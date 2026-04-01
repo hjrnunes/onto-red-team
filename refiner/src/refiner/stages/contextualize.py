@@ -123,6 +123,8 @@ def contextualize(
 
             valid_enums = []
             for enum in resp_axis.enumerations:
+                if enum.class_uri == input_axis.cco_class_uri:
+                    continue  # skip self-reference
                 check = onto_handlers["get_class_definition"](enum.class_uri)
                 if check is not None:
                     valid_enums.append(AxisEnumeration(

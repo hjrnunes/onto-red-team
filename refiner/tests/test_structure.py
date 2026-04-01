@@ -15,6 +15,8 @@ def test_slugify():
     assert slugify("Executive Compensation") == "executive-compensation"
     assert slugify("Debt Repayment Negotiation") == "debt-repayment-negotiation"
     assert slugify("Fraud") == "fraud"
+    assert slugify("Disclosure - Financial") == "disclosure-financial"
+    assert slugify("A -- B") == "a-b"
     assert slugify("Security & Malware") == "security-malware"
 
 

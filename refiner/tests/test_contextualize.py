@@ -149,6 +149,30 @@ def test_contextualize_sibling_fallback_excludes_self(mock_client, mock_config, 
     assert result[0].axes == []
 
 
+def test_contextualize_filters_self_reference_enumerations(mock_client, mock_config, mock_onto_handlers):
+    axes = [_make_axes()]
+    mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/Employee", "label": "Employee", "definition": "d", "superclasses": []
+    }
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        axes=[
+            _AxisResponse(
+                cco_class_uri="http://example.org/Person",
+                enumerations=[
+                    _EnumResponse(class_uri="http://example.org/Person", class_label="Person", relevance="high"),
+                    _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                ],
+            ),
+        ],
+    )
+    result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
+    assert len(result[0].axes[0].enumerations) == 1
+    assert result[0].axes[0].enumerations[0].class_uri == "http://example.org/Employee"
+
+
 def test_contextualize_empty_axes(mock_client, mock_config, mock_onto_handlers):
     result = contextualize([], mock_client, mock_config, mock_onto_handlers)
     assert result == []
