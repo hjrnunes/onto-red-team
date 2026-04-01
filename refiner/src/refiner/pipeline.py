@@ -57,7 +57,7 @@ def run_pipeline(
         return state
 
     state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks = map_risks(
-        state.classifications, client, config, risk_handlers
+        state.classifications, client, config, risk_handlers, report=report
     )
     if report:
         report.stages_completed.append("map_risks")
@@ -66,7 +66,7 @@ def run_pipeline(
 
     state.variation_axes = anchor(
         state.risk_mappings, state.risk_details, client, config, onto_handlers,
-        selected_domains=state.selected_domains,
+        selected_domains=state.selected_domains, report=report,
     )
     if report:
         report.stages_completed.append("anchor")

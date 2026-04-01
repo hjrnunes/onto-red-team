@@ -13,6 +13,59 @@ from refiner.stages.identify_domains import derive_source_ontology
 
 logger = logging.getLogger(__name__)
 
+# BFO/CCO category → semantic roles mapping.
+# More specific CCO categories are checked first (via superclass walk),
+# falling back to broader BFO categories.
+# For non-BFO ontologies (FIBO, Commons), the walk won't hit these,
+# so we fall back to the LLM-assigned role.
+_CATEGORY_ROLES: dict[str, list[str]] = {
+    # CCO categories (more specific — checked first)
+    "https://www.commoncoreontologies.org/ont00001017": ["agent"],               # Agent
+    "https://www.commoncoreontologies.org/ont00000995": ["object", "instrument"],  # Material Artifact
+    "https://www.commoncoreontologies.org/ont00000005": ["object"],               # Act (process)
+    "https://www.commoncoreontologies.org/ont00000958": ["object", "instrument"],  # Information Content Entity
+    # BFO categories (broader fallback)
+    "http://purl.obolibrary.org/obo/BFO_0000040": ["agent", "object"],   # material entity
+    "http://purl.obolibrary.org/obo/BFO_0000015": ["object"],            # process
+    "http://purl.obolibrary.org/obo/BFO_0000023": ["agent"],             # role (bearer acts)
+    "http://purl.obolibrary.org/obo/BFO_0000016": ["instrument"],        # disposition
+    "http://purl.obolibrary.org/obo/BFO_0000031": ["object"],            # generically dependent continuant
+    "http://purl.obolibrary.org/obo/BFO_0000019": ["object"],            # quality
+    "http://purl.obolibrary.org/obo/BFO_0000029": ["location"],          # site
+    "http://purl.obolibrary.org/obo/BFO_0000006": ["location"],          # spatial region
+    "http://purl.obolibrary.org/obo/BFO_0000141": ["location"],          # immaterial entity
+    "http://purl.obolibrary.org/obo/BFO_0000008": ["temporal"],          # temporal region
+}
+
+
+def derive_roles(class_uri: str, onto_handlers: dict, max_depth: int = 10) -> list[str] | None:
+    """Walk superclass chain looking for BFO/CCO categories. Returns roles or None."""
+    visited = {class_uri}
+    current = class_uri
+
+    for _ in range(max_depth):
+        if current in _CATEGORY_ROLES:
+            return _CATEGORY_ROLES[current]
+
+        superclasses = onto_handlers["get_superclasses"](current)
+        if not superclasses:
+            break
+
+        # Follow first named superclass
+        next_uri = None
+        for s in superclasses:
+            uri = s.get("uri", "")
+            if uri and uri not in visited:
+                next_uri = uri
+                break
+        if next_uri is None:
+            break
+        visited.add(next_uri)
+        current = next_uri
+
+    return None
+
+
 SYSTEM_PROMPT = """\
 You are identifying variation axes for AI risk concepts using ontology classes.
 
@@ -28,8 +81,15 @@ Given a risk (with description and concern) and candidate ontology classes (with
 Return 2-3 axes max."""
 
 
+class _SlimAxis(BaseModel):
+    cco_class_uri: str
+    cco_class_label: str
+    role: str
+    rationale: str
+
+
 class _AnchorResponse(BaseModel):
-    axes: list[VariationAxis]
+    axes: list[_SlimAxis]
 
 
 def anchor(
@@ -39,14 +99,28 @@ def anchor(
     config: LLMConfig,
     onto_handlers: dict,
     selected_domains: list[str] | None = None,
+    report=None,
 ) -> list[RiskVariationAxes]:
     if not risk_mappings:
         return []
 
     results: list[RiskVariationAxes] = []
+    axes_cache: dict[str, list[VariationAxis]] = {}  # risk_id -> cached axes
 
     for mapping in risk_mappings:
         for rm in mapping.matched_risks:
+            if rm.risk_id in axes_cache:
+                logger.debug("Cache hit for risk_id=%s, reusing axes", rm.risk_id)
+                if report:
+                    report.events.append({"stage": "anchor", "event": "cache_hit", "risk_id": rm.risk_id})
+                results.append(RiskVariationAxes(
+                    risk_id=rm.risk_id,
+                    risk_name=rm.risk_name,
+                    policy_concept=mapping.policy_concept,
+                    axes=axes_cache[rm.risk_id],
+                ))
+                continue
+
             details = risk_details.get(rm.risk_id, {})
             description = details.get("description", rm.risk_name)
             concern = details.get("concern", "")
@@ -56,6 +130,13 @@ def anchor(
             if selected_domains:
                 candidates = [c for c in raw_candidates
                               if derive_source_ontology(c.get("uri", "")) in selected_domains][:3]
+                if report:
+                    report.events.append({
+                        "stage": "anchor", "event": "domain_filtered",
+                        "risk_id": rm.risk_id,
+                        "filtered_count": len(raw_candidates) - len(candidates),
+                        "kept_count": len(candidates),
+                    })
             else:
                 candidates = raw_candidates[:3]
 
@@ -73,6 +154,9 @@ def anchor(
                 enriched.append({**defn, "siblings": siblings})
 
             if not enriched:
+                if report:
+                    report.events.append({"stage": "anchor", "event": "empty_axes", "risk_id": rm.risk_id})
+                axes_cache[rm.risk_id] = []
                 results.append(RiskVariationAxes(
                     risk_id=rm.risk_id,
                     risk_name=rm.risk_name,
@@ -117,14 +201,30 @@ def anchor(
                 "num_candidates": len(enriched),
             })
 
-            # Post-processing: validate URIs exist in ontology
+            # Post-processing: validate URIs, derive roles from BFO/CCO hierarchy
             valid_axes = []
             for axis in result.axes:
                 check = onto_handlers["get_class_definition"](axis.cco_class_uri)
-                if check is not None:
-                    valid_axes.append(axis)
-                else:
+                if check is None:
                     logger.warning("Filtering invalid cco_class_uri: %s", axis.cco_class_uri)
+                    continue
+                derived = derive_roles(axis.cco_class_uri, onto_handlers)
+                if report:
+                    report.events.append({
+                        "stage": "anchor", "event": "role_derivation",
+                        "uri": axis.cco_class_uri,
+                        "method": "derived" if derived is not None else "llm_fallback",
+                    })
+                roles = derived if derived is not None else [axis.role]
+                valid_axes.append(VariationAxis(
+                    cco_class_uri=axis.cco_class_uri,
+                    cco_class_label=axis.cco_class_label,
+                    roles=roles,
+                    rationale=axis.rationale,
+                ))
+
+            # Cache axes by risk_id for deduplication
+            axes_cache[rm.risk_id] = valid_axes
 
             # Stitch back metadata the LLM doesn't need to produce
             results.append(RiskVariationAxes(

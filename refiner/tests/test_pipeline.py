@@ -67,10 +67,10 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         # Verify stage calls received correct inputs
         m_classify.assert_called_once_with(policies, mock_client, mock_config, report=report)
         m_domains.assert_called_once_with(classify_result, mock_client, mock_config, report=report)
-        m_map.assert_called_once_with(classify_result, mock_client, mock_config, mock_risk_handlers)
+        m_map.assert_called_once_with(classify_result, mock_client, mock_config, mock_risk_handlers, report=report)
         m_anchor.assert_called_once_with(
             map_result[0], map_result[1], mock_client, mock_config, mock_onto_handlers,
-            selected_domains=domains_result,
+            selected_domains=domains_result, report=report,
         )
         m_ctx.assert_called_once_with(anchor_result, mock_client, mock_config, mock_onto_handlers)
 

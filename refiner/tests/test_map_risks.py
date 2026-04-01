@@ -2,9 +2,8 @@ import logging
 from refiner.models import (
     PolicyClassification,
     PolicyRiskMapping,
-    RiskMatch,
 )
-from refiner.stages.map_risks import map_risks, _RiskSelection
+from refiner.stages.map_risks import map_risks, _RiskSelection, _SlimRiskMatch
 
 
 def _make_classification(concept="Fraud", policy_type="A"):
@@ -32,7 +31,7 @@ def test_map_risks_calls_search_and_details(mock_client, mock_config, mock_risk_
     mock_risk_handlers["get_related_risks"].return_value = []
     mock_client.chat.completions.create.return_value = _RiskSelection(
         matched_risks=[
-            RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j"),
+            _SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j"),
         ],
     )
     mappings, details, seen_ids, related = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
@@ -55,15 +54,15 @@ def test_map_risks_filters_hallucinated_risk_ids(mock_client, mock_config, mock_
         if rid == "atlas-fraud" else None
     )
     mock_risk_handlers["get_related_risks"].return_value = []
-    # LLM hallucinates a risk_id that doesn't exist
+    # LLM returns an invalid index
     mock_client.chat.completions.create.return_value = _RiskSelection(
         matched_risks=[
-            RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j"),
-            RiskMatch(risk_id="hallucinated-id", risk_name="Fake", relevance="supporting", justification="j"),
+            _SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j"),
+            _SlimRiskMatch(risk_index=99, risk_name="Fake", relevance="supporting", justification="j"),
         ],
     )
     mappings, details, seen_ids, related = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
-    # Hallucinated ID should be filtered out
+    # Invalid index should be filtered out
     assert len(mappings[0].matched_risks) == 1
     assert mappings[0].matched_risks[0].risk_id == "atlas-fraud"
 
@@ -80,7 +79,7 @@ def test_map_risks_returns_risk_details_cache(mock_client, mock_config, mock_ris
     mock_risk_handlers["get_risk_details"].return_value = risk_detail
     mock_risk_handlers["get_related_risks"].return_value = []
     mock_client.chat.completions.create.return_value = _RiskSelection(
-        matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
     )
     _, details, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
     assert "atlas-fraud" in details
@@ -101,7 +100,7 @@ def test_map_risks_seen_ids_includes_related(mock_client, mock_config, mock_risk
         {"id": "nist-fraud", "mapping_type": "related"},
     ]
     mock_client.chat.completions.create.return_value = _RiskSelection(
-        matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
     )
     _, _, seen_ids, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
     assert "atlas-fraud" in seen_ids
@@ -124,12 +123,48 @@ def test_map_risks_returns_related_risks(mock_client, mock_config, mock_risk_han
     ]
     mock_risk_handlers["get_related_risks"].return_value = related
     mock_client.chat.completions.create.return_value = _RiskSelection(
-        matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
     )
     _, _, _, related_risks = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
     assert "atlas-fraud" in related_risks
     assert len(related_risks["atlas-fraud"]) == 2
     assert related_risks["atlas-fraud"][0]["id"] == "owasp-fraud"
+
+
+def test_map_risks_populates_match_distance(mock_client, mock_config, mock_risk_handlers):
+    classifications = [_make_classification()]
+    mock_risk_handlers["search_risks"].return_value = [
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.25},
+    ]
+    mock_risk_handlers["get_risk_details"].return_value = {
+        "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
+        "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
+    )
+    mappings, _, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
+    assert mappings[0].matched_risks[0].match_distance == 0.25
+
+
+def test_map_risks_warns_on_weak_match(mock_client, mock_config, mock_risk_handlers, caplog):
+    classifications = [_make_classification()]
+    mock_risk_handlers["search_risks"].return_value = [
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.55},
+    ]
+    mock_risk_handlers["get_risk_details"].return_value = {
+        "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
+        "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
+    )
+    with caplog.at_level(logging.WARNING):
+        mappings, _, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
+    assert mappings[0].matched_risks[0].match_distance == 0.55
+    assert any("Weak match" in msg for msg in caplog.messages)
 
 
 def test_map_risks_empty_classifications(mock_client, mock_config, mock_risk_handlers):
@@ -138,3 +173,92 @@ def test_map_risks_empty_classifications(mock_client, mock_config, mock_risk_han
     assert details == {}
     assert seen_ids == set()
     assert related == {}
+
+
+def test_map_risks_emits_weak_match(mock_client, mock_config, mock_risk_handlers):
+    """When a match distance > 0.4, emit a weak_match event."""
+    from refiner.models import RunReport
+    classifications = [_make_classification()]
+    mock_risk_handlers["search_risks"].return_value = [
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.55},
+    ]
+    mock_risk_handlers["get_risk_details"].return_value = {
+        "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
+        "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    mappings, _, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers, report=report)
+    weak = [e for e in report.events if e["event"] == "weak_match"]
+    assert len(weak) == 1
+    assert weak[0]["risk_id"] == "atlas-fraud"
+    assert weak[0]["distance"] == 0.55
+
+
+def test_map_risks_emits_invalid_risk_index(mock_client, mock_config, mock_risk_handlers):
+    """When LLM returns an out-of-range index, emit invalid_risk_index."""
+    from refiner.models import RunReport
+    classifications = [_make_classification()]
+    mock_risk_handlers["search_risks"].return_value = [
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
+    ]
+    mock_risk_handlers["get_risk_details"].return_value = {
+        "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
+        "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[
+            _SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j"),
+            _SlimRiskMatch(risk_index=99, risk_name="Fake", relevance="supporting", justification="j"),
+        ],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    mappings, _, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers, report=report)
+    invalid = [e for e in report.events if e["event"] == "invalid_risk_index"]
+    assert len(invalid) == 1
+    assert invalid[0]["raw_index"] == 99
+
+
+def test_map_risks_emits_match_count(mock_client, mock_config, mock_risk_handlers):
+    """Emit match_count per policy concept."""
+    from refiner.models import RunReport
+    classifications = [_make_classification()]
+    mock_risk_handlers["search_risks"].return_value = [
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
+    ]
+    mock_risk_handlers["get_risk_details"].return_value = {
+        "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
+        "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    mappings, _, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers, report=report)
+    counts = [e for e in report.events if e["event"] == "match_count"]
+    assert len(counts) == 1
+    assert counts[0]["policy_concept"] == "Fraud"
+    assert counts[0]["count"] == 1
+
+
+def test_map_risks_no_report_works(mock_client, mock_config, mock_risk_handlers):
+    """map_risks works without report param (backward compat)."""
+    classifications = [_make_classification()]
+    mock_risk_handlers["search_risks"].return_value = [
+        {"id": "atlas-fraud", "name": "Fraud", "description": "d", "distance": 0.2},
+    ]
+    mock_risk_handlers["get_risk_details"].return_value = {
+        "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
+        "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
+    )
+    mappings, _, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
+    assert len(mappings) == 1
