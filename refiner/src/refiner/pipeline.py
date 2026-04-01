@@ -8,6 +8,7 @@ from refiner.models import (
     PolicyRiskMapping,
     RiskVariationAxes,
     DomainContextProfile,
+    RunReport,
 )
 from refiner.stages.classify import classify
 from refiner.stages.identify_domains import identify_domains
@@ -29,6 +30,7 @@ class PipelineState:
     related_risks: dict[str, list[dict]] | None = None
     variation_axes: list[RiskVariationAxes] | None = None
     domain_context: list[DomainContextProfile] | None = None
+    report: RunReport | None = None
 
 
 def run_pipeline(
@@ -38,20 +40,27 @@ def run_pipeline(
     risk_handlers: dict,
     onto_handlers: dict,
     until: str | None = None,
+    report: RunReport | None = None,
 ) -> PipelineState:
-    state = PipelineState(policies=policies)
+    state = PipelineState(policies=policies, report=report)
 
     state.classifications = classify(state.policies, client, config)
+    if report:
+        report.stages_completed.append("classify")
     if until == "classify":
         return state
 
     state.selected_domains = identify_domains(state.classifications, client, config)
+    if report:
+        report.stages_completed.append("identify_domains")
     if until == "identify_domains":
         return state
 
     state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks = map_risks(
         state.classifications, client, config, risk_handlers
     )
+    if report:
+        report.stages_completed.append("map_risks")
     if until == "map_risks":
         return state
 
@@ -59,10 +68,14 @@ def run_pipeline(
         state.risk_mappings, state.risk_details, client, config, onto_handlers,
         selected_domains=state.selected_domains,
     )
+    if report:
+        report.stages_completed.append("anchor")
     if until == "anchor":
         return state
 
     state.domain_context = contextualize(
         state.variation_axes, client, config, onto_handlers
     )
+    if report:
+        report.stages_completed.append("contextualize")
     return state

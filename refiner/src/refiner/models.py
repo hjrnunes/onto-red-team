@@ -1,4 +1,5 @@
 from typing import Literal
+from dataclasses import dataclass, field
 from pydantic import BaseModel
 
 
@@ -19,6 +20,7 @@ class RiskMatch(BaseModel):
     risk_name: str
     relevance: Literal["primary", "supporting", "tangential"]
     justification: str
+    match_distance: float | None = None
 
 
 class PolicyRiskMapping(BaseModel):
@@ -30,7 +32,7 @@ class PolicyRiskMapping(BaseModel):
 class VariationAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
-    role: str
+    roles: list[str]
     rationale: str
 
 
@@ -51,7 +53,7 @@ class AxisEnumeration(BaseModel):
 class DomainContextAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
-    role: str
+    roles: list[str]
     enumerations: list[AxisEnumeration]
 
 
@@ -65,8 +67,26 @@ class DomainContextProfile(BaseModel):
 class SampledAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
-    role: str
+    roles: list[str]
     sampled_uri: str
     sampled_label: str
     source_ontology: str
     relevance: Literal["high", "medium", "low"]
+
+
+@dataclass
+class RunReport:
+    model: str
+    policy_set: str
+    timestamp: str
+    stages_completed: list[str] = field(default_factory=list)
+    events: list[dict] = field(default_factory=list)
+
+    def to_dict(self) -> dict:
+        return {
+            "model": self.model,
+            "policy_set": self.policy_set,
+            "timestamp": self.timestamp,
+            "stages_completed": self.stages_completed,
+            "events": self.events,
+        }

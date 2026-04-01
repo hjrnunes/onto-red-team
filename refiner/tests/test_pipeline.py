@@ -8,12 +8,14 @@ from refiner.models import (
     VariationAxis,
     DomainContextProfile,
     DomainContextAxis,
+    RunReport,
 )
 from refiner.pipeline import PipelineState, run_pipeline
 
 
 def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
+    report = RunReport(model="test-model", policy_set="test.json", timestamp="2026-04-01T00:00:00Z")
 
     classify_result = [
         PolicyClassification(
@@ -34,13 +36,13 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
     anchor_result = [
         RiskVariationAxes(
             risk_id="r1", risk_name="R1", policy_concept="Fraud",
-            axes=[VariationAxis(cco_class_uri="http://ex/P", cco_class_label="P", role="agent", rationale="r")],
+            axes=[VariationAxis(cco_class_uri="http://ex/P", cco_class_label="P", roles=["agent"], rationale="r")],
         ),
     ]
     context_result = [
         DomainContextProfile(
             risk_id="r1", risk_name="R1", policy_concept="Fraud",
-            axes=[DomainContextAxis(cco_class_uri="http://ex/P", cco_class_label="P", role="agent", enumerations=[])],
+            axes=[DomainContextAxis(cco_class_uri="http://ex/P", cco_class_label="P", roles=["agent"], enumerations=[])],
         ),
     ]
 
@@ -50,7 +52,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
          patch("refiner.pipeline.anchor", return_value=anchor_result) as m_anchor, \
          patch("refiner.pipeline.contextualize", return_value=context_result) as m_ctx:
 
-        state = run_pipeline(policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers)
+        state = run_pipeline(policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers, report=report)
 
         assert state.classifications == classify_result
         assert state.selected_domains == domains_result
@@ -59,6 +61,8 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         assert state.related_risks == map_result[3]
         assert state.variation_axes == anchor_result
         assert state.domain_context == context_result
+        assert state.report == report
+        assert report.stages_completed == ["classify", "identify_domains", "map_risks", "anchor", "contextualize"]
 
         # Verify stage calls received correct inputs
         m_classify.assert_called_once_with(policies, mock_client, mock_config)

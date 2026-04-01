@@ -27,8 +27,8 @@ def test_policy_risk_mapping():
     assert prm.matched_risks == []
 
 def test_variation_axis():
-    va = VariationAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="agent", rationale="Actors who commit fraud")
-    assert va.role == "agent"
+    va = VariationAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"], rationale="Actors who commit fraud")
+    assert va.roles == ["agent"]
 
 def test_risk_variation_axes():
     rva = RiskVariationAxes(risk_id="r1", risk_name="Fraud", policy_concept="Fraud", axes=[])
@@ -42,7 +42,7 @@ def test_axis_enumeration_valid_relevance():
 def test_domain_context_profile():
     dcp = DomainContextProfile(
         risk_id="r1", risk_name="Fraud", policy_concept="Fraud",
-        axes=[DomainContextAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="agent", enumerations=[])],
+        axes=[DomainContextAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"], enumerations=[])],
     )
     assert len(dcp.axes) == 1
 
@@ -52,14 +52,14 @@ def test_sampled_axis_creation():
     sa = SampledAxis(
         cco_class_uri="http://example.org/Person",
         cco_class_label="Person",
-        role="agent",
+        roles=["agent"],
         sampled_uri="http://example.org/Manager",
         sampled_label="Manager",
         source_ontology="FIBO",
         relevance="high",
     )
     assert sa.sampled_label == "Manager"
-    assert sa.role == "agent"
+    assert sa.roles == ["agent"]
 
 
 def test_sampled_axis_rejects_invalid_relevance():
@@ -69,9 +69,37 @@ def test_sampled_axis_rejects_invalid_relevance():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            role="agent",
+            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
             relevance="critical",
         )
+
+
+def test_run_report_creation():
+    from refiner.models import RunReport
+    report = RunReport(model="test-model", policy_set="test.json", timestamp="2026-04-01T00:00:00Z")
+    assert report.model == "test-model"
+    assert report.stages_completed == []
+    assert report.events == []
+
+
+def test_run_report_append_event():
+    from refiner.models import RunReport
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    report.events.append({"stage": "classify", "event": "type_distribution", "distribution": {"A": 1}})
+    assert len(report.events) == 1
+    assert report.events[0]["stage"] == "classify"
+
+
+def test_run_report_to_dict():
+    from refiner.models import RunReport
+    report = RunReport(model="m", policy_set="p.json", timestamp="t")
+    report.stages_completed.append("classify")
+    report.events.append({"stage": "classify", "event": "type_distribution", "distribution": {"A": 1}})
+    d = report.to_dict()
+    assert d["model"] == "m"
+    assert d["policy_set"] == "p.json"
+    assert d["stages_completed"] == ["classify"]
+    assert len(d["events"]) == 1
