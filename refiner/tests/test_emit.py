@@ -355,3 +355,48 @@ def test_emit_skips_risk_with_no_axes(tmp_path):
     emit(tmp_path, pol_path, samples_per_risk=5, output_path=out_path, seed=1)
     content = out_path.read_text().strip()
     assert content == ""
+
+
+from typer.testing import CliRunner
+from refiner.cli import app
+
+runner = CliRunner()
+
+
+def test_emit_cli_command(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "2",
+        "--seed", "42",
+        "--output", str(out_path),
+    ])
+    assert result.exit_code == 0, result.output
+    assert out_path.exists()
+    lines = out_path.read_text().strip().split("\n")
+    assert len(lines) > 0
+
+
+def test_emit_cli_default_output(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "1",
+        "--seed", "1",
+    ])
+    assert result.exit_code == 0, result.output
+    default_out = tmp_path / "dataset.jsonl"
+    assert default_out.exists()
+
+
+def test_emit_cli_missing_policies(tmp_path):
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(tmp_path / "nonexistent.json"),
+    ])
+    assert result.exit_code != 0

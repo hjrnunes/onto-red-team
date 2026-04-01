@@ -62,7 +62,7 @@ def test_cli_run_full_pipeline(mock_run, mock_create_client, mock_onto, mock_ris
     mock_onto.return_value = {}
     mock_structure.return_value = ({"name": "test"}, [])
 
-    result = runner.invoke(app, [str(policy_file)])
+    result = runner.invoke(app, ["run", str(policy_file)])
     assert result.exit_code == 0, result.output
     mock_run.assert_called_once()
 
@@ -83,7 +83,7 @@ def test_cli_run_with_until(mock_run, mock_create_client, mock_onto, mock_risk, 
     mock_risk.return_value = {}
     mock_onto.return_value = {}
 
-    result = runner.invoke(app, ["--until", "classify", str(policy_file)])
+    result = runner.invoke(app, ["run", "--until", "classify", str(policy_file)])
     assert result.exit_code == 0, result.output
     call_kwargs = mock_run.call_args.kwargs
     assert call_kwargs.get("until") == "classify"

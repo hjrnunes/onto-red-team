@@ -128,5 +128,28 @@ def run(
         typer.echo(f"Intermediate state written to {state_path}")
 
 
+@app.command()
+def emit(
+    output_dir: Path = typer.Argument(..., help="Directory from a prior 'refiner run --output'"),
+    policies: Path = typer.Option(..., "--policies", help="Original policy JSON file"),
+    samples_per_risk: int = typer.Option(10, "--samples-per-risk", help="Samples per risk (default: 10)"),
+    seed: int = typer.Option(None, "--seed", help="Random seed for reproducible sampling"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output JSONL path (default: <output-dir>/dataset.jsonl)"),
+):
+    """Emit an sdg_hub-ready JSONL dataset from domain context profiles."""
+    if not output_dir.is_dir():
+        typer.echo(f"Error: {output_dir} is not a directory", err=True)
+        raise typer.Exit(1)
+    if not policies.exists():
+        typer.echo(f"Error: {policies} does not exist", err=True)
+        raise typer.Exit(1)
+
+    out_path = output or (output_dir / "dataset.jsonl")
+
+    from refiner.emit import emit as do_emit
+    do_emit(output_dir, policies, samples_per_risk, out_path, seed=seed)
+    typer.echo(f"Dataset written to {out_path}")
+
+
 if __name__ == "__main__":
     app()
