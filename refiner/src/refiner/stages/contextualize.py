@@ -18,9 +18,11 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """\
 You are generating domain context profiles for AI risk variation axes.
 
-For each variation axis (a CCO ontology class), you are given its subclasses from domain ontologies. These subclasses form the enumeration space — the specific values that can be substituted when generating diverse prompts.
+For each variation axis (an ontology class), you are given candidate classes that form the enumeration space — the specific values that can be substituted when generating diverse prompts.
 
-Filter out irrelevant subclasses and annotate each remaining one with:
+Candidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.
+
+Filter out irrelevant candidates and annotate each remaining one with:
 - relevance: "high" (directly relevant), "medium" (potentially relevant), "low" (edge case)
 
 Return one entry per axis using the axis URI as a key, with the filtered enumerations."""
@@ -65,17 +67,24 @@ def contextualize(
         # Build lookup of input axes by URI for stitching back metadata
         input_axes_by_uri = {axis.cco_class_uri: axis for axis in rva.axes}
 
-        # Gather subclasses for each axis — cap to avoid context overflow
+        # Gather candidates for each axis — subclasses first, siblings as fallback
         axis_context = []
         for axis in rva.axes:
             subclasses = onto_handlers["get_subclasses"](axis.cco_class_uri, depth=1)
-            sub_lines = []
-            for sc in subclasses[:10]:
-                sub_lines.append(f"  - {sc.get('uri', '')}: {sc.get('label', '')} (depth {sc.get('depth', '?')})")
+            if subclasses:
+                candidates = subclasses[:10]
+                source = "Subclasses"
+            else:
+                siblings = onto_handlers["get_siblings"](axis.cco_class_uri)
+                candidates = [s for s in siblings if s.get("uri") != axis.cco_class_uri][:10]
+                source = "Siblings"
+            candidate_lines = []
+            for c in candidates:
+                candidate_lines.append(f"  - {c.get('uri', '')}: {c.get('label', '')}")
             axis_context.append(
                 f"Axis: {axis.cco_class_label} ({axis.cco_class_uri})\n"
                 f"Role: {axis.role}\n"
-                f"Subclasses:\n" + ("\n".join(sub_lines) if sub_lines else "  (none)")
+                f"{source}:\n" + ("\n".join(candidate_lines) if candidate_lines else "  (none)")
             )
 
         user_content = (
