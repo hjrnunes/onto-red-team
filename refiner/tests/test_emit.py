@@ -48,7 +48,7 @@ def _make_profile():
             DomainContextAxis(
                 cco_class_uri="http://example.org/Person",
                 cco_class_label="Person",
-                role="agent",
+                roles=["agent"],
                 enumerations=[
                     _enum("high"),
                     AxisEnumeration(class_uri="http://example.org/Manager", class_label="Manager", source_ontology="FIBO", relevance="medium"),
@@ -57,7 +57,7 @@ def _make_profile():
             DomainContextAxis(
                 cco_class_uri="http://example.org/Instrument",
                 cco_class_label="Instrument",
-                role="instrument",
+                roles=["instrument"],
                 enumerations=[
                     AxisEnumeration(class_uri="http://example.org/Bond", class_label="Bond", source_ontology="FIBO", relevance="high"),
                 ],
@@ -76,7 +76,7 @@ def test_sample_axes_returns_sampled_axes():
         assert len(sample) == 2  # two axes
         for sa in sample:
             assert isinstance(sa, SampledAxis)
-            assert sa.role in ("agent", "instrument")
+            assert sa.roles in (["agent"], ["instrument"])
 
 
 def test_sample_axes_deduplicates():
@@ -87,7 +87,7 @@ def test_sample_axes_deduplicates():
             DomainContextAxis(
                 cco_class_uri="http://example.org/A",
                 cco_class_label="A",
-                role="agent",
+                roles=["agent"],
                 enumerations=[_enum("high")],
             ),
         ],
@@ -103,13 +103,13 @@ def test_sample_axes_skips_empty_axes():
             DomainContextAxis(
                 cco_class_uri="http://example.org/A",
                 cco_class_label="A",
-                role="agent",
+                roles=["agent"],
                 enumerations=[_enum("high")],
             ),
             DomainContextAxis(
                 cco_class_uri="http://example.org/B",
                 cco_class_label="B",
-                role="object",
+                roles=["object"],
                 enumerations=[],  # empty — should be skipped
             ),
         ],
@@ -117,7 +117,7 @@ def test_sample_axes_skips_empty_axes():
     samples = sample_axes(profile, n=5)
     for sample in samples:
         assert len(sample) == 1  # only the non-empty axis
-        assert sample[0].role == "agent"
+        assert sample[0].roles == ["agent"]
 
 
 def test_sample_axes_reproducible_with_seed():
@@ -135,7 +135,7 @@ def test_build_prompt_returns_messages():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            role="agent",
+            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
@@ -161,7 +161,7 @@ def test_build_prompt_user_message_has_policy():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            role="agent",
+            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
@@ -180,7 +180,7 @@ def test_build_prompt_user_message_has_axes():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            role="agent",
+            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
@@ -189,7 +189,7 @@ def test_build_prompt_user_message_has_axes():
         SampledAxis(
             cco_class_uri="http://example.org/Instrument",
             cco_class_label="Instrument",
-            role="instrument",
+            roles=["instrument"],
             sampled_uri="http://example.org/Bond",
             sampled_label="Bond",
             source_ontology="FIBO",
@@ -216,7 +216,7 @@ def test_load_domain_context(tmp_path):
                     {
                         "cco_class_uri": "http://example.org/Person",
                         "cco_class_label": "Person",
-                        "role": "agent",
+                        "roles": ["agent"],
                         "enumerations": [
                             {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
                         ],
@@ -259,7 +259,7 @@ def _write_test_files(tmp_path):
                     {
                         "cco_class_uri": "http://example.org/Person",
                         "cco_class_label": "Person",
-                        "role": "agent",
+                        "roles": ["agent"],
                         "enumerations": [
                             {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
                             {"class_uri": "http://example.org/Employee", "class_label": "Employee", "source_ontology": "CCO", "relevance": "medium"},
@@ -292,8 +292,15 @@ def test_emit_writes_jsonl(tmp_path):
     assert "risk_id" in row
     assert "risk_name" in row
     assert "sampled_axes" in row
+    assert "domain_context_axes" in row
     assert row["policy_concept"] == "Fraud"
     assert row["risk_id"] == "r1"
+    # domain_context_axes should contain the full axis definitions
+    dc_axes = row["domain_context_axes"]
+    assert isinstance(dc_axes, list)
+    assert len(dc_axes) == 1  # one axis in test fixture
+    assert dc_axes[0]["cco_class_label"] == "Person"
+    assert len(dc_axes[0]["enumerations"]) == 2  # Manager + Employee
 
 
 def test_emit_generation_prompt_is_messages(tmp_path):
@@ -378,7 +385,7 @@ def test_emit_skips_missing_policy_concept(tmp_path):
                     {
                         "cco_class_uri": "http://example.org/A",
                         "cco_class_label": "A",
-                        "role": "agent",
+                        "roles": ["agent"],
                         "enumerations": [
                             {
                                 "class_uri": "http://example.org/E1",

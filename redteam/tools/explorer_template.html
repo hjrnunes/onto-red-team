@@ -175,34 +175,46 @@
           </div>
         </div>
 
-        <!-- Sampled Axes (ontology provenance) -->
-        <div x-show="selectedRecord?.sampled_axes?.length">
-          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Variation Axes</h3>
-          <div class="space-y-2">
-            <template x-for="(ax, i) in (selectedRecord?.sampled_axes || [])" :key="i">
-              <div class="bg-gray-50 rounded-lg border border-gray-200 p-3 flex flex-col sm:flex-row sm:items-center gap-2">
-                <!-- Role badge -->
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold shrink-0"
-                  :class="roleColor(ax.roles ? ax.roles[0] : (ax.role || ''))"
-                  x-text="ax.roles ? ax.roles[0] : (ax.role || '')"></span>
-                <!-- Sampled value + class -->
-                <div class="flex-1 min-w-0">
-                  <p class="text-sm font-medium text-gray-800">
-                    <span x-text="ax.sampled_label"></span>
-                    <span class="text-gray-400 font-normal"> &larr; </span>
-                    <span class="text-gray-500" x-text="ax.cco_class_label"></span>
-                  </p>
-                  <p class="text-xs text-gray-400 truncate" x-text="ax.sampled_uri"></p>
+        <!-- Domain Context -->
+        <div x-show="selectedRecord?.domain_context_axes?.length">
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Domain Context</h3>
+          <div class="space-y-3">
+            <template x-for="(dcAxis, ai) in (selectedRecord?.domain_context_axes || [])" :key="ai">
+              <div class="rounded-lg border border-gray-200 overflow-hidden">
+                <!-- Axis header -->
+                <div class="bg-gray-50 px-3 py-2 flex items-center gap-2 border-b border-gray-200">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold shrink-0"
+                    :class="roleColor((dcAxis.roles || [])[0] || '')"
+                    x-text="(dcAxis.roles || []).join('/')"></span>
+                  <span class="text-sm font-medium text-gray-800" x-text="dcAxis.cco_class_label"></span>
+                  <span class="text-xs text-gray-400 truncate" x-text="dcAxis.cco_class_uri"></span>
                 </div>
-                <!-- Source + relevance -->
-                <div class="flex items-center gap-2 shrink-0">
-                  <span class="text-xs font-medium px-1.5 py-0.5 rounded bg-blue-50 text-blue-700" x-text="ax.source_ontology"></span>
-                  <span class="text-xs font-medium px-1.5 py-0.5 rounded"
-                    :class="relevanceColor(ax.relevance)"
-                    x-text="ax.relevance"></span>
+                <!-- Enumerations -->
+                <div class="p-2 flex flex-wrap gap-1.5">
+                  <template x-for="(en, ei) in (dcAxis.enumerations || [])" :key="ei">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border"
+                      :class="isSampled(selectedRecord, dcAxis, en)
+                        ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-semibold ring-2 ring-indigo-400/50'
+                        : 'bg-white border-gray-200 text-gray-600'">
+                      <span x-text="en.class_label"></span>
+                      <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                        :class="{'bg-green-500': en.relevance==='high', 'bg-yellow-400': en.relevance==='medium', 'bg-red-400': en.relevance==='low'}"></span>
+                      <span class="text-[10px] opacity-60" x-text="en.source_ontology"></span>
+                    </span>
+                  </template>
+                  <template x-if="!dcAxis.enumerations?.length">
+                    <span class="text-xs text-gray-400 italic px-2 py-1">no enumerations</span>
+                  </template>
                 </div>
               </div>
             </template>
+          </div>
+          <!-- Legend -->
+          <div class="mt-2 flex items-center gap-3 text-[10px] text-gray-400">
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> high</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> medium</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> low</span>
+            <span class="ml-2 px-1.5 py-0.5 rounded bg-indigo-100 border border-indigo-300 text-indigo-700">sampled</span>
           </div>
         </div>
 
@@ -320,6 +332,14 @@ function explorerApp() {
         'low':    'bg-red-100 text-red-800',
       };
       return map[rel] || 'bg-gray-100 text-gray-800';
+    },
+
+    isSampled(record, dcAxis, enumeration) {
+      if (!record?.sampled_axes) return false;
+      return record.sampled_axes.some(sa =>
+        sa.cco_class_uri === dcAxis.cco_class_uri &&
+        sa.sampled_uri === enumeration.class_uri
+      );
     },
 
     prettyJSON(val) {

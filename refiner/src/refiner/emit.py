@@ -45,7 +45,7 @@ def sample_axes(
             sample.append(SampledAxis(
                 cco_class_uri=axis.cco_class_uri,
                 cco_class_label=axis.cco_class_label,
-                role=axis.role,
+                roles=axis.roles,
                 sampled_uri=chosen.class_uri,
                 sampled_label=chosen.class_label,
                 source_ontology=chosen.source_ontology,
@@ -87,7 +87,7 @@ def build_prompt(
     # Build scenario lines from sampled axes
     if sampled_axes:
         axis_lines = "\n".join(
-            f"- {sa.role}: a {sa.sampled_label} (a type of {sa.cco_class_label})"
+            f"- {'/'.join(sa.roles)}: a {sa.sampled_label} (a type of {sa.cco_class_label})"
             for sa in sampled_axes
         )
         scenario_block = f"The scenario involves:\n{axis_lines}"
@@ -182,6 +182,7 @@ def emit(
                 "risk_id": profile.risk_id,
                 "risk_name": profile.risk_name,
                 "sampled_axes": [sa.model_dump() for sa in sampled],
+                "domain_context_axes": [a.model_dump() for a in profile.axes],
             })
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
