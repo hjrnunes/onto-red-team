@@ -1,0 +1,44 @@
+metadata:
+  name: Taxonomy Refiner Red Team Prompt Generation
+  description: >
+    Generates adversarial prompts from taxonomy-refiner emit output.
+    Expects pre-built generation_prompt column with chat messages.
+    All metadata columns (policy_concept, risk_id, sampled_axes, etc.)
+    pass through untouched.
+  version: 1.0.0
+  dataset_requirements:
+    required_columns:
+      - generation_prompt
+
+blocks:
+  - block_type: LLMChatBlock
+    block_config:
+      block_name: generate_adversarial_prompt
+      input_cols: generation_prompt
+      output_cols: raw_response
+      response_format:
+        type: json_schema
+        json_schema:
+          strict: false
+          name: prompt_response
+          schema:
+            type: object
+            properties:
+              prompt:
+                type: string
+                minLength: 100
+            required:
+              - prompt
+      async_mode: true
+  - block_type: LLMResponseExtractorBlock
+    block_config:
+      block_name: extract_response
+      input_cols: raw_response
+      extract_content: true
+      expand_lists: true
+  - block_type: JSONParserBlock
+    block_config:
+      block_name: parse_json_response
+      input_cols:
+        - extract_response_content
+      drop_input: true
