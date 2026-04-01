@@ -3,7 +3,7 @@ import json
 import yaml
 
 from refiner.models import AxisEnumeration, DomainContextProfile, DomainContextAxis, SampledAxis
-from refiner.emit import relevance_weights, sample_axes
+from refiner.emit import relevance_weights, sample_axes, build_prompt
 
 
 def _enum(relevance):
@@ -128,3 +128,78 @@ def test_sample_axes_reproducible_with_seed():
     random.seed(99)
     samples_b = sample_axes(profile, n=5)
     assert samples_a == samples_b
+
+
+def test_build_prompt_returns_messages():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            role="agent",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("Fraud", "About fraud", "Financial Fraud", axes)
+    assert isinstance(messages, list)
+    assert len(messages) == 2
+    assert messages[0]["role"] == "system"
+    assert messages[1]["role"] == "user"
+
+
+def test_build_prompt_system_message_content():
+    messages = build_prompt("X", "Y", "Z", [])
+    system = messages[0]["content"]
+    assert "red-team scenario writer" in system
+    assert "subtlety" in system.lower()
+
+
+def test_build_prompt_user_message_has_policy():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            role="agent",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("Fraud", "About fraud", "Financial Fraud", axes)
+    user = messages[1]["content"]
+    assert "Fraud" in user
+    assert "About fraud" in user
+    assert "Financial Fraud" in user
+
+
+def test_build_prompt_user_message_has_axes():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            role="agent",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+        SampledAxis(
+            cco_class_uri="http://example.org/Instrument",
+            cco_class_label="Instrument",
+            role="instrument",
+            sampled_uri="http://example.org/Bond",
+            sampled_label="Bond",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("X", "Y", "Z", axes)
+    user = messages[1]["content"]
+    assert "agent" in user
+    assert "Manager" in user
+    assert "Person" in user
+    assert "instrument" in user
+    assert "Bond" in user
