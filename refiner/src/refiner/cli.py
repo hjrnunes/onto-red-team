@@ -171,5 +171,87 @@ def emit(
     typer.echo(f"Dataset written to {out_path}")
 
 
+@app.command()
+def evaluate(
+    output_dir: Path = typer.Argument(..., help="Directory from a prior 'refiner run --output'"),
+    emit_path: Path = typer.Option(None, "--emit", help="Path to emit dataset JSONL"),
+    adversarial_path: Path = typer.Option(None, "--adversarial", help="Path to adversarial prompts JSONL"),
+    policies_path: Path = typer.Option(None, "--policies", help="Original policy JSON (for zero-match detection)"),
+    judge: bool = typer.Option(False, "--judge", help="Run judge-model evaluation"),
+    judge_model: str = typer.Option(None, "--judge-model", help="Judge model name"),
+    judge_base_url: str = typer.Option(None, "--judge-base-url", help="Judge model API base URL"),
+    judge_api_key: str = typer.Option(None, "--judge-api-key", help="Judge model API key"),
+    judge_sample: int = typer.Option(None, "--judge-sample", help="Score only N random prompts"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output evaluation YAML path"),
+):
+    """Evaluate pipeline outputs with metrics and optional judge scoring."""
+    if not output_dir.is_dir():
+        typer.echo(f"Error: {output_dir} is not a directory", err=True)
+        raise typer.Exit(1)
+
+    from refiner.evaluate import run_evaluation, format_summary
+    evaluation = run_evaluation(
+        output_dir, emit_path=emit_path, adversarial_path=adversarial_path,
+        policies_path=policies_path,
+    )
+
+    if judge and adversarial_path:
+        import json as json_mod
+        import random
+        from collections import defaultdict as dd
+        from refiner.judge import judge_prompt as jp, aggregate_judge_results
+        from refiner.llm import LLMConfig, create_client
+
+        j_base = judge_base_url or os.environ.get("REFINER_BASE_URL", "")
+        j_model = judge_model or os.environ.get("REFINER_MODEL", "")
+        j_key = judge_api_key or os.environ.get("REFINER_API_KEY", "none")
+        j_config = LLMConfig(base_url=j_base, model=j_model, api_key=j_key)
+        j_client = create_client(j_config)
+
+        adv_rows = [json_mod.loads(line) for line in adversarial_path.read_text().strip().split("\n") if line]
+        if judge_sample and judge_sample < len(adv_rows):
+            adv_rows = random.sample(adv_rows, judge_sample)
+
+        scores = []
+        scores_by_policy: dict[str, list] = dd(list)
+        for row in adv_rows:
+            s = jp(
+                j_client, j_config,
+                prompt_text=row.get("prompt", ""),
+                policy_concept=row.get("policy_concept", ""),
+                concept_definition=row.get("concept_definition", ""),
+                risk_name=row.get("risk_name", ""),
+                sampled_axes=row.get("sampled_axes", []),
+            )
+            score_dict = {
+                "subtlety": s.subtlety, "plausibility": s.plausibility,
+                "domain_grounding": s.domain_grounding, "policy_relevance": s.policy_relevance,
+            }
+            scores.append(score_dict)
+            scores_by_policy[row.get("policy_concept", "unknown")].append(score_dict)
+
+        evaluation["judge_evaluation"] = {
+            "model": j_model,
+            "prompts_scored": len(scores),
+            "aggregates": aggregate_judge_results(scores),
+            "by_policy_concept": {
+                pc: aggregate_judge_results(pc_scores)
+                for pc, pc_scores in sorted(scores_by_policy.items())
+            },
+        }
+
+    summary = format_summary(evaluation)
+    typer.echo(summary)
+
+    out_path = output
+    if out_path is None:
+        slug = evaluation.get("run", {}).get("policy_set", "eval").replace(".json", "")
+        out_path = output_dir / f"{slug}-evaluation.yaml"
+
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(yaml.dump(evaluation, default_flow_style=False, sort_keys=False))
+    typer.echo(f"Written to {out_path}")
+
+
 if __name__ == "__main__":
     app()

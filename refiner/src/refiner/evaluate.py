@@ -1,8 +1,12 @@
 """Evaluation metrics for the refiner pipeline."""
 
+import json
 import math
 import re
 from collections import defaultdict
+from pathlib import Path
+
+import yaml
 
 
 def aggregate_stage_quality(events: list[dict]) -> dict:
@@ -281,3 +285,125 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
         "red_flag_count": red_flag_count,
         "per_policy": [{"policy_concept": pc, "count": c} for pc, c in sorted(per_policy.items())],
     }
+
+
+def _discover_file(output_dir: Path, pattern: str) -> Path | None:
+    matches = list(output_dir.glob(pattern))
+    if len(matches) > 1:
+        raise SystemExit(f"Error: multiple {pattern} found in {output_dir}: {matches}")
+    return matches[0] if matches else None
+
+
+def run_evaluation(
+    output_dir: Path,
+    emit_path: Path | None = None,
+    adversarial_path: Path | None = None,
+    policies_path: Path | None = None,
+) -> dict:
+    report_path = _discover_file(output_dir, "*-report.yaml")
+    taxonomy_path = _discover_file(output_dir, "*-taxonomy.yaml")
+    dc_path = _discover_file(output_dir, "*-domain-context.yaml")
+
+    report_data = yaml.safe_load(report_path.read_text()) if report_path else {}
+    taxonomy_data = yaml.safe_load(taxonomy_path.read_text()) if taxonomy_path else {}
+    dc_data = yaml.safe_load(dc_path.read_text()) if dc_path else {}
+
+    result = {}
+
+    result["run"] = {
+        "model": report_data.get("model", "unknown"),
+        "policy_set": report_data.get("policy_set", "unknown"),
+        "timestamp": report_data.get("timestamp", "unknown"),
+        "stages_completed": report_data.get("stages_completed", []),
+    }
+
+    events = report_data.get("events", [])
+    if events:
+        result["stage_quality"] = aggregate_stage_quality(events)
+
+    all_policies = None
+    if policies_path and policies_path.exists():
+        raw_policies = json.loads(policies_path.read_text())
+        all_policies = {p["policy_concept"]: p["concept_definition"] for p in raw_policies}
+
+    profiles = dc_data.get("profiles", [])
+    emit_rows = None
+    if emit_path and emit_path.exists():
+        emit_rows = [json.loads(line) for line in emit_path.read_text().strip().split("\n") if line]
+
+    coverage = {}
+    if profiles:
+        coverage["policy"] = compute_policy_coverage(profiles, emit_data=emit_rows, all_policies=all_policies)
+        coverage["ontological"] = compute_ontological_coverage(profiles)
+    if taxonomy_data:
+        if profiles:
+            risk_ids = list({p["risk_id"] for p in profiles})
+            coverage["risk_framework"] = compute_risk_framework_coverage(risk_ids)
+
+        filtered_count = 0
+        sq = result.get("stage_quality", {}).get("structure", {})
+        filtered_count = sq.get("cross_mappings_filtered", 0)
+        coverage["cross_mapping"] = compute_cross_mapping_coverage(taxonomy_data, filtered_count)
+    if coverage:
+        result["coverage"] = coverage
+
+    if emit_rows and profiles:
+        result["generation_metrics"] = compute_generation_metrics(emit_rows, profiles)
+
+    if adversarial_path and adversarial_path.exists():
+        adv_rows = [json.loads(line) for line in adversarial_path.read_text().strip().split("\n") if line]
+        result["prompt_metrics"] = compute_adversarial_metrics(adv_rows)
+
+    return result
+
+
+def format_summary(evaluation: dict) -> str:
+    run = evaluation.get("run", {})
+    lines = [f"Evaluation: {run.get('policy_set', '?')} / {run.get('model', '?')} / {run.get('timestamp', '?')}"]
+
+    sq = evaluation.get("stage_quality", {})
+    if sq:
+        mr = sq.get("map_risks", {})
+        ctx = sq.get("contextualize", {})
+        lines.append(
+            f"  Stage quality: {mr.get('invalid_risk_indices', 0)} invalid indices, "
+            f"{len(mr.get('weak_matches', []))} weak match(es), "
+            f"{ctx.get('sibling_fallbacks', 0)} sibling fallbacks"
+        )
+
+    cov = evaluation.get("coverage", {})
+    if cov:
+        policy = cov.get("policy", [])
+        onto = cov.get("ontological", {})
+        total_risks = sum(p.get("risks_matched", 0) for p in policy)
+        lines.append(
+            f"  Coverage: {total_risks} risks, "
+            f"{onto.get('unique_enumeration_uris', 0)} unique ontology classes"
+        )
+
+    gen = evaluation.get("generation_metrics", {})
+    if gen:
+        lines.append(
+            f"  Generation: axis diversity {gen.get('axis_diversity', {}).get('overall_mean', 0)}, "
+            f"dedup saturation {len(gen.get('dedup_saturation', {}))} risks tracked"
+        )
+
+    pm = evaluation.get("prompt_metrics", {})
+    if pm:
+        lines.append(
+            f"  Prompts: TTR {pm.get('lexical_diversity', 0)}, "
+            f"domain hit rate {pm.get('domain_term_hit_rate', 0)}, "
+            f"{pm.get('red_flag_count', 0)} red flags"
+        )
+
+    je = evaluation.get("judge_evaluation", {})
+    if je:
+        agg = je.get("aggregates", {})
+        lines.append(
+            f"  Judge: subtlety {agg.get('subtlety', {}).get('mean', '?')}, "
+            f"plausibility {agg.get('plausibility', {}).get('mean', '?')}, "
+            f"grounding {agg.get('domain_grounding', {}).get('mean', '?')}, "
+            f"relevance {agg.get('policy_relevance', {}).get('mean', '?')}"
+        )
+
+    return "\n".join(lines)

@@ -217,3 +217,151 @@ def test_compute_adversarial_metrics_empty():
     result = compute_adversarial_metrics([])
     assert result["lexical_diversity"] == 0
     assert result["red_flag_count"] == 0
+
+
+import yaml
+import json
+from refiner.evaluate import run_evaluation, format_summary, _discover_file
+
+
+def test_discover_file_single_match(tmp_path):
+    (tmp_path / "test-report.yaml").write_text("model: m")
+    result = _discover_file(tmp_path, "*-report.yaml")
+    assert result is not None
+    assert result.name == "test-report.yaml"
+
+
+def test_discover_file_no_match(tmp_path):
+    result = _discover_file(tmp_path, "*-report.yaml")
+    assert result is None
+
+
+def test_discover_file_multiple_raises(tmp_path):
+    (tmp_path / "a-report.yaml").write_text("model: a")
+    (tmp_path / "b-report.yaml").write_text("model: b")
+    import pytest
+    with pytest.raises(SystemExit):
+        _discover_file(tmp_path, "*-report.yaml")
+
+
+def _write_minimal_pipeline_outputs(tmp_path):
+    report = {
+        "model": "test-model", "policy_set": "test.json",
+        "timestamp": "2026-04-01T00:00:00Z",
+        "stages_completed": ["classify", "identify_domains", "map_risks", "anchor", "contextualize", "structure"],
+        "events": [
+            {"stage": "classify", "event": "type_distribution", "distribution": {"A": 2}},
+            {"stage": "map_risks", "event": "match_count", "policy_concept": "Fraud", "count": 2},
+        ],
+    }
+    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+    taxonomy = {
+        "taxonomies": [{"id": "t1", "name": "T1", "type": "RiskTaxonomy"}],
+        "groups": [],
+        "entries": [{"id": "e1", "name": "Risk One", "exact_mappings": ["ibm-risk-atlas-r2"]}],
+    }
+    (tmp_path / "test-taxonomy.yaml").write_text(yaml.dump(taxonomy))
+    dc = {"profiles": [
+        {"risk_id": "ibm-risk-atlas-r1", "risk_name": "Risk One", "policy_concept": "Fraud",
+         "axes": [{"cco_class_uri": "http://ex/P", "cco_class_label": "P", "roles": ["agent"],
+                   "enumerations": [{"class_uri": "http://ex/M", "class_label": "M",
+                                    "source_ontology": "FIBO", "relevance": "high"}]}]},
+    ]}
+    (tmp_path / "test-domain-context.yaml").write_text(yaml.dump(dc))
+
+
+def test_run_evaluation_minimal(tmp_path):
+    _write_minimal_pipeline_outputs(tmp_path)
+    result = run_evaluation(tmp_path)
+    assert "run" in result
+    assert "stage_quality" in result
+    assert "coverage" in result
+    assert result["run"]["model"] == "test-model"
+    assert "policy" in result["coverage"]
+    assert "ontological" in result["coverage"]
+    assert "cross_mapping" in result["coverage"]
+    assert "risk_framework" in result["coverage"]
+
+
+def test_run_evaluation_with_emit(tmp_path):
+    _write_minimal_pipeline_outputs(tmp_path)
+    emit_path = tmp_path / "dataset.jsonl"
+    row = {
+        "risk_id": "ibm-risk-atlas-r1", "policy_concept": "Fraud",
+        "sampled_axes": [
+            {"cco_class_uri": "http://ex/P", "cco_class_label": "P",
+             "roles": ["agent"], "sampled_uri": "http://ex/M",
+             "sampled_label": "M", "source_ontology": "FIBO", "relevance": "high"},
+        ],
+    }
+    emit_path.write_text(json.dumps(row) + "\n")
+    result = run_evaluation(tmp_path, emit_path=emit_path)
+    assert "generation_metrics" in result
+
+
+def test_run_evaluation_with_adversarial(tmp_path):
+    _write_minimal_pipeline_outputs(tmp_path)
+    adv_path = tmp_path / "adversarial.jsonl"
+    row = {"prompt": "Can you show me the salary data?", "policy_concept": "Fraud", "sampled_axes": []}
+    adv_path.write_text(json.dumps(row) + "\n")
+    result = run_evaluation(tmp_path, adversarial_path=adv_path)
+    assert "prompt_metrics" in result
+
+
+def test_run_evaluation_with_policies_zero_match(tmp_path):
+    _write_minimal_pipeline_outputs(tmp_path)
+    policies = tmp_path / "policies.json"
+    policies.write_text(json.dumps([
+        {"policy_concept": "Fraud", "concept_definition": "About fraud"},
+        {"policy_concept": "Violence", "concept_definition": "About violence"},
+    ]))
+    result = run_evaluation(tmp_path, policies_path=policies)
+    policy_cov = result["coverage"]["policy"]
+    concepts = {p["policy_concept"] for p in policy_cov}
+    assert "Violence" in concepts
+
+
+def test_format_summary_minimal():
+    evaluation = {"run": {"policy_set": "test.json", "model": "m", "timestamp": "t"}}
+    result = format_summary(evaluation)
+    assert "test.json" in result
+    assert "m" in result
+
+
+def test_format_summary_all_sections():
+    evaluation = {
+        "run": {"policy_set": "test.json", "model": "m", "timestamp": "t"},
+        "stage_quality": {"map_risks": {"invalid_risk_indices": 0, "weak_matches": []},
+                          "contextualize": {"sibling_fallbacks": 2}},
+        "coverage": {"policy": [{"risks_matched": 3}], "ontological": {"unique_enumeration_uris": 50}},
+        "generation_metrics": {"axis_diversity": {"overall_mean": 0.75}, "dedup_saturation": {"r1": {}}},
+        "prompt_metrics": {"lexical_diversity": 0.8, "domain_term_hit_rate": 0.5, "red_flag_count": 1},
+        "judge_evaluation": {"aggregates": {"subtlety": {"mean": 3.5}, "plausibility": {"mean": 4.0},
+                                            "domain_grounding": {"mean": 3.0}, "policy_relevance": {"mean": 4.5}}},
+    }
+    result = format_summary(evaluation)
+    assert "Stage quality" in result
+    assert "Coverage" in result
+    assert "Generation" in result
+    assert "Prompts" in result
+    assert "Judge" in result
+
+
+from typer.testing import CliRunner
+from refiner.cli import app
+
+_cli_runner = CliRunner()
+
+
+def test_evaluate_cli_minimal(tmp_path):
+    _write_minimal_pipeline_outputs(tmp_path)
+    result = _cli_runner.invoke(app, ["evaluate", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+    assert "Evaluation:" in result.output
+    eval_files = list(tmp_path.glob("*-evaluation.yaml"))
+    assert len(eval_files) == 1
+
+
+def test_evaluate_cli_nonexistent_dir():
+    result = _cli_runner.invoke(app, ["evaluate", "/nonexistent/path"])
+    assert result.exit_code != 0
