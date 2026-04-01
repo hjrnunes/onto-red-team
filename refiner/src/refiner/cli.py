@@ -5,6 +5,7 @@ from pathlib import Path
 import typer
 import yaml
 
+from refiner import debug
 from refiner.llm import LLMConfig, create_client
 from refiner.models import Policy
 from refiner.pipeline import run_pipeline, STAGES
@@ -50,6 +51,7 @@ def run(
     policy_json: Path = typer.Argument(..., help="Path to policy JSON file"),
     until: str = typer.Option(None, "--until", help=f"Run up to this stage: {', '.join(STAGES)}"),
     output_dir: Path = typer.Option(None, "--output", "-o", help="Output directory (default: current dir)"),
+    debug_dir: Path = typer.Option(None, "--debug", help="Directory for per-call debug logs (prompts + responses)"),
 ):
     """Run the refiner pipeline on a policy JSON file."""
     if not policy_json.exists():
@@ -74,10 +76,11 @@ def run(
 
     config = LLMConfig(base_url=base_url, model=model)
     client = create_client(config)
+    debug.configure(debug_dir)
 
     # Create handlers — only load what's needed for the requested stages
-    needs_risk = until not in ("classify",)
-    needs_onto = until not in ("classify", "map_risks")
+    needs_risk = until not in ("classify", "identify_domains")
+    needs_onto = until not in ("classify", "identify_domains", "map_risks")
     risk_handlers = _create_risk_handlers() if needs_risk else {}
     onto_handlers = _create_onto_handlers() if needs_onto else {}
 
@@ -91,10 +94,11 @@ def run(
     client_slug = policy_json.stem
 
     if state.domain_context is not None and state.classifications is not None and state.risk_mappings is not None:
-        # Collect valid nexus risk IDs for cross-mapping validation
-        valid_ids = set(state.risk_details.keys()) if state.risk_details else None
+        # Validate cross-mapping targets against all risk IDs shown to the model
+        valid_ids = state.seen_risk_ids
         taxonomy, profiles = structure(
             client_slug, state.classifications, state.risk_mappings, state.domain_context,
+            related_risks=state.related_risks,
             valid_risk_ids=valid_ids,
         )
         tax_path = out / f"{client_slug}-taxonomy.yaml"
@@ -112,6 +116,8 @@ def run(
         }
         if state.classifications:
             state_data["classifications"] = [c.model_dump() for c in state.classifications]
+        if state.selected_domains:
+            state_data["selected_domains"] = state.selected_domains
         if state.risk_mappings:
             state_data["risk_mappings"] = [m.model_dump() for m in state.risk_mappings]
         if state.risk_details:

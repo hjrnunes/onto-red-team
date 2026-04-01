@@ -29,6 +29,7 @@ def structure(
     classifications: list[PolicyClassification],
     risk_mappings: list[PolicyRiskMapping],
     domain_context: list[DomainContextProfile],
+    related_risks: dict[str, list[dict]] | None = None,
     valid_risk_ids: set[str] | None = None,
 ) -> tuple[dict, dict]:
     taxonomy_id = f"client-{client_slug}"
@@ -47,32 +48,37 @@ def structure(
             "isDefinedByTaxonomy": taxonomy_id,
         })
 
-    # Build entries from risk mappings
-    entries = []
+    # Build entries from risk mappings, deduplicating by entry ID
+    entries_by_id: dict[str, dict] = {}
     for mapping in risk_mappings:
         ptype = mapping.policy_type
         group_slug = POLICY_TYPE_GROUPS.get(ptype, ("unknown", "Unknown"))[0]
         group_id = f"{taxonomy_id}-{group_slug}"
 
         for rm in mapping.matched_risks:
-            entry = {
-                "id": f"{taxonomy_id}-{slugify(rm.risk_name)}",
-                "name": rm.risk_name,
-                "type": "Risk",
-                "isDefinedByTaxonomy": taxonomy_id,
-                "isPartOf": group_id,
-                "tag": slugify(rm.risk_name),
-            }
-            # Add cross-mappings for this risk's source
-            for cm in mapping.cross_mappings:
-                if cm.source_risk_id == rm.risk_id:
-                    # Validate target exists if valid_risk_ids provided
-                    if valid_risk_ids is not None and cm.target_risk_id not in valid_risk_ids:
-                        logger.warning("Skipping unknown cross-mapping target: %s", cm.target_risk_id)
+            entry_id = f"{taxonomy_id}-{slugify(rm.risk_name)}"
+            if entry_id not in entries_by_id:
+                entries_by_id[entry_id] = {
+                    "id": entry_id,
+                    "name": rm.risk_name,
+                    "type": "Risk",
+                    "isDefinedByTaxonomy": taxonomy_id,
+                    "isPartOf": group_id,
+                    "tag": slugify(rm.risk_name),
+                }
+            entry = entries_by_id[entry_id]
+            # Add cross-mappings from knowledge graph ground truth
+            if related_risks:
+                for rel in related_risks.get(rm.risk_id, []):
+                    target_id = rel["id"]
+                    if valid_risk_ids is not None and target_id not in valid_risk_ids:
+                        logger.warning("Skipping unknown cross-mapping target: %s", target_id)
                         continue
-                    key = f"{cm.mapping_type}_mappings"
-                    entry.setdefault(key, []).append(cm.target_risk_id)
-            entries.append(entry)
+                    key = f"{rel['mapping_type']}_mappings"
+                    existing = entry.get(key, [])
+                    if target_id not in existing:
+                        entry.setdefault(key, []).append(target_id)
+    entries = list(entries_by_id.values())
 
     taxonomy = {
         "taxonomies": [

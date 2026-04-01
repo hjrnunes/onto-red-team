@@ -21,13 +21,15 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             policy_type="A", justification="j",
         ),
     ]
+    domains_result = ["CCO", "Commons", "FIBO"]
     map_result = (
         [PolicyRiskMapping(
             policy_concept="Fraud", policy_type="A",
             matched_risks=[RiskMatch(risk_id="r1", risk_name="R1", relevance="primary", justification="j")],
-            cross_mappings=[],
         )],
         {"r1": {"id": "r1", "name": "R1", "description": "d", "concern": "c"}},
+        {"r1"},
+        {"r1": [{"id": "r2", "mapping_type": "close"}]},
     )
     anchor_result = [
         RiskVariationAxes(
@@ -43,6 +45,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
     ]
 
     with patch("refiner.pipeline.classify", return_value=classify_result) as m_classify, \
+         patch("refiner.pipeline.identify_domains", return_value=domains_result) as m_domains, \
          patch("refiner.pipeline.map_risks", return_value=map_result) as m_map, \
          patch("refiner.pipeline.anchor", return_value=anchor_result) as m_anchor, \
          patch("refiner.pipeline.contextualize", return_value=context_result) as m_ctx:
@@ -50,16 +53,20 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         state = run_pipeline(policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers)
 
         assert state.classifications == classify_result
+        assert state.selected_domains == domains_result
         assert state.risk_mappings == map_result[0]
         assert state.risk_details == map_result[1]
+        assert state.related_risks == map_result[3]
         assert state.variation_axes == anchor_result
         assert state.domain_context == context_result
 
         # Verify stage calls received correct inputs
         m_classify.assert_called_once_with(policies, mock_client, mock_config)
+        m_domains.assert_called_once_with(classify_result, mock_client, mock_config)
         m_map.assert_called_once_with(classify_result, mock_client, mock_config, mock_risk_handlers)
         m_anchor.assert_called_once_with(
-            map_result[0], map_result[1], mock_client, mock_config, mock_onto_handlers
+            map_result[0], map_result[1], mock_client, mock_config, mock_onto_handlers,
+            selected_domains=domains_result,
         )
         m_ctx.assert_called_once_with(anchor_result, mock_client, mock_config, mock_onto_handlers)
 
@@ -74,7 +81,7 @@ def test_pipeline_until_classify(mock_client, mock_config, mock_risk_handlers, m
     ]
 
     with patch("refiner.pipeline.classify", return_value=classify_result), \
-         patch("refiner.pipeline.map_risks") as m_map:
+         patch("refiner.pipeline.identify_domains") as m_domains:
 
         state = run_pipeline(
             policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers,
@@ -82,5 +89,29 @@ def test_pipeline_until_classify(mock_client, mock_config, mock_risk_handlers, m
         )
 
         assert state.classifications is not None
+        assert state.selected_domains is None
+        m_domains.assert_not_called()
+
+
+def test_pipeline_until_identify_domains(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
+    policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
+    classify_result = [
+        PolicyClassification(
+            policy_concept="Fraud", concept_definition="About fraud",
+            policy_type="A", justification="j",
+        ),
+    ]
+    domains_result = ["CCO", "Commons", "FIBO"]
+
+    with patch("refiner.pipeline.classify", return_value=classify_result), \
+         patch("refiner.pipeline.identify_domains", return_value=domains_result), \
+         patch("refiner.pipeline.map_risks") as m_map:
+
+        state = run_pipeline(
+            policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers,
+            until="identify_domains",
+        )
+
+        assert state.selected_domains == domains_result
         assert state.risk_mappings is None
         m_map.assert_not_called()

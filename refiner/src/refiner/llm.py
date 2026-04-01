@@ -11,7 +11,7 @@ class LLMConfig:
     api_key: str = "none"
     temperature: float = 0.3
     max_retries: int = 3
-    max_tokens: int = 4096
+    max_tokens: int = 2048
 
 
 def create_client(config: LLMConfig) -> instructor.Instructor:

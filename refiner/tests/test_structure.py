@@ -4,7 +4,6 @@ from refiner.models import (
     PolicyClassification,
     PolicyRiskMapping,
     RiskMatch,
-    CrossMapping,
     DomainContextProfile,
     DomainContextAxis,
     AxisEnumeration,
@@ -36,22 +35,19 @@ def _make_state_data():
             matched_risks=[
                 RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j"),
             ],
-            cross_mappings=[
-                CrossMapping(
-                    source_risk_id="atlas-fraud", target_risk_id="owasp-fraud",
-                    target_risk_name="OWASP Fraud", target_taxonomy="owasp",
-                    mapping_type="close",
-                ),
-            ],
         ),
         PolicyRiskMapping(
             policy_concept="Executive Compensation", policy_type="B",
             matched_risks=[
                 RiskMatch(risk_id="atlas-data-disclosure", risk_name="Data Disclosure", relevance="primary", justification="j"),
             ],
-            cross_mappings=[],
         ),
     ]
+    related_risks = {
+        "atlas-fraud": [
+            {"id": "owasp-fraud", "mapping_type": "close"},
+        ],
+    }
     domain_context = [
         DomainContextProfile(
             risk_id="atlas-fraud", risk_name="Fraud", policy_concept="Fraud",
@@ -65,19 +61,21 @@ def _make_state_data():
             ],
         ),
     ]
-    return classifications, risk_mappings, domain_context
+    return classifications, risk_mappings, related_risks, domain_context
 
 
 def test_structure_taxonomy_has_correct_id():
-    classifications, risk_mappings, domain_context = _make_state_data()
-    taxonomy, profiles = structure("swb", classifications, risk_mappings, domain_context)
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, profiles = structure("swb", classifications, risk_mappings, domain_context,
+                                   related_risks=related_risks)
     assert taxonomy["taxonomies"][0]["id"] == "client-swb"
     assert taxonomy["taxonomies"][0]["type"] == "RiskTaxonomy"
 
 
 def test_structure_creates_groups_per_policy_type():
-    classifications, risk_mappings, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context)
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks)
     group_ids = {g["id"] for g in taxonomy["groups"]}
     assert "client-swb-safety" in group_ids  # type A
     assert "client-swb-confidentiality" in group_ids  # type B
@@ -86,8 +84,9 @@ def test_structure_creates_groups_per_policy_type():
 
 
 def test_structure_entries_have_correct_isPartOf():
-    classifications, risk_mappings, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context)
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks)
     entries = taxonomy["entries"]
     fraud_entry = next(e for e in entries if "fraud" in e["id"])
     assert fraud_entry["isPartOf"] == "client-swb-safety"
@@ -96,41 +95,77 @@ def test_structure_entries_have_correct_isPartOf():
 
 
 def test_structure_entries_have_cross_mappings():
-    classifications, risk_mappings, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context)
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks)
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     assert "owasp-fraud" in fraud_entry.get("close_mappings", [])
 
 
 def test_structure_filters_invalid_cross_mapping_targets():
-    classifications, risk_mappings, domain_context = _make_state_data()
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
     # Only "owasp-fraud" is in the valid set; any other target would be filtered
     taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks,
                             valid_risk_ids={"owasp-fraud"})
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     assert "owasp-fraud" in fraud_entry.get("close_mappings", [])
 
 
 def test_structure_warns_on_unknown_cross_mapping_targets():
-    classifications, risk_mappings, domain_context = _make_state_data()
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
     # Empty valid set means all cross-mappings are filtered
     taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks,
                             valid_risk_ids=set())
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     assert "close_mappings" not in fraud_entry
 
 
-def test_structure_no_validation_when_valid_ids_none():
-    """When valid_risk_ids is None, all cross-mappings pass through (backwards compat)."""
-    classifications, risk_mappings, domain_context = _make_state_data()
+def test_structure_no_cross_mappings_when_related_risks_none():
+    """When related_risks is None, no cross-mappings are added."""
+    classifications, risk_mappings, _, domain_context = _make_state_data()
     taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
-                            valid_risk_ids=None)
+                            related_risks=None)
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
-    assert "owasp-fraud" in fraud_entry.get("close_mappings", [])
+    assert "close_mappings" not in fraud_entry
 
 
 def test_structure_profiles_output():
-    classifications, risk_mappings, domain_context = _make_state_data()
-    _, profiles = structure("swb", classifications, risk_mappings, domain_context)
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    _, profiles = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks)
     assert len(profiles["profiles"]) == 1
     assert profiles["profiles"][0]["risk_id"] == "atlas-fraud"
+
+
+def test_structure_deduplicates_entries_by_id():
+    """Same risk matched from two policies should produce one entry with merged mappings."""
+    classifications = [
+        PolicyClassification(policy_concept="Fraud", concept_definition="d", policy_type="A", justification="j"),
+        PolicyClassification(policy_concept="AML", concept_definition="d", policy_type="A", justification="j"),
+    ]
+    risk_mappings = [
+        PolicyRiskMapping(
+            policy_concept="Fraud", policy_type="A",
+            matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
+        ),
+        PolicyRiskMapping(
+            policy_concept="AML", policy_type="A",
+            matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="supporting", justification="j")],
+        ),
+    ]
+    related_risks = {
+        "atlas-fraud": [
+            {"id": "owasp-fraud", "mapping_type": "close"},
+            {"id": "nist-fraud", "mapping_type": "related"},
+        ],
+    }
+    domain_context = []
+    taxonomy, _ = structure("test", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks)
+    fraud_entries = [e for e in taxonomy["entries"] if "fraud" in e["id"]]
+    assert len(fraud_entries) == 1
+    entry = fraud_entries[0]
+    assert "owasp-fraud" in entry.get("close_mappings", [])
+    assert "nist-fraud" in entry.get("related_mappings", [])
