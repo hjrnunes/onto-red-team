@@ -82,6 +82,8 @@ refiner/                   # LLM pipeline: policy → taxonomy + domain context
       structure.py         # Stage 6: LinkML-conformant YAML assembly (deterministic)
   flows/
     flow.yaml              # Companion sdg_hub flow for adversarial prompt generation
+  scripts/
+    generate.py            # Run sdg_hub generation from emit dataset (requires sdg_hub)
   tests/                   # 82 tests (pytest)
 
 policy_examples/
@@ -263,10 +265,9 @@ cd refiner
 uv run refiner emit /tmp/refiner-out --policies ../policy_examples/swb.json \
   --samples-per-risk 10 --seed 42 --output /tmp/dataset.jsonl
 
-# Then feed to sdg_hub:
-# flow = Flow.from_yaml('refiner/flows/flow.yaml')
-# dataset = pd.read_json('/tmp/dataset.jsonl', lines=True)
-# result = flow.generate(dataset)
+# Generate adversarial prompts via sdg_hub (requires sdg_hub installed)
+python scripts/generate.py /tmp/dataset.jsonl \
+  --model hosted_vllm/my-model --api-base http://localhost:8080/v1
 ```
 
 **Spec:** `docs/superpowers/specs/2026-04-01-emit-dataset-design.md`
