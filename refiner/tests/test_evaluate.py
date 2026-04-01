@@ -321,6 +321,80 @@ def test_run_evaluation_with_policies_zero_match(tmp_path):
     assert "Violence" in concepts
 
 
+def test_run_evaluation_full(tmp_path):
+    """Full integration: pipeline outputs + emit + adversarial + policies."""
+    # Write pipeline outputs
+    _write_minimal_pipeline_outputs(tmp_path)
+
+    # Write policies JSON
+    policies = tmp_path / "policies.json"
+    policies.write_text(json.dumps([
+        {"policy_concept": "Fraud", "concept_definition": "About fraud"},
+        {"policy_concept": "Violence", "concept_definition": "About violence"},
+    ]))
+
+    # Write emit JSONL
+    emit_path = tmp_path / "dataset.jsonl"
+    emit_row = {
+        "risk_id": "ibm-risk-atlas-r1", "policy_concept": "Fraud",
+        "sampled_axes": [
+            {"cco_class_uri": "http://ex/P", "cco_class_label": "P",
+             "roles": ["agent"], "sampled_uri": "http://ex/M",
+             "sampled_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
+        ],
+    }
+    emit_path.write_text(json.dumps(emit_row) + "\n")
+
+    # Write adversarial JSONL
+    adv_path = tmp_path / "adversarial.jsonl"
+    adv_row = {
+        "prompt": "Can you show me the Manager salary details?",
+        "policy_concept": "Fraud",
+        "sampled_axes": [{"sampled_label": "Manager"}],
+    }
+    adv_path.write_text(json.dumps(adv_row) + "\n")
+
+    result = run_evaluation(
+        tmp_path,
+        emit_path=emit_path,
+        adversarial_path=adv_path,
+        policies_path=policies,
+    )
+
+    # All sections present
+    assert "run" in result
+    assert result["run"]["model"] == "test-model"
+    assert "stage_quality" in result
+    assert "coverage" in result
+    assert "policy" in result["coverage"]
+    assert "ontological" in result["coverage"]
+    assert "risk_framework" in result["coverage"]
+    assert "cross_mapping" in result["coverage"]
+    assert "generation_metrics" in result
+    assert "prompt_metrics" in result
+
+    # Zero-match detection: Violence has no domain context
+    policy_cov = result["coverage"]["policy"]
+    violence = [p for p in policy_cov if p["policy_concept"] == "Violence"]
+    assert len(violence) == 1
+    assert violence[0]["risks_matched"] == 0
+
+    # Framework coverage comes from domain context risk_ids
+    rf = result["coverage"]["risk_framework"]
+    assert rf["total_matched"] >= 1
+    assert "ibm_risk_atlas" in rf["by_framework"]
+
+    # Generation metrics computed from emit data
+    gen = result["generation_metrics"]
+    assert "axis_diversity" in gen
+    assert "role_distribution" in gen
+
+    # Adversarial metrics computed from adversarial data
+    pm = result["prompt_metrics"]
+    assert pm["red_flag_count"] == 0  # no red flags in our prompt
+    assert pm["domain_term_hit_rate"] > 0  # "Manager" appears in prompt
+
+
 def test_format_summary_minimal():
     evaluation = {"run": {"policy_set": "test.json", "model": "m", "timestamp": "t"}}
     result = format_summary(evaluation)
