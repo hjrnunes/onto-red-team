@@ -3,7 +3,7 @@ import json
 import yaml
 
 from refiner.models import AxisEnumeration, DomainContextProfile, DomainContextAxis, SampledAxis
-from refiner.emit import relevance_weights, sample_axes, build_prompt
+from refiner.emit import relevance_weights, sample_axes, build_prompt, load_domain_context, load_policies
 
 
 def _enum(relevance):
@@ -203,3 +203,42 @@ def test_build_prompt_user_message_has_axes():
     assert "Person" in user
     assert "instrument" in user
     assert "Bond" in user
+
+
+def test_load_domain_context(tmp_path):
+    profiles_data = {
+        "profiles": [
+            {
+                "risk_id": "r1",
+                "risk_name": "Risk One",
+                "policy_concept": "Fraud",
+                "axes": [
+                    {
+                        "cco_class_uri": "http://example.org/Person",
+                        "cco_class_label": "Person",
+                        "role": "agent",
+                        "enumerations": [
+                            {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    p = tmp_path / "test-domain-context.yaml"
+    p.write_text(yaml.dump(profiles_data))
+    result = load_domain_context(p)
+    assert len(result) == 1
+    assert result[0].risk_id == "r1"
+    assert result[0].axes[0].enumerations[0].class_label == "Manager"
+
+
+def test_load_policies(tmp_path):
+    policies = [
+        {"policy_concept": "Fraud", "concept_definition": "About fraud"},
+        {"policy_concept": "Violence", "concept_definition": "About violence"},
+    ]
+    p = tmp_path / "policies.json"
+    p.write_text(json.dumps(policies))
+    result = load_policies(p)
+    assert result == {"Fraud": "About fraud", "Violence": "About violence"}

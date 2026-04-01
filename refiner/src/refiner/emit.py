@@ -117,3 +117,13 @@ Respond with JSON: {{"prompt": "..."}}"""
         {"role": "system", "content": SYSTEM_MESSAGE},
         {"role": "user", "content": user_content},
     ]
+
+
+def load_domain_context(path: Path) -> list[DomainContextProfile]:
+    raw = yaml.safe_load(path.read_text())
+    return [DomainContextProfile(**p) for p in raw["profiles"]]
+
+
+def load_policies(path: Path) -> dict[str, str]:
+    raw = json.loads(path.read_text())
+    return {p["policy_concept"]: p["concept_definition"] for p in raw}
