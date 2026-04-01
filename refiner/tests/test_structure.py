@@ -7,6 +7,7 @@ from refiner.models import (
     DomainContextProfile,
     DomainContextAxis,
     AxisEnumeration,
+    RunReport,
 )
 from refiner.stages.structure import structure, slugify
 
@@ -55,7 +56,7 @@ def _make_state_data():
             risk_id="atlas-fraud", risk_name="Fraud", policy_concept="Fraud",
             axes=[
                 DomainContextAxis(
-                    cco_class_uri="http://example.org/Person", cco_class_label="Person", role="agent",
+                    cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
                     enumerations=[
                         AxisEnumeration(class_uri="http://example.org/Employee", class_label="Employee", source_ontology="CCO", relevance="high"),
                     ],
@@ -171,3 +172,23 @@ def test_structure_deduplicates_entries_by_id():
     entry = fraud_entries[0]
     assert "owasp-fraud" in entry.get("close_mappings", [])
     assert "nist-fraud" in entry.get("related_mappings", [])
+
+
+def test_structure_emits_cross_mapping_filtered():
+    """When cross-mapping target is not in valid_risk_ids, emit cross_mapping_filtered."""
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    # Empty valid set — all cross-mappings should be filtered
+    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks, valid_risk_ids=set(), report=report)
+    filtered = [e for e in report.events if e["event"] == "cross_mapping_filtered"]
+    assert len(filtered) >= 1
+    assert filtered[0]["target_id"] == "owasp-fraud"
+
+
+def test_structure_no_report_works():
+    """structure works without report param (backward compat)."""
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, profiles = structure("swb", classifications, risk_mappings, domain_context,
+                                    related_risks=related_risks)
+    assert len(taxonomy["entries"]) > 0

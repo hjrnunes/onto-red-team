@@ -5,6 +5,7 @@ from refiner.models import (
     PolicyClassification,
     PolicyRiskMapping,
     DomainContextProfile,
+    RunReport,
 )
 
 logger = logging.getLogger(__name__)
@@ -32,6 +33,7 @@ def structure(
     domain_context: list[DomainContextProfile],
     related_risks: dict[str, list[dict]] | None = None,
     valid_risk_ids: set[str] | None = None,
+    report: RunReport | None = None,
 ) -> tuple[dict, dict]:
     taxonomy_id = f"client-{client_slug}"
 
@@ -74,6 +76,11 @@ def structure(
                     target_id = rel["id"]
                     if valid_risk_ids is not None and target_id not in valid_risk_ids:
                         logger.warning("Skipping unknown cross-mapping target: %s", target_id)
+                        if report:
+                            report.events.append({
+                                "stage": "structure", "event": "cross_mapping_filtered",
+                                "target_id": target_id,
+                            })
                         continue
                     key = f"{rel['mapping_type']}_mappings"
                     existing = entry.get(key, [])

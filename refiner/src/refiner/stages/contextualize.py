@@ -9,6 +9,7 @@ from refiner.models import (
     DomainContextProfile,
     DomainContextAxis,
     AxisEnumeration,
+    RunReport,
 )
 from refiner import debug
 from refiner.stages.identify_domains import derive_source_ontology
@@ -48,14 +49,27 @@ def contextualize(
     client: instructor.Instructor,
     config: LLMConfig,
     onto_handlers: dict,
+    report: RunReport | None = None,
 ) -> list[DomainContextProfile]:
     if not variation_axes:
         return []
 
     results: list[DomainContextProfile] = []
+    context_cache: dict[str, list[DomainContextAxis]] = {}  # risk_id -> cached axes
 
     for rva in variation_axes:
+        if rva.risk_id in context_cache:
+            logger.debug("Cache hit for risk_id=%s, reusing context", rva.risk_id)
+            results.append(DomainContextProfile(
+                risk_id=rva.risk_id,
+                risk_name=rva.risk_name,
+                policy_concept=rva.policy_concept,
+                axes=context_cache[rva.risk_id],
+            ))
+            continue
+
         if not rva.axes:
+            context_cache[rva.risk_id] = []
             results.append(DomainContextProfile(
                 risk_id=rva.risk_id,
                 risk_name=rva.risk_name,
@@ -78,12 +92,17 @@ def contextualize(
                 siblings = onto_handlers["get_siblings"](axis.cco_class_uri)
                 candidates = [s for s in siblings if s.get("uri") != axis.cco_class_uri][:10]
                 source = "Siblings"
+                if report:
+                    report.events.append({
+                        "stage": "contextualize", "event": "sibling_fallback",
+                        "axis_uri": axis.cco_class_uri, "sibling_count": len(candidates),
+                    })
             candidate_lines = []
             for c in candidates:
                 candidate_lines.append(f"  - {c.get('uri', '')}: {c.get('label', '')}")
             axis_context.append(
                 f"Axis: {axis.cco_class_label} ({axis.cco_class_uri})\n"
-                f"Role: {axis.role}\n"
+                f"Roles: {', '.join(axis.roles)}\n"
                 f"{source}:\n" + ("\n".join(candidate_lines) if candidate_lines else "  (none)")
             )
 
@@ -124,6 +143,11 @@ def contextualize(
             valid_enums = []
             for enum in resp_axis.enumerations:
                 if enum.class_uri == input_axis.cco_class_uri:
+                    if report:
+                        report.events.append({
+                            "stage": "contextualize", "event": "self_reference_filtered",
+                            "axis_uri": input_axis.cco_class_uri,
+                        })
                     continue  # skip self-reference
                 check = onto_handlers["get_class_definition"](enum.class_uri)
                 if check is not None:
@@ -139,9 +163,19 @@ def contextualize(
             validated_axes.append(DomainContextAxis(
                 cco_class_uri=input_axis.cco_class_uri,
                 cco_class_label=input_axis.cco_class_label,
-                role=input_axis.role,
+                roles=input_axis.roles,
                 enumerations=valid_enums,
             ))
+
+        # Emit event for empty enumerations
+        for va in validated_axes:
+            if not va.enumerations and report:
+                report.events.append({
+                    "stage": "contextualize", "event": "empty_enumerations",
+                    "risk_id": rva.risk_id, "axis_uri": va.cco_class_uri,
+                })
+
+        context_cache[rva.risk_id] = validated_axes
 
         results.append(DomainContextProfile(
             risk_id=rva.risk_id,
