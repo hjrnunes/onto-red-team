@@ -93,6 +93,7 @@ def anchor(
                 ],
                 temperature=config.temperature,
                 max_retries=config.max_retries,
+                max_tokens=config.max_tokens,
             )
 
             # Post-processing: validate URIs exist in ontology

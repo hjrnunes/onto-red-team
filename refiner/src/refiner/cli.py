@@ -75,9 +75,11 @@ def run(
     config = LLMConfig(base_url=base_url, model=model)
     client = create_client(config)
 
-    # Create handlers
-    risk_handlers = _create_risk_handlers()
-    onto_handlers = _create_onto_handlers()
+    # Create handlers — only load what's needed for the requested stages
+    needs_risk = until not in ("classify",)
+    needs_onto = until not in ("classify", "map_risks")
+    risk_handlers = _create_risk_handlers() if needs_risk else {}
+    onto_handlers = _create_onto_handlers() if needs_onto else {}
 
     # Run pipeline
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")

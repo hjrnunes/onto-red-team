@@ -70,6 +70,7 @@ def contextualize(
             ],
             temperature=config.temperature,
             max_retries=config.max_retries,
+            max_tokens=config.max_tokens,
         )
 
         # Post-processing: validate enumeration URIs resolve in ontology

@@ -40,5 +40,6 @@ def classify(
         ],
         temperature=config.temperature,
         max_retries=config.max_retries,
+        max_tokens=config.max_tokens,
     )
     return result
