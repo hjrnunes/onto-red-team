@@ -127,3 +127,60 @@ def load_domain_context(path: Path) -> list[DomainContextProfile]:
 def load_policies(path: Path) -> dict[str, str]:
     raw = json.loads(path.read_text())
     return {p["policy_concept"]: p["concept_definition"] for p in raw}
+
+
+def _discover_domain_context(output_dir: Path) -> Path:
+    matches = list(output_dir.glob("*-domain-context.yaml"))
+    if len(matches) == 0:
+        raise SystemExit(f"Error: no *-domain-context.yaml found in {output_dir}")
+    if len(matches) > 1:
+        raise SystemExit(f"Error: multiple *-domain-context.yaml found in {output_dir}: {matches}")
+    return matches[0]
+
+
+def emit(
+    output_dir: Path,
+    policies_path: Path,
+    samples_per_risk: int,
+    output_path: Path,
+    seed: int | None = None,
+) -> None:
+    dc_path = _discover_domain_context(output_dir)
+    profiles = load_domain_context(dc_path)
+    policy_defs = load_policies(policies_path)
+
+    if seed is not None:
+        random.seed(seed)
+
+    logger.info("Loaded %d profiles from %s", len(profiles), dc_path.name)
+
+    rows: list[dict] = []
+    for profile in profiles:
+        concept_def = policy_defs.get(profile.policy_concept, "")
+        samples = sample_axes(profile, n=samples_per_risk)
+        if not samples:
+            logger.warning("Skipping risk %s — no usable axes", profile.risk_id)
+            continue
+
+        for sampled in samples:
+            prompt = build_prompt(
+                profile.policy_concept,
+                concept_def,
+                profile.risk_name,
+                sampled,
+            )
+            rows.append({
+                "generation_prompt": prompt,
+                "policy_concept": profile.policy_concept,
+                "concept_definition": concept_def,
+                "risk_id": profile.risk_id,
+                "risk_name": profile.risk_name,
+                "sampled_axes": [sa.model_dump() for sa in sampled],
+            })
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        for row in rows:
+            f.write(json.dumps(row) + "\n")
+
+    logger.info("Wrote %d rows to %s", len(rows), output_path)

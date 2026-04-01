@@ -242,3 +242,116 @@ def test_load_policies(tmp_path):
     p.write_text(json.dumps(policies))
     result = load_policies(p)
     assert result == {"Fraud": "About fraud", "Violence": "About violence"}
+
+
+from refiner.emit import emit
+
+
+def _write_test_files(tmp_path):
+    """Write domain context YAML and policy JSON for testing."""
+    profiles_data = {
+        "profiles": [
+            {
+                "risk_id": "r1",
+                "risk_name": "Risk One",
+                "policy_concept": "Fraud",
+                "axes": [
+                    {
+                        "cco_class_uri": "http://example.org/Person",
+                        "cco_class_label": "Person",
+                        "role": "agent",
+                        "enumerations": [
+                            {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
+                            {"class_uri": "http://example.org/Employee", "class_label": "Employee", "source_ontology": "CCO", "relevance": "medium"},
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    dc_path = tmp_path / "test-domain-context.yaml"
+    dc_path.write_text(yaml.dump(profiles_data))
+
+    policies = [{"policy_concept": "Fraud", "concept_definition": "About fraud"}]
+    pol_path = tmp_path / "policies.json"
+    pol_path.write_text(json.dumps(policies))
+    return dc_path, pol_path
+
+
+def test_emit_writes_jsonl(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=out_path, seed=42)
+    assert out_path.exists()
+    lines = out_path.read_text().strip().split("\n")
+    assert len(lines) > 0
+    row = json.loads(lines[0])
+    assert "generation_prompt" in row
+    assert "policy_concept" in row
+    assert "risk_id" in row
+    assert "risk_name" in row
+    assert "sampled_axes" in row
+    assert row["policy_concept"] == "Fraud"
+    assert row["risk_id"] == "r1"
+
+
+def test_emit_generation_prompt_is_messages(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=1, output_path=out_path, seed=42)
+    row = json.loads(out_path.read_text().strip().split("\n")[0])
+    messages = row["generation_prompt"]
+    assert isinstance(messages, list)
+    assert messages[0]["role"] == "system"
+    assert messages[1]["role"] == "user"
+
+
+def test_emit_discovers_domain_context_file(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=1, output_path=out_path, seed=1)
+    assert out_path.exists()
+
+
+def test_emit_fails_no_domain_context(tmp_path):
+    pol_path = tmp_path / "policies.json"
+    pol_path.write_text('[{"policy_concept": "X", "concept_definition": "Y"}]')
+    out_path = tmp_path / "dataset.jsonl"
+    import pytest
+    with pytest.raises(SystemExit):
+        emit(tmp_path, pol_path, samples_per_risk=1, output_path=out_path)
+
+
+def test_emit_fails_multiple_domain_context(tmp_path):
+    (tmp_path / "a-domain-context.yaml").write_text("profiles: []")
+    (tmp_path / "b-domain-context.yaml").write_text("profiles: []")
+    pol_path = tmp_path / "policies.json"
+    pol_path.write_text('[{"policy_concept": "X", "concept_definition": "Y"}]')
+    out_path = tmp_path / "dataset.jsonl"
+    import pytest
+    with pytest.raises(SystemExit):
+        emit(tmp_path, pol_path, samples_per_risk=1, output_path=out_path)
+
+
+def test_emit_skips_risk_with_no_axes(tmp_path):
+    profiles_data = {
+        "profiles": [
+            {
+                "risk_id": "r1",
+                "risk_name": "Risk One",
+                "policy_concept": "Fraud",
+                "axes": [],  # no axes
+            },
+        ],
+    }
+    dc_path = tmp_path / "test-domain-context.yaml"
+    dc_path.write_text(yaml.dump(profiles_data))
+    pol_path = tmp_path / "policies.json"
+    pol_path.write_text('[{"policy_concept": "Fraud", "concept_definition": "About fraud"}]')
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=5, output_path=out_path, seed=1)
+    content = out_path.read_text().strip()
+    assert content == ""
