@@ -54,6 +54,7 @@ def identify_domains(
     classifications: list[PolicyClassification],
     client: instructor.Instructor,
     config: LLMConfig,
+    report=None,
 ) -> list[str]:
     if not classifications:
         return list(ALWAYS_INCLUDED)
@@ -87,7 +88,13 @@ def identify_domains(
             valid_domains.append(d)
         else:
             logger.warning("Filtering unknown domain key: %s", d)
+            if report:
+                report.events.append({"stage": "identify_domains", "event": "invalid_domain_key", "raw_key": d})
 
     selected = list(ALWAYS_INCLUDED) + valid_domains
     logger.info("Selected domains: %s (justification: %s)", selected, result.justification)
+
+    if report:
+        report.events.append({"stage": "identify_domains", "event": "selected_domains", "domains": selected})
+
     return selected

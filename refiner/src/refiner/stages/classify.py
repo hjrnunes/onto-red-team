@@ -23,6 +23,7 @@ def classify(
     policies: list[Policy],
     client: instructor.Instructor,
     config: LLMConfig,
+    report=None,
 ) -> list[PolicyClassification]:
     if not policies:
         return []
@@ -45,4 +46,10 @@ def classify(
         max_tokens=config.max_tokens,
     )
     debug.log_call("classify", messages, result)
+
+    if report:
+        from collections import Counter
+        dist = dict(Counter(c.policy_type for c in result))
+        report.events.append({"stage": "classify", "event": "type_distribution", "distribution": dist})
+
     return result

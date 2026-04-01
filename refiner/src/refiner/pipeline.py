@@ -44,13 +44,13 @@ def run_pipeline(
 ) -> PipelineState:
     state = PipelineState(policies=policies, report=report)
 
-    state.classifications = classify(state.policies, client, config)
+    state.classifications = classify(state.policies, client, config, report=report)
     if report:
         report.stages_completed.append("classify")
     if until == "classify":
         return state
 
-    state.selected_domains = identify_domains(state.classifications, client, config)
+    state.selected_domains = identify_domains(state.classifications, client, config, report=report)
     if report:
         report.stages_completed.append("identify_domains")
     if until == "identify_domains":
