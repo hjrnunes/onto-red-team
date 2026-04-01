@@ -1,16 +1,13 @@
-#!/usr/bin/env python3
 """Generate adversarial prompts from a refiner emit dataset via sdg_hub.
-
-Requires sdg_hub to be installed (not a refiner dependency).
 
 Usage:
     # Basic — model endpoint + dataset
-    python scripts/generate.py /tmp/dataset.jsonl \
+    redteam /tmp/dataset.jsonl \
         --model hosted_vllm/my-model \
         --api-base http://localhost:8080/v1
 
     # Full options
-    python scripts/generate.py /tmp/dataset.jsonl \
+    redteam /tmp/dataset.jsonl \
         --model hosted_vllm/my-model \
         --api-base http://localhost:8080/v1 \
         --api-key EMPTY \
@@ -18,9 +15,11 @@ Usage:
         --output /tmp/adversarial_prompts.jsonl
 
     # End-to-end from refiner pipeline output
+    cd refiner
     uv run refiner emit /tmp/refiner-out --policies ../policy_examples/swb.json \
         --samples-per-risk 10 --seed 42 --output /tmp/dataset.jsonl
-    python scripts/generate.py /tmp/dataset.jsonl \
+    cd ../redteam
+    uv run redteam /tmp/dataset.jsonl \
         --model hosted_vllm/my-model \
         --api-base http://localhost:8080/v1
 """
@@ -30,22 +29,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-try:
-    import nest_asyncio
-    nest_asyncio.apply()
-except ImportError:
-    pass
+import nest_asyncio
+import pandas as pd
+from sdg_hub import Flow
 
-try:
-    import pandas as pd
-    from sdg_hub import Flow
-except ImportError:
-    print(
-        "Error: sdg_hub and pandas are required.\n"
-        "Install with: pip install sdg_hub pandas",
-        file=sys.stderr,
-    )
-    sys.exit(1)
+nest_asyncio.apply()
+
+FLOW_YAML = Path(__file__).resolve().parent.parent.parent / "flows" / "flow.yaml"
 
 
 def main():
@@ -76,7 +66,7 @@ def main():
         "--flow",
         type=Path,
         default=None,
-        help="Path to flow.yaml (default: refiner/flows/flow.yaml)",
+        help=f"Path to flow.yaml (default: {FLOW_YAML})",
     )
     parser.add_argument(
         "--concurrency",
@@ -93,9 +83,7 @@ def main():
     args = parser.parse_args()
 
     # Resolve flow path
-    flow_path = args.flow
-    if flow_path is None:
-        flow_path = Path(__file__).resolve().parent.parent / "flows" / "flow.yaml"
+    flow_path = args.flow or FLOW_YAML
     if not flow_path.exists():
         print(f"Error: flow not found at {flow_path}", file=sys.stderr)
         sys.exit(1)
@@ -146,7 +134,7 @@ def main():
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # Drop intermediate columns (raw_response, extract_response_content)
+    # Drop intermediate columns, keep metadata + generated prompt
     drop_cols = [c for c in result.columns if c in (
         "raw_response", "extract_response_content", "generation_prompt",
     )]

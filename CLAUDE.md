@@ -80,11 +80,15 @@ refiner/                   # LLM pipeline: policy → taxonomy + domain context
       anchor.py            # Stage 4: Variation axis identification (with domain filtering)
       contextualize.py     # Stage 5: Domain context profiles (with sibling fallback)
       structure.py         # Stage 6: LinkML-conformant YAML assembly (deterministic)
-  flows/
-    flow.yaml              # Companion sdg_hub flow for adversarial prompt generation
-  scripts/
-    generate.py            # Run sdg_hub generation from emit dataset (requires sdg_hub)
   tests/                   # 82 tests (pytest)
+
+redteam/                   # Adversarial prompt generation via sdg_hub
+  pyproject.toml           # uv project: sdg_hub, pandas, nest_asyncio
+  src/redteam/
+    generate.py            # CLI: load emit dataset, run sdg_hub flow, save results
+                           # Entry point: redteam
+  flows/
+    flow.yaml              # Companion sdg_hub flow (3 blocks: LLMChat, Extractor, JSONParser)
 
 policy_examples/
   swb.json                 # South West Bank — banking domain, 6 policies
@@ -247,7 +251,7 @@ refiner emit (pure Python) → dataset.jsonl
 sdg_hub flow.generate() (LLM) → adversarial prompts
 ```
 
-**Hybrid integration:** We do sampling + prompt building; sdg_hub does LLM execution + response parsing via a companion `flow.yaml` (3 blocks: LLMChatBlock, ResponseExtractor, JSONParser).
+**Hybrid integration:** We do sampling + prompt building; sdg_hub does LLM execution + response parsing via a companion `redteam/flows/flow.yaml` (3 blocks: LLMChatBlock, ResponseExtractor, JSONParser).
 
 **Key design:**
 - **Relevance-weighted sampling:** `high=3, medium=2, low=1`, normalized per axis to probability distribution. Deduplication by URI tuple across axes.
@@ -265,8 +269,9 @@ cd refiner
 uv run refiner emit /tmp/refiner-out --policies ../policy_examples/swb.json \
   --samples-per-risk 10 --seed 42 --output /tmp/dataset.jsonl
 
-# Generate adversarial prompts via sdg_hub (requires sdg_hub installed)
-python scripts/generate.py /tmp/dataset.jsonl \
+# Generate adversarial prompts via sdg_hub (separate project)
+cd ../redteam
+uv run redteam /tmp/dataset.jsonl \
   --model hosted_vllm/my-model --api-base http://localhost:8080/v1
 ```
 
