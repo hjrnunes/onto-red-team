@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import instructor
 from refiner.llm import LLMConfig

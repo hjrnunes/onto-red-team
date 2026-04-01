@@ -47,21 +47,12 @@ def structure(
             "isDefinedByTaxonomy": taxonomy_id,
         })
 
-    # Build policy_concept -> policy_type lookup
-    concept_to_type = {c.policy_concept: c.policy_type for c in classifications}
-
     # Build entries from risk mappings
     entries = []
     for mapping in risk_mappings:
         ptype = mapping.policy_type
         group_slug = POLICY_TYPE_GROUPS.get(ptype, ("unknown", "Unknown"))[0]
         group_id = f"{taxonomy_id}-{group_slug}"
-
-        # Collect cross-mappings grouped by type
-        cross_maps_by_type: dict[str, list[str]] = {}
-        for cm in mapping.cross_mappings:
-            key = f"{cm.mapping_type}_mappings"
-            cross_maps_by_type.setdefault(key, []).append(cm.target_risk_id)
 
         for rm in mapping.matched_risks:
             entry = {
