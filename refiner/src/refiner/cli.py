@@ -1,5 +1,6 @@
 import json
 import os
+from datetime import datetime, timezone
 from pathlib import Path
 
 import typer
@@ -7,7 +8,7 @@ import yaml
 
 from refiner import debug
 from refiner.llm import LLMConfig, create_client
-from refiner.models import Policy
+from refiner.models import Policy, RunReport
 from refiner.pipeline import run_pipeline, STAGES
 from refiner.stages.structure import structure
 
@@ -78,6 +79,13 @@ def run(
     client = create_client(config)
     debug.configure(debug_dir)
 
+    # Create report
+    report = RunReport(
+        model=config.model,
+        policy_set=policy_json.name,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+
     # Create handlers — only load what's needed for the requested stages
     needs_risk = until not in ("classify", "identify_domains")
     needs_onto = until not in ("classify", "identify_domains", "map_risks")
@@ -86,7 +94,7 @@ def run(
 
     # Run pipeline
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")
-    state = run_pipeline(policies, client, config, risk_handlers, onto_handlers, until=until)
+    state = run_pipeline(policies, client, config, risk_handlers, onto_handlers, until=until, report=report)
 
     # Output
     out = output_dir or Path(".")
@@ -100,7 +108,10 @@ def run(
             client_slug, state.classifications, state.risk_mappings, state.domain_context,
             related_risks=state.related_risks,
             valid_risk_ids=valid_ids,
+            report=report,
         )
+        report.stages_completed.append("structure")
+
         tax_path = out / f"{client_slug}-taxonomy.yaml"
         tax_path.write_text(yaml.dump(taxonomy, default_flow_style=False, sort_keys=False))
         typer.echo(f"Taxonomy written to {tax_path}")
@@ -108,6 +119,10 @@ def run(
         prof_path = out / f"{client_slug}-domain-context.yaml"
         prof_path.write_text(yaml.dump(profiles, default_flow_style=False, sort_keys=False))
         typer.echo(f"Domain context written to {prof_path}")
+
+        report_path = out / f"{client_slug}-report.yaml"
+        report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
+        typer.echo(f"Report written to {report_path}")
     else:
         # Partial run — dump intermediate state as JSON
         state_path = out / f"{client_slug}-state.json"
@@ -126,6 +141,11 @@ def run(
             state_data["variation_axes"] = [a.model_dump() for a in state.variation_axes]
         state_path.write_text(json.dumps(state_data, indent=2))
         typer.echo(f"Intermediate state written to {state_path}")
+
+        if report.events:
+            report_path = out / f"{client_slug}-report.yaml"
+            report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
+            typer.echo(f"Report written to {report_path}")
 
 
 @app.command()
