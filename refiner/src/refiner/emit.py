@@ -156,7 +156,13 @@ def emit(
 
     rows: list[dict] = []
     for profile in profiles:
-        concept_def = policy_defs.get(profile.policy_concept, "")
+        concept_def = policy_defs.get(profile.policy_concept)
+        if concept_def is None:
+            logger.warning(
+                "Skipping risk %s — policy_concept '%s' not found in policies",
+                profile.risk_id, profile.policy_concept,
+            )
+            continue
         samples = sample_axes(profile, n=samples_per_risk)
         if not samples:
             logger.warning("Skipping risk %s — no usable axes", profile.risk_id)

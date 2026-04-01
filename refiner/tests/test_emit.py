@@ -357,6 +357,50 @@ def test_emit_skips_risk_with_no_axes(tmp_path):
     assert content == ""
 
 
+def test_emit_empty_profiles(tmp_path):
+    dc_path = tmp_path / "test-domain-context.yaml"
+    dc_path.write_text(yaml.dump({"profiles": []}))
+    pol_path = tmp_path / "policies.json"
+    pol_path.write_text('[{"policy_concept": "X", "concept_definition": "Y"}]')
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=5, output_path=out_path, seed=1)
+    assert out_path.read_text().strip() == ""
+
+
+def test_emit_skips_missing_policy_concept(tmp_path):
+    profiles_data = {
+        "profiles": [
+            {
+                "risk_id": "r1",
+                "risk_name": "Risk One",
+                "policy_concept": "Unknown",
+                "axes": [
+                    {
+                        "cco_class_uri": "http://example.org/A",
+                        "cco_class_label": "A",
+                        "role": "agent",
+                        "enumerations": [
+                            {
+                                "class_uri": "http://example.org/E1",
+                                "class_label": "E1",
+                                "source_ontology": "X",
+                                "relevance": "high",
+                            },
+                        ],
+                    },
+                ],
+            },
+        ],
+    }
+    dc_path = tmp_path / "test-domain-context.yaml"
+    dc_path.write_text(yaml.dump(profiles_data))
+    pol_path = tmp_path / "policies.json"
+    pol_path.write_text('[{"policy_concept": "Fraud", "concept_definition": "About fraud"}]')
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=5, output_path=out_path, seed=1)
+    assert out_path.read_text().strip() == ""
+
+
 from typer.testing import CliRunner
 from refiner.cli import app
 
