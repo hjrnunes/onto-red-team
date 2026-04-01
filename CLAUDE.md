@@ -66,10 +66,11 @@ ontologies/
 refiner/                   # LLM pipeline: policy → taxonomy + domain context
   pyproject.toml           # uv project: instructor, openai, pydantic, typer, pyyaml
   src/refiner/
-    cli.py                 # Typer CLI: `refiner run <policy.json>` with --until, --output, --debug
+    cli.py                 # Typer CLI: `refiner run` and `refiner emit` commands
     pipeline.py            # Pipeline orchestration: stage sequencing, state threading
+    emit.py                # Emit dataset: domain context → sdg_hub-ready JSONL (pure Python)
     debug.py               # Per-call debug logging (--debug writes JSON per LLM call)
-    models.py              # 10 Pydantic models for stage I/O contracts
+    models.py              # 11 Pydantic models for stage I/O contracts (incl. SampledAxis)
     llm.py                 # Instructor + OpenAI client setup, LLMConfig
     stages/
       classify.py          # Stage 1: Policy type classification (A/B/C/D)
@@ -79,7 +80,9 @@ refiner/                   # LLM pipeline: policy → taxonomy + domain context
       anchor.py            # Stage 4: Variation axis identification (with domain filtering)
       contextualize.py     # Stage 5: Domain context profiles (with sibling fallback)
       structure.py         # Stage 6: LinkML-conformant YAML assembly (deterministic)
-  tests/                   # 51 tests (pytest)
+  flows/
+    flow.yaml              # Companion sdg_hub flow for adversarial prompt generation
+  tests/                   # 82 tests (pytest)
 
 policy_examples/
   swb.json                 # South West Bank — banking domain, 6 policies
@@ -221,12 +224,53 @@ Separate uv project at `nexus-mcp/`. Wraps the AIAtlasNexus Python API + ChromaD
 cd refiner
 uv run refiner run ../policy_examples/swb.json --output /tmp/out --debug /tmp/debug
 uv run refiner run ../policy_examples/swb.json --until identify_domains  # partial run
+uv run refiner emit /tmp/out --policies ../policy_examples/swb.json --samples-per-risk 10
 ```
 
 **Config:** `REFINER_BASE_URL`, `REFINER_MODEL`, `REFINER_API_KEY`, `NEXUS_BASE_DIR`, `ONTOQUERY_CHROMA_DIR`, `NEXUS_CHROMA_DIR`
 
 **Spec:** `docs/superpowers/specs/2026-04-01-refiner-llm-layer-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-01-refiner-llm-layer.md`
+
+## Emit Dataset
+
+Pure Python command (`refiner emit`) that transforms domain context profiles (output of the refiner pipeline) into an sdg_hub-ready JSONL dataset for adversarial prompt generation. No LLM calls. Designed to be re-runnable with different sampling parameters without re-running the expensive refiner pipeline.
+
+**Data flow:**
+```
+refiner run (LLM) → domain-context.yaml + taxonomy.yaml
+                            ↓
+refiner emit (pure Python) → dataset.jsonl
+                            ↓
+sdg_hub flow.generate() (LLM) → adversarial prompts
+```
+
+**Hybrid integration:** We do sampling + prompt building; sdg_hub does LLM execution + response parsing via a companion `flow.yaml` (3 blocks: LLMChatBlock, ResponseExtractor, JSONParser).
+
+**Key design:**
+- **Relevance-weighted sampling:** `high=3, medium=2, low=1`, normalized per axis to probability distribution. Deduplication by URI tuple across axes.
+- **Scenario-first prompts:** Domain context entities define the world; harm emerges naturally. Axis `role` field (agent, object, instrument, location, temporal) gives semantic guidance on how each entity participates.
+- **Full ontology traceability:** `sampled_axes` column carries provenance: generated prompt → sampled value → ontology class URI → CCO axis → role in risk → risk → policy concept.
+- **SampledAxis model:** `cco_class_uri`, `cco_class_label`, `role`, `sampled_uri`, `sampled_label`, `source_ontology`, `relevance`.
+
+**Output columns:** `generation_prompt` (chat messages), `policy_concept`, `concept_definition`, `risk_id`, `risk_name`, `sampled_axes`.
+
+**CLI:**
+```bash
+cd refiner
+
+# Emit dataset (cheap, re-runnable with different params)
+uv run refiner emit /tmp/refiner-out --policies ../policy_examples/swb.json \
+  --samples-per-risk 10 --seed 42 --output /tmp/dataset.jsonl
+
+# Then feed to sdg_hub:
+# flow = Flow.from_yaml('refiner/flows/flow.yaml')
+# dataset = pd.read_json('/tmp/dataset.jsonl', lines=True)
+# result = flow.generate(dataset)
+```
+
+**Spec:** `docs/superpowers/specs/2026-04-01-emit-dataset-design.md`
+**Plan:** `docs/superpowers/plans/2026-04-01-emit-dataset.md`
 
 ## ontoquery CLI
 
