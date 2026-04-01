@@ -86,9 +86,13 @@ redteam/                   # Adversarial prompt generation via sdg_hub
   pyproject.toml           # uv project: sdg_hub, pandas, nest_asyncio
   src/redteam/
     generate.py            # CLI: load emit dataset, run sdg_hub flow, save results
+                           # Builds HTML explorer automatically after generation
                            # Entry point: redteam
   flows/
     flow.yaml              # Companion sdg_hub flow (3 blocks: LLMChat, Extractor, JSONParser)
+  tools/
+    build_explorer.py      # Build HTML explorer from JSON/JSONL output
+    explorer_template.html # Alpine.js + Tailwind template for browsing results
 
 policy_examples/
   swb.json                 # South West Bank — banking domain, 6 policies

@@ -144,6 +144,17 @@ def main():
     print(f"\nSaved {len(output_df)} rows to {output_path}")
     print(f"Output columns: {list(output_df.columns)}")
 
+    # Build HTML explorer
+    tools_dir = Path(__file__).resolve().parent.parent.parent / "tools"
+    explorer_template = tools_dir / "explorer_template.html"
+    if explorer_template.exists():
+        sys.path.insert(0, str(tools_dir))
+        from build_explorer import build_explorer
+        explorer_path = output_path.with_suffix(".html")
+        build_explorer(output_df, output_path=explorer_path)
+    else:
+        print(f"(Explorer template not found at {explorer_template}, skipping HTML explorer)")
+
 
 if __name__ == "__main__":
     main()
