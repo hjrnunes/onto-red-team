@@ -1,0 +1,63 @@
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:      <http://www.w3.org/2002/07/owl#> .
+@prefix cco:      <https://www.commoncoreontologies.org/> .
+@prefix cmns-pts: <https://www.omg.org/spec/Commons/PartiesAndSituations/> .
+@prefix cmns-org: <https://www.omg.org/spec/Commons/Organizations/> .
+@prefix cmns-rlcmp: <https://www.omg.org/spec/Commons/RolesAndCompositions/> .
+@prefix cmns-doc: <https://www.omg.org/spec/Commons/Documents/> .
+@prefix cmns-id:  <https://www.omg.org/spec/Commons/Identifiers/> .
+@prefix cmns-loc: <https://www.omg.org/spec/Commons/Locations/> .
+
+<https://www.commoncoreontologies.org/bridges/cco-commons>
+    rdf:type owl:Ontology ;
+    rdfs:label "CCO-Commons Bridge Ontology" ;
+    rdfs:comment "Bridge axioms mapping CCO classes to OMG Commons classes for FIBO interoperability. All axioms are rdfs:subClassOf (conservative, no owl:equivalentClass)." .
+
+# --- Entity Bridges (7) ---
+
+# Agent → Agent
+cco:ont00001017 rdfs:subClassOf cmns-pts:Agent .
+
+# Person → Party
+cco:ont00001262 rdfs:subClassOf cmns-pts:Party .
+
+# Person → LegalPerson
+cco:ont00001262 rdfs:subClassOf cmns-org:LegalPerson .
+
+# Organization → FormalOrganization
+cco:ont00001180 rdfs:subClassOf cmns-org:FormalOrganization .
+
+# Document Content Entity → Document
+cco:ont00002039 rdfs:subClassOf cmns-doc:Document .
+
+# Legal Instrument → LegalDocument
+cco:ont00001346 rdfs:subClassOf cmns-doc:LegalDocument .
+
+# Geospatial Region → Location
+cco:ont00000472 rdfs:subClassOf cmns-loc:Location .
+
+# --- Identifier Bridge (1) ---
+
+# Designative ICE → Identifier
+cco:ont00000686 rdfs:subClassOf cmns-id:Identifier .
+
+# --- Role Bridges (6) ---
+
+# Authority Role → StructuralRole
+cco:ont00000187 rdfs:subClassOf cmns-rlcmp:StructuralRole .
+
+# Occupation Role → FunctionalRole
+cco:ont00000984 rdfs:subClassOf cmns-rlcmp:FunctionalRole .
+
+# Organization Member Role → PartyRole
+cco:ont00000175 rdfs:subClassOf cmns-pts:PartyRole .
+
+# Commercial Role → StructuralRole
+cco:ont00000485 rdfs:subClassOf cmns-rlcmp:StructuralRole .
+
+# Citizen Role → PartyRole
+cco:ont00000987 rdfs:subClassOf cmns-pts:PartyRole .
+
+# Contractor Role → FunctionalRole
+cco:ont00000506 rdfs:subClassOf cmns-rlcmp:FunctionalRole .
