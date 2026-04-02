@@ -438,5 +438,44 @@ def evaluate(
         typer.echo(f"Logged to MLflow: run {run_id}")
 
 
+@app.command()
+def track(
+    output_dir: Path = typer.Argument(..., help="Directory with evaluation outputs to track"),
+    tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
+    description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
+):
+    """Retroactively log an existing evaluation to MLflow."""
+    if not output_dir.is_dir():
+        typer.echo(f"Error: {output_dir} is not a directory", err=True)
+        raise typer.Exit(1)
+
+    try:
+        from refiner.tracking import log_run_to_mlflow, read_run_id, write_run_id
+    except ImportError:
+        typer.echo("Error: MLflow is required. Install with: uv sync --extra tracking", err=True)
+        raise typer.Exit(1)
+
+    if not tracking_uri:
+        typer.echo("Error: --tracking-uri or MLFLOW_TRACKING_URI is required", err=True)
+        raise typer.Exit(1)
+
+    from refiner.evaluate import _discover_file
+    eval_path = _discover_file(output_dir, "*-evaluation.json")
+    if not eval_path:
+        typer.echo(f"Error: no *-evaluation.json found in {output_dir}", err=True)
+        raise typer.Exit(1)
+
+    evaluation = json.loads(eval_path.read_text())
+    existing_run_id = read_run_id(output_dir)
+
+    run_id = log_run_to_mlflow(
+        evaluation, output_dir, tracking_uri,
+        description=description, run_id=existing_run_id,
+    )
+    if not existing_run_id:
+        write_run_id(output_dir, run_id)
+    typer.echo(f"Logged to MLflow: run {run_id}")
+
+
 if __name__ == "__main__":
     app()
