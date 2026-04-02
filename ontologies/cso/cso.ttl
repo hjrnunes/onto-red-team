@@ -1,0 +1,178 @@
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix cso: <http://taxonomy-refiner.io/ontologies/cso#> .
+@prefix dc: <http://purl.org/dc/elements/1.1/> .
+
+<http://taxonomy-refiner.io/ontologies/cso> a owl:Ontology ;
+    dc:title "Content Safety Ontology" ;
+    dc:creator "taxonomy-refiner project" ;
+    owl:versionInfo "1.0.0" ;
+    dc:rights "CC-BY 4.0" ;
+    rdfs:comment "Lightweight ontology of content safety harm categories for adversarial prompt generation diversity." .
+
+# Root Class
+
+cso:ContentSafetyHazard a owl:Class ;
+    rdfs:label "Content Safety Hazard" ;
+    rdfs:comment "Root class for content safety harm categories relevant to adversarial prompt generation against LLM deployments." .
+
+# Violence Category (29 classes)
+
+cso:Violence a owl:Class ;
+    rdfs:label "Violence" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Physical force intended to harm, damage, or kill living beings. Includes direct violence, threats, terrorism, and weapons-related harms." .
+
+## PhysicalAssault subcategory
+
+cso:PhysicalAssault a owl:Class ;
+    rdfs:label "Physical Assault" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Intentional physical attack on a person causing or attempting to cause bodily harm." .
+
+cso:AggravatedAssault a owl:Class ;
+    rdfs:label "Aggravated Assault" ;
+    rdfs:subClassOf cso:PhysicalAssault ;
+    rdfs:comment "Physical assault involving a deadly weapon or resulting in serious bodily injury." .
+
+cso:DomesticViolence a owl:Class ;
+    rdfs:label "Domestic Violence" ;
+    rdfs:subClassOf cso:PhysicalAssault ;
+    rdfs:comment "Physical assault occurring within intimate partner, family, or household relationships." .
+
+cso:AssaultAgainstMinors a owl:Class ;
+    rdfs:label "Assault Against Minors" ;
+    rdfs:subClassOf cso:PhysicalAssault ;
+    rdfs:comment "Physical assault targeting individuals under 18 years of age." .
+
+## Homicide subcategory
+
+cso:Homicide a owl:Class ;
+    rdfs:label "Homicide" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Intentional or unintentional killing of a human being by another human being." .
+
+cso:Murder a owl:Class ;
+    rdfs:label "Murder" ;
+    rdfs:subClassOf cso:Homicide ;
+    rdfs:comment "Unlawful premeditated killing of one human being by another with malice aforethought." .
+
+cso:Manslaughter a owl:Class ;
+    rdfs:label "Manslaughter" ;
+    rdfs:subClassOf cso:Homicide ;
+    rdfs:comment "Unlawful killing without premeditation or malice, including voluntary and involuntary forms." .
+
+cso:Assassination a owl:Class ;
+    rdfs:label "Assassination" ;
+    rdfs:subClassOf cso:Homicide ;
+    rdfs:comment "Targeted killing of a prominent individual for political, ideological, or financial motives." .
+
+## MassViolence subcategory
+
+cso:MassViolence a owl:Class ;
+    rdfs:label "Mass Violence" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Acts of violence targeting multiple victims simultaneously or in rapid succession." .
+
+cso:MassShooting a owl:Class ;
+    rdfs:label "Mass Shooting" ;
+    rdfs:subClassOf cso:MassViolence ;
+    rdfs:comment "Shooting incident targeting multiple victims with firearms in a relatively confined area." .
+
+cso:BombingAttack a owl:Class ;
+    rdfs:label "Bombing Attack" ;
+    rdfs:subClassOf cso:MassViolence ;
+    rdfs:comment "Use of explosive devices to harm multiple victims and destroy property." .
+
+cso:VehicularAttack a owl:Class ;
+    rdfs:label "Vehicular Attack" ;
+    rdfs:subClassOf cso:MassViolence ;
+    rdfs:comment "Intentional use of a vehicle as a weapon to strike multiple pedestrians or targets." .
+
+## Terrorism subcategory
+
+cso:Terrorism a owl:Class ;
+    rdfs:label "Terrorism" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Unlawful use of violence and intimidation against civilians to pursue political, ideological, or religious aims." .
+
+cso:DomesticTerrorism a owl:Class ;
+    rdfs:label "Domestic Terrorism" ;
+    rdfs:subClassOf cso:Terrorism ;
+    rdfs:comment "Terrorism conducted within a nation by individuals or groups based and operating in that country." .
+
+cso:InternationalTerrorism a owl:Class ;
+    rdfs:label "International Terrorism" ;
+    rdfs:subClassOf cso:Terrorism ;
+    rdfs:comment "Terrorism involving citizens or territory of more than one country or conducted by transnational organizations." .
+
+cso:Cyberterrorism a owl:Class ;
+    rdfs:label "Cyberterrorism" ;
+    rdfs:subClassOf cso:Terrorism ;
+    rdfs:comment "Use of digital attacks against critical infrastructure or information systems to create fear and disruption for political ends." .
+
+## ThreatsOfViolence subcategory
+
+cso:ThreatsOfViolence a owl:Class ;
+    rdfs:label "Threats of Violence" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Communication of intent to inflict harm or damage to create fear, even if not carried out." .
+
+cso:DeathThreat a owl:Class ;
+    rdfs:label "Death Threat" ;
+    rdfs:subClassOf cso:ThreatsOfViolence ;
+    rdfs:comment "Explicit communication of intent to kill a specific individual or group." .
+
+cso:Intimidation a owl:Class ;
+    rdfs:label "Intimidation" ;
+    rdfs:subClassOf cso:ThreatsOfViolence ;
+    rdfs:comment "Use of threats or fear to coerce compliance or silence opposition without necessarily specifying lethal harm." .
+
+cso:Stalking a owl:Class ;
+    rdfs:label "Stalking" ;
+    rdfs:subClassOf cso:ThreatsOfViolence ;
+    rdfs:comment "Persistent unwanted attention and following of an individual creating reasonable fear for personal safety." .
+
+## WeaponsUse subcategory
+
+cso:WeaponsUse a owl:Class ;
+    rdfs:label "Weapons Use" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Employment of instruments designed or adapted to inflict harm in acts of violence." .
+
+cso:FirearmsUse a owl:Class ;
+    rdfs:label "Firearms Use" ;
+    rdfs:subClassOf cso:WeaponsUse ;
+    rdfs:comment "Use of guns, rifles, or other projectile weapons that discharge bullets or pellets." .
+
+cso:BladedWeaponsUse a owl:Class ;
+    rdfs:label "Bladed Weapons Use" ;
+    rdfs:subClassOf cso:WeaponsUse ;
+    rdfs:comment "Use of knives, swords, machetes, or other cutting or stabbing implements." .
+
+cso:ImprovisedWeaponsUse a owl:Class ;
+    rdfs:label "Improvised Weapons Use" ;
+    rdfs:subClassOf cso:WeaponsUse ;
+    rdfs:comment "Use of everyday objects repurposed as weapons, such as bottles, tools, or furniture." .
+
+cso:ExplosiveUse a owl:Class ;
+    rdfs:label "Explosive Use" ;
+    rdfs:subClassOf cso:WeaponsUse ;
+    rdfs:comment "Use of bombs, grenades, or other devices that cause harm through explosive force and fragmentation." .
+
+## Direct children of Violence
+
+cso:Torture a owl:Class ;
+    rdfs:label "Torture" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Intentional infliction of severe physical or psychological pain and suffering, often for coercion or punishment." .
+
+cso:AnimalCruelty a owl:Class ;
+    rdfs:label "Animal Cruelty" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Intentional harm, neglect, or abuse causing suffering to non-human animals." .
+
+cso:GlorificationOfViolence a owl:Class ;
+    rdfs:label "Glorification of Violence" ;
+    rdfs:subClassOf cso:Violence ;
+    rdfs:comment "Content that celebrates, praises, or portrays violent acts in a positive or heroic light, potentially encouraging imitation." .
