@@ -3,9 +3,36 @@ from dataclasses import dataclass, field
 from pydantic import BaseModel
 
 
+class BoundaryExample(BaseModel):
+    prohibited: str
+    acceptable: str
+
+
+class NamedEntity(BaseModel):
+    name: str
+    role: str
+
+
 class Policy(BaseModel):
     policy_concept: str
     concept_definition: str
+    boundary_examples: list[BoundaryExample] = []
+    acceptable_uses: list[str] = []
+    risk_controls: list[str] = []
+    human_involvement: str | None = None
+
+
+class PolicyDocument(BaseModel):
+    airo_version: str = "0.2"
+    organization: str = ""
+    domain: str = ""
+    purpose: list[str] = []
+    ai_systems: list[str] = []
+    ai_users: list[str] = []
+    ai_subjects: list[str] = []
+    governing_regulations: list[str] = []
+    named_entities: list[NamedEntity] = []
+    policies: list[Policy] = []
 
 
 class PolicyClassification(BaseModel):
@@ -62,6 +89,10 @@ class DomainContextProfile(BaseModel):
     risk_name: str
     policy_concept: str
     axes: list[DomainContextAxis]
+    risk_description: str | None = ""
+    risk_concern: str | None = ""
+    risk_framework: str | None = ""
+    cross_mappings: list[dict] = []
 
 
 class SampledAxis(BaseModel):
