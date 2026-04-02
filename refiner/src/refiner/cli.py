@@ -171,6 +171,8 @@ def run(
     # Run pipeline
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")
     state = run_pipeline(policies, client, config, risk_handlers, onto_handlers, until=until, report=report)
+    # TODO: thread doc_context into pipeline stages (e.g. identify_domains domain hint)
+    state.doc_context = doc_context
 
     # Output
     out = output_dir or Path(".")

@@ -413,27 +413,9 @@ def ingest(
 
     # Apply overrides
     if domain_override:
-        context = _SlimContext(
-            organization=context.organization,
-            domain=domain_override,
-            purpose=context.purpose,
-            ai_systems=context.ai_systems,
-            ai_users=context.ai_users,
-            ai_subjects=context.ai_subjects,
-            governing_regulations=context.governing_regulations,
-            named_entities=context.named_entities,
-        )
+        context = context.model_copy(update={"domain": domain_override})
     if organization_override:
-        context = _SlimContext(
-            organization=organization_override,
-            domain=context.domain,
-            purpose=context.purpose,
-            ai_systems=context.ai_systems,
-            ai_users=context.ai_users,
-            ai_subjects=context.ai_subjects,
-            governing_regulations=context.governing_regulations,
-            named_entities=context.named_entities,
-        )
+        context = context.model_copy(update={"organization": organization_override})
 
     if until == "context":
         return _build_document(context, [])

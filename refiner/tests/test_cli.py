@@ -36,7 +36,7 @@ def _make_completed_state():
         risk_mappings=[
             PolicyRiskMapping(
                 policy_concept="Fraud", policy_type="A",
-                matched_risks=[], cross_mappings=[],
+                matched_risks=[],
             ),
         ],
         risk_details={},
