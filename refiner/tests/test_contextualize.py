@@ -481,3 +481,97 @@ def test_contextualize_works_without_risk_details(mock_client, mock_config, mock
     mock_client.chat.completions.create.return_value = _ContextResponse(axes=[])
     result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
     assert len(result) == 1
+
+
+def test_contextualize_filters_disjoint_enumerations(mock_client, mock_config, mock_onto_handlers):
+    """When two enumerations are disjoint, keep the higher-relevance one."""
+    axes = [_make_axes()]
+    mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
+        {"uri": "http://example.org/Contractor", "label": "Contractor", "depth": 1},
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/Employee", "label": "Employee", "definition": "d", "superclasses": []
+    }
+    # Employee and Contractor are disjoint
+    mock_onto_handlers["get_disjoint_classes"].side_effect = lambda uri: (
+        ["http://example.org/Contractor"] if uri == "http://example.org/Employee"
+        else ["http://example.org/Employee"] if uri == "http://example.org/Contractor"
+        else []
+    )
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        axes=[_AxisResponse(
+            cco_class_uri="http://example.org/Person",
+            enumerations=[
+                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                _EnumResponse(class_uri="http://example.org/Contractor", class_label="Contractor", relevance="low"),
+            ],
+        )],
+    )
+    result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
+    enums = result[0].axes[0].enumerations
+    assert len(enums) == 1
+    assert enums[0].class_uri == "http://example.org/Employee"  # higher relevance kept
+
+
+def test_contextualize_emits_disjoint_filtered_event(mock_client, mock_config, mock_onto_handlers):
+    """Disjointness filtering emits disjoint_filtered event."""
+    axes = [_make_axes()]
+    mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
+        {"uri": "http://example.org/Contractor", "label": "Contractor", "depth": 1},
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/Employee", "label": "Employee", "definition": "d", "superclasses": []
+    }
+    mock_onto_handlers["get_disjoint_classes"].side_effect = lambda uri: (
+        ["http://example.org/Contractor"] if uri == "http://example.org/Employee"
+        else ["http://example.org/Employee"] if uri == "http://example.org/Contractor"
+        else []
+    )
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        axes=[_AxisResponse(
+            cco_class_uri="http://example.org/Person",
+            enumerations=[
+                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                _EnumResponse(class_uri="http://example.org/Contractor", class_label="Contractor", relevance="low"),
+            ],
+        )],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    contextualize(axes, mock_client, mock_config, mock_onto_handlers, report=report)
+    disjoint_events = [e for e in report.events if e["event"] == "disjoint_filtered"]
+    assert len(disjoint_events) == 1
+    assert "http://example.org/Contractor" in disjoint_events[0]["filtered"]
+
+
+def test_contextualize_no_disjoint_filter_when_handler_absent(mock_client, mock_config):
+    """Without get_disjoint_classes handler, no filtering occurs."""
+    from unittest.mock import MagicMock
+    handlers = {
+        "search_classes": MagicMock(return_value=[]),
+        "get_class_definition": MagicMock(return_value={"uri": "u", "label": "l", "definition": "d", "superclasses": []}),
+        "get_subclasses": MagicMock(return_value=[{"uri": "http://example.org/Employee", "label": "Employee", "depth": 1}]),
+        "get_superclasses": MagicMock(return_value=[]),
+        "get_siblings": MagicMock(return_value=[]),
+        "get_properties": MagicMock(return_value=[]),
+        "explore_class": MagicMock(return_value=None),
+        # No get_disjoint_classes key
+    }
+    axes = [_make_axes()]
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        axes=[_AxisResponse(
+            cco_class_uri="http://example.org/Person",
+            enumerations=[
+                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+            ],
+        )],
+    )
+    mock_config_local = MagicMock()
+    mock_config_local.model = "test"
+    mock_config_local.temperature = 0.0
+    mock_config_local.max_retries = 1
+    mock_config_local.max_tokens = 500
+    result = contextualize(axes, mock_client, mock_config_local, handlers)
+    assert len(result[0].axes[0].enumerations) == 1

@@ -44,6 +44,10 @@ class _ContextResponse(BaseModel):
     axes: list[_AxisResponse]
 
 
+def _relevance_rank(relevance: str) -> int:
+    return {"high": 3, "medium": 2, "low": 1}.get(relevance, 0)
+
+
 def contextualize(
     variation_axes: list[RiskVariationAxes],
     client: instructor.Instructor,
@@ -188,6 +192,33 @@ def contextualize(
                     ))
                 else:
                     logger.warning("Filtering invalid enumeration class_uri: %s", enum.class_uri)
+
+            # Disjointness filter
+            if onto_handlers.get("get_disjoint_classes"):
+                filtered_by_disjoint = []
+                removed_uris: set[str] = set()
+                for enum in valid_enums:
+                    if enum.class_uri in removed_uris:
+                        continue
+                    disjoints = set(onto_handlers["get_disjoint_classes"](enum.class_uri))
+                    conflicting = [e for e in valid_enums if e.class_uri in disjoints and e.class_uri not in removed_uris]
+                    for conflict in conflicting:
+                        if _relevance_rank(enum.relevance) >= _relevance_rank(conflict.relevance):
+                            removed_uris.add(conflict.class_uri)
+                        else:
+                            removed_uris.add(enum.class_uri)
+                            break
+                    if enum.class_uri not in removed_uris:
+                        filtered_by_disjoint.append(enum)
+                if removed_uris and report:
+                    report.events.append({
+                        "stage": "contextualize", "event": "disjoint_filtered",
+                        "risk_id": rva.risk_id,
+                        "axis_uri": input_axis.cco_class_uri,
+                        "kept": [e.class_uri for e in filtered_by_disjoint],
+                        "filtered": list(removed_uris),
+                    })
+                valid_enums = filtered_by_disjoint
 
             validated_axes.append(DomainContextAxis(
                 cco_class_uri=input_axis.cco_class_uri,
