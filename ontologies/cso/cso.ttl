@@ -539,3 +539,221 @@ cso:SexualCoercion a owl:Class ;
     rdfs:label "Sexual Coercion" ;
     rdfs:subClassOf cso:SexualExploitation ;
     rdfs:comment "Use of pressure, manipulation, or exploitation of power imbalances to obtain sexual compliance without physical force or explicit threats." .
+
+# --- 5. Sexual Content (11 classes) ---
+
+cso:SexualContent a owl:Class ;
+    rdfs:label "Sexual Content" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Content involving sexual themes, behaviors, descriptions, or imagery that may be inappropriate, explicit, or boundary-crossing in certain contexts, distinct from exploitative content involving coercion or minors." .
+
+cso:ExplicitSexualDescription a owl:Class ;
+    rdfs:label "Explicit Sexual Description" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Detailed, graphic descriptions of sexual acts, anatomy, or behaviors that leave little to interpretation." .
+
+cso:EroticFictionGeneration a owl:Class ;
+    rdfs:label "Erotic Fiction Generation" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Creation of narrative content primarily designed to sexually arouse the reader through fictional scenarios and characters." .
+
+cso:SexualFetishContent a owl:Class ;
+    rdfs:label "Sexual Fetish Content" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Content focused on atypical sexual interests or practices that may be considered niche, taboo, or inappropriate in mainstream contexts." .
+
+cso:PornographicContentDescription a owl:Class ;
+    rdfs:label "Pornographic Content Description" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Descriptions or generation of explicit sexual material intended for sexual arousal, mimicking pornographic media formats." .
+
+cso:SexualRolePlay a owl:Class ;
+    rdfs:label "Sexual Role Play" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Interactive scenarios where participants adopt sexual personas or engage in sexually charged conversational exchanges." .
+
+cso:SexEducationBoundary a owl:Class ;
+    rdfs:label "Sex Education Boundary" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Content that crosses from informational sex education into inappropriate detail, age-inappropriate framing, or instructional material for sexual activity." .
+
+cso:ReproductiveHealthBoundary a owl:Class ;
+    rdfs:label "Reproductive Health Boundary" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Medical or health information about reproduction that becomes overly detailed, graphically explicit, or inappropriate for the context or audience." .
+
+cso:ClinicalSexualDescription a owl:Class ;
+    rdfs:label "Clinical Sexual Description" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Medically accurate sexual content presented in contexts where clinical framing does not justify the level of detail or explicitness provided." .
+
+cso:NudityDescription a owl:Class ;
+    rdfs:label "Nudity Description" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Detailed descriptions of nude bodies or partial nudity, particularly when sexualized or presented in non-artistic contexts." .
+
+cso:SexualInnuendo a owl:Class ;
+    rdfs:label "Sexual Innuendo" ;
+    rdfs:subClassOf cso:SexualContent ;
+    rdfs:comment "Indirect or suggestive references to sexual acts or themes, often using double meanings or metaphors to imply sexual content." .
+
+# --- 6. Fraud and Deception (29 classes) ---
+
+cso:FraudAndDeception a owl:Class ;
+    rdfs:label "Fraud and Deception" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Deliberate misrepresentation, manipulation, or false information intended to deceive individuals for personal gain, harm others, or undermine trust in institutions and information." .
+
+## FinancialFraud subcategory
+
+cso:FinancialFraud a owl:Class ;
+    rdfs:label "Financial Fraud" ;
+    rdfs:subClassOf cso:FraudAndDeception ;
+    rdfs:comment "Deceptive practices designed to secure unlawful financial gain through misrepresentation of investment opportunities, identity theft, or manipulation of financial systems." .
+
+cso:InvestmentScam a owl:Class ;
+    rdfs:label "Investment Scam" ;
+    rdfs:subClassOf cso:FinancialFraud ;
+    rdfs:comment "Fraudulent schemes promising high returns with little risk to persuade victims to invest money in non-existent or worthless ventures." .
+
+cso:PonziScheme a owl:Class ;
+    rdfs:label "Ponzi Scheme" ;
+    rdfs:subClassOf cso:FinancialFraud ;
+    rdfs:comment "Investment fraud where returns to earlier investors are paid using capital from new investors rather than legitimate profits, creating unsustainable pyramid structure." .
+
+cso:InsuranceFraud a owl:Class ;
+    rdfs:label "Insurance Fraud" ;
+    rdfs:subClassOf cso:FinancialFraud ;
+    rdfs:comment "Deliberate deception in insurance transactions, including false claims, staged accidents, or misrepresentation of facts to obtain unwarranted payouts." .
+
+cso:CreditCardFraud a owl:Class ;
+    rdfs:label "Credit Card Fraud" ;
+    rdfs:subClassOf cso:FinancialFraud ;
+    rdfs:comment "Unauthorized use of credit card information to make purchases, withdraw funds, or conduct transactions without the cardholder's consent." .
+
+cso:IdentityTheft a owl:Class ;
+    rdfs:label "Identity Theft" ;
+    rdfs:subClassOf cso:FinancialFraud ;
+    rdfs:comment "Fraudulent acquisition and use of another person's identifying information, such as Social Security numbers or financial account details, for economic gain." .
+
+## SocialEngineeringFraud subcategory
+
+cso:SocialEngineeringFraud a owl:Class ;
+    rdfs:label "Social Engineering Fraud" ;
+    rdfs:subClassOf cso:FraudAndDeception ;
+    rdfs:comment "Manipulation of individuals through psychological tactics to gain trust, extract confidential information, or persuade victims to take actions against their interests." .
+
+cso:RomanceScam a owl:Class ;
+    rdfs:label "Romance Scam" ;
+    rdfs:subClassOf cso:SocialEngineeringFraud ;
+    rdfs:comment "Fraudulent cultivation of romantic relationships online to exploit emotional vulnerability and extract money or sensitive information from victims." .
+
+cso:Impersonation a owl:Class ;
+    rdfs:label "Impersonation" ;
+    rdfs:subClassOf cso:SocialEngineeringFraud ;
+    rdfs:comment "Fraudulent assumption of another person's identity, including authority figures, celebrities, or trusted contacts, to deceive victims and gain compliance." .
+
+cso:Pretexting a owl:Class ;
+    rdfs:label "Pretexting" ;
+    rdfs:subClassOf cso:SocialEngineeringFraud ;
+    rdfs:comment "Creation of fabricated scenarios or false identities to manipulate targets into divulging confidential information or performing actions they would not otherwise take." .
+
+cso:ConfidenceTrick a owl:Class ;
+    rdfs:label "Confidence Trick" ;
+    rdfs:subClassOf cso:SocialEngineeringFraud ;
+    rdfs:comment "Exploiting the confidence and trust of victims through persuasive deception and manipulation to obtain money, property, or sensitive information." .
+
+## Misinformation subcategory
+
+cso:Misinformation a owl:Class ;
+    rdfs:label "Misinformation" ;
+    rdfs:subClassOf cso:FraudAndDeception ;
+    rdfs:comment "False or inaccurate information shared without malicious intent to deceive, often due to misunderstanding, carelessness, or lack of fact-checking." .
+
+cso:HealthMisinformation a owl:Class ;
+    rdfs:label "Health Misinformation" ;
+    rdfs:subClassOf cso:Misinformation ;
+    rdfs:comment "Inaccurate medical or health-related claims that may lead individuals to make harmful decisions about their care, treatment, or public health measures." .
+
+cso:PoliticalMisinformation a owl:Class ;
+    rdfs:label "Political Misinformation" ;
+    rdfs:subClassOf cso:Misinformation ;
+    rdfs:comment "False information about political figures, policies, or events that distorts public understanding of governance and democratic processes." .
+
+cso:ScientificMisinformation a owl:Class ;
+    rdfs:label "Scientific Misinformation" ;
+    rdfs:subClassOf cso:Misinformation ;
+    rdfs:comment "Inaccurate claims about scientific findings, research methods, or consensus that undermine evidence-based understanding of natural phenomena." .
+
+cso:ElectionMisinformation a owl:Class ;
+    rdfs:label "Election Misinformation" ;
+    rdfs:subClassOf cso:Misinformation ;
+    rdfs:comment "False information about voting procedures, candidate eligibility, election results, or electoral integrity that may suppress participation or erode trust." .
+
+## Disinformation subcategory
+
+cso:Disinformation a owl:Class ;
+    rdfs:label "Disinformation" ;
+    rdfs:subClassOf cso:FraudAndDeception ;
+    rdfs:comment "Deliberately false information spread with malicious intent to deceive, manipulate public opinion, or cause harm to individuals, groups, or institutions." .
+
+cso:StateSponsoredPropaganda a owl:Class ;
+    rdfs:label "State-Sponsored Propaganda" ;
+    rdfs:subClassOf cso:Disinformation ;
+    rdfs:comment "Coordinated spread of biased or false information by government actors to shape public opinion, justify policies, or undermine adversaries." .
+
+cso:ConspiracyTheoryPromotion a owl:Class ;
+    rdfs:label "Conspiracy Theory Promotion" ;
+    rdfs:subClassOf cso:Disinformation ;
+    rdfs:comment "Deliberate amplification of unsubstantiated explanations for events that attribute them to secret plots by powerful actors, eroding trust in legitimate institutions." .
+
+cso:DeepfakeDisinformation a owl:Class ;
+    rdfs:label "Deepfake Disinformation" ;
+    rdfs:subClassOf cso:Disinformation ;
+    rdfs:comment "Use of AI-generated synthetic media depicting individuals saying or doing things they did not, created intentionally to deceive and manipulate audiences." .
+
+## Manipulation subcategory
+
+cso:Manipulation a owl:Class ;
+    rdfs:label "Manipulation" ;
+    rdfs:subClassOf cso:FraudAndDeception ;
+    rdfs:comment "Psychological tactics used to influence or control others' thoughts, emotions, or behaviors through deceptive or underhanded means for personal advantage." .
+
+cso:EmotionalManipulation a owl:Class ;
+    rdfs:label "Emotional Manipulation" ;
+    rdfs:subClassOf cso:Manipulation ;
+    rdfs:comment "Exploitation of emotional vulnerabilities through guilt, fear, or affection to control behavior or extract concessions from targets." .
+
+cso:Gaslighting a owl:Class ;
+    rdfs:label "Gaslighting" ;
+    rdfs:subClassOf cso:Manipulation ;
+    rdfs:comment "Systematic psychological manipulation causing victims to question their own perception, memory, or sanity to maintain control or avoid accountability." .
+
+cso:CoerciveControl a owl:Class ;
+    rdfs:label "Coercive Control" ;
+    rdfs:subClassOf cso:Manipulation ;
+    rdfs:comment "Pattern of behavior that seeks to dominate another person through isolation, intimidation, degradation, and control over resources or decision-making." .
+
+## Counterfeiting subcategory
+
+cso:Counterfeiting a owl:Class ;
+    rdfs:label "Counterfeiting" ;
+    rdfs:subClassOf cso:FraudAndDeception ;
+    rdfs:comment "Creation and distribution of fraudulent imitations of documents, currency, or goods with intent to deceive about authenticity or legitimacy." .
+
+cso:DocumentForgery a owl:Class ;
+    rdfs:label "Document Forgery" ;
+    rdfs:subClassOf cso:Counterfeiting ;
+    rdfs:comment "Creation or alteration of documents such as identification papers, contracts, or credentials to fraudulently represent authorization, identity, or authenticity." .
+
+cso:CurrencyCounterfeiting a owl:Class ;
+    rdfs:label "Currency Counterfeiting" ;
+    rdfs:subClassOf cso:Counterfeiting ;
+    rdfs:comment "Production of fake money or financial instruments designed to pass as legitimate currency and defraud economic systems or individuals." .
+
+## Direct child of FraudAndDeception
+
+cso:AcademicDishonesty a owl:Class ;
+    rdfs:label "Academic Dishonesty" ;
+    rdfs:subClassOf cso:FraudAndDeception ;
+    rdfs:comment "Deceptive practices in academic contexts, including plagiarism, cheating on examinations, fabrication of research data, or unauthorized collaboration." .
