@@ -221,7 +221,7 @@ def test_compute_adversarial_metrics_empty():
 
 import yaml
 import json
-from refiner.evaluate import run_evaluation, format_summary, _discover_file
+from refiner.evaluate import run_evaluation, format_summary, build_html_report, _discover_file
 
 
 def test_discover_file_single_match(tmp_path):
@@ -421,6 +421,22 @@ def test_format_summary_all_sections():
     assert "Judge" in result
 
 
+def test_build_html_report(tmp_path):
+    evaluation = {
+        "run": {"policy_set": "test.json", "model": "m", "timestamp": "t", "stages_completed": ["classify"]},
+        "stage_quality": {"classify": {"type_distribution": {"A": 2}}},
+        "coverage": {"policy": [{"policy_concept": "Fraud", "risks_matched": 1, "total_axes": 2,
+                                  "axes_with_enumerations": 1, "total_enumerations": 3}]},
+    }
+    html_path = tmp_path / "report.html"
+    build_html_report(evaluation, html_path)
+    assert html_path.exists()
+    content = html_path.read_text()
+    assert "reportApp" in content
+    assert '"policy_set": "test.json"' in content
+    assert "__REPORT_DATA__" not in content
+
+
 from typer.testing import CliRunner
 from refiner.cli import app
 
@@ -432,10 +448,33 @@ def test_evaluate_cli_minimal(tmp_path):
     result = _cli_runner.invoke(app, ["evaluate", str(tmp_path)])
     assert result.exit_code == 0, result.output
     assert "Evaluation:" in result.output
-    eval_files = list(tmp_path.glob("*-evaluation.yaml"))
+    eval_files = list(tmp_path.glob("*-evaluation.json"))
     assert len(eval_files) == 1
+    html_files = list(tmp_path.glob("*-evaluation.html"))
+    assert len(html_files) == 1
 
 
 def test_evaluate_cli_nonexistent_dir():
     result = _cli_runner.invoke(app, ["evaluate", "/nonexistent/path"])
     assert result.exit_code != 0
+
+
+def test_run_evaluation_enriched_policies(tmp_path):
+    report = {"model": "test", "policy_set": "test", "timestamp": "2026-01-01",
+              "stages_completed": ["classify"], "events": []}
+    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+
+    enriched = {
+        "airo_version": "0.2",
+        "organization": "Test",
+        "domain": "healthcare",
+        "policies": [
+            {"policy_concept": "PHI", "concept_definition": "No PII"},
+        ],
+    }
+    policies_path = tmp_path / "enriched.json"
+    policies_path.write_text(json.dumps(enriched))
+
+    from refiner.evaluate import run_evaluation
+    result = run_evaluation(tmp_path, policies_path=policies_path)
+    assert result["run"]["model"] == "test"

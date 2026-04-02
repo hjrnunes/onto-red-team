@@ -261,11 +261,11 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
     per_policy: dict[str, int] = defaultdict(int)
 
     for row in rows:
-        prompt = row.get("prompt", "")
+        prompt = row.get("prompt") or ""
         tokens = prompt.lower().split()
         all_tokens.extend(tokens)
         prompt_lengths.append(len(tokens))
-        per_policy[row.get("policy_concept", "unknown")] += 1
+        per_policy[row.get("policy_concept") or "unknown"] += 1
         if _RED_FLAG_RE.search(prompt):
             red_flag_count += 1
         prompt_lower = prompt.lower()
@@ -324,7 +324,13 @@ def run_evaluation(
     all_policies = None
     if policies_path and policies_path.exists():
         raw_policies = json.loads(policies_path.read_text())
-        all_policies = {p["policy_concept"]: p["concept_definition"] for p in raw_policies}
+        if isinstance(raw_policies, list):
+            all_policies = {p["policy_concept"]: p["concept_definition"] for p in raw_policies}
+        else:
+            all_policies = {
+                p["policy_concept"]: p["concept_definition"]
+                for p in raw_policies.get("policies", [])
+            }
 
     profiles = dc_data.get("profiles", [])
     emit_rows = None
@@ -355,6 +361,14 @@ def run_evaluation(
         result["prompt_metrics"] = compute_adversarial_metrics(adv_rows)
 
     return result
+
+
+def build_html_report(evaluation: dict, output_path: Path) -> None:
+    """Build a self-contained HTML report from evaluation data."""
+    template_path = Path(__file__).parent / "evaluation_report_template.html"
+    template = template_path.read_text()
+    html = template.replace("__REPORT_DATA__", json.dumps(evaluation))
+    output_path.write_text(html)
 
 
 def format_summary(evaluation: dict) -> str:
