@@ -228,3 +228,55 @@ def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_r
     policies = call_args[0][0]
     assert len(policies) == 1
     assert policies[0].policy_concept == "Fraud"
+
+
+@patch("refiner.cli.create_client")
+def test_ingest_then_run_integration(mock_create_client, tmp_path, monkeypatch):
+    """Full workflow: ingest flat JSON → enriched JSON → refiner run accepts it."""
+    from refiner.stages.ingest import _SlimContext, _SlimEnrichmentList, _SlimEnrichment, _SlimBoundaryExample
+    from refiner.models import PolicyDocument
+
+    monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
+    monkeypatch.setenv("REFINER_MODEL", "test-model")
+
+    # Create flat JSON
+    flat_json = tmp_path / "policies.json"
+    flat_json.write_text(json.dumps([
+        {"policy_concept": "Fraud", "concept_definition": "About fraud"},
+    ]))
+
+    # Mock client for ingest
+    mock_client = MagicMock()
+    mock_create_client.return_value = mock_client
+    mock_client.chat.completions.create.side_effect = [
+        _SlimContext(
+            organization="Bank", domain="finance", purpose=["services"],
+            ai_systems=["ChatBot"], ai_users=["staff"], ai_subjects=["customers"],
+            governing_regulations=[], named_entities=[],
+        ),
+        _SlimEnrichmentList(enrichments=[
+            _SlimEnrichment(
+                policy_concept="Fraud",
+                boundary_examples=[
+                    _SlimBoundaryExample(prohibited="commit fraud", acceptable="report fraud")
+                ],
+                acceptable_uses=["fraud reporting"],
+                risk_controls=[], human_involvement="",
+            ),
+        ]),
+    ]
+
+    enriched = tmp_path / "enriched.json"
+    result = runner.invoke(app, ["ingest", str(flat_json), "-o", str(enriched)])
+    assert result.exit_code == 0, result.output
+    assert enriched.exists()
+
+    # Verify enriched file is valid PolicyDocument
+    data = json.loads(enriched.read_text())
+    assert data["organization"] == "Bank"
+    assert data["policies"][0]["boundary_examples"][0]["prohibited"] == "commit fraud"
+
+    # Verify refiner run would accept this file
+    doc = PolicyDocument(**data)
+    assert len(doc.policies) == 1
+    assert doc.policies[0].policy_concept == "Fraud"
