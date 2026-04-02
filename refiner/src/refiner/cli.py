@@ -8,20 +8,82 @@ import yaml
 
 from refiner import debug
 from refiner.llm import LLMConfig, create_client
-from refiner.models import Policy, RunReport
+from refiner.models import Policy, PolicyDocument, RunReport
 from refiner.pipeline import run_pipeline, STAGES
 from refiner.stages.structure import structure
 
 app = typer.Typer()
 
+INGEST_PASSES = ("context", "policies", "enrichment")
 
-def _create_risk_handlers() -> dict:
+
+@app.command()
+def ingest(
+    document: Path = typer.Argument(..., help="Policy document (.md/.txt) or flat JSON (.json)"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output path (default: <stem>-enriched.json)"),
+    base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL", help="LLM API base URL"),
+    model: str = typer.Option(None, "--model", envvar="REFINER_MODEL", help="LLM model name"),
+    api_key: str = typer.Option("none", "--api-key", envvar="REFINER_API_KEY", help="LLM API key"),
+    debug_dir: Path = typer.Option(None, "--debug", help="Directory for per-call debug logs"),
+    skip_enrichment: bool = typer.Option(False, "--skip-enrichment", help="Skip boundary enrichment (Pass 3)"),
+    domain: str = typer.Option(None, "--domain", help="Override inferred domain"),
+    organization: str = typer.Option(None, "--organization", help="Override inferred organization"),
+    until: str = typer.Option(None, "--until", help=f"Run up to this pass: {', '.join(INGEST_PASSES)}"),
+):
+    """Ingest a policy document or flat JSON into enriched PolicyDocument format."""
+    if not document.exists():
+        typer.echo(f"Error: {document} does not exist", err=True)
+        raise typer.Exit(1)
+
+    if until and until not in INGEST_PASSES:
+        typer.echo(f"Error: --until must be one of: {', '.join(INGEST_PASSES)}", err=True)
+        raise typer.Exit(1)
+
+    if not base_url or not model:
+        typer.echo("Error: --base-url and --model are required (or set REFINER_BASE_URL / REFINER_MODEL)", err=True)
+        raise typer.Exit(1)
+
+    # Detect input format
+    document_text = document.read_text()
+    if document.suffix == ".json":
+        raw = json.loads(document_text)
+        if isinstance(raw, dict) and "policies" in raw:
+            typer.echo("Error: Already an enriched PolicyDocument — use 'refiner run' directly.", err=True)
+            raise typer.Exit(1)
+        input_format = "json_array"
+    else:
+        input_format = "markdown"
+
+    config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
+    client = create_client(config)
+    debug.configure(debug_dir)
+
+    report = RunReport(
+        model=config.model,
+        policy_set=document.name,
+        timestamp=datetime.now(timezone.utc).isoformat(),
+    )
+
+    from refiner.stages.ingest import ingest as do_ingest
+    result = do_ingest(
+        document_text, input_format, client, config,
+        skip_enrichment=skip_enrichment, until=until,
+        domain_override=domain, organization_override=organization,
+        report=report,
+    )
+
+    out_path = output or document.with_stem(f"{document.stem}-enriched").with_suffix(".json")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    out_path.write_text(json.dumps(result.model_dump(), indent=2))
+    typer.echo(f"Enriched PolicyDocument written to {out_path}")
+    typer.echo(f"  Organization: {result.organization}")
+    typer.echo(f"  Domain: {result.domain}")
+    typer.echo(f"  Policies: {len(result.policies)}")
+
+
+def _create_risk_handlers(nexus_base_dir: str, nexus_chroma_dir: Path) -> dict:
     from nexus_mcp.server import create_tool_handlers
     from nexus_mcp.risk_index import RiskIndex
-    nexus_base_dir = os.environ.get("NEXUS_BASE_DIR")
-    if not nexus_base_dir:
-        typer.echo("Error: NEXUS_BASE_DIR environment variable must be set", err=True)
-        raise typer.Exit(1)
     from ai_atlas_nexus import AIAtlasNexus
     nexus = AIAtlasNexus(base_dir=nexus_base_dir)
     all_risks = nexus.get_all_risks()
@@ -30,7 +92,7 @@ def _create_risk_handlers() -> dict:
     actions_by_id = {a.id: a for a in all_actions}
     taxonomies = nexus.get_all_taxonomies()
     groups = nexus.get_all("groups")
-    chroma_dir = Path(os.environ.get("NEXUS_CHROMA_DIR", ".chroma"))
+    chroma_dir = nexus_chroma_dir
     chroma_dir.mkdir(parents=True, exist_ok=True)
     idx = RiskIndex(chroma_dir)
     if idx.needs_reindex(len(all_risks)):
@@ -41,10 +103,9 @@ def _create_risk_handlers() -> dict:
     )
 
 
-def _create_onto_handlers() -> dict:
+def _create_onto_handlers(ontoquery_chroma_dir: Path) -> dict:
     from ontoquery.mcp_server import create_tool_handlers
-    chroma_dir = Path(os.environ.get("ONTOQUERY_CHROMA_DIR", ".chroma"))
-    return create_tool_handlers(chroma_dir)
+    return create_tool_handlers(ontoquery_chroma_dir)
 
 
 @app.command()
@@ -53,6 +114,12 @@ def run(
     until: str = typer.Option(None, "--until", help=f"Run up to this stage: {', '.join(STAGES)}"),
     output_dir: Path = typer.Option(None, "--output", "-o", help="Output directory (default: current dir)"),
     debug_dir: Path = typer.Option(None, "--debug", help="Directory for per-call debug logs (prompts + responses)"),
+    base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL", help="LLM API base URL"),
+    model: str = typer.Option(None, "--model", envvar="REFINER_MODEL", help="LLM model name"),
+    api_key: str = typer.Option("none", "--api-key", envvar="REFINER_API_KEY", help="LLM API key"),
+    nexus_base_dir: str = typer.Option(None, "--nexus-base-dir", envvar="NEXUS_BASE_DIR", help="Path to ai-atlas-nexus repo"),
+    ontoquery_chroma_dir: Path = typer.Option(Path(".chroma"), "--ontoquery-chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="Ontoquery ChromaDB directory"),
+    nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR", help="Nexus ChromaDB directory"),
 ):
     """Run the refiner pipeline on a policy JSON file."""
     if not policy_json.exists():
@@ -68,14 +135,11 @@ def run(
     policies = [Policy(**p) for p in raw]
     typer.echo(f"Loaded {len(policies)} policies from {policy_json.name}")
 
-    # Config from environment
-    base_url = os.environ.get("REFINER_BASE_URL")
-    model = os.environ.get("REFINER_MODEL")
     if not base_url or not model:
-        typer.echo("Error: REFINER_BASE_URL and REFINER_MODEL must be set", err=True)
+        typer.echo("Error: --base-url and --model are required (or set REFINER_BASE_URL / REFINER_MODEL)", err=True)
         raise typer.Exit(1)
 
-    config = LLMConfig(base_url=base_url, model=model)
+    config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
     client = create_client(config)
     debug.configure(debug_dir)
 
@@ -89,8 +153,14 @@ def run(
     # Create handlers — only load what's needed for the requested stages
     needs_risk = until not in ("classify", "identify_domains")
     needs_onto = until not in ("classify", "identify_domains", "map_risks")
-    risk_handlers = _create_risk_handlers() if needs_risk else {}
-    onto_handlers = _create_onto_handlers() if needs_onto else {}
+    if needs_risk:
+        if not nexus_base_dir:
+            typer.echo("Error: --nexus-base-dir is required (or set NEXUS_BASE_DIR)", err=True)
+            raise typer.Exit(1)
+        risk_handlers = _create_risk_handlers(nexus_base_dir, nexus_chroma_dir)
+    else:
+        risk_handlers = {}
+    onto_handlers = _create_onto_handlers(ontoquery_chroma_dir) if needs_onto else {}
 
     # Run pipeline
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")
@@ -102,6 +172,33 @@ def run(
     client_slug = policy_json.stem
 
     if state.domain_context is not None and state.classifications is not None and state.risk_mappings is not None:
+        # Enrich domain context profiles with risk details and cross-mappings
+        from refiner.stages.identify_domains import derive_source_ontology
+        FRAMEWORK_LABELS = {
+            "ibm-risk-atlas": "IBM Risk Atlas",
+            "owasp-llm": "OWASP LLM Top 10",
+            "nist-ai-rmf": "NIST AI RMF",
+            "air-2024": "AIR 2024",
+            "mit-ai-risk": "MIT AI Risk Repository",
+            "ailuminate": "AILuminate",
+            "credo": "Credo",
+            "aiuc": "AIUC-1",
+            "csiro": "CSIRO",
+        }
+        for profile in state.domain_context:
+            if state.risk_details:
+                details = state.risk_details.get(profile.risk_id, {})
+                profile.risk_description = details.get("description") or ""
+                profile.risk_concern = details.get("concern") or ""
+                taxonomy_id = details.get("taxonomy", "")
+                profile.risk_framework = taxonomy_id
+                for prefix, label in FRAMEWORK_LABELS.items():
+                    if profile.risk_id.startswith(prefix):
+                        profile.risk_framework = label
+                        break
+            if state.related_risks:
+                profile.cross_mappings = state.related_risks.get(profile.risk_id, [])
+
         # Validate cross-mapping targets against all risk IDs shown to the model
         valid_ids = state.seen_risk_ids
         taxonomy, profiles = structure(
@@ -182,7 +279,7 @@ def evaluate(
     judge_base_url: str = typer.Option(None, "--judge-base-url", help="Judge model API base URL"),
     judge_api_key: str = typer.Option(None, "--judge-api-key", help="Judge model API key"),
     judge_sample: int = typer.Option(None, "--judge-sample", help="Score only N random prompts"),
-    output: Path = typer.Option(None, "--output", "-o", help="Output evaluation YAML path"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output evaluation JSON path"),
 ):
     """Evaluate pipeline outputs with metrics and optional judge scoring."""
     if not output_dir.is_dir():
@@ -246,11 +343,16 @@ def evaluate(
     out_path = output
     if out_path is None:
         slug = evaluation.get("run", {}).get("policy_set", "eval").replace(".json", "")
-        out_path = output_dir / f"{slug}-evaluation.yaml"
+        out_path = output_dir / f"{slug}-evaluation.json"
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(yaml.dump(evaluation, default_flow_style=False, sort_keys=False))
+    out_path.write_text(json.dumps(evaluation, indent=2))
     typer.echo(f"Written to {out_path}")
+
+    from refiner.evaluate import build_html_report
+    html_path = out_path.with_suffix(".html")
+    build_html_report(evaluation, html_path)
+    typer.echo(f"HTML report written to {html_path}")
 
 
 if __name__ == "__main__":

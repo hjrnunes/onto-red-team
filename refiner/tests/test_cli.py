@@ -54,6 +54,7 @@ def _make_completed_state():
 def test_cli_run_full_pipeline(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
+    monkeypatch.setenv("NEXUS_BASE_DIR", "/tmp/nexus")
 
     policy_file = _make_policy_file(tmp_path)
     mock_run.return_value = _make_completed_state()
@@ -87,3 +88,96 @@ def test_cli_run_with_until(mock_run, mock_create_client, mock_onto, mock_risk, 
     assert result.exit_code == 0, result.output
     call_kwargs = mock_run.call_args.kwargs
     assert call_kwargs.get("until") == "classify"
+
+
+@patch("refiner.cli.create_client")
+def test_cli_ingest_markdown(mock_create_client, tmp_path, monkeypatch):
+    from refiner.stages.ingest import _SlimContext, _SlimPolicyList, _SlimPolicy, _SlimEnrichmentList, _SlimEnrichment, _SlimBoundaryExample
+
+    monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
+    monkeypatch.setenv("REFINER_MODEL", "test-model")
+
+    doc = tmp_path / "policy.md"
+    doc.write_text("# Test Policy\nAI must not do bad things.")
+
+    mock_client = MagicMock()
+    mock_create_client.return_value = mock_client
+    mock_client.chat.completions.create.side_effect = [
+        _SlimContext(
+            organization="Test", domain="general", purpose=[], ai_systems=[],
+            ai_users=[], ai_subjects=[], governing_regulations=[], named_entities=[],
+        ),
+        _SlimPolicyList(policies=[
+            _SlimPolicy(policy_concept="Safety", concept_definition="No harm"),
+        ]),
+        _SlimEnrichmentList(enrichments=[
+            _SlimEnrichment(
+                policy_concept="Safety",
+                boundary_examples=[
+                    _SlimBoundaryExample(prohibited="cause harm", acceptable="discuss safety")
+                ],
+                acceptable_uses=[], risk_controls=[], human_involvement="",
+            ),
+        ]),
+    ]
+
+    out = tmp_path / "output.json"
+    result = runner.invoke(app, [
+        "ingest", str(doc), "-o", str(out),
+    ])
+    assert result.exit_code == 0, result.output
+    assert out.exists()
+
+    data = json.loads(out.read_text())
+    assert data["organization"] == "Test"
+    assert len(data["policies"]) == 1
+
+
+@patch("refiner.cli.create_client")
+def test_cli_ingest_json(mock_create_client, tmp_path, monkeypatch):
+    from refiner.stages.ingest import _SlimContext, _SlimEnrichmentList
+
+    monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
+    monkeypatch.setenv("REFINER_MODEL", "test-model")
+
+    policy_file = tmp_path / "policies.json"
+    policy_file.write_text(json.dumps([
+        {"policy_concept": "Fraud", "concept_definition": "About fraud"},
+    ]))
+
+    mock_client = MagicMock()
+    mock_create_client.return_value = mock_client
+    mock_client.chat.completions.create.side_effect = [
+        _SlimContext(
+            organization="Bank", domain="finance", purpose=[], ai_systems=[],
+            ai_users=[], ai_subjects=[], governing_regulations=[], named_entities=[],
+        ),
+        _SlimEnrichmentList(enrichments=[]),
+    ]
+
+    out = tmp_path / "enriched.json"
+    result = runner.invoke(app, [
+        "ingest", str(policy_file), "-o", str(out),
+    ])
+    assert result.exit_code == 0, result.output
+
+    data = json.loads(out.read_text())
+    assert data["domain"] == "finance"
+    assert data["policies"][0]["policy_concept"] == "Fraud"
+
+
+def test_cli_ingest_already_enriched(tmp_path, monkeypatch):
+    monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
+    monkeypatch.setenv("REFINER_MODEL", "test-model")
+
+    enriched = tmp_path / "enriched.json"
+    enriched.write_text(json.dumps({
+        "airo_version": "0.2",
+        "organization": "Test",
+        "domain": "general",
+        "policies": [{"policy_concept": "X", "concept_definition": "Y"}],
+    }))
+
+    result = runner.invoke(app, ["ingest", str(enriched)])
+    assert result.exit_code == 1
+    assert "Already an enriched PolicyDocument" in result.output
