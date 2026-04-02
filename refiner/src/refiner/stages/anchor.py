@@ -13,17 +13,16 @@ from refiner.stages.identify_domains import derive_source_ontology
 
 logger = logging.getLogger(__name__)
 
-# BFO/CCO category → semantic roles mapping.
-# More specific CCO categories are checked first (via superclass walk),
-# falling back to broader BFO categories.
-# For non-BFO ontologies (FIBO, Commons), the walk won't hit these,
-# so we fall back to the LLM-assigned role.
+# BFO/CCO/Commons category → semantic roles mapping.
+# More specific categories are checked first (via superclass walk),
+# falling back to broader categories.
 _CATEGORY_ROLES: dict[str, list[str]] = {
     # CCO categories (more specific — checked first)
     "https://www.commoncoreontologies.org/ont00001017": ["agent"],               # Agent
     "https://www.commoncoreontologies.org/ont00000995": ["object", "instrument"],  # Material Artifact
     "https://www.commoncoreontologies.org/ont00000005": ["object"],               # Act (process)
     "https://www.commoncoreontologies.org/ont00000958": ["object", "instrument"],  # Information Content Entity
+    "https://www.commoncoreontologies.org/ont00000192": ["location"],             # Facility (not bridged — Material Artifact, not spatial)
     # BFO categories (broader fallback)
     "http://purl.obolibrary.org/obo/BFO_0000040": ["agent", "object"],   # material entity
     "http://purl.obolibrary.org/obo/BFO_0000015": ["object"],            # process
@@ -35,11 +34,26 @@ _CATEGORY_ROLES: dict[str, list[str]] = {
     "http://purl.obolibrary.org/obo/BFO_0000006": ["location"],          # spatial region
     "http://purl.obolibrary.org/obo/BFO_0000141": ["location"],          # immaterial entity
     "http://purl.obolibrary.org/obo/BFO_0000008": ["temporal"],          # temporal region
+    # Commons categories (reached via FIBO superclass chains)
+    "https://www.omg.org/spec/Commons/PartiesAndSituations/Agent": ["agent"],
+    "https://www.omg.org/spec/Commons/PartiesAndSituations/Party": ["agent"],
+    "https://www.omg.org/spec/Commons/PartiesAndSituations/PartyRole": ["agent"],
+    "https://www.omg.org/spec/Commons/RolesAndCompositions/Role": ["agent"],
+    "https://www.omg.org/spec/Commons/RolesAndCompositions/FunctionalRole": ["agent", "instrument"],
+    "https://www.omg.org/spec/Commons/RolesAndCompositions/StructuralRole": ["agent"],
+    "https://www.omg.org/spec/Commons/Organizations/Organization": ["agent"],
+    "https://www.omg.org/spec/Commons/Organizations/FormalOrganization": ["agent"],
+    "https://www.omg.org/spec/Commons/Organizations/LegalEntity": ["agent"],
+    "https://www.omg.org/spec/Commons/Organizations/LegalPerson": ["agent"],
+    "https://www.omg.org/spec/Commons/Documents/Document": ["object"],
+    "https://www.omg.org/spec/Commons/Documents/LegalDocument": ["object"],
+    "https://www.omg.org/spec/Commons/Identifiers/Identifier": ["object", "instrument"],
+    "https://www.omg.org/spec/Commons/Locations/Location": ["location"],
 }
 
 
 def derive_roles(class_uri: str, onto_handlers: dict, max_depth: int = 10) -> list[str] | None:
-    """Walk superclass chain looking for BFO/CCO categories. Returns roles or None."""
+    """Walk superclass chain looking for BFO/CCO/Commons categories. Returns roles or None."""
     visited = {class_uri}
     current = class_uri
 

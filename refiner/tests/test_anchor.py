@@ -186,6 +186,67 @@ def test_derive_roles_multi_hop(mock_onto_handlers):
     assert roles == ["location"]
 
 
+def test_derive_roles_commons_agent(mock_onto_handlers):
+    """FIBO class walking to Commons Agent should get ['agent'] roles."""
+    mock_onto_handlers["get_superclasses"].side_effect = lambda uri: {
+        "http://example.org/FiboBank": [{"uri": "https://www.omg.org/spec/Commons/Organizations/FormalOrganization", "label": "FormalOrganization"}],
+    }.get(uri, [])
+    roles = derive_roles("http://example.org/FiboBank", mock_onto_handlers)
+    assert roles == ["agent"]
+
+
+def test_derive_roles_commons_document(mock_onto_handlers):
+    """FIBO class walking to Commons Document should get ['object'] roles."""
+    mock_onto_handlers["get_superclasses"].side_effect = lambda uri: {
+        "http://example.org/FiboContract": [{"uri": "https://www.omg.org/spec/Commons/Documents/LegalDocument", "label": "LegalDocument"}],
+    }.get(uri, [])
+    roles = derive_roles("http://example.org/FiboContract", mock_onto_handlers)
+    assert roles == ["object"]
+
+
+def test_derive_roles_commons_location(mock_onto_handlers):
+    """FIBO class walking to Commons Location should get ['location'] roles."""
+    mock_onto_handlers["get_superclasses"].side_effect = lambda uri: {
+        "http://example.org/FiboCountry": [{"uri": "https://www.omg.org/spec/Commons/Locations/Location", "label": "Location"}],
+    }.get(uri, [])
+    roles = derive_roles("http://example.org/FiboCountry", mock_onto_handlers)
+    assert roles == ["location"]
+
+
+def test_derive_roles_commons_functional_role(mock_onto_handlers):
+    """FIBO class walking to Commons FunctionalRole should get ['agent', 'instrument']."""
+    mock_onto_handlers["get_superclasses"].side_effect = lambda uri: {
+        "http://example.org/FiboLendingOfficer": [{"uri": "https://www.omg.org/spec/Commons/RolesAndCompositions/FunctionalRole", "label": "FunctionalRole"}],
+    }.get(uri, [])
+    roles = derive_roles("http://example.org/FiboLendingOfficer", mock_onto_handlers)
+    assert roles == ["agent", "instrument"]
+
+
+def test_derive_roles_commons_identifier(mock_onto_handlers):
+    """FIBO class walking to Commons Identifier should get ['object', 'instrument']."""
+    mock_onto_handlers["get_superclasses"].side_effect = lambda uri: {
+        "http://example.org/FiboLEI": [{"uri": "https://www.omg.org/spec/Commons/Identifiers/Identifier", "label": "Identifier"}],
+    }.get(uri, [])
+    roles = derive_roles("http://example.org/FiboLEI", mock_onto_handlers)
+    assert roles == ["object", "instrument"]
+
+
+def test_derive_roles_facility_direct(mock_onto_handlers):
+    """CCO Facility should get ['location'] via direct _CATEGORY_ROLES entry (no bridge axiom)."""
+    roles = derive_roles("https://www.commoncoreontologies.org/ont00000192", mock_onto_handlers)
+    assert roles == ["location"]
+
+
+def test_derive_roles_commons_multi_hop(mock_onto_handlers):
+    """FIBO class 2 hops from Commons should still resolve roles."""
+    mock_onto_handlers["get_superclasses"].side_effect = lambda uri: {
+        "http://example.org/FiboCorp": [{"uri": "http://example.org/FiboLegalEntity", "label": "LegalEntity"}],
+        "http://example.org/FiboLegalEntity": [{"uri": "https://www.omg.org/spec/Commons/Organizations/LegalEntity", "label": "LegalEntity"}],
+    }.get(uri, [])
+    roles = derive_roles("http://example.org/FiboCorp", mock_onto_handlers)
+    assert roles == ["agent"]
+
+
 def test_anchor_derives_roles_from_bfo(mock_client, mock_config, mock_onto_handlers):
     """When BFO ancestor exists, anchor uses derived roles instead of LLM's."""
     mappings = [_make_mapping()]
