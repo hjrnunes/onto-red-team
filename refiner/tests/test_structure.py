@@ -192,3 +192,69 @@ def test_structure_no_report_works():
     taxonomy, profiles = structure("swb", classifications, risk_mappings, domain_context,
                                     related_risks=related_risks)
     assert len(taxonomy["entries"]) > 0
+
+
+def test_structure_includes_domain_context_summary():
+    """Taxonomy entries include domain_context_summary from matching profiles."""
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks)
+    fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
+    assert "domain_context_summary" in fraud_entry
+    summary = fraud_entry["domain_context_summary"]
+    assert summary["axis_count"] == 1
+    assert summary["enumeration_count"] == 1
+    assert "CCO" in summary["source_ontologies"]
+    assert len(summary["axes"]) == 1
+    assert summary["axes"][0]["class"] == "Person"
+
+
+def test_structure_no_summary_when_no_matching_profile():
+    """Entries without matching domain context profiles have no summary."""
+    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+                            related_risks=related_risks)
+    disclosure_entry = next(e for e in taxonomy["entries"] if "data-disclosure" in e["id"])
+    # No domain context profile for atlas-data-disclosure in _make_state_data
+    assert "domain_context_summary" not in disclosure_entry
+
+
+def test_structure_summary_with_multiple_axes():
+    """Summary correctly aggregates across multiple axes."""
+    classifications = [
+        PolicyClassification(
+            policy_concept="Fraud", concept_definition="d", policy_type="A", justification="j",
+        ),
+    ]
+    risk_mappings = [
+        PolicyRiskMapping(
+            policy_concept="Fraud", policy_type="A",
+            matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
+        ),
+    ]
+    domain_context = [
+        DomainContextProfile(
+            risk_id="atlas-fraud", risk_name="Fraud", policy_concept="Fraud",
+            axes=[
+                DomainContextAxis(
+                    cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
+                    enumerations=[
+                        AxisEnumeration(class_uri="http://example.org/E1", class_label="E1", source_ontology="CCO", relevance="high"),
+                        AxisEnumeration(class_uri="http://example.org/E2", class_label="E2", source_ontology="CCO", relevance="medium"),
+                    ],
+                ),
+                DomainContextAxis(
+                    cco_class_uri="http://example.org/Instrument", cco_class_label="Instrument", roles=["instrument"],
+                    enumerations=[
+                        AxisEnumeration(class_uri="http://example.org/E3", class_label="E3", source_ontology="FIBO", relevance="high"),
+                    ],
+                ),
+            ],
+        ),
+    ]
+    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context)
+    fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
+    summary = fraud_entry["domain_context_summary"]
+    assert summary["axis_count"] == 2
+    assert summary["enumeration_count"] == 3
+    assert sorted(summary["source_ontologies"]) == ["CCO", "FIBO"]

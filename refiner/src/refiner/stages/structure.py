@@ -37,6 +37,12 @@ def structure(
 ) -> tuple[dict, dict]:
     taxonomy_id = f"client-{client_slug}"
 
+    # Build lookup from risk_id to domain context profile
+    dc_by_risk_id: dict[str, DomainContextProfile] = {}
+    for p in domain_context:
+        if p.risk_id not in dc_by_risk_id:
+            dc_by_risk_id[p.risk_id] = p
+
     # Determine which policy types are present
     policy_types_present = {c.policy_type for c in classifications}
 
@@ -86,6 +92,31 @@ def structure(
                     existing = entry.get(key, [])
                     if target_id not in existing:
                         entry.setdefault(key, []).append(target_id)
+
+            # Attach domain context summary (only on first encounter of this entry)
+            if "domain_context_summary" not in entry:
+                profile = dc_by_risk_id.get(rm.risk_id)
+                if profile and profile.axes:
+                    axes_summary = []
+                    all_ontologies: set[str] = set()
+                    total_enums = 0
+                    for axis in profile.axes:
+                        enum_count = len(axis.enumerations)
+                        total_enums += enum_count
+                        for e in axis.enumerations:
+                            all_ontologies.add(e.source_ontology)
+                        axes_summary.append({
+                            "class": axis.cco_class_label,
+                            "uri": axis.cco_class_uri,
+                            "roles": axis.roles,
+                            "enumeration_count": enum_count,
+                        })
+                    entry["domain_context_summary"] = {
+                        "axis_count": len(axes_summary),
+                        "enumeration_count": total_enums,
+                        "source_ontologies": sorted(all_ontologies),
+                        "axes": axes_summary,
+                    }
     entries = list(entries_by_id.values())
 
     taxonomy = {
