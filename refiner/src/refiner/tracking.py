@@ -153,3 +153,118 @@ def read_run_id(output_dir: Path) -> str | None:
     if path.exists():
         return path.read_text().strip()
     return None
+
+
+def _extract_params(evaluation: dict) -> dict[str, str]:
+    """Extract MLflow parameters from evaluation dict.
+
+    Args:
+        evaluation: Evaluation dict from run_evaluation()
+
+    Returns:
+        Dict of string parameters (model, policy_set, selected_domains, git_sha, git_dirty)
+    """
+    run = evaluation.get("run", {})
+    git_sha, git_dirty = _get_git_context()
+    domains = (
+        evaluation.get("stage_quality", {})
+        .get("identify_domains", {})
+        .get("selected_domains", [])
+    )
+    return {
+        "model": run.get("model", "unknown"),
+        "policy_set": run.get("policy_set", "unknown"),
+        "selected_domains": ",".join(domains),
+        "git_sha": git_sha,
+        "git_dirty": str(git_dirty),
+    }
+
+
+def _extract_tags(evaluation: dict, description: str | None) -> dict[str, str]:
+    """Extract MLflow tags from evaluation dict.
+
+    Args:
+        evaluation: Evaluation dict from run_evaluation()
+        description: Optional run description
+
+    Returns:
+        Dict of string tags (timestamp, stages_completed, description)
+    """
+    run = evaluation.get("run", {})
+    tags: dict[str, str] = {
+        "timestamp": run.get("timestamp", "unknown"),
+        "stages_completed": ",".join(run.get("stages_completed", [])),
+    }
+    if description:
+        tags["description"] = description
+    return tags
+
+
+def _experiment_name(policy_set: str) -> str:
+    """Derive experiment name from policy set filename.
+
+    Args:
+        policy_set: Policy set filename (e.g., "swb.json")
+
+    Returns:
+        Experiment name (e.g., "swb")
+    """
+    return policy_set.removesuffix(".json")
+
+
+def log_run_to_mlflow(
+    evaluation: dict,
+    output_dir: Path,
+    tracking_uri: str,
+    description: str | None = None,
+    run_id: str | None = None,
+) -> str:
+    """Log pipeline run to MLflow with params, metrics, and artifacts.
+
+    Args:
+        evaluation: Evaluation dict from run_evaluation()
+        output_dir: Pipeline output directory
+        tracking_uri: MLflow tracking server URI
+        description: Optional run description (logged as tag)
+        run_id: Optional existing run ID to append to (for incremental updates)
+
+    Returns:
+        MLflow run ID (new or existing)
+
+    Raises:
+        ImportError: If mlflow is not installed
+    """
+    import mlflow
+
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(_experiment_name(evaluation.get("run", {}).get("policy_set", "unknown")))
+
+    if run_id:
+        mlflow.start_run(run_id=run_id)
+    else:
+        mlflow.start_run()
+
+    try:
+        if not run_id:
+            params = _extract_params(evaluation)
+            mlflow.log_params(params)
+
+        tags = _extract_tags(evaluation, description)
+        mlflow.set_tags(tags)
+
+        metrics = _flatten_metrics(evaluation)
+        if metrics:
+            mlflow.log_metrics(metrics)
+
+        files, dirs = _collect_artifacts(output_dir)
+        for f in files:
+            mlflow.log_artifact(str(f))
+        for d in dirs:
+            mlflow.log_artifacts(str(d), artifact_path=d.name)
+
+        current_run_id = mlflow.active_run().info.run_id
+        mlflow.end_run()
+        return current_run_id
+    except Exception:
+        mlflow.end_run(status="FAILED")
+        raise

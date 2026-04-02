@@ -1,7 +1,7 @@
 """Tests for the tracking module."""
 
 import subprocess
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from refiner.tracking import (
     _collect_artifacts,
@@ -160,3 +160,80 @@ def test_write_and_read_run_id(tmp_path):
 
 def test_read_run_id_missing(tmp_path):
     assert read_run_id(tmp_path) is None
+
+
+def test_extract_params():
+    from refiner.tracking import _extract_params
+
+    evaluation = {
+        "run": {"model": "gemma2-9b", "policy_set": "swb.json"},
+        "stage_quality": {
+            "identify_domains": {"selected_domains": ["FIBO", "CCO"]},
+        },
+    }
+    with patch("refiner.tracking._get_git_context", return_value=("abc123", True)):
+        params = _extract_params(evaluation)
+    assert params["model"] == "gemma2-9b"
+    assert params["policy_set"] == "swb.json"
+    assert params["selected_domains"] == "FIBO,CCO"
+    assert params["git_sha"] == "abc123"
+    assert params["git_dirty"] == "True"
+
+
+def test_extract_params_no_domains():
+    from refiner.tracking import _extract_params
+
+    evaluation = {"run": {"model": "test", "policy_set": "test.json"}}
+    with patch("refiner.tracking._get_git_context", return_value=("unknown", False)):
+        params = _extract_params(evaluation)
+    assert params["selected_domains"] == ""
+
+
+def test_extract_tags_with_description():
+    from refiner.tracking import _extract_tags
+
+    evaluation = {
+        "run": {"timestamp": "2026-04-02T10:00:00Z", "stages_completed": ["classify", "map_risks"]},
+    }
+    tags = _extract_tags(evaluation, description="added sibling fallback")
+    assert tags["description"] == "added sibling fallback"
+    assert tags["timestamp"] == "2026-04-02T10:00:00Z"
+    assert tags["stages_completed"] == "classify,map_risks"
+
+
+def test_extract_tags_no_description():
+    from refiner.tracking import _extract_tags
+
+    evaluation = {"run": {"timestamp": "2026-04-02T10:00:00Z", "stages_completed": []}}
+    tags = _extract_tags(evaluation, description=None)
+    assert "description" not in tags
+
+
+def test_log_run_to_mlflow_new_run(tmp_path):
+    # Create minimal evaluation file and artifacts
+    evaluation = {
+        "run": {"model": "test-model", "policy_set": "test.json",
+                "timestamp": "2026-04-02T10:00:00Z", "stages_completed": ["classify"]},
+        "coverage": {"risk_framework": {"total_matched": 5}},
+    }
+    (tmp_path / "test-evaluation.json").write_text("{}")
+    (tmp_path / "test-taxonomy.yaml").write_text("x")
+
+    mock_mlflow = MagicMock()
+    mock_mlflow.active_run.return_value = MagicMock()
+    mock_mlflow.active_run.return_value.info.run_id = "run-123"
+
+    with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
+        from refiner.tracking import log_run_to_mlflow
+        with patch("refiner.tracking._get_git_context", return_value=("sha123", False)):
+            run_id = log_run_to_mlflow(evaluation, tmp_path, "http://localhost:5000")
+
+    assert run_id == "run-123"
+    mock_mlflow.set_tracking_uri.assert_called_once_with("http://localhost:5000")
+    mock_mlflow.set_experiment.assert_called_once_with("test")
+    mock_mlflow.log_params.assert_called_once()
+    mock_mlflow.set_tags.assert_called_once()
+    mock_mlflow.log_metrics.assert_called_once()
+    # Should have logged 2 artifacts (evaluation.json + taxonomy.yaml)
+    assert mock_mlflow.log_artifact.call_count == 2
+    mock_mlflow.end_run.assert_called_once()
