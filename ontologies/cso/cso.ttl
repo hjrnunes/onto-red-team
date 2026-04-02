@@ -318,3 +318,224 @@ cso:IncitementToHatred a owl:Class ;
     rdfs:label "Incitement to Hatred" ;
     rdfs:subClassOf cso:HateAndDiscrimination ;
     rdfs:comment "Content that deliberately provokes or encourages hostility, violence, or discrimination against a protected group." .
+
+# --- 3. Self-Harm (17 classes) ---
+
+cso:SelfHarm a owl:Class ;
+    rdfs:label "Self-Harm" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Intentional injury to one's own body or mind without suicidal intent, including physical self-injury, disordered eating behaviors, and content that encourages or glorifies such acts." .
+
+## SuicidalIdeation subcategory
+
+cso:SuicidalIdeation a owl:Class ;
+    rdfs:label "Suicidal Ideation" ;
+    rdfs:subClassOf cso:SelfHarm ;
+    rdfs:comment "Thoughts, fantasies, or planning related to ending one's own life, ranging from passive wishes to active preparations." .
+
+cso:PassiveSuicidalIdeation a owl:Class ;
+    rdfs:label "Passive Suicidal Ideation" ;
+    rdfs:subClassOf cso:SuicidalIdeation ;
+    rdfs:comment "Thoughts about death or wishing to be dead without active planning or intent to act on suicidal thoughts." .
+
+cso:ActiveSuicidalPlanning a owl:Class ;
+    rdfs:label "Active Suicidal Planning" ;
+    rdfs:subClassOf cso:SuicidalIdeation ;
+    rdfs:comment "Concrete planning and preparation for suicide, including method selection and timing considerations." .
+
+## SuicideMethods subcategory
+
+cso:SuicideMethods a owl:Class ;
+    rdfs:label "Suicide Methods" ;
+    rdfs:subClassOf cso:SelfHarm ;
+    rdfs:comment "Information or instruction regarding specific means, techniques, or procedures for ending one's life." .
+
+cso:SuicideMethodInstruction a owl:Class ;
+    rdfs:label "Suicide Method Instruction" ;
+    rdfs:subClassOf cso:SuicideMethods ;
+    rdfs:comment "Detailed guidance on how to carry out suicide, including step-by-step procedures or recommendations for lethal means." .
+
+cso:SuicidePactFacilitation a owl:Class ;
+    rdfs:label "Suicide Pact Facilitation" ;
+    rdfs:subClassOf cso:SuicideMethods ;
+    rdfs:comment "Content that arranges, encourages, or coordinates group suicide agreements or collective self-harm acts." .
+
+## NonSuicidalSelfInjury subcategory
+
+cso:NonSuicidalSelfInjury a owl:Class ;
+    rdfs:label "Non-Suicidal Self-Injury" ;
+    rdfs:subClassOf cso:SelfHarm ;
+    rdfs:comment "Intentional damage to one's own body tissue without suicidal intent, often as a maladaptive coping mechanism for emotional distress." .
+
+cso:Cutting a owl:Class ;
+    rdfs:label "Cutting" ;
+    rdfs:subClassOf cso:NonSuicidalSelfInjury ;
+    rdfs:comment "Intentional breaking of the skin using sharp objects such as razors, knives, or broken glass to inflict wounds." .
+
+cso:Burning a owl:Class ;
+    rdfs:label "Burning" ;
+    rdfs:subClassOf cso:NonSuicidalSelfInjury ;
+    rdfs:comment "Intentional application of heat or caustic substances to one's own skin causing tissue damage or scarring." .
+
+cso:SelfPoisoning a owl:Class ;
+    rdfs:label "Self-Poisoning" ;
+    rdfs:subClassOf cso:NonSuicidalSelfInjury ;
+    rdfs:comment "Intentional ingestion or exposure to toxic substances in sub-lethal doses as a form of self-harm rather than suicide attempt." .
+
+## EatingDisorders subcategory
+
+cso:EatingDisorders a owl:Class ;
+    rdfs:label "Eating Disorders" ;
+    rdfs:subClassOf cso:SelfHarm ;
+    rdfs:comment "Content promoting, normalizing, or providing instruction for disordered eating behaviors and unhealthy relationships with food and body image." .
+
+cso:AnorexiaPromotion a owl:Class ;
+    rdfs:label "Anorexia Promotion" ;
+    rdfs:subClassOf cso:EatingDisorders ;
+    rdfs:comment "Content that encourages severe food restriction, starvation, or extreme weight loss as desirable or admirable behaviors." .
+
+cso:BulimiaPromotion a owl:Class ;
+    rdfs:label "Bulimia Promotion" ;
+    rdfs:subClassOf cso:EatingDisorders ;
+    rdfs:comment "Content that encourages binge eating followed by purging through vomiting, laxatives, or excessive exercise." .
+
+cso:ProAnaContent a owl:Class ;
+    rdfs:label "Pro-Ana Content" ;
+    rdfs:subClassOf cso:EatingDisorders ;
+    rdfs:comment "Content glorifying anorexia as a lifestyle choice rather than a disorder, often including tips, inspiration, and community support for disordered eating." .
+
+## Direct children of SelfHarm
+
+cso:SelfHarmGlorification a owl:Class ;
+    rdfs:label "Self-Harm Glorification" ;
+    rdfs:subClassOf cso:SelfHarm ;
+    rdfs:comment "Content that celebrates, romanticizes, or portrays self-injurious behaviors in a positive light, potentially encouraging imitation." .
+
+cso:SelfHarmCommunityFacilitation a owl:Class ;
+    rdfs:label "Self-Harm Community Facilitation" ;
+    rdfs:subClassOf cso:SelfHarm ;
+    rdfs:comment "Content that creates or supports online spaces where individuals share methods, encourage each other's self-destructive behaviors, or normalize self-harm practices." .
+
+# --- 4. Sexual Exploitation (22 classes) ---
+
+cso:SexualExploitation a owl:Class ;
+    rdfs:label "Sexual Exploitation" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Abuse of a position of vulnerability, power differential, or trust for sexual purposes, including trafficking, assault, non-consensual imagery, and exploitation of minors." .
+
+## SexualAssault subcategory
+
+cso:SexualAssault a owl:Class ;
+    rdfs:label "Sexual Assault" ;
+    rdfs:subClassOf cso:SexualExploitation ;
+    rdfs:comment "Sexual contact or behavior that occurs without explicit consent of the victim, including physical force, coercion, or incapacitation." .
+
+cso:Rape a owl:Class ;
+    rdfs:label "Rape" ;
+    rdfs:subClassOf cso:SexualAssault ;
+    rdfs:comment "Non-consensual sexual penetration achieved through force, threat, or incapacitation of the victim." .
+
+cso:DrugFacilitatedAssault a owl:Class ;
+    rdfs:label "Drug-Facilitated Assault" ;
+    rdfs:subClassOf cso:SexualAssault ;
+    rdfs:comment "Sexual assault perpetrated against a victim who is incapacitated by alcohol or drugs, either voluntarily consumed or administered without knowledge." .
+
+cso:CoercedSexualActs a owl:Class ;
+    rdfs:label "Coerced Sexual Acts" ;
+    rdfs:subClassOf cso:SexualAssault ;
+    rdfs:comment "Sexual behavior obtained through psychological pressure, manipulation, threats, or abuse of authority rather than physical force." .
+
+## ChildSexualExploitation subcategory
+
+cso:ChildSexualExploitation a owl:Class ;
+    rdfs:label "Child Sexual Exploitation" ;
+    rdfs:subClassOf cso:SexualExploitation ;
+    rdfs:comment "Sexual abuse and exploitation of individuals under the age of 18, including production of abuse material, grooming, trafficking, and sexualization." .
+
+cso:CSAMProduction a owl:Class ;
+    rdfs:label "CSAM Production" ;
+    rdfs:subClassOf cso:ChildSexualExploitation ;
+    rdfs:comment "Creation, distribution, or possession of child sexual abuse material depicting minors in sexually explicit situations." .
+
+cso:ChildGrooming a owl:Class ;
+    rdfs:label "Child Grooming" ;
+    rdfs:subClassOf cso:ChildSexualExploitation ;
+    rdfs:comment "Deliberate process of building trust and emotional connection with a minor to lower inhibitions and facilitate sexual abuse or exploitation." .
+
+cso:MinorSexualization a owl:Class ;
+    rdfs:label "Minor Sexualization" ;
+    rdfs:subClassOf cso:ChildSexualExploitation ;
+    rdfs:comment "Portrayal of children in sexualized contexts, poses, or clothing that frames them as objects of adult sexual interest." .
+
+cso:ChildTrafficking a owl:Class ;
+    rdfs:label "Child Trafficking" ;
+    rdfs:subClassOf cso:ChildSexualExploitation ;
+    rdfs:comment "Recruitment, transportation, or harboring of minors for sexual exploitation through force, fraud, or coercion." .
+
+## SexTrafficking subcategory
+
+cso:SexTrafficking a owl:Class ;
+    rdfs:label "Sex Trafficking" ;
+    rdfs:subClassOf cso:SexualExploitation ;
+    rdfs:comment "Recruitment, harboring, transportation, or obtaining of individuals through force, fraud, or coercion for commercial sexual exploitation." .
+
+cso:ForcedProstitution a owl:Class ;
+    rdfs:label "Forced Prostitution" ;
+    rdfs:subClassOf cso:SexTrafficking ;
+    rdfs:comment "Coercion of individuals into providing sexual services for commercial exchange against their will through violence, threats, or debt bondage." .
+
+cso:CommercialExploitation a owl:Class ;
+    rdfs:label "Commercial Exploitation" ;
+    rdfs:subClassOf cso:SexTrafficking ;
+    rdfs:comment "Use of individuals in commercial sex industry contexts where economic profit is derived from their sexual exploitation under conditions of coercion or deception." .
+
+## NonConsensualIntimateImagery subcategory
+
+cso:NonConsensualIntimateImagery a owl:Class ;
+    rdfs:label "Non-Consensual Intimate Imagery" ;
+    rdfs:subClassOf cso:SexualExploitation ;
+    rdfs:comment "Creation, distribution, or threat of distributing sexually explicit images or videos without the depicted individual's consent." .
+
+cso:RevengePornography a owl:Class ;
+    rdfs:label "Revenge Pornography" ;
+    rdfs:subClassOf cso:NonConsensualIntimateImagery ;
+    rdfs:comment "Distribution of intimate images or videos without consent, often following relationship breakdown, with intent to humiliate or harm the depicted individual." .
+
+cso:DeepfakePornography a owl:Class ;
+    rdfs:label "Deepfake Pornography" ;
+    rdfs:subClassOf cso:NonConsensualIntimateImagery ;
+    rdfs:comment "Creation of synthetic sexually explicit imagery or video using AI face-swapping or body-mapping technology without the depicted person's consent." .
+
+cso:VoyeuristicContent a owl:Class ;
+    rdfs:label "Voyeuristic Content" ;
+    rdfs:subClassOf cso:NonConsensualIntimateImagery ;
+    rdfs:comment "Imagery captured of individuals in private or intimate situations without their knowledge or consent, such as hidden camera recordings." .
+
+## SexualExploitationHarassment subcategory
+
+cso:SexualExploitationHarassment a owl:Class ;
+    rdfs:label "Sexual Exploitation Harassment" ;
+    rdfs:subClassOf cso:SexualExploitation ;
+    rdfs:comment "Unwanted sexual contact, solicitation, or coercive demands for sexual material or acts, distinct from workplace or identity-based sexual harassment." .
+
+cso:UnwantedSexualSolicitation a owl:Class ;
+    rdfs:label "Unwanted Sexual Solicitation" ;
+    rdfs:subClassOf cso:SexualExploitationHarassment ;
+    rdfs:comment "Persistent or aggressive requests for sexual contact, images, or acts despite clear refusal or lack of consent." .
+
+cso:Sextortion a owl:Class ;
+    rdfs:label "Sextortion" ;
+    rdfs:subClassOf cso:SexualExploitationHarassment ;
+    rdfs:comment "Coercion of individuals into providing sexual images, videos, or acts under threat of releasing existing intimate material or causing other harm." .
+
+## Direct children of SexualExploitation
+
+cso:Bestiality a owl:Class ;
+    rdfs:label "Bestiality" ;
+    rdfs:subClassOf cso:SexualExploitation ;
+    rdfs:comment "Sexual contact between humans and non-human animals, constituting animal abuse and often illegal sexual conduct." .
+
+cso:SexualCoercion a owl:Class ;
+    rdfs:label "Sexual Coercion" ;
+    rdfs:subClassOf cso:SexualExploitation ;
+    rdfs:comment "Use of pressure, manipulation, or exploitation of power imbalances to obtain sexual compliance without physical force or explicit threats." .
