@@ -5,6 +5,7 @@ from refiner.llm import LLMConfig
 from refiner.models import (
     Policy,
     PolicyClassification,
+    PolicyDocument,
     PolicyRiskMapping,
     RiskVariationAxes,
     DomainContextProfile,
@@ -31,6 +32,7 @@ class PipelineState:
     variation_axes: list[RiskVariationAxes] | None = None
     domain_context: list[DomainContextProfile] | None = None
     report: RunReport | None = None
+    doc_context: PolicyDocument | None = None
 
 
 def run_pipeline(

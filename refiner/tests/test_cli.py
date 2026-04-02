@@ -181,3 +181,50 @@ def test_cli_ingest_already_enriched(tmp_path, monkeypatch):
     result = runner.invoke(app, ["ingest", str(enriched)])
     assert result.exit_code == 1
     assert "Already an enriched PolicyDocument" in result.output
+
+
+def _make_enriched_policy_file(tmp_path: Path) -> Path:
+    doc = {
+        "airo_version": "0.2",
+        "organization": "Test Org",
+        "domain": "healthcare",
+        "purpose": [],
+        "ai_systems": [],
+        "ai_users": [],
+        "ai_subjects": [],
+        "governing_regulations": [],
+        "named_entities": [],
+        "policies": [
+            {"policy_concept": "Fraud", "concept_definition": "About fraud"},
+        ],
+    }
+    p = tmp_path / "enriched.json"
+    p.write_text(json.dumps(doc))
+    return p
+
+
+@patch("refiner.cli.structure")
+@patch("refiner.cli._create_risk_handlers")
+@patch("refiner.cli._create_onto_handlers")
+@patch("refiner.cli.create_client")
+@patch("refiner.cli.run_pipeline")
+def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
+    monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
+    monkeypatch.setenv("REFINER_MODEL", "test-model")
+    monkeypatch.setenv("NEXUS_BASE_DIR", "/tmp/nexus")
+
+    policy_file = _make_enriched_policy_file(tmp_path)
+    mock_run.return_value = _make_completed_state()
+    mock_create_client.return_value = MagicMock()
+    mock_risk.return_value = {}
+    mock_onto.return_value = {}
+    mock_structure.return_value = ({"entries": []}, {"profiles": []})
+
+    result = runner.invoke(app, [
+        "run", str(policy_file), "-o", str(tmp_path),
+    ])
+    assert result.exit_code == 0, result.output
+    call_args = mock_run.call_args
+    policies = call_args[0][0]
+    assert len(policies) == 1
+    assert policies[0].policy_concept == "Fraud"

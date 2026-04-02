@@ -130,9 +130,15 @@ def run(
         typer.echo(f"Error: --until must be one of: {', '.join(STAGES)}", err=True)
         raise typer.Exit(1)
 
-    # Load policies
+    # Load policies — detect flat array vs enriched PolicyDocument
     raw = json.loads(policy_json.read_text())
-    policies = [Policy(**p) for p in raw]
+    if isinstance(raw, list):
+        policies = [Policy(**p) for p in raw]
+        doc_context = None
+    else:
+        doc = PolicyDocument(**raw)
+        policies = doc.policies
+        doc_context = doc
     typer.echo(f"Loaded {len(policies)} policies from {policy_json.name}")
 
     if not base_url or not model:
