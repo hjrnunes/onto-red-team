@@ -32,6 +32,9 @@ testpaths = ["tests"]
 [dependency-groups]
 dev = ["pytest>=8.0"]
 
+[project.optional-dependencies]
+tracking = ["mlflow>=2.14"]
+
 [tool.uv.sources]
 ontoquery = { path = "../ontoquery", editable = true }
 nexus-mcp = { path = "../nexus-mcp", editable = true }
