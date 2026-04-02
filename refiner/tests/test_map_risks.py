@@ -151,7 +151,7 @@ def test_map_risks_populates_match_distance(mock_client, mock_config, mock_risk_
 def test_map_risks_warns_on_weak_match(mock_client, mock_config, mock_risk_handlers, caplog):
     classifications = [_make_classification()]
     mock_risk_handlers["search_risks"].return_value = [
-        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.55},
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.65},
     ]
     mock_risk_handlers["get_risk_details"].return_value = {
         "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
@@ -163,7 +163,7 @@ def test_map_risks_warns_on_weak_match(mock_client, mock_config, mock_risk_handl
     )
     with caplog.at_level(logging.WARNING):
         mappings, _, _, _ = map_risks(classifications, mock_client, mock_config, mock_risk_handlers)
-    assert mappings[0].matched_risks[0].match_distance == 0.55
+    assert mappings[0].matched_risks[0].match_distance == 0.65
     assert any("Weak match" in msg for msg in caplog.messages)
 
 
@@ -176,11 +176,11 @@ def test_map_risks_empty_classifications(mock_client, mock_config, mock_risk_han
 
 
 def test_map_risks_emits_weak_match(mock_client, mock_config, mock_risk_handlers):
-    """When a match distance > 0.4, emit a weak_match event."""
+    """When a match distance > 0.6, emit a weak_match event."""
     from refiner.models import RunReport
     classifications = [_make_classification()]
     mock_risk_handlers["search_risks"].return_value = [
-        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.55},
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.65},
     ]
     mock_risk_handlers["get_risk_details"].return_value = {
         "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
@@ -195,7 +195,7 @@ def test_map_risks_emits_weak_match(mock_client, mock_config, mock_risk_handlers
     weak = [e for e in report.events if e["event"] == "weak_match"]
     assert len(weak) == 1
     assert weak[0]["risk_id"] == "atlas-fraud"
-    assert weak[0]["distance"] == 0.55
+    assert weak[0]["distance"] == 0.65
 
 
 def test_map_risks_emits_invalid_risk_index(mock_client, mock_config, mock_risk_handlers):

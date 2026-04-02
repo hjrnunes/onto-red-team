@@ -49,6 +49,7 @@ def contextualize(
     client: instructor.Instructor,
     config: LLMConfig,
     onto_handlers: dict,
+    selected_domains: list[str] | None = None,
     report: RunReport | None = None,
 ) -> list[DomainContextProfile]:
     if not variation_axes:
@@ -149,6 +150,23 @@ def contextualize(
                             "axis_uri": input_axis.cco_class_uri,
                         })
                     continue  # skip self-reference
+                # Domain filtering: check enumeration URI against selected domains
+                if selected_domains:
+                    enum_domain = derive_source_ontology(enum.class_uri)
+                    if enum_domain not in selected_domains:
+                        logger.info(
+                            "Filtering enumeration %s (domain %s) — not in selected domains %s",
+                            enum.class_uri, enum_domain, selected_domains,
+                        )
+                        if report:
+                            report.events.append({
+                                "stage": "contextualize", "event": "enumeration_domain_filtered",
+                                "axis_uri": input_axis.cco_class_uri,
+                                "enum_uri": enum.class_uri,
+                                "enum_domain": enum_domain,
+                                "selected_domains": selected_domains,
+                            })
+                        continue
                 check = onto_handlers["get_class_definition"](enum.class_uri)
                 if check is not None:
                     valid_enums.append(AxisEnumeration(

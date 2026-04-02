@@ -72,7 +72,10 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             map_result[0], map_result[1], mock_client, mock_config, mock_onto_handlers,
             selected_domains=domains_result, report=report,
         )
-        m_ctx.assert_called_once_with(anchor_result, mock_client, mock_config, mock_onto_handlers, report=report)
+        m_ctx.assert_called_once_with(
+            anchor_result, mock_client, mock_config, mock_onto_handlers,
+            selected_domains=domains_result, report=report,
+        )
 
 
 def test_pipeline_until_classify(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):

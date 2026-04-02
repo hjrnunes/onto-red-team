@@ -76,7 +76,8 @@ def run_pipeline(
         return state
 
     state.domain_context = contextualize(
-        state.variation_axes, client, config, onto_handlers, report=report
+        state.variation_axes, client, config, onto_handlers,
+        selected_domains=state.selected_domains, report=report,
     )
     if report:
         report.stages_completed.append("contextualize")

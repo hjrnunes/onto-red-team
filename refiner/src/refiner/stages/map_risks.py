@@ -13,7 +13,7 @@ from refiner import debug
 
 logger = logging.getLogger(__name__)
 
-WEAK_MATCH_THRESHOLD = 0.4
+WEAK_MATCH_THRESHOLD = 0.6
 
 SYSTEM_PROMPT = """\
 You are mapping client content policies to known AI risk entries from a knowledge graph.
@@ -88,11 +88,11 @@ def map_risks(
         for i, ec in enumerate(enriched_candidates, 1):
             index_to_id[i] = ec['id']
             index_to_distance[i] = ec.get('distance')
-            name = ec['name'][:80]
-            desc = ec.get('description', '')[:120]
+            name = ec['name']
+            desc = ec.get('description', '')
             line = f"- {i}: {name} — {desc}"
             if ec.get("concern"):
-                line += f" (Concern: {ec['concern'][:80]})"
+                line += f" (Concern: {ec['concern']})"
             if ec["related"]:
                 xm = ", ".join(f"{x['id']}[{x['mapping_type']}]" for x in ec["related"][:3])
                 line += f"\n  Cross-mappings: {xm}"
