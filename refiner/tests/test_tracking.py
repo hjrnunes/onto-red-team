@@ -237,3 +237,72 @@ def test_log_run_to_mlflow_new_run(tmp_path):
     # Should have logged 2 artifacts (evaluation.json + taxonomy.yaml)
     assert mock_mlflow.log_artifact.call_count == 2
     mock_mlflow.end_run.assert_called_once()
+
+
+def test_log_run_to_mlflow_reopens_existing_run(tmp_path):
+    """When .mlflow-run-id exists, reopen that run instead of creating new."""
+    import json
+
+    evaluation = {
+        "run": {"model": "test", "policy_set": "swb.json",
+                "timestamp": "2026-04-02T10:00:00Z", "stages_completed": []},
+    }
+    write_run_id(tmp_path, "existing-run-456")
+    (tmp_path / "swb-evaluation.json").write_text(json.dumps(evaluation))
+
+    mock_mlflow = MagicMock()
+    mock_mlflow.active_run.return_value = MagicMock()
+    mock_mlflow.active_run.return_value.info.run_id = "existing-run-456"
+
+    with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
+        from refiner.tracking import log_run_to_mlflow
+        with patch("refiner.tracking._get_git_context", return_value=("sha", False)):
+            run_id = log_run_to_mlflow(
+                evaluation, tmp_path, "http://localhost:5000",
+                run_id="existing-run-456",
+            )
+
+    assert run_id == "existing-run-456"
+    mock_mlflow.start_run.assert_called_once_with(run_id="existing-run-456")
+    # Params should NOT be re-logged when reopening an existing run
+    mock_mlflow.log_params.assert_not_called()
+
+
+def test_full_flow_evaluate_then_track(tmp_path):
+    """Simulate: evaluate writes JSON, then track reads it and logs to MLflow."""
+    import json
+
+    evaluation = {
+        "run": {"model": "gemma2", "policy_set": "generic.json",
+                "timestamp": "2026-04-02T12:00:00Z",
+                "stages_completed": ["classify", "map_risks"]},
+        "coverage": {"risk_framework": {"total_matched": 8}},
+        "prompt_metrics": {
+            "lexical_diversity": 0.55,
+            "mean_prompt_length": 42.0,
+            "domain_term_hit_rate": 0.4,
+            "red_flag_count": 1,
+            "per_policy": [{"policy_concept": "fraud", "count": 5}],
+        },
+    }
+    eval_path = tmp_path / "generic-evaluation.json"
+    eval_path.write_text(json.dumps(evaluation))
+
+    mock_mlflow = MagicMock()
+    mock_mlflow.active_run.return_value = MagicMock()
+    mock_mlflow.active_run.return_value.info.run_id = "new-run-789"
+
+    with patch.dict("sys.modules", {"mlflow": mock_mlflow}):
+        from refiner.tracking import log_run_to_mlflow
+        with patch("refiner.tracking._get_git_context", return_value=("sha", False)):
+            run_id = log_run_to_mlflow(evaluation, tmp_path, "http://localhost:5000")
+
+    assert run_id == "new-run-789"
+    mock_mlflow.set_experiment.assert_called_once_with("generic")
+    # Verify metrics were logged
+    logged_metrics = mock_mlflow.log_metrics.call_args[0][0]
+    assert logged_metrics["coverage.total_risks_matched"] == 8
+    assert logged_metrics["prompt.lexical_diversity"] == 0.55
+    # Verify artifact logged
+    mock_mlflow.log_artifact.assert_called_once()
+    assert "generic-evaluation.json" in str(mock_mlflow.log_artifact.call_args)
