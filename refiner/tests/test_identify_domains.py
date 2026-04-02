@@ -30,6 +30,8 @@ def test_identify_domains_returns_selected_domains(mock_client, mock_config):
     assert "FIBO" in result
     assert "CCO" in result
     assert "Commons" in result
+    assert "D3FEND" in result
+    assert "CSO" in result
     assert "OBO" not in result
 
 
@@ -55,6 +57,8 @@ def test_derive_source_ontology():
     assert derive_source_ontology("https://www.omg.org/spec/Commons/Parties") == "Commons"
     assert derive_source_ontology("http://purl.obolibrary.org/obo/MONDO_0001234") == "OBO"
     assert derive_source_ontology("https://www.industrialontologies.org/ont/core") == "IOF"
+    assert derive_source_ontology("http://d3fend.mitre.org/ontologies/d3fend.owl#Phishing") == "D3FEND"
+    assert derive_source_ontology("http://taxonomy-refiner.io/ontologies/cso#RacialHate") == "CSO"
     assert derive_source_ontology("http://example.org/Unknown") == "unknown"
 
 

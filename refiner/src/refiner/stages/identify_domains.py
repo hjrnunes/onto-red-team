@@ -17,7 +17,7 @@ DOMAIN_OPTIONS = {
 }
 
 # Always included regardless of LLM selection (domain-independent)
-ALWAYS_INCLUDED = ["CCO", "Commons"]
+ALWAYS_INCLUDED = ["CCO", "Commons", "D3FEND", "CSO"]
 
 SYSTEM_PROMPT = """\
 You are identifying which domain ontologies are relevant for a set of client content policies.
@@ -47,6 +47,10 @@ def derive_source_ontology(uri: str) -> str:
         return "OBO"
     if "industrialontologies.org" in uri:
         return "IOF"
+    if "d3fend.mitre.org" in uri:
+        return "D3FEND"
+    if "taxonomy-refiner.io/ontologies/cso" in uri:
+        return "CSO"
     return "unknown"
 
 
