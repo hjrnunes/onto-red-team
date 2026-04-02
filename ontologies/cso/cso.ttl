@@ -757,3 +757,334 @@ cso:AcademicDishonesty a owl:Class ;
     rdfs:label "Academic Dishonesty" ;
     rdfs:subClassOf cso:FraudAndDeception ;
     rdfs:comment "Deceptive practices in academic contexts, including plagiarism, cheating on examinations, fabrication of research data, or unauthorized collaboration." .
+
+# --- 7. Dangerous Information (18 classes) ---
+
+cso:DangerousInformation a owl:Class ;
+    rdfs:label "Dangerous Information" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts." .
+
+## WeaponsManufacturing subcategory
+
+cso:WeaponsManufacturing a owl:Class ;
+    rdfs:label "Weapons Manufacturing" ;
+    rdfs:subClassOf cso:DangerousInformation ;
+    rdfs:comment "Instructions or technical specifications for creating lethal weapons from raw materials or accessible components." .
+
+cso:FirearmsManufacturing a owl:Class ;
+    rdfs:label "Firearms Manufacturing" ;
+    rdfs:subClassOf cso:WeaponsManufacturing ;
+    rdfs:comment "Detailed instructions for constructing functional guns, including component machining, assembly procedures, and ammunition creation." .
+
+cso:ExplosiveSynthesis a owl:Class ;
+    rdfs:label "Explosive Synthesis" ;
+    rdfs:subClassOf cso:WeaponsManufacturing ;
+    rdfs:comment "Chemical formulas and procedures for creating explosive compounds or devices from precursor materials." .
+
+cso:ChemicalWeaponsSynthesis a owl:Class ;
+    rdfs:label "Chemical Weapons Synthesis" ;
+    rdfs:subClassOf cso:WeaponsManufacturing ;
+    rdfs:comment "Methods for producing toxic chemical agents designed to incapacitate, injure, or kill through inhalation, ingestion, or skin contact." .
+
+## DrugSynthesis subcategory
+
+cso:DrugSynthesis a owl:Class ;
+    rdfs:label "Drug Synthesis" ;
+    rdfs:subClassOf cso:DangerousInformation ;
+    rdfs:comment "Detailed instructions for manufacturing controlled substances or illegal drugs from precursor chemicals or natural sources." .
+
+cso:IllicitDrugManufacturing a owl:Class ;
+    rdfs:label "Illicit Drug Manufacturing" ;
+    rdfs:subClassOf cso:DrugSynthesis ;
+    rdfs:comment "Step-by-step procedures for synthesizing illegal drugs such as methamphetamine, fentanyl, or synthetic cannabinoids." .
+
+cso:PrecursorChemicalAcquisition a owl:Class ;
+    rdfs:label "Precursor Chemical Acquisition" ;
+    rdfs:subClassOf cso:DrugSynthesis ;
+    rdfs:comment "Guidance on obtaining regulated chemical precursors required for drug synthesis while evading legal controls or detection." .
+
+cso:DrugAdministrationMethods a owl:Class ;
+    rdfs:label "Drug Administration Methods" ;
+    rdfs:subClassOf cso:DrugSynthesis ;
+    rdfs:comment "Instructions on routes of administration, dosing, or preparation techniques that maximize potency or minimize detection of illicit substances." .
+
+## CBRNInformation subcategory
+
+cso:CBRNInformation a owl:Class ;
+    rdfs:label "CBRN Information" ;
+    rdfs:subClassOf cso:DangerousInformation ;
+    rdfs:comment "Knowledge about chemical, biological, radiological, or nuclear materials and weapons that could enable mass casualty attacks." .
+
+cso:BiologicalAgentProduction a owl:Class ;
+    rdfs:label "Biological Agent Production" ;
+    rdfs:subClassOf cso:CBRNInformation ;
+    rdfs:comment "Methods for culturing, weaponizing, or disseminating pathogens or toxins intended to cause disease or death in populations." .
+
+cso:RadiologicalDeviceConstruction a owl:Class ;
+    rdfs:label "Radiological Device Construction" ;
+    rdfs:subClassOf cso:CBRNInformation ;
+    rdfs:comment "Instructions for building dirty bombs or other devices that disperse radioactive material to contaminate areas and cause radiation exposure." .
+
+cso:NuclearMaterialAcquisition a owl:Class ;
+    rdfs:label "Nuclear Material Acquisition" ;
+    rdfs:subClassOf cso:CBRNInformation ;
+    rdfs:comment "Guidance on obtaining, enriching, or weaponizing fissile materials for nuclear weapons or radiological dispersal devices." .
+
+## HarmfulHowTo subcategory
+
+cso:HarmfulHowTo a owl:Class ;
+    rdfs:label "Harmful How-To" ;
+    rdfs:subClassOf cso:DangerousInformation ;
+    rdfs:comment "Step-by-step instructions for activities that cause property destruction, physical harm, or enable illegal intrusion when executed by unauthorized individuals." .
+
+cso:LockPickingAndBypassing a owl:Class ;
+    rdfs:label "Lock Picking and Bypassing" ;
+    rdfs:subClassOf cso:HarmfulHowTo ;
+    rdfs:comment "Detailed techniques for defeating physical security locks, alarms, or access controls to enable unauthorized entry into protected spaces." .
+
+cso:SabotageInstructions a owl:Class ;
+    rdfs:label "Sabotage Instructions" ;
+    rdfs:subClassOf cso:HarmfulHowTo ;
+    rdfs:comment "Methods for disabling, damaging, or destroying infrastructure, equipment, or systems to cause operational disruption or economic harm." .
+
+cso:ArsonMethods a owl:Class ;
+    rdfs:label "Arson Methods" ;
+    rdfs:subClassOf cso:HarmfulHowTo ;
+    rdfs:comment "Instructions on accelerants, ignition techniques, or fire-setting strategies designed to maximize damage while minimizing detection or suppression." .
+
+## Direct child of DangerousInformation
+
+cso:DualUseResearchConcern a owl:Class ;
+    rdfs:label "Dual-Use Research Concern" ;
+    rdfs:subClassOf cso:DangerousInformation ;
+    rdfs:comment "Scientific or technical information with legitimate research applications that could also be misused to develop biological weapons, enhance pathogen virulence, or enable mass harm." .
+
+# --- 8. Intellectual Property (18 classes) ---
+
+cso:IntellectualProperty a owl:Class ;
+    rdfs:label "Intellectual Property" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Unauthorized use, reproduction, or distribution of protected creative works, inventions, brands, or confidential business information in violation of legal rights." .
+
+## CopyrightInfringement subcategory
+
+cso:CopyrightInfringement a owl:Class ;
+    rdfs:label "Copyright Infringement" ;
+    rdfs:subClassOf cso:IntellectualProperty ;
+    rdfs:comment "Unauthorized reproduction, distribution, or public display of protected creative works such as literature, music, software, or visual art without permission from rights holders." .
+
+cso:LiteraryWorkReproduction a owl:Class ;
+    rdfs:label "Literary Work Reproduction" ;
+    rdfs:subClassOf cso:CopyrightInfringement ;
+    rdfs:comment "Verbatim copying or substantial reproduction of novels, poems, articles, or other written works protected by copyright." .
+
+cso:MusicalWorkReproduction a owl:Class ;
+    rdfs:label "Musical Work Reproduction" ;
+    rdfs:subClassOf cso:CopyrightInfringement ;
+    rdfs:comment "Unauthorized copying of song lyrics, melodies, compositions, or recordings protected by copyright law." .
+
+cso:SoftwareCodeReproduction a owl:Class ;
+    rdfs:label "Software Code Reproduction" ;
+    rdfs:subClassOf cso:CopyrightInfringement ;
+    rdfs:comment "Copying or distributing proprietary source code, compiled programs, or software components without license or permission." .
+
+cso:VisualArtReproduction a owl:Class ;
+    rdfs:label "Visual Art Reproduction" ;
+    rdfs:subClassOf cso:CopyrightInfringement ;
+    rdfs:comment "Unauthorized reproduction of paintings, photographs, illustrations, sculptures, or other visual works protected by copyright." .
+
+cso:DatabaseExtraction a owl:Class ;
+    rdfs:label "Database Extraction" ;
+    rdfs:subClassOf cso:CopyrightInfringement ;
+    rdfs:comment "Systematic extraction or reuse of substantial portions of databases protected under copyright or sui generis database rights." .
+
+## TrademarkViolation subcategory
+
+cso:TrademarkViolation a owl:Class ;
+    rdfs:label "Trademark Violation" ;
+    rdfs:subClassOf cso:IntellectualProperty ;
+    rdfs:comment "Unauthorized use of protected brand names, logos, slogans, or trade dress in ways that cause consumer confusion or dilute brand value." .
+
+cso:BrandNameMisuse a owl:Class ;
+    rdfs:label "Brand Name Misuse" ;
+    rdfs:subClassOf cso:TrademarkViolation ;
+    rdfs:comment "Unauthorized use of protected brand names or trademarks in commercial contexts that create likelihood of confusion about source or affiliation." .
+
+cso:LogoReproduction a owl:Class ;
+    rdfs:label "Logo Reproduction" ;
+    rdfs:subClassOf cso:TrademarkViolation ;
+    rdfs:comment "Copying or displaying protected logos, symbols, or graphical marks without authorization from trademark holders." .
+
+cso:TradeDressImitation a owl:Class ;
+    rdfs:label "Trade Dress Imitation" ;
+    rdfs:subClassOf cso:TrademarkViolation ;
+    rdfs:comment "Copying the distinctive visual appearance, packaging, or presentation of products in ways that confuse consumers about origin or affiliation." .
+
+## TradeSecretDisclosure subcategory
+
+cso:TradeSecretDisclosure a owl:Class ;
+    rdfs:label "Trade Secret Disclosure" ;
+    rdfs:subClassOf cso:IntellectualProperty ;
+    rdfs:comment "Unauthorized revelation of confidential business information such as formulas, processes, customer lists, or proprietary methods that provide competitive advantage." .
+
+cso:FormulaDisclosure a owl:Class ;
+    rdfs:label "Formula Disclosure" ;
+    rdfs:subClassOf cso:TradeSecretDisclosure ;
+    rdfs:comment "Revealing proprietary chemical formulas, recipes, or compound specifications protected as trade secrets." .
+
+cso:ProcessDisclosure a owl:Class ;
+    rdfs:label "Process Disclosure" ;
+    rdfs:subClassOf cso:TradeSecretDisclosure ;
+    rdfs:comment "Disclosing confidential manufacturing processes, business methods, or operational procedures that constitute trade secrets." .
+
+cso:CustomerListDisclosure a owl:Class ;
+    rdfs:label "Customer List Disclosure" ;
+    rdfs:subClassOf cso:TradeSecretDisclosure ;
+    rdfs:comment "Revealing confidential customer databases, contact information, or client relationship details protected as trade secrets." .
+
+## Plagiarism subcategory
+
+cso:Plagiarism a owl:Class ;
+    rdfs:label "Plagiarism" ;
+    rdfs:subClassOf cso:IntellectualProperty ;
+    rdfs:comment "Presenting another person's ideas, words, or creative work as one's own without proper attribution or acknowledgment." .
+
+cso:AcademicPlagiarism a owl:Class ;
+    rdfs:label "Academic Plagiarism" ;
+    rdfs:subClassOf cso:Plagiarism ;
+    rdfs:comment "Copying or paraphrasing academic research, essays, or scholarly work without citation in educational or research contexts." .
+
+cso:CreativePlagiarism a owl:Class ;
+    rdfs:label "Creative Plagiarism" ;
+    rdfs:subClassOf cso:Plagiarism ;
+    rdfs:comment "Appropriating artistic concepts, storylines, designs, or creative expressions from others and presenting them as original work." .
+
+# --- 9. Privacy Violation (23 classes) ---
+
+cso:PrivacyViolation a owl:Class ;
+    rdfs:label "Privacy Violation" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Unauthorized collection, disclosure, or use of personal information that compromises individual privacy, exposes sensitive data, or enables identity theft or discrimination." .
+
+## DirectIdentifierExposure subcategory
+
+cso:DirectIdentifierExposure a owl:Class ;
+    rdfs:label "Direct Identifier Exposure" ;
+    rdfs:subClassOf cso:PrivacyViolation ;
+    rdfs:comment "Disclosure of information that directly identifies individuals, such as names, addresses, government identifiers, or biometric data." .
+
+cso:NameAndAddressExposure a owl:Class ;
+    rdfs:label "Name and Address Exposure" ;
+    rdfs:subClassOf cso:DirectIdentifierExposure ;
+    rdfs:comment "Revealing individuals' full names combined with residential or business addresses without authorization." .
+
+cso:NationalIDExposure a owl:Class ;
+    rdfs:label "National ID Exposure" ;
+    rdfs:subClassOf cso:DirectIdentifierExposure ;
+    rdfs:comment "Disclosing government-issued identification numbers such as Social Security numbers, passport numbers, or national identity card numbers." .
+
+cso:BiometricDataExposure a owl:Class ;
+    rdfs:label "Biometric Data Exposure" ;
+    rdfs:subClassOf cso:DirectIdentifierExposure ;
+    rdfs:comment "Revealing unique biological characteristics such as fingerprints, facial recognition data, iris scans, or DNA profiles used for identification." .
+
+cso:PhotoAndLikenessExposure a owl:Class ;
+    rdfs:label "Photo and Likeness Exposure" ;
+    rdfs:subClassOf cso:DirectIdentifierExposure ;
+    rdfs:comment "Unauthorized disclosure of photographs or visual representations of individuals in contexts that violate privacy expectations or consent." .
+
+## FinancialDataExposure subcategory
+
+cso:FinancialDataExposure a owl:Class ;
+    rdfs:label "Financial Data Exposure" ;
+    rdfs:subClassOf cso:PrivacyViolation ;
+    rdfs:comment "Disclosure of personal financial information including account numbers, credit scores, or transaction histories without authorization." .
+
+cso:AccountNumberExposure a owl:Class ;
+    rdfs:label "Account Number Exposure" ;
+    rdfs:subClassOf cso:FinancialDataExposure ;
+    rdfs:comment "Revealing bank account numbers, credit card numbers, or other financial account identifiers that enable unauthorized access or fraud." .
+
+cso:CreditScoreExposure a owl:Class ;
+    rdfs:label "Credit Score Exposure" ;
+    rdfs:subClassOf cso:FinancialDataExposure ;
+    rdfs:comment "Disclosing individuals' credit ratings, creditworthiness assessments, or detailed credit reports without consent." .
+
+cso:TransactionHistoryExposure a owl:Class ;
+    rdfs:label "Transaction History Exposure" ;
+    rdfs:subClassOf cso:FinancialDataExposure ;
+    rdfs:comment "Revealing detailed records of financial transactions, purchases, payments, or account activity that expose spending patterns or financial behavior." .
+
+## HealthDataExposure subcategory
+
+cso:HealthDataExposure a owl:Class ;
+    rdfs:label "Health Data Exposure" ;
+    rdfs:subClassOf cso:PrivacyViolation ;
+    rdfs:comment "Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories." .
+
+cso:MedicalRecordExposure a owl:Class ;
+    rdfs:label "Medical Record Exposure" ;
+    rdfs:subClassOf cso:HealthDataExposure ;
+    rdfs:comment "Revealing comprehensive medical history, treatment records, test results, or clinical notes protected under healthcare privacy laws." .
+
+cso:PrescriptionExposure a owl:Class ;
+    rdfs:label "Prescription Exposure" ;
+    rdfs:subClassOf cso:HealthDataExposure ;
+    rdfs:comment "Disclosing information about medications prescribed to individuals, including drug names, dosages, or pharmacy records." .
+
+cso:DiagnosisExposure a owl:Class ;
+    rdfs:label "Diagnosis Exposure" ;
+    rdfs:subClassOf cso:HealthDataExposure ;
+    rdfs:comment "Revealing medical diagnoses, health conditions, or disease status that individuals expect to remain confidential." .
+
+## DigitalFootprintExposure subcategory
+
+cso:DigitalFootprintExposure a owl:Class ;
+    rdfs:label "Digital Footprint Exposure" ;
+    rdfs:subClassOf cso:PrivacyViolation ;
+    rdfs:comment "Disclosure of digital behavior traces such as browsing history, location data, communication patterns, or device identifiers that reveal personal habits and associations." .
+
+cso:BrowsingHistoryExposure a owl:Class ;
+    rdfs:label "Browsing History Exposure" ;
+    rdfs:subClassOf cso:DigitalFootprintExposure ;
+    rdfs:comment "Revealing websites visited, search queries, or online activity patterns that expose interests, beliefs, or behaviors individuals expect to remain private." .
+
+cso:LocationDataExposure a owl:Class ;
+    rdfs:label "Location Data Exposure" ;
+    rdfs:subClassOf cso:DigitalFootprintExposure ;
+    rdfs:comment "Disclosing GPS coordinates, travel patterns, or location histories that reveal where individuals live, work, or spend time." .
+
+cso:CommunicationMetadataExposure a owl:Class ;
+    rdfs:label "Communication Metadata Exposure" ;
+    rdfs:subClassOf cso:DigitalFootprintExposure ;
+    rdfs:comment "Revealing who individuals communicate with, when, and how frequently, even without content of messages, exposing social networks and relationships." .
+
+cso:DeviceFingerprintExposure a owl:Class ;
+    rdfs:label "Device Fingerprint Exposure" ;
+    rdfs:subClassOf cso:DigitalFootprintExposure ;
+    rdfs:comment "Disclosing unique device identifiers, hardware configurations, or technical characteristics used to track individuals across platforms and contexts." .
+
+## EmploymentDataExposure subcategory
+
+cso:EmploymentDataExposure a owl:Class ;
+    rdfs:label "Employment Data Exposure" ;
+    rdfs:subClassOf cso:PrivacyViolation ;
+    rdfs:comment "Unauthorized disclosure of employment information including compensation, performance evaluations, or workplace records that individuals expect to remain confidential." .
+
+cso:SalaryExposure a owl:Class ;
+    rdfs:label "Salary Exposure" ;
+    rdfs:subClassOf cso:EmploymentDataExposure ;
+    rdfs:comment "Revealing compensation details, wage information, bonuses, or benefits packages that employees expect to remain private." .
+
+cso:PerformanceRecordExposure a owl:Class ;
+    rdfs:label "Performance Record Exposure" ;
+    rdfs:subClassOf cso:EmploymentDataExposure ;
+    rdfs:comment "Disclosing employee evaluations, disciplinary actions, or performance metrics without authorization." .
+
+## Direct child of PrivacyViolation
+
+cso:UnauthorizedSurveillance a owl:Class ;
+    rdfs:label "Unauthorized Surveillance" ;
+    rdfs:subClassOf cso:PrivacyViolation ;
+    rdfs:comment "Monitoring, tracking, or recording individuals' activities, communications, or locations without consent or legal authority in contexts where privacy is expected." .
