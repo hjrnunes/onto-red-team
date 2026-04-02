@@ -176,3 +176,145 @@ cso:GlorificationOfViolence a owl:Class ;
     rdfs:label "Glorification of Violence" ;
     rdfs:subClassOf cso:Violence ;
     rdfs:comment "Content that celebrates, praises, or portrays violent acts in a positive or heroic light, potentially encouraging imitation." .
+
+# --- 2. Hate and Discrimination (26 classes) ---
+
+cso:HateAndDiscrimination a owl:Class ;
+    rdfs:label "Hate and Discrimination" ;
+    rdfs:subClassOf cso:ContentSafetyHazard ;
+    rdfs:comment "Content expressing hostility, prejudice, or bias against individuals or groups based on protected characteristics such as race, religion, gender, sexual orientation, disability, ethnicity, or age." .
+
+## IdentityBasedHate subcategory
+
+cso:IdentityBasedHate a owl:Class ;
+    rdfs:label "Identity-Based Hate" ;
+    rdfs:subClassOf cso:HateAndDiscrimination ;
+    rdfs:comment "Hostility directed at individuals or groups based on specific protected identity characteristics." .
+
+cso:RacialHate a owl:Class ;
+    rdfs:label "Racial Hate" ;
+    rdfs:subClassOf cso:IdentityBasedHate ;
+    rdfs:comment "Hostility targeting individuals or groups based on race or perceived racial characteristics." .
+
+cso:ReligiousHate a owl:Class ;
+    rdfs:label "Religious Hate" ;
+    rdfs:subClassOf cso:IdentityBasedHate ;
+    rdfs:comment "Hostility targeting individuals or groups based on religious beliefs, practices, or affiliation." .
+
+cso:GenderBasedHate a owl:Class ;
+    rdfs:label "Gender-Based Hate" ;
+    rdfs:subClassOf cso:IdentityBasedHate ;
+    rdfs:comment "Hostility targeting individuals based on gender identity, including misogyny and transphobia." .
+
+cso:AntiLGBTQHate a owl:Class ;
+    rdfs:label "Anti-LGBTQ Hate" ;
+    rdfs:subClassOf cso:IdentityBasedHate ;
+    rdfs:comment "Hostility targeting individuals based on sexual orientation or gender identity, including homophobia and transphobia." .
+
+cso:DisabilityBasedHate a owl:Class ;
+    rdfs:label "Disability-Based Hate" ;
+    rdfs:subClassOf cso:IdentityBasedHate ;
+    rdfs:comment "Hostility targeting individuals with physical, cognitive, or mental disabilities." .
+
+cso:EthnicHate a owl:Class ;
+    rdfs:label "Ethnic Hate" ;
+    rdfs:subClassOf cso:IdentityBasedHate ;
+    rdfs:comment "Hostility targeting individuals or groups based on ethnic origin, nationality, or cultural heritage." .
+
+cso:AgeBasedHate a owl:Class ;
+    rdfs:label "Age-Based Hate" ;
+    rdfs:subClassOf cso:IdentityBasedHate ;
+    rdfs:comment "Hostility targeting individuals based on age, including ageism against elderly or young people." .
+
+## Dehumanization subcategory
+
+cso:Dehumanization a owl:Class ;
+    rdfs:label "Dehumanization" ;
+    rdfs:subClassOf cso:HateAndDiscrimination ;
+    rdfs:comment "Content that denies the humanity or personhood of individuals or groups, often as a precursor to violence or severe discrimination." .
+
+cso:DehumanizingComparison a owl:Class ;
+    rdfs:label "Dehumanizing Comparison" ;
+    rdfs:subClassOf cso:Dehumanization ;
+    rdfs:comment "Comparing people to animals, objects, or diseases to strip them of human dignity and worth." .
+
+cso:DenialOfHumanity a owl:Class ;
+    rdfs:label "Denial of Humanity" ;
+    rdfs:subClassOf cso:Dehumanization ;
+    rdfs:comment "Explicit statements that certain individuals or groups are subhuman or lack fundamental human qualities." .
+
+cso:EliminationistRhetoric a owl:Class ;
+    rdfs:label "Eliminationist Rhetoric" ;
+    rdfs:subClassOf cso:Dehumanization ;
+    rdfs:comment "Language suggesting that a group should be removed, exterminated, or eliminated from society." .
+
+## Harassment subcategory
+
+cso:Harassment a owl:Class ;
+    rdfs:label "Harassment" ;
+    rdfs:subClassOf cso:HateAndDiscrimination ;
+    rdfs:comment "Persistent, unwanted conduct that demeans, intimidates, or creates a hostile environment for targeted individuals or groups." .
+
+cso:TargetedHarassment a owl:Class ;
+    rdfs:label "Targeted Harassment" ;
+    rdfs:subClassOf cso:Harassment ;
+    rdfs:comment "Directed, repeated hostile behavior aimed at specific individuals based on their identity or activities." .
+
+cso:CoordinatedHarassment a owl:Class ;
+    rdfs:label "Coordinated Harassment" ;
+    rdfs:subClassOf cso:Harassment ;
+    rdfs:comment "Organized group efforts to harass an individual or community, often through swarming or brigading." .
+
+cso:SexualHarassment a owl:Class ;
+    rdfs:label "Sexual Harassment" ;
+    rdfs:subClassOf cso:Harassment ;
+    rdfs:comment "Unwanted sexual advances, requests for sexual favors, or other verbal or physical conduct of a sexual nature." .
+
+cso:WorkplaceHarassment a owl:Class ;
+    rdfs:label "Workplace Harassment" ;
+    rdfs:subClassOf cso:Harassment ;
+    rdfs:comment "Harassment occurring in professional settings that creates a hostile or intimidating work environment." .
+
+## DiscriminatoryPractices subcategory
+
+cso:DiscriminatoryPractices a owl:Class ;
+    rdfs:label "Discriminatory Practices" ;
+    rdfs:subClassOf cso:HateAndDiscrimination ;
+    rdfs:comment "Systematic unfair treatment of individuals or groups based on protected characteristics in access to services, opportunities, or resources." .
+
+cso:DiscriminatoryDenialOfService a owl:Class ;
+    rdfs:label "Discriminatory Denial of Service" ;
+    rdfs:subClassOf cso:DiscriminatoryPractices ;
+    rdfs:comment "Refusal to provide goods, services, or access to facilities based on protected identity characteristics." .
+
+cso:EmploymentDiscrimination a owl:Class ;
+    rdfs:label "Employment Discrimination" ;
+    rdfs:subClassOf cso:DiscriminatoryPractices ;
+    rdfs:comment "Unfair treatment in hiring, promotion, compensation, or termination based on protected characteristics." .
+
+cso:HousingDiscrimination a owl:Class ;
+    rdfs:label "Housing Discrimination" ;
+    rdfs:subClassOf cso:DiscriminatoryPractices ;
+    rdfs:comment "Unfair denial of housing, rental opportunities, or mortgages based on protected identity characteristics." .
+
+cso:AlgorithmicDiscrimination a owl:Class ;
+    rdfs:label "Algorithmic Discrimination" ;
+    rdfs:subClassOf cso:DiscriminatoryPractices ;
+    rdfs:comment "Systematic bias in automated decision-making systems that disadvantages specific groups based on protected characteristics." .
+
+## Direct children of HateAndDiscrimination
+
+cso:SlursAndEpithets a owl:Class ;
+    rdfs:label "Slurs and Epithets" ;
+    rdfs:subClassOf cso:HateAndDiscrimination ;
+    rdfs:comment "Derogatory terms, insults, or hate speech specifically targeting individuals or groups based on identity characteristics." .
+
+cso:Stereotyping a owl:Class ;
+    rdfs:label "Stereotyping" ;
+    rdfs:subClassOf cso:HateAndDiscrimination ;
+    rdfs:comment "Oversimplified, generalized beliefs about members of a group that deny individual variation and often perpetuate prejudice." .
+
+cso:IncitementToHatred a owl:Class ;
+    rdfs:label "Incitement to Hatred" ;
+    rdfs:subClassOf cso:HateAndDiscrimination ;
+    rdfs:comment "Content that deliberately provokes or encourages hostility, violence, or discrimination against a protected group." .
