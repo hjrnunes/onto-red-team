@@ -20,10 +20,12 @@ Detailed design thinking lives in Obsidian vault notes:
 
 ```
 ontoquery/                 # Ontology MCP server + CLI
-  pyproject.toml           # uv project: rdflib, chromadb, typer, mcp[cli]
+  pyproject.toml           # uv project: rdflib, pyoxigraph, chromadb, typer, mcp[cli]
   src/ontoquery/
     cli.py                 # Typer CLI: index, search, navigate commands
-    graph.py               # rdflib graph loading, class extraction, hierarchy navigation
+    backend.py             # GraphBackend Protocol + OxigraphBackend + RdflibBackend
+                           # Factory functions: create_index_backend(), load_backend()
+    graph.py               # rdflib graph utilities (used by RdflibBackend)
                            # Includes: get_siblings, get_subclasses_recursive, get_class_definition
     index.py               # ChromaDB indexing and semantic search (OntologyIndex class)
                            # Includes: search_raw() for single-query MCP tool use
@@ -31,8 +33,8 @@ ontoquery/                 # Ontology MCP server + CLI
                            # Tools: search_classes, get_class_definition, get_subclasses,
                            # get_superclasses, get_siblings, get_properties, explore_class
                            # Entry point: ontoquery-mcp
-  tests/                   # 52 tests (pytest)
-  .chroma/                 # Runtime: ChromaDB persistent store + graph.nt cache (gitignored)
+  tests/                   # 103 tests (pytest)
+  .chroma/                 # Runtime: ChromaDB + oxigraph/ RocksDB store (gitignored)
 
 nexus-mcp/                 # AI Atlas Nexus MCP server
   pyproject.toml           # uv project: mcp[cli], chromadb, ai-atlas-nexus (git dep)
@@ -60,17 +62,33 @@ ontologies/
                            # Financial services domain ontology
   obo/                     # OBO Foundry healthcare ontologies (.owl)
                            # ogms, mondo-base, hp-base, uberon-base, maxo, oae
+  d3fend-ontology/         # MITRE D3FEND v1.3.0 — cybersecurity countermeasures (OWL 2 DL)
+                           # 4,366 classes: OffensiveTechnique (849), DigitalArtifact (896),
+                           # Weakness/CWE (943), DefensiveTechnique (272)
+                           # ATT&CK Enterprise/Mobile/ICS + ATLAS (AI) + SPARTA (space)
+                           # Has CCO mapping: DigitalArtifact → CCO InformationBearingArtifact
+                           # src/ontology/d3fend-protege.ttl is the main file
+  cso/                     # Content Safety Ontology (CSO) — ~195 classes
+                           # 9 harm categories: Violence, Hate/Discrimination, Self-Harm,
+                           # Sexual Exploitation, Sexual Content, Fraud/Deception,
+                           # Dangerous Information, Intellectual Property, Privacy Violation
+                           # Standalone (not BFO-aligned), rdfs:comment for definitions
+                           # Namespace: http://taxonomy-refiner.io/ontologies/cso#
   dron-base.owl            # Drug Ontology — excluded from obo/ (770k classes,
                            # only 72 with definitions, too large for ChromaDB)
 
 refiner/                   # LLM pipeline: policy → taxonomy + domain context
   pyproject.toml           # uv project: instructor, openai, pydantic, typer, pyyaml
+                           # Optional: mlflow>=2.14 under [tracking] extra
   src/refiner/
-    cli.py                 # Typer CLI: `refiner run` and `refiner emit` commands
+    cli.py                 # Typer CLI: `refiner run`, `refiner emit`, `refiner evaluate`, `refiner track`
     pipeline.py            # Pipeline orchestration: stage sequencing, state threading
     emit.py                # Emit dataset: domain context → sdg_hub-ready JSONL (pure Python)
-    debug.py               # Per-call debug logging (--debug writes JSON per LLM call)
-    models.py              # 11 Pydantic models for stage I/O contracts (incl. SampledAxis)
+    evaluate.py            # Post-hoc evaluation: metrics, coverage, quality analysis
+    tracking.py            # MLflow integration: params, metrics, artifacts, run linking
+    judge.py               # Judge-model evaluation: 4-dimension rubric scoring (LLM)
+    debug.py               # Per-call debug logging + MLflow trace spans (dual-write)
+    models.py              # 11 Pydantic models + RunReport dataclass for stage I/O
     llm.py                 # Instructor + OpenAI client setup, LLMConfig
     stages/
       classify.py          # Stage 1: Policy type classification (A/B/C/D)
@@ -80,7 +98,9 @@ refiner/                   # LLM pipeline: policy → taxonomy + domain context
       anchor.py            # Stage 4: Variation axis identification (with domain filtering)
       contextualize.py     # Stage 5: Domain context profiles (with sibling fallback)
       structure.py         # Stage 6: LinkML-conformant YAML assembly (deterministic)
-  tests/                   # 82 tests (pytest)
+  tests/                   # 245 tests (pytest)
+  tools/
+    assess_run.py          # Run assessment data extraction (see Run Assessment below)
 
 redteam/                   # Adversarial prompt generation via sdg_hub
   pyproject.toml           # uv project: sdg_hub, pandas, nest_asyncio
@@ -106,6 +126,12 @@ policy_examples/
   aramco.json              # Aramco — energy/oil & gas domain, 5 policies
                            # Proprietary data, operational security, supply chain,
                            # cybersecurity, sanctions evasion
+
+runs/                      # Pipeline run outputs (gitignored)
+                           # Each subdirectory contains: *-taxonomy.yaml, *-domain-context.yaml,
+                           # *-report.yaml, *-evaluation.json, dataset.jsonl,
+                           # adversarial_prompts.jsonl, adversarial_prompts.html,
+                           # debug/ (per-LLM-call JSON), assessment.md (qualitative analysis)
 ```
 
 ## Key Concepts
@@ -143,6 +169,8 @@ A single client risk maps to multiple risks across the 600+ in the knowledge gra
 | Insurance | **FIBO FND/FBC** + custom extension (~50-100 classes) | No | Via FIBO's Commons bridge | No mature insurance ontology exists anywhere. |
 | Government | **DPV EU AI Act** + CPSV-AP + Core Person + W3C ORG | No | Direct CCO bridge (~10 axioms) | DPV has ~170 AI Act concepts. NIEM for US scope. |
 | Manufacturing | IOF | Yes (explicit BFO+CCO) | Already in `ontologies/ontology/` | Not a priority vertical currently. |
+| Content Safety (cross-domain) | **CSO** (~195 classes) | No (standalone) | N/A | Always-included. Covers harm categories CCO lacks. |
+| Cybersecurity (cross-domain) | **D3FEND** (4,366 classes) | OWL 2 DL, CCO mapping | Has `d3fend-cco.ttl` mapping | ATT&CK + CWE + ATLAS (AI) + SPARTA. Always-included domain. |
 
 OMG Commons (22 modules, MIT) is the interoperability hub: IOF maps to it (in repo), FIBO imports ~16 modules from it. See Obsidian note "AI Atlas Nexus - Domain Ontology Selection" for full analysis.
 
@@ -200,8 +228,9 @@ Separate uv project at `nexus-mcp/`. Wraps the AIAtlasNexus Python API + ChromaD
 
 ### Design Patterns
 
+- **`GraphBackend` Protocol** — `typing.Protocol` (structural subtyping) abstracts over `OxigraphBackend` (Rust/RocksDB, default) and `RdflibBackend` (pure Python, fallback). Consumers receive a backend, not a raw graph.
 - **`create_tool_handlers()`** — both servers separate tool logic into a function returning a dict of callables, enabling testing without MCP transport
-- **Lazy-singleton `_get_handlers()`** — heavy state (rdflib graph, ChromaDB, AIAtlasNexus) loaded once on first tool call
+- **Lazy-singleton `_get_handlers()`** — heavy state (graph backend, ChromaDB, AIAtlasNexus) loaded once on first tool call
 - **`get_related_risks()`** reads five mapping attributes directly from Risk objects to preserve mapping_type (the `nexus.get_related_risks()` API flattens and loses this)
 
 **Spec:** `docs/superpowers/specs/2026-04-01-mcp-servers-design.md`
@@ -224,10 +253,12 @@ Separate uv project at `nexus-mcp/`. Wraps the AIAtlasNexus Python API + ChromaD
 **Key patterns:**
 - **Slim response models:** Private `_`-prefixed Pydantic models without docstrings for LLM calls. Metadata stitched back programmatically. No docstrings — Instructor embeds them in JSON schema, confusing small models.
 - **Ground-truth cross-mappings:** `get_related_risks()` from knowledge graph, not LLM-generated. Eliminates hallucinated cross-mapping IDs.
-- **Domain filtering:** `identify_domains` stage selects ontologies; `anchor` stage filters `search_classes` results by URI namespace before sending to LLM.
-- **Sibling fallback:** `contextualize` stage falls back to `get_siblings()` when `get_subclasses()` returns empty (leaf nodes). Many FIBO/CCO leaf classes have useful siblings.
-- **Programmatic retrieval:** Python calls `create_tool_handlers()` dicts from ontoquery + nexus-mcp (no MCP transport). LLM receives pre-assembled context and produces structured output.
-- **Per-call debug logging:** `--debug <dir>` writes JSON file per LLM call with full prompts, responses, and context.
+- **Domain filtering:** `identify_domains` stage selects ontologies; `anchor` stage filters `search_classes` results by URI namespace before sending to LLM. CCO, Commons, D3FEND, and CSO are always-included (domain-independent); FIBO/OBO/IOF are selectable.
+- **Sibling fallback:** `contextualize` stage falls back to `get_siblings()` when `get_subclasses()` returns empty (leaf nodes). Many FIBO/CCO leaf classes have useful siblings. Each `AxisEnumeration` carries a `provenance` field (`"subclass"` or `"sibling"`) for downstream quality analysis.
+- **Programmatic retrieval:** Python calls `create_tool_handlers()` dicts from ontoquery + nexus-mcp (no MCP transport). Ontoquery uses `GraphBackend` protocol (oxigraph by default). LLM receives pre-assembled context and produces structured output.
+- **Per-call debug logging:** `--debug <dir>` writes JSON file per LLM call with full prompts, responses, and context. When `--track` is active, also creates MLflow trace spans (dual-write via `debug.log_call()`).
+
+**Pipeline events:** Each stage emits structured events to a `RunReport` dataclass (14 event types: type_distribution, selected_domains, invalid_domain_key, weak_match, invalid_risk_index, match_count, domain_filtered, cache_hit, empty_axes, role_derivation, sibling_fallback, empty_enumerations, self_reference_filtered, cross_mapping_filtered). Report written as `*-report.yaml`.
 
 **CLI:**
 ```bash
@@ -235,9 +266,17 @@ cd refiner
 uv run refiner run ../policy_examples/swb.json --output /tmp/out --debug /tmp/debug
 uv run refiner run ../policy_examples/swb.json --until identify_domains  # partial run
 uv run refiner emit /tmp/out --policies ../policy_examples/swb.json --samples-per-risk 10
+uv run refiner evaluate /tmp/out --policies ../policy_examples/swb.json  # post-hoc metrics
+uv run refiner evaluate /tmp/out --emit /tmp/dataset.jsonl --adversarial /tmp/adv.jsonl  # full evaluation
+uv run refiner evaluate /tmp/out --adversarial /tmp/adv.jsonl --judge --judge-sample 20  # with judge scoring
+
+# MLflow tracking (requires: uv sync --extra tracking)
+uv run refiner run ../policy_examples/swb.json --output /tmp/out --track --tracking-uri $MLFLOW_TRACKING_URI
+uv run refiner evaluate /tmp/out --track --tracking-uri $MLFLOW_TRACKING_URI  # logs metrics to same MLflow run
+uv run refiner track /tmp/out --tracking-uri $MLFLOW_TRACKING_URI  # backfill existing run
 ```
 
-**Config:** `REFINER_BASE_URL`, `REFINER_MODEL`, `REFINER_API_KEY`, `NEXUS_BASE_DIR`, `ONTOQUERY_CHROMA_DIR`, `NEXUS_CHROMA_DIR`
+**Config:** `REFINER_BASE_URL`, `REFINER_MODEL`, `REFINER_API_KEY`, `NEXUS_BASE_DIR`, `ONTOQUERY_CHROMA_DIR`, `NEXUS_CHROMA_DIR`, `MLFLOW_TRACKING_URI`
 
 **Spec:** `docs/superpowers/specs/2026-04-01-refiner-llm-layer-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-01-refiner-llm-layer.md`
@@ -282,6 +321,127 @@ uv run redteam /tmp/dataset.jsonl \
 **Spec:** `docs/superpowers/specs/2026-04-01-emit-dataset-design.md`
 **Plan:** `docs/superpowers/plans/2026-04-01-emit-dataset.md`
 
+## Evaluation Framework
+
+Post-hoc evaluation of pipeline outputs via `refiner evaluate`. Two components: structured pipeline events during execution, and metrics computed after.
+
+**Pipeline events (evaluate.py: `aggregate_stage_quality`):**
+- 14 event types across 6 stages, emitted to `RunReport` on `PipelineState`
+- Each stage accepts `report=None` (backward compatible); events appended with `if report:` guards
+- Written as `*-report.yaml` alongside taxonomy and domain context outputs
+
+**Coverage metrics (evaluate.py):**
+- `compute_risk_framework_coverage` — maps risk IDs to frameworks by prefix convention (ibm-risk-atlas-*, owasp-llm-*, etc.)
+- `compute_policy_coverage` — per-policy risk counts, axis counts, enumeration counts; zero-match detection when policies JSON provided
+- `compute_ontological_coverage` — unique axis classes, unique enumeration URIs, breakdown by source ontology
+- `compute_cross_mapping_coverage` — cross-mapping utilization from taxonomy entries
+- `compute_single_value_axis_dominance` — fraction of axes with ≤1 enumeration (predicts prompt repetition)
+- `compute_enumeration_domain_mismatch` — enumerations from ontologies outside selected domains (e.g. FIBO in healthcare runs)
+
+**Proxy quality metrics (evaluate.py):**
+- `compute_generation_metrics` — axis diversity (sampled/available per risk), role distribution, relevance distribution, dedup saturation (samples vs combinatorial space)
+- `compute_enumeration_concentration` — top-k share of sampled enumeration values (Herfindahl-style dominance)
+- `compute_adversarial_metrics` — lexical diversity (TTR), mean prompt length, domain term hit rate, red-flag pattern scan (13 patterns), per-policy breakdown
+- `compute_policy_coverage_balance` — Shannon entropy of prompt distribution across policies (normalized 0-1)
+- `compute_jargon_leak_rate` — prompts containing ontology naming patterns (CamelCase, "Artifact Function", "Act of X")
+- `compute_axis_fidelity` — per-prompt word-overlap check of sampled axis labels against prompt text; classifies prompts as full/partial/improvised
+- `compute_named_entity_utilization` — extracts proper nouns from policy definitions (Title Case sequences, CamelCase), checks presence in prompts
+- `compute_weak_match_impact` — groups prompts by weak-match vs strong-match risks, compares distributions; optionally compares judge scores between groups
+- `compute_semantic_diversity` — TF-IDF cosine pairwise distance across prompts (catches meaning repetition that TTR misses); per-policy breakdown; pure Python, no extra deps
+- `compute_sibling_relevance` — compares relevance distributions (high/medium/low) between subclass-sourced and sibling-sourced enumerations; uses `provenance` field on `AxisEnumeration`
+
+**Judge-model evaluation (judge.py):**
+- `judge_prompt` — Instructor-based LLM call scoring on 4 dimensions (1-5 scale): subtlety, plausibility, domain_grounding, policy_relevance
+- `aggregate_judge_results` — mean/median/std per dimension
+- CLI integration: `--judge` flag on `refiner evaluate`, with `--judge-model`, `--judge-base-url`, `--judge-api-key`, `--judge-sample`
+
+**Orchestration (evaluate.py: `run_evaluation`):**
+- Discovers `*-report.yaml`, `*-taxonomy.yaml`, `*-domain-context.yaml` via `_discover_file` glob
+- Accepts optional `emit_path`, `adversarial_path`, `policies_path` for additional metrics layers
+- Returns nested dict with sections: run, stage_quality, coverage (includes single_value_axis_dominance, enumeration_domain_mismatch, sibling_relevance), generation_metrics (includes enumeration_concentration), prompt_metrics (includes policy_coverage_balance, jargon_leak_rate, axis_fidelity, named_entity_utilization, weak_match_impact, semantic_diversity), judge_evaluation
+
+**Spec:** `docs/superpowers/specs/2026-04-01-evaluation-metrics-design.md`
+**Plan:** `docs/superpowers/plans/2026-04-01-evaluation-metrics.md`
+
+## MLflow Tracking
+
+Optional MLflow integration for cross-run comparison and experiment lifecycle tracking. Wraps `refiner run` (tracing) and `refiner evaluate` (metrics/artifacts).
+
+**Install:** `uv sync --extra tracking` (adds `mlflow>=2.14`)
+
+**Components:**
+- `tracking.py` — Core MLflow logic: `log_run_to_mlflow()`, git context, metric flattening, artifact whitelisting, run linking
+- `debug.py` — Dual-write: JSON files + MLflow trace spans per LLM call (via `try/except ImportError` guard)
+- `cli.py` — `--track`, `--tracking-uri`, `--description` flags on `run`/`evaluate`; standalone `track` command
+
+**Data flow:**
+```
+refiner run --track
+  ├── mlflow.start_run() → creates MLflow run, writes .mlflow-run-id
+  ├── pipeline executes → debug.log_call() creates trace spans per LLM call
+  └── logs output artifacts (taxonomy, domain context, report YAML)
+
+refiner evaluate --track
+  ├── reads .mlflow-run-id → reopens existing run (or creates new)
+  ├── computes all metrics
+  └── logs flattened metrics + evaluation artifacts
+
+refiner track <output-dir>
+  ├── reads *-evaluation.json + .mlflow-run-id
+  └── logs params + metrics + artifacts (backfill, no traces)
+```
+
+**Experiment organization:** One MLflow experiment per policy set (e.g. `swb`, `generic`, `aramco`). Runs vary by model, git SHA, and configuration. Cross-run comparison answers: "did this change make prompts better?"
+
+**Run linking:** `refiner run --track` writes `.mlflow-run-id` to the output directory. `refiner evaluate --track` reads it to reopen the same run — traces and metrics live together. If absent, a new run is created.
+
+**What gets logged:**
+- **Params:** model, policy_set, selected_domains, git_sha, git_dirty
+- **Tags:** description (optional), timestamp, stages_completed
+- **Metrics (22 flattened scalars):** coverage.total_risks_matched, coverage.single_value_axis_rate, coverage.cross_mapping_utilization, generation.axis_diversity, prompt.lexical_diversity, prompt.semantic_diversity, judge.subtlety, etc. Conditional — absent metrics are simply not logged.
+- **Artifacts:** Whitelisted glob patterns (*-taxonomy.yaml, *-evaluation.json, dataset.jsonl, adversarial_prompts.jsonl, assessment.md, debug/, etc.)
+- **Traces:** One span per LLM call with full prompt/response payloads, named by stage + context slug (e.g. `map_risks-illegal-activity`)
+
+**Key patterns:**
+- **Optional dependency:** Everything works without mlflow. `tracking.py` imported only when `--track` is used. `debug.py` uses `try/except ImportError` for silent no-op.
+- **Immutable params guard:** `log_run_to_mlflow()` skips `log_params` when reopening an existing run (MLflow params are immutable).
+- **Artifact whitelist:** Only known pipeline outputs are uploaded — `.mlflow-run-id` and stale files excluded.
+- **Git SHA tracking:** Captures code state (prompt templates, pipeline logic, filtering rules) via `git rev-parse HEAD` + `git status --porcelain`.
+
+**Spec:** `docs/superpowers/specs/2026-04-02-mlflow-integration-design.md`
+**Plan:** `docs/superpowers/plans/2026-04-02-mlflow-integration.md`
+
+## Run Assessment
+
+Qualitative assessment of adversarial prompt quality from pipeline runs. Each run directory in `runs/` gets an `assessment.md` with best/worst examples, systematic issues, distribution stats, and root cause analysis.
+
+**Data extraction:**
+```bash
+cd refiner
+uv run python tools/assess_run.py ../runs/<run-name>
+```
+
+`assess_run.py` reads all pipeline outputs (taxonomy, domain context, report, evaluation JSON, adversarial prompts JSONL, debug logs) and prints structured data: run metadata, taxonomy summary, pipeline events, domain context profiles (empty axes/enumerations, relevance distribution), all adversarial prompts with axes, evaluation metrics, and debug log token estimates.
+
+**Assessment structure** (written as `runs/<run-name>/assessment.md`):
+- Run metadata and dataset summary
+- Best examples (5-6 prompts) — what makes them effective boundary probes
+- Worst examples (4-5 prompts) — why they fail (off-domain, ontology jargon, no policy boundary tested)
+- Systematic issues — patterns across the full set (axis saturation, ontology mismatches, empty axes)
+- Pattern table — which ontology groundings produce effective vs ineffective prompts
+- Root causes — why the issues exist (ontology coverage gaps, domain filter limitations, model behaviour)
+- Distribution stats — source ontology, roles, policy coverage, prompt lengths, sampled values
+
+**Known patterns from assessments:**
+- Domain-specific policies (SWB banking) produce much stronger prompts than generic safety policies
+- FIBO enumerations + named entities from policies = strongest prompts
+- CCO safety vocabulary is shallow: `Act of Violence` (3 children), `Act of Deceptive Communication` (1 child)
+- `Act of Propaganda` appears in ~30% of prompts across all runs — single child of `Act of Deceptive Communication`
+- FIBO `SecurityIdentifier` matches "security" in infosec policies — semantic collision
+- `Deception Artifact Function` siblings are all physical-world concepts (Thermal Control, Fuel, etc.)
+- Malware and Obscene Content risks get zero axes after domain filtering — no relevant ontology loaded
+- Model sometimes ignores bad axes and improvises better framings — useful but unreliable
+
 ## ontoquery CLI
 
 Ontology query CLI at `ontoquery/`. Three commands:
@@ -304,11 +464,15 @@ uv run ontoquery navigate "https://www.commoncoreontologies.org/ont00000449"
 ```
 
 ### Key implementation details
-- **Definition extraction fallback**: `skos:definition` > `iof-av:naturalLanguageDefinition` > `obo:IAO_0000115` > `rdfs:comment`
+- **Graph backend abstraction**: `GraphBackend` protocol in `backend.py` with two implementations:
+  - **`OxigraphBackend`** (default): Rust-based via pyoxigraph, RocksDB persistent store at `.chroma/oxigraph/`. Parses 338 files in ~5s (vs ~6min with rdflib). Startup from persistent store: 8ms.
+  - **`RdflibBackend`** (fallback): Pure Python, N-Triples cache at `.chroma/graph.nt`. Used when pyoxigraph is not installed.
+  - Factory: `create_index_backend(files, chroma_dir)` for indexing, `load_backend(chroma_dir, source_dirs)` for runtime.
+  - Pattern matching (`quads_for_pattern`) used for all traversals — faster than SPARQL for simple queries.
+- **Definition extraction fallback**: `skos:definition` > `iof-av:naturalLanguageDefinition` > `obo:IAO_0000115` > `d3f:definition` > `rdfs:comment`
 - **Format detection**: explicit `format="turtle"` for `.ttl`, `format="xml"` for `.rdf`/`.owl` (not auto-detected)
-- **Graph caching**: N-Triples dump at `.chroma/graph.nt` avoids re-parsing on every `navigate` call; invalidated on re-index
 - **`owl:imports` not followed**: include imported ontology files in the indexed directory to get labels for cross-referenced classes
 - **Property coverage**: `rdfs:domain`/`rdfs:range` only; OWL restrictions not yet extracted (most CCO/IOF relationships are via restrictions)
-- **Graph utilities**: `get_siblings()`, `get_subclasses_recursive()` (BFS with depth), `get_class_definition()` — used by MCP server tools
+- **Graph utilities**: `get_siblings()`, `get_subclasses_recursive()` (BFS with depth), `get_class_definition()` — used by MCP server tools via backend protocol
 - **CLI spec**: `docs/superpowers/specs/2026-03-31-ontoquery-cli-design.md`
 - **CLI plan**: `docs/superpowers/plans/2026-03-31-ontoquery-cli.md`
