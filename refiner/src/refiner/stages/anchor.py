@@ -326,7 +326,13 @@ def anchor(
             for ec in enriched:
                 cand = next((c for c in candidates if c["uri"] == ec["uri"]), None)
                 hit_info = ""
-                if cand and cand.get("hit_count", 1) > 1:
+                if cand and cand.get("restriction_from"):
+                    prop_label = cand.get("restriction_property", "").split("#")[-1].split("/")[-1]
+                    from_label = cand.get("restriction_from", "").split("#")[-1].split("/")[-1]
+                    hit_info = f" [from restriction: {prop_label} on {from_label}]"
+                elif cand and "equivalence" in cand.get("query_sources", []):
+                    hit_info = " [from equivalence]"
+                elif cand and cand.get("hit_count", 1) > 1:
                     hit_info = f" [found by {cand['hit_count']}/{expansion_stats['queries_run']} queries]"
                 line = f"- {ec['uri']}: {ec.get('label', '')} — {ec.get('definition', '')}{hit_info}"
                 if ec.get("siblings"):
