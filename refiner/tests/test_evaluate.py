@@ -1141,3 +1141,69 @@ def test_compute_query_source_contribution():
 def test_compute_query_source_contribution_empty():
     result = compute_query_source_contribution([])
     assert result == {}
+
+
+def test_aggregate_disjoint_filtered_event():
+    events = [
+        {"stage": "contextualize", "event": "disjoint_filtered",
+         "risk_id": "r1", "axis_uri": "http://ex/A",
+         "kept": ["http://ex/B"], "filtered": ["http://ex/C"]},
+    ]
+    result = aggregate_stage_quality(events)
+    df = result["contextualize"]["disjoint_filtered"]
+    assert len(df) == 1
+    assert df[0]["risk_id"] == "r1"
+    assert "http://ex/C" in df[0]["filtered"]
+
+
+def test_aggregate_restriction_expansion_event():
+    events = [
+        {"stage": "anchor", "event": "restriction_expansion",
+         "risk_id": "r1", "source_uri": "http://ex/A",
+         "candidates_added": 2, "source_type": "restriction"},
+    ]
+    result = aggregate_stage_quality(events)
+    re = result["anchor"]["restriction_expansions"]
+    assert len(re) == 1
+    assert re[0]["candidates_added"] == 2
+
+
+def test_aggregate_restriction_context_added_event():
+    events = [
+        {"stage": "contextualize", "event": "restriction_context_added",
+         "axis_uri": "http://ex/A", "restriction_count": 3},
+    ]
+    result = aggregate_stage_quality(events)
+    assert result["contextualize"]["restriction_contexts_added"] == 1
+
+
+def test_compute_disjoint_filter_rate():
+    from refiner.evaluate import compute_disjoint_filter_rate
+    events = [
+        {"stage": "contextualize", "event": "disjoint_filtered",
+         "risk_id": "r1", "axis_uri": "a", "kept": ["b"], "filtered": ["c"]},
+        {"stage": "contextualize", "event": "empty_enumerations",
+         "risk_id": "r2", "axis_uri": "d"},
+    ]
+    result = compute_disjoint_filter_rate(events, total_risks=3)
+    assert result["risks_with_disjoint_filtering"] == 1
+    assert result["total_risks"] == 3
+    assert abs(result["disjoint_filter_rate"] - 1 / 3) < 0.01
+
+
+def test_compute_disjoint_filter_rate_empty():
+    from refiner.evaluate import compute_disjoint_filter_rate
+    result = compute_disjoint_filter_rate([], total_risks=0)
+    assert result["disjoint_filter_rate"] == 0
+
+
+def test_compute_restriction_discovery_rate():
+    from refiner.evaluate import compute_restriction_discovery_rate
+    events = [
+        {"stage": "anchor", "event": "restriction_expansion",
+         "risk_id": "r1", "source_uri": "a", "candidates_added": 2, "source_type": "restriction"},
+    ]
+    result = compute_restriction_discovery_rate(events, total_risks=4)
+    assert result["risks_with_restriction_expansion"] == 1
+    assert result["total_candidates_from_axioms"] == 2
+    assert result["restriction_discovery_rate"] == 0.25

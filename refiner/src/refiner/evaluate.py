@@ -77,6 +77,22 @@ def aggregate_stage_quality(events: list[dict]) -> dict:
             s["self_references_filtered"] = s.get("self_references_filtered", 0) + 1
         elif etype == "cross_mapping_filtered":
             s["cross_mappings_filtered"] = s.get("cross_mappings_filtered", 0) + 1
+        elif etype == "disjoint_filtered":
+            s.setdefault("disjoint_filtered", []).append({
+                "risk_id": event["risk_id"],
+                "axis_uri": event["axis_uri"],
+                "kept": event["kept"],
+                "filtered": event["filtered"],
+            })
+        elif etype == "restriction_expansion":
+            s.setdefault("restriction_expansions", []).append({
+                "risk_id": event["risk_id"],
+                "source_uri": event["source_uri"],
+                "candidates_added": event["candidates_added"],
+                "source_type": event["source_type"],
+            })
+        elif etype == "restriction_context_added":
+            s["restriction_contexts_added"] = s.get("restriction_contexts_added", 0) + 1
 
     return result
 
@@ -665,6 +681,30 @@ def compute_query_source_contribution(events: list[dict]) -> dict:
     return counts
 
 
+def compute_disjoint_filter_rate(events: list[dict], total_risks: int) -> dict:
+    """Fraction of risks where disjointness filtering removed enumerations."""
+    disjoint_events = [e for e in events if e.get("event") == "disjoint_filtered"]
+    risk_ids = {e["risk_id"] for e in disjoint_events}
+    return {
+        "risks_with_disjoint_filtering": len(risk_ids),
+        "total_risks": total_risks,
+        "disjoint_filter_rate": round(len(risk_ids) / total_risks, 3) if total_risks > 0 else 0,
+    }
+
+
+def compute_restriction_discovery_rate(events: list[dict], total_risks: int) -> dict:
+    """Fraction of risks where restriction/equivalence expansion added candidates."""
+    expansion_events = [e for e in events if e.get("event") == "restriction_expansion"]
+    risk_ids = {e["risk_id"] for e in expansion_events}
+    total_added = sum(e.get("candidates_added", 0) for e in expansion_events)
+    return {
+        "risks_with_restriction_expansion": len(risk_ids),
+        "total_risks": total_risks,
+        "total_candidates_from_axioms": total_added,
+        "restriction_discovery_rate": round(len(risk_ids) / total_risks, 3) if total_risks > 0 else 0,
+    }
+
+
 def _discover_file(output_dir: Path, pattern: str) -> Path | None:
     matches = list(output_dir.glob(pattern))
     if len(matches) > 1:
@@ -732,6 +772,10 @@ def run_evaluation(
                 profiles, selected_domains
             )
         coverage["sibling_relevance"] = compute_sibling_relevance(profiles)
+        if events:
+            total_risks = len({p["risk_id"] for p in profiles})
+            coverage["disjoint_filter_rate"] = compute_disjoint_filter_rate(events, total_risks)
+            coverage["restriction_discovery_rate"] = compute_restriction_discovery_rate(events, total_risks)
     if taxonomy_data:
         if profiles:
             risk_ids = list({p["risk_id"] for p in profiles})
