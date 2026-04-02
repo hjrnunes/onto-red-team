@@ -3,6 +3,20 @@
 import subprocess
 from pathlib import Path
 
+_ARTIFACT_PATTERNS = [
+    "*-taxonomy.yaml",
+    "*-domain-context.yaml",
+    "*-report.yaml",
+    "*-evaluation.json",
+    "*-evaluation.html",
+    "dataset.jsonl",
+    "adversarial_prompts.jsonl",
+    "adversarial_prompts.html",
+    "assessment.md",
+]
+
+_RUN_ID_FILE = ".mlflow-run-id"
+
 
 def _get_git_context() -> tuple[str, bool]:
     """Get git commit SHA and dirty status.
@@ -94,3 +108,48 @@ def _flatten_metrics(evaluation: dict) -> dict[str, float]:
                 metrics[f"judge.{dim}"] = dim_data["mean"]
 
     return metrics
+
+
+def _collect_artifacts(output_dir: Path) -> tuple[list[Path], list[Path]]:
+    """Collect whitelisted artifact files and directories for MLflow upload.
+
+    Args:
+        output_dir: Pipeline output directory
+
+    Returns:
+        Tuple of (files, dirs) where files are individual artifact files
+        and dirs are directories to upload recursively (e.g., debug/)
+    """
+    files = []
+    for pattern in _ARTIFACT_PATTERNS:
+        files.extend(output_dir.glob(pattern))
+    dirs = []
+    debug_dir = output_dir / "debug"
+    if debug_dir.is_dir():
+        dirs.append(debug_dir)
+    return files, dirs
+
+
+def write_run_id(output_dir: Path, run_id: str) -> None:
+    """Write MLflow run ID to output directory for linking.
+
+    Args:
+        output_dir: Pipeline output directory
+        run_id: MLflow run ID
+    """
+    (output_dir / _RUN_ID_FILE).write_text(run_id)
+
+
+def read_run_id(output_dir: Path) -> str | None:
+    """Read MLflow run ID from output directory if present.
+
+    Args:
+        output_dir: Pipeline output directory
+
+    Returns:
+        MLflow run ID or None if not found
+    """
+    path = output_dir / _RUN_ID_FILE
+    if path.exists():
+        return path.read_text().strip()
+    return None

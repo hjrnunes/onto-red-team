@@ -3,7 +3,13 @@
 import subprocess
 from unittest.mock import patch
 
-from refiner.tracking import _flatten_metrics, _get_git_context
+from refiner.tracking import (
+    _collect_artifacts,
+    _flatten_metrics,
+    _get_git_context,
+    read_run_id,
+    write_run_id,
+)
 
 
 def test_get_git_context_returns_sha_and_dirty():
@@ -105,3 +111,52 @@ def test_flatten_metrics_cross_mapping_zero_division():
     }
     metrics = _flatten_metrics(evaluation)
     assert "coverage.cross_mapping_utilization" not in metrics
+
+
+def test_collect_artifacts_whitelists(tmp_path):
+    # Create whitelisted files
+    (tmp_path / "swb-taxonomy.yaml").write_text("x")
+    (tmp_path / "swb-evaluation.json").write_text("x")
+    (tmp_path / "swb-evaluation.html").write_text("x")
+    (tmp_path / "dataset.jsonl").write_text("x")
+    (tmp_path / "adversarial_prompts.jsonl").write_text("x")
+    (tmp_path / "assessment.md").write_text("x")
+    # Create files that should be excluded
+    (tmp_path / ".mlflow-run-id").write_text("abc123")
+    (tmp_path / "random-file.txt").write_text("x")
+
+    files, dirs = _collect_artifacts(tmp_path)
+    names = {f.name for f in files}
+    assert "swb-taxonomy.yaml" in names
+    assert "swb-evaluation.json" in names
+    assert "swb-evaluation.html" in names
+    assert "dataset.jsonl" in names
+    assert "adversarial_prompts.jsonl" in names
+    assert "assessment.md" in names
+    assert ".mlflow-run-id" not in names
+    assert "random-file.txt" not in names
+    assert dirs == []
+
+
+def test_collect_artifacts_includes_debug_dir(tmp_path):
+    debug_dir = tmp_path / "debug"
+    debug_dir.mkdir()
+    (debug_dir / "01-classify.json").write_text("x")
+
+    files, dirs = _collect_artifacts(tmp_path)
+    assert dirs == [debug_dir]
+
+
+def test_collect_artifacts_empty_dir(tmp_path):
+    files, dirs = _collect_artifacts(tmp_path)
+    assert files == []
+    assert dirs == []
+
+
+def test_write_and_read_run_id(tmp_path):
+    write_run_id(tmp_path, "abc-123-def")
+    assert read_run_id(tmp_path) == "abc-123-def"
+
+
+def test_read_run_id_missing(tmp_path):
+    assert read_run_id(tmp_path) is None
