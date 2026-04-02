@@ -633,6 +633,38 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
     }
 
 
+def compute_candidate_expansion_effectiveness(events: list[dict]) -> dict:
+    expansion_events = [e for e in events if e.get("event") == "candidate_expansion"]
+    hit_events = [e for e in events if e.get("event") == "multi_query_hit"]
+
+    if not expansion_events:
+        return {"mean_queries_run": 0, "mean_unique_candidates": 0, "multi_hit_fraction": 0}
+
+    mean_queries = sum(e["queries_run"] for e in expansion_events) / len(expansion_events)
+    mean_unique = sum(e["unique_after_dedup"] for e in expansion_events) / len(expansion_events)
+
+    multi_hit_count = sum(1 for e in hit_events if e.get("hit_count", 1) > 1)
+    multi_hit_fraction = multi_hit_count / len(hit_events) if hit_events else 0
+
+    return {
+        "mean_queries_run": mean_queries,
+        "mean_unique_candidates": mean_unique,
+        "multi_hit_fraction": multi_hit_fraction,
+    }
+
+
+def compute_query_source_contribution(events: list[dict]) -> dict:
+    hit_events = [e for e in events if e.get("event") == "multi_query_hit"]
+    if not hit_events:
+        return {}
+
+    counts: dict[str, int] = {}
+    for e in hit_events:
+        for source in e.get("query_sources", []):
+            counts[source] = counts.get(source, 0) + 1
+    return counts
+
+
 def _discover_file(output_dir: Path, pattern: str) -> Path | None:
     matches = list(output_dir.glob(pattern))
     if len(matches) > 1:
@@ -666,6 +698,8 @@ def run_evaluation(
     events = report_data.get("events", [])
     if events:
         result["stage_quality"] = aggregate_stage_quality(events)
+        result["stage_quality"]["candidate_expansion"] = compute_candidate_expansion_effectiveness(events)
+        result["stage_quality"]["query_source_contribution"] = compute_query_source_contribution(events)
 
     all_policies = None
     if policies_path and policies_path.exists():

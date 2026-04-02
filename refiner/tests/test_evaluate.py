@@ -2,6 +2,13 @@ from refiner.evaluate import (
     aggregate_stage_quality, compute_risk_framework_coverage, compute_policy_coverage,
     compute_ontological_coverage, compute_cross_mapping_coverage,
     compute_generation_metrics, compute_adversarial_metrics,
+    compute_single_value_axis_dominance, compute_enumeration_domain_mismatch,
+    compute_policy_coverage_balance, compute_enumeration_concentration,
+    compute_jargon_leak_rate,
+    compute_axis_fidelity, compute_named_entity_utilization,
+    compute_weak_match_impact,
+    compute_semantic_diversity, compute_sibling_relevance,
+    compute_candidate_expansion_effectiveness, compute_query_source_contribution,
 )
 
 
@@ -217,6 +224,511 @@ def test_compute_adversarial_metrics_empty():
     result = compute_adversarial_metrics([])
     assert result["lexical_diversity"] == 0
     assert result["red_flag_count"] == 0
+
+
+# --- Single-value axis dominance ---
+
+def test_single_value_axis_dominance_mixed():
+    """Axes with 1 enumeration should be counted as single-value."""
+    dc = _sample_domain_context()
+    result = compute_single_value_axis_dominance(dc["profiles"])
+    # r1 has 1 axis with 2 enums, r2 has 1 axis with 1 enum
+    assert result["total_axes"] == 2
+    assert result["single_value_axes"] == 1
+    assert result["single_value_rate"] == 0.5
+
+
+def test_single_value_axis_dominance_empty():
+    result = compute_single_value_axis_dominance([])
+    assert result["total_axes"] == 0
+    assert result["single_value_axes"] == 0
+    assert result["single_value_rate"] == 0
+
+
+def test_single_value_axis_dominance_all_single():
+    profiles = [
+        {"risk_id": "r1", "axes": [
+            {"cco_class_uri": "http://ex/A", "enumerations": [{"class_uri": "http://ex/X"}]},
+            {"cco_class_uri": "http://ex/B", "enumerations": [{"class_uri": "http://ex/Y"}]},
+        ]},
+    ]
+    result = compute_single_value_axis_dominance(profiles)
+    assert result["single_value_rate"] == 1.0
+
+
+def test_single_value_axis_dominance_zero_enum_axis():
+    """Axes with 0 enumerations should also count as single-value (no diversity)."""
+    profiles = [
+        {"risk_id": "r1", "axes": [
+            {"cco_class_uri": "http://ex/A", "enumerations": []},
+        ]},
+    ]
+    result = compute_single_value_axis_dominance(profiles)
+    assert result["single_value_axes"] == 1
+
+
+# --- Enumeration domain mismatch ---
+
+def test_enumeration_domain_mismatch_basic():
+    """FIBO enumerations in a CCO+OBO-only run should be flagged."""
+    profiles = [
+        {"risk_id": "r1", "axes": [
+            {"cco_class_uri": "http://ex/A", "enumerations": [
+                {"class_uri": "http://ex/X", "source_ontology": "FIBO"},
+                {"class_uri": "http://ex/Y", "source_ontology": "OBO"},
+            ]},
+        ]},
+    ]
+    selected_domains = ["CCO", "OBO"]
+    result = compute_enumeration_domain_mismatch(profiles, selected_domains)
+    assert result["total_enumerations"] == 2
+    assert result["mismatched"] == 1  # FIBO not in selected domains
+    assert result["mismatch_rate"] == 0.5
+    assert result["by_mismatched_ontology"]["FIBO"] == 1
+
+
+def test_enumeration_domain_mismatch_cco_always_allowed():
+    """CCO enumerations should never be flagged, even if not in selected_domains."""
+    profiles = [
+        {"risk_id": "r1", "axes": [
+            {"cco_class_uri": "http://ex/A", "enumerations": [
+                {"class_uri": "http://ex/X", "source_ontology": "CCO"},
+            ]},
+        ]},
+    ]
+    result = compute_enumeration_domain_mismatch(profiles, ["OBO"])
+    assert result["mismatched"] == 0
+
+
+def test_enumeration_domain_mismatch_empty():
+    result = compute_enumeration_domain_mismatch([], ["CCO"])
+    assert result["total_enumerations"] == 0
+    assert result["mismatch_rate"] == 0
+
+
+# --- Policy coverage balance ---
+
+def test_policy_coverage_balance_even():
+    """Even distribution should have high entropy."""
+    per_policy = [
+        {"policy_concept": "A", "count": 10},
+        {"policy_concept": "B", "count": 10},
+    ]
+    result = compute_policy_coverage_balance(per_policy)
+    assert result["entropy"] == 1.0  # log2(2) = 1 for uniform 2-way split
+    assert result["normalized_entropy"] == 1.0
+
+
+def test_policy_coverage_balance_skewed():
+    """Highly skewed distribution should have low normalized entropy."""
+    per_policy = [
+        {"policy_concept": "A", "count": 99},
+        {"policy_concept": "B", "count": 1},
+    ]
+    result = compute_policy_coverage_balance(per_policy)
+    assert result["normalized_entropy"] < 0.5
+
+
+def test_policy_coverage_balance_single():
+    per_policy = [{"policy_concept": "A", "count": 10}]
+    result = compute_policy_coverage_balance(per_policy)
+    assert result["entropy"] == 0
+    assert result["normalized_entropy"] == 0
+
+
+def test_policy_coverage_balance_empty():
+    result = compute_policy_coverage_balance([])
+    assert result["entropy"] == 0
+    assert result["normalized_entropy"] == 0
+
+
+# --- Enumeration concentration ---
+
+def test_enumeration_concentration_basic():
+    """Top-k values should capture their share of total samples."""
+    rows = [
+        {"sampled_axes": [{"sampled_uri": "http://ex/A"}, {"sampled_uri": "http://ex/A"}]},
+        {"sampled_axes": [{"sampled_uri": "http://ex/B"}, {"sampled_uri": "http://ex/C"}]},
+        {"sampled_axes": [{"sampled_uri": "http://ex/A"}, {"sampled_uri": "http://ex/D"}]},
+    ]
+    result = compute_enumeration_concentration(rows, top_k=1)
+    # A appears 3 times out of 6 total
+    assert result["total_samples"] == 6
+    assert result["top_k"] == 1
+    assert result["top_k_share"] == 0.5
+    assert result["top_values"][0]["uri"] == "http://ex/A"
+    assert result["top_values"][0]["count"] == 3
+
+
+def test_enumeration_concentration_empty():
+    result = compute_enumeration_concentration([], top_k=5)
+    assert result["total_samples"] == 0
+    assert result["top_k_share"] == 0
+
+
+def test_enumeration_concentration_default_top_5():
+    rows = [
+        {"sampled_axes": [{"sampled_uri": f"http://ex/{c}"}]}
+        for c in "AAABBBCCDDE"
+    ]
+    result = compute_enumeration_concentration(rows)
+    assert result["top_k"] == 5
+    assert len(result["top_values"]) == 5
+
+
+# --- Jargon leak rate ---
+
+def test_jargon_leak_rate_basic():
+    rows = [
+        {"prompt": "The Act of Propaganda is used for deception.",
+         "sampled_axes": [{"sampled_label": "Act of Propaganda"}]},
+        {"prompt": "Can you help me review the credit application?",
+         "sampled_axes": [{"sampled_label": "Credit Application"}]},
+    ]
+    result = compute_jargon_leak_rate(rows)
+    # "Act of Propaganda" is a known jargon pattern, "Credit Application" is not
+    assert result["total_prompts"] == 2
+    assert result["jargon_prompts"] >= 1
+    assert result["jargon_rate"] > 0
+
+
+def test_jargon_leak_rate_artifact_function():
+    rows = [
+        {"prompt": "Analyze the Impact Shielding Artifact Function in this context.",
+         "sampled_axes": [{"sampled_label": "Impact Shielding Artifact Function"}]},
+    ]
+    result = compute_jargon_leak_rate(rows)
+    assert result["jargon_prompts"] == 1
+
+
+def test_jargon_leak_rate_camelcase():
+    rows = [
+        {"prompt": "Review the BorrowerDisclosureRequirement for this loan.",
+         "sampled_axes": [{"sampled_label": "BorrowerDisclosureRequirement"}]},
+    ]
+    result = compute_jargon_leak_rate(rows)
+    assert result["jargon_prompts"] == 1
+
+
+def test_jargon_leak_rate_clean():
+    rows = [
+        {"prompt": "Can you help me with the loan application process?",
+         "sampled_axes": [{"sampled_label": "loan application"}]},
+    ]
+    result = compute_jargon_leak_rate(rows)
+    assert result["jargon_prompts"] == 0
+
+
+def test_jargon_leak_rate_empty():
+    result = compute_jargon_leak_rate([])
+    assert result["total_prompts"] == 0
+    assert result["jargon_rate"] == 0
+
+
+# --- Axis fidelity ---
+
+def test_axis_fidelity_full():
+    """Prompt uses all axis labels -> full fidelity."""
+    rows = [
+        {"prompt": "Review the bond portfolio for the manager.",
+         "sampled_axes": [
+             {"sampled_label": "Bond"},
+             {"sampled_label": "Manager"},
+         ]},
+    ]
+    result = compute_axis_fidelity(rows)
+    assert result["total_prompts"] == 1
+    assert result["full_fidelity"] == 1
+    assert result["improvised"] == 0
+    assert result["mean_fidelity"] == 1.0
+
+
+def test_axis_fidelity_improvised():
+    """Prompt ignores all axes -> improvised."""
+    rows = [
+        {"prompt": "Can you help me with my loan application process?",
+         "sampled_axes": [
+             {"sampled_label": "Act of Propaganda"},
+             {"sampled_label": "Impact Shielding Artifact Function"},
+         ]},
+    ]
+    result = compute_axis_fidelity(rows)
+    assert result["improvised"] == 1
+    assert result["full_fidelity"] == 0
+    assert result["mean_fidelity"] == 0
+
+
+def test_axis_fidelity_partial():
+    """Prompt uses some axes but not all -> partial."""
+    rows = [
+        {"prompt": "Review the propaganda campaign strategy for our marketing department.",
+         "sampled_axes": [
+             {"sampled_label": "Act of Propaganda"},
+             {"sampled_label": "Impact Shielding Artifact Function"},
+         ]},
+    ]
+    result = compute_axis_fidelity(rows)
+    assert result["partial"] == 1
+    assert result["mean_fidelity"] == 0.5
+
+
+def test_axis_fidelity_word_match():
+    """Should match on significant words from the label, not just exact label."""
+    rows = [
+        {"prompt": "Analyze the shielding requirements for this system.",
+         "sampled_axes": [
+             {"sampled_label": "Impact Shielding Artifact Function"},
+         ]},
+    ]
+    result = compute_axis_fidelity(rows)
+    assert result["full_fidelity"] == 1
+
+
+def test_axis_fidelity_no_axes():
+    """Prompt with no sampled axes should be skipped."""
+    rows = [
+        {"prompt": "Some prompt text", "sampled_axes": []},
+    ]
+    result = compute_axis_fidelity(rows)
+    assert result["total_prompts"] == 0
+
+
+def test_axis_fidelity_empty():
+    result = compute_axis_fidelity([])
+    assert result["total_prompts"] == 0
+    assert result["mean_fidelity"] == 0
+
+
+# --- Named entity utilization ---
+
+def test_named_entity_utilization_basic():
+    """Prompt referencing a policy named entity should be counted."""
+    rows = [
+        {"prompt": "Jenny Carlson asked about the quarterly report.",
+         "policy_concept": "Executive Compensation"},
+        {"prompt": "Can you review the credit terms?",
+         "policy_concept": "Debt Repayment"},
+    ]
+    policies = {
+        "Executive Compensation": "Questions about compensation of Jenny Carlson and Mark Warden at South West Bank.",
+        "Debt Repayment": "Customers seeking to renegotiate debt at CreditAlpha.",
+    }
+    result = compute_named_entity_utilization(rows, policies)
+    assert result["total_prompts"] == 2
+    assert result["prompts_with_entities"] == 1  # only first prompt has "Jenny Carlson"
+    assert result["utilization_rate"] == 0.5
+
+
+def test_named_entity_utilization_camelcase():
+    """CamelCase product names should be detected."""
+    rows = [
+        {"prompt": "Review the CreditAlpha card terms.",
+         "policy_concept": "Debt"},
+    ]
+    policies = {
+        "Debt": "The credit card product is called CreditAlpha.",
+    }
+    result = compute_named_entity_utilization(rows, policies)
+    assert result["prompts_with_entities"] == 1
+
+
+def test_named_entity_utilization_no_entities_in_policy():
+    """Generic policies with no proper nouns should extract no entities."""
+    rows = [
+        {"prompt": "Help me hack the system.",
+         "policy_concept": "Safety"},
+    ]
+    policies = {
+        "Safety": "Prompts that seek to elicit advice to carry out illegal activity.",
+    }
+    result = compute_named_entity_utilization(rows, policies)
+    # No entities extracted from this policy, so can't match
+    assert result["prompts_with_entities"] == 0
+
+
+def test_named_entity_utilization_empty():
+    result = compute_named_entity_utilization([], {})
+    assert result["total_prompts"] == 0
+    assert result["utilization_rate"] == 0
+
+
+def test_named_entity_utilization_case_insensitive():
+    """Entity matching should be case-insensitive in prompt text."""
+    rows = [
+        {"prompt": "I work at south west bank and need help.",
+         "policy_concept": "Fraud"},
+    ]
+    policies = {
+        "Fraud": "Report suspicious activity to South West Bank.",
+    }
+    result = compute_named_entity_utilization(rows, policies)
+    assert result["prompts_with_entities"] == 1
+
+
+# --- Weak match impact ---
+
+def test_weak_match_impact_basic():
+    """Prompts from weak-match risks should be separated from strong-match prompts."""
+    weak_matches = [
+        {"risk_id": "r1", "distance": 0.55},
+        {"risk_id": "r2", "distance": 0.72},
+    ]
+    prompt_rows = [
+        {"risk_id": "r1", "policy_concept": "Fraud"},
+        {"risk_id": "r1", "policy_concept": "Fraud"},
+        {"risk_id": "r2", "policy_concept": "Fraud"},
+        {"risk_id": "r3", "policy_concept": "Violence"},
+        {"risk_id": "r3", "policy_concept": "Violence"},
+    ]
+    result = compute_weak_match_impact(weak_matches, prompt_rows)
+    assert result["weak_match_prompts"] == 3  # r1 x2 + r2 x1
+    assert result["strong_match_prompts"] == 2  # r3 x2
+    assert result["weak_match_risks"] == 2
+    assert result["mean_weak_distance"] == (0.55 + 0.72) / 2
+
+
+def test_weak_match_impact_with_scores():
+    """When prompts have scores, compare means between groups."""
+    weak_matches = [{"risk_id": "r1", "distance": 0.6}]
+    prompt_rows = [
+        {"risk_id": "r1", "judge_score": 2.0},
+        {"risk_id": "r1", "judge_score": 2.5},
+        {"risk_id": "r2", "judge_score": 4.0},
+        {"risk_id": "r2", "judge_score": 4.5},
+    ]
+    result = compute_weak_match_impact(weak_matches, prompt_rows)
+    assert result["weak_match_mean_score"] == 2.25
+    assert result["strong_match_mean_score"] == 4.25
+
+
+def test_weak_match_impact_no_weak_matches():
+    """All strong matches -> no weak data."""
+    prompt_rows = [
+        {"risk_id": "r1", "policy_concept": "A"},
+    ]
+    result = compute_weak_match_impact([], prompt_rows)
+    assert result["weak_match_prompts"] == 0
+    assert result["strong_match_prompts"] == 1
+
+
+def test_weak_match_impact_empty():
+    result = compute_weak_match_impact([], [])
+    assert result["weak_match_prompts"] == 0
+    assert result["strong_match_prompts"] == 0
+
+
+# --- Semantic diversity ---
+
+def test_semantic_diversity_identical_prompts():
+    """Identical prompts should have low diversity (high similarity)."""
+    rows = [
+        {"prompt": "Review the billing optimization strategy.", "policy_concept": "Fraud"},
+        {"prompt": "Review the billing optimization strategy.", "policy_concept": "Fraud"},
+        {"prompt": "Review the billing optimization strategy.", "policy_concept": "Fraud"},
+    ]
+    result = compute_semantic_diversity(rows)
+    assert result["mean_pairwise_distance"] == 0
+    assert result["total_prompts"] == 3
+
+
+def test_semantic_diversity_different_prompts():
+    """Very different prompts should have high diversity."""
+    rows = [
+        {"prompt": "Review the billing optimization strategy for cardiac rehabilitation.",
+         "policy_concept": "Fraud"},
+        {"prompt": "Can you provide information about the investment portfolio allocation?",
+         "policy_concept": "Investment"},
+        {"prompt": "Analyze the cybersecurity vulnerability assessment for the network.",
+         "policy_concept": "Security"},
+    ]
+    result = compute_semantic_diversity(rows)
+    assert result["mean_pairwise_distance"] > 0.5
+    assert result["total_prompts"] == 3
+
+
+def test_semantic_diversity_single_prompt():
+    """Single prompt has no pairs — diversity is 0."""
+    rows = [{"prompt": "Some prompt text.", "policy_concept": "A"}]
+    result = compute_semantic_diversity(rows)
+    assert result["mean_pairwise_distance"] == 0
+    assert result["total_prompts"] == 1
+
+
+def test_semantic_diversity_empty():
+    result = compute_semantic_diversity([])
+    assert result["mean_pairwise_distance"] == 0
+    assert result["total_prompts"] == 0
+
+
+def test_semantic_diversity_per_policy():
+    """Should compute per-policy diversity when prompts span multiple policies."""
+    rows = [
+        {"prompt": "Review billing codes for cardiac rehab.", "policy_concept": "Billing"},
+        {"prompt": "Analyze billing patterns for oncology department.", "policy_concept": "Billing"},
+        {"prompt": "What are the investment risks for emerging markets?", "policy_concept": "Investment"},
+        {"prompt": "Analyze the portfolio allocation for retirement funds.", "policy_concept": "Investment"},
+    ]
+    result = compute_semantic_diversity(rows)
+    assert "per_policy" in result
+    assert "Billing" in result["per_policy"]
+    assert "Investment" in result["per_policy"]
+
+
+# --- Sibling relevance ---
+
+def test_sibling_relevance_basic():
+    """Compare relevance distributions between subclass and sibling enumerations."""
+    profiles = [
+        {"risk_id": "r1", "axes": [
+            {"cco_class_uri": "http://ex/A", "enumerations": [
+                {"class_uri": "http://ex/X", "relevance": "high", "provenance": "subclass"},
+                {"class_uri": "http://ex/Y", "relevance": "high", "provenance": "subclass"},
+                {"class_uri": "http://ex/Z", "relevance": "low", "provenance": "sibling"},
+                {"class_uri": "http://ex/W", "relevance": "low", "provenance": "sibling"},
+            ]},
+        ]},
+    ]
+    result = compute_sibling_relevance(profiles)
+    assert result["subclass_count"] == 2
+    assert result["sibling_count"] == 2
+    assert result["subclass_relevance"]["high"] == 2
+    assert result["sibling_relevance"]["low"] == 2
+
+
+def test_sibling_relevance_no_provenance():
+    """Profiles without provenance field should default to subclass."""
+    profiles = [
+        {"risk_id": "r1", "axes": [
+            {"cco_class_uri": "http://ex/A", "enumerations": [
+                {"class_uri": "http://ex/X", "relevance": "high"},
+            ]},
+        ]},
+    ]
+    result = compute_sibling_relevance(profiles)
+    assert result["subclass_count"] == 1
+    assert result["sibling_count"] == 0
+
+
+def test_sibling_relevance_empty():
+    result = compute_sibling_relevance([])
+    assert result["subclass_count"] == 0
+    assert result["sibling_count"] == 0
+
+
+def test_sibling_relevance_mean_scores():
+    """Should compute mean relevance score for each group (high=3, medium=2, low=1)."""
+    profiles = [
+        {"risk_id": "r1", "axes": [
+            {"cco_class_uri": "http://ex/A", "enumerations": [
+                {"class_uri": "http://ex/X", "relevance": "high", "provenance": "subclass"},
+                {"class_uri": "http://ex/Y", "relevance": "medium", "provenance": "subclass"},
+                {"class_uri": "http://ex/Z", "relevance": "low", "provenance": "sibling"},
+            ]},
+        ]},
+    ]
+    result = compute_sibling_relevance(profiles)
+    assert result["subclass_mean_score"] == 2.5  # (3+2)/2
+    assert result["sibling_mean_score"] == 1.0  # 1/1
 
 
 import yaml
@@ -459,6 +971,109 @@ def test_evaluate_cli_nonexistent_dir():
     assert result.exit_code != 0
 
 
+def test_run_evaluation_includes_new_metrics(tmp_path):
+    """run_evaluation should include the 5 new metric sections."""
+    _write_minimal_pipeline_outputs(tmp_path)
+
+    # Add selected_domains event to report so domain mismatch can compute
+    report = yaml.safe_load((tmp_path / "test-report.yaml").read_text())
+    report["events"].append(
+        {"stage": "identify_domains", "event": "selected_domains", "domains": ["CCO", "FIBO"]}
+    )
+    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+
+    emit_path = tmp_path / "dataset.jsonl"
+    emit_row = {
+        "risk_id": "ibm-risk-atlas-r1", "policy_concept": "Fraud",
+        "sampled_axes": [
+            {"cco_class_uri": "http://ex/P", "cco_class_label": "P",
+             "roles": ["agent"], "sampled_uri": "http://ex/M",
+             "sampled_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
+        ],
+    }
+    emit_path.write_text(json.dumps(emit_row) + "\n")
+
+    adv_path = tmp_path / "adversarial.jsonl"
+    adv_row = {
+        "prompt": "Review the Act of Propaganda campaign materials.",
+        "policy_concept": "Fraud",
+        "sampled_axes": [{"sampled_label": "Act of Propaganda", "sampled_uri": "http://ex/M"}],
+    }
+    adv_path.write_text(json.dumps(adv_row) + "\n")
+
+    # Add policies for named entity utilization
+    policies = tmp_path / "policies.json"
+    policies.write_text(json.dumps([
+        {"policy_concept": "Fraud", "concept_definition": "Report fraud to South West Bank."},
+    ]))
+
+    # Add weak_match event
+    report = yaml.safe_load((tmp_path / "test-report.yaml").read_text())
+    report["events"].append(
+        {"stage": "map_risks", "event": "weak_match", "risk_id": "ibm-risk-atlas-r1", "distance": 0.55}
+    )
+    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+
+    result = run_evaluation(
+        tmp_path, emit_path=emit_path, adversarial_path=adv_path, policies_path=policies,
+    )
+
+    # Batch 1 metrics
+    assert "single_value_axis_dominance" in result["coverage"]
+    assert "enumeration_domain_mismatch" in result["coverage"]
+    assert "enumeration_concentration" in result["generation_metrics"]
+    assert "policy_coverage_balance" in result["prompt_metrics"]
+    assert "jargon_leak_rate" in result["prompt_metrics"]
+
+    # Batch 2 metrics
+    assert "axis_fidelity" in result["prompt_metrics"]
+    assert "named_entity_utilization" in result["prompt_metrics"]
+    assert "weak_match_impact" in result["prompt_metrics"]
+
+    # Batch 3 metrics
+    assert "semantic_diversity" in result["prompt_metrics"]
+    assert "sibling_relevance" in result["coverage"]
+
+
+def test_format_summary_includes_new_metrics():
+    evaluation = {
+        "run": {"policy_set": "test.json", "model": "m", "timestamp": "t"},
+        "coverage": {
+            "policy": [{"risks_matched": 3}],
+            "ontological": {"unique_enumeration_uris": 50},
+            "single_value_axis_dominance": {"single_value_rate": 0.4},
+            "enumeration_domain_mismatch": {"mismatch_rate": 0.2, "mismatched": 5},
+            "sibling_relevance": {"subclass_count": 20, "sibling_count": 8,
+                                  "subclass_mean_score": 2.5, "sibling_mean_score": 1.3},
+        },
+        "prompt_metrics": {
+            "lexical_diversity": 0.8, "domain_term_hit_rate": 0.5, "red_flag_count": 1,
+            "policy_coverage_balance": {"normalized_entropy": 0.85},
+            "jargon_leak_rate": {"jargon_rate": 0.15, "jargon_prompts": 3},
+            "axis_fidelity": {"mean_fidelity": 0.65, "improvised": 5},
+            "named_entity_utilization": {"utilization_rate": 0.7},
+            "weak_match_impact": {"weak_match_prompts": 12, "strong_match_prompts": 30},
+            "semantic_diversity": {"mean_pairwise_distance": 0.72},
+        },
+        "generation_metrics": {
+            "axis_diversity": {"overall_mean": 0.75},
+            "dedup_saturation": {"r1": {}},
+            "enumeration_concentration": {"top_k_share": 0.6, "top_k": 5},
+        },
+    }
+    result = format_summary(evaluation)
+    assert "single-value" in result
+    assert "mismatch" in result
+    assert "jargon" in result
+    assert "balance" in result
+    assert "concentration" in result
+    assert "fidelity" in result
+    assert "entity" in result
+    assert "weak" in result.lower()
+    assert "semantic" in result.lower()
+    assert "sibling" in result.lower()
+
+
 def test_run_evaluation_enriched_policies(tmp_path):
     report = {"model": "test", "policy_set": "test", "timestamp": "2026-01-01",
               "stages_completed": ["classify"], "events": []}
@@ -478,3 +1093,51 @@ def test_run_evaluation_enriched_policies(tmp_path):
     from refiner.evaluate import run_evaluation
     result = run_evaluation(tmp_path, policies_path=policies_path)
     assert result["run"]["model"] == "test"
+
+
+def test_compute_candidate_expansion_effectiveness():
+    events = [
+        {"stage": "anchor", "event": "candidate_expansion",
+         "risk_id": "r1", "queries_run": 4, "raw_total": 15, "unique_after_dedup": 8, "kept_after_filter": 5},
+        {"stage": "anchor", "event": "candidate_expansion",
+         "risk_id": "r2", "queries_run": 2, "raw_total": 10, "unique_after_dedup": 6, "kept_after_filter": 3},
+        {"stage": "anchor", "event": "multi_query_hit",
+         "risk_id": "r1", "uri": "http://example.org/A", "hit_count": 3, "best_distance": 0.1, "query_sources": ["description", "concern", "action"]},
+        {"stage": "anchor", "event": "multi_query_hit",
+         "risk_id": "r1", "uri": "http://example.org/B", "hit_count": 1, "best_distance": 0.4, "query_sources": ["description"]},
+    ]
+    result = compute_candidate_expansion_effectiveness(events)
+    assert result["mean_queries_run"] == 3.0  # (4 + 2) / 2
+    assert result["mean_unique_candidates"] == 7.0  # (8 + 6) / 2
+    assert result["multi_hit_fraction"] == 0.5  # 1 of 2 multi_query_hit events has hit_count > 1
+
+
+def test_compute_candidate_expansion_effectiveness_empty():
+    result = compute_candidate_expansion_effectiveness([])
+    assert result["mean_queries_run"] == 0
+    assert result["multi_hit_fraction"] == 0
+
+
+def test_compute_query_source_contribution():
+    events = [
+        {"stage": "anchor", "event": "multi_query_hit",
+         "risk_id": "r1", "uri": "a", "hit_count": 3, "best_distance": 0.1,
+         "query_sources": ["description", "concern", "action"]},
+        {"stage": "anchor", "event": "multi_query_hit",
+         "risk_id": "r1", "uri": "b", "hit_count": 1, "best_distance": 0.4,
+         "query_sources": ["description"]},
+        {"stage": "anchor", "event": "multi_query_hit",
+         "risk_id": "r2", "uri": "c", "hit_count": 2, "best_distance": 0.2,
+         "query_sources": ["concern", "cross_mapping"]},
+    ]
+    result = compute_query_source_contribution(events)
+    # description appears in 2 of 3 hits
+    assert result["description"] == 2
+    assert result["concern"] == 2
+    assert result["action"] == 1
+    assert result["cross_mapping"] == 1
+
+
+def test_compute_query_source_contribution_empty():
+    result = compute_query_source_contribution([])
+    assert result == {}
