@@ -171,6 +171,8 @@ def anchor(
     config: LLMConfig,
     onto_handlers: dict,
     selected_domains: list[str] | None = None,
+    risk_actions: dict[str, list[str]] | None = None,
+    related_risks: dict[str, list[dict]] | None = None,
     report=None,
 ) -> list[RiskVariationAxes]:
     if not risk_mappings:
@@ -197,20 +199,38 @@ def anchor(
             description = details.get("description", rm.risk_name)
             concern = details.get("concern", "")
 
-            # Search ontology for candidate classes, filtering to selected domains
-            raw_candidates = onto_handlers["search_classes"](description, top_k=10)
-            if selected_domains:
-                candidates = [c for c in raw_candidates
-                              if derive_source_ontology(c.get("uri", "")) in selected_domains][:3]
-                if report:
+            # Expand candidates via multi-query search (description + concern + actions + cross-mappings)
+            actions = risk_actions.get(rm.risk_id, []) if risk_actions else []
+            cross_mapped_descs = []
+            if related_risks:
+                for rel in related_risks.get(rm.risk_id, []):
+                    desc = rel.get("description", "")
+                    if desc:
+                        cross_mapped_descs.append(desc)
+
+            candidates, expansion_stats = expand_candidates(
+                description=description,
+                concern=concern,
+                action_descriptions=actions,
+                cross_mapped_descriptions=cross_mapped_descs,
+                onto_handlers=onto_handlers,
+                selected_domains=selected_domains,
+            )
+
+            if report:
+                report.events.append({
+                    "stage": "anchor", "event": "candidate_expansion",
+                    "risk_id": rm.risk_id, **expansion_stats,
+                })
+                for c in candidates:
                     report.events.append({
-                        "stage": "anchor", "event": "domain_filtered",
+                        "stage": "anchor", "event": "multi_query_hit",
                         "risk_id": rm.risk_id,
-                        "filtered_count": len(raw_candidates) - len(candidates),
-                        "kept_count": len(candidates),
+                        "uri": c["uri"],
+                        "hit_count": c["hit_count"],
+                        "best_distance": c["best_distance"],
+                        "query_sources": c["query_sources"],
                     })
-            else:
-                candidates = raw_candidates[:3]
 
             # Enrich candidates with definitions and siblings
             enriched = []
@@ -240,7 +260,11 @@ def anchor(
             # Build context for LLM
             class_lines = []
             for ec in enriched:
-                line = f"- {ec['uri']}: {ec.get('label', '')} — {ec.get('definition', '')}"
+                cand = next((c for c in candidates if c["uri"] == ec["uri"]), None)
+                hit_info = ""
+                if cand and cand.get("hit_count", 1) > 1:
+                    hit_info = f" [found by {cand['hit_count']}/{expansion_stats['queries_run']} queries]"
+                line = f"- {ec['uri']}: {ec.get('label', '')} — {ec.get('definition', '')}{hit_info}"
                 if ec.get("siblings"):
                     sibs = ", ".join(s.get("label", s.get("uri", "")) for s in ec["siblings"][:3])
                     line += f"\n  Siblings: {sibs}"

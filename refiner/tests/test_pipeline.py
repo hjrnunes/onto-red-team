@@ -32,6 +32,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         {"r1": {"id": "r1", "name": "R1", "description": "d", "concern": "c"}},
         {"r1"},
         {"r1": [{"id": "r2", "mapping_type": "close"}]},
+        {},
     )
     anchor_result = [
         RiskVariationAxes(
@@ -59,6 +60,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         assert state.risk_mappings == map_result[0]
         assert state.risk_details == map_result[1]
         assert state.related_risks == map_result[3]
+        assert state.risk_actions == map_result[4]
         assert state.variation_axes == anchor_result
         assert state.domain_context == context_result
         assert state.report == report
@@ -70,7 +72,10 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         m_map.assert_called_once_with(classify_result, mock_client, mock_config, mock_risk_handlers, report=report)
         m_anchor.assert_called_once_with(
             map_result[0], map_result[1], mock_client, mock_config, mock_onto_handlers,
-            selected_domains=domains_result, report=report,
+            selected_domains=domains_result,
+            risk_actions=map_result[4],
+            related_risks=map_result[3],
+            report=report,
         )
         m_ctx.assert_called_once_with(
             anchor_result, mock_client, mock_config, mock_onto_handlers,

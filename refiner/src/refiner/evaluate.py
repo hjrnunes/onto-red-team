@@ -44,6 +44,24 @@ def aggregate_stage_quality(events: list[dict]) -> dict:
             existing["total_filtered"] += event["filtered_count"]
             existing["total_kept"] += event["kept_count"]
             s["domain_filtered"] = existing
+        elif etype == "candidate_expansion":
+            expansions = s.setdefault("candidate_expansions", [])
+            expansions.append({
+                "risk_id": event["risk_id"],
+                "queries_run": event["queries_run"],
+                "raw_total": event["raw_total"],
+                "unique_after_dedup": event["unique_after_dedup"],
+                "kept_after_filter": event["kept_after_filter"],
+            })
+        elif etype == "multi_query_hit":
+            hits = s.setdefault("multi_query_hits", [])
+            hits.append({
+                "risk_id": event["risk_id"],
+                "uri": event["uri"],
+                "hit_count": event["hit_count"],
+                "best_distance": event["best_distance"],
+                "query_sources": event["query_sources"],
+            })
         elif etype == "cache_hit":
             s["cache_hits"] = s.get("cache_hits", 0) + 1
         elif etype == "empty_axes":
@@ -246,6 +264,334 @@ def compute_generation_metrics(emit_rows: list[dict], dc_profiles: list[dict]) -
     }
 
 
+def compute_single_value_axis_dominance(profiles: list[dict]) -> dict:
+    total = 0
+    single = 0
+    for p in profiles:
+        for axis in p.get("axes", []):
+            total += 1
+            if len(axis.get("enumerations", [])) <= 1:
+                single += 1
+    return {
+        "total_axes": total,
+        "single_value_axes": single,
+        "single_value_rate": round(single / total, 3) if total > 0 else 0,
+    }
+
+
+def compute_enumeration_domain_mismatch(
+    profiles: list[dict], selected_domains: list[str],
+) -> dict:
+    allowed = set(selected_domains) | {"CCO"}
+    total = 0
+    mismatched = 0
+    by_ont: dict[str, int] = defaultdict(int)
+    for p in profiles:
+        for axis in p.get("axes", []):
+            for enum in axis.get("enumerations", []):
+                total += 1
+                ont = enum.get("source_ontology", "unknown")
+                if ont not in allowed:
+                    mismatched += 1
+                    by_ont[ont] += 1
+    return {
+        "total_enumerations": total,
+        "mismatched": mismatched,
+        "mismatch_rate": round(mismatched / total, 3) if total > 0 else 0,
+        "by_mismatched_ontology": dict(by_ont),
+    }
+
+
+def compute_policy_coverage_balance(per_policy: list[dict]) -> dict:
+    counts = [p["count"] for p in per_policy if p.get("count", 0) > 0]
+    if len(counts) <= 1:
+        return {"entropy": 0, "normalized_entropy": 0}
+    total = sum(counts)
+    entropy = -sum((c / total) * math.log2(c / total) for c in counts)
+    max_entropy = math.log2(len(counts))
+    return {
+        "entropy": round(entropy, 3),
+        "normalized_entropy": round(entropy / max_entropy, 3) if max_entropy > 0 else 0,
+    }
+
+
+def compute_enumeration_concentration(
+    rows: list[dict], top_k: int = 5,
+) -> dict:
+    uri_counts: dict[str, int] = defaultdict(int)
+    for row in rows:
+        for sa in row.get("sampled_axes", []):
+            uri = sa.get("sampled_uri", "")
+            if uri:
+                uri_counts[uri] += 1
+    total = sum(uri_counts.values())
+    if total == 0:
+        return {"total_samples": 0, "top_k": top_k, "top_k_share": 0, "top_values": []}
+    sorted_uris = sorted(uri_counts.items(), key=lambda x: x[1], reverse=True)
+    top = sorted_uris[:top_k]
+    top_sum = sum(c for _, c in top)
+    return {
+        "total_samples": total,
+        "top_k": top_k,
+        "top_k_share": round(top_sum / total, 3),
+        "top_values": [{"uri": uri, "count": c} for uri, c in top],
+    }
+
+
+JARGON_PATTERNS = [
+    r"\bAct of [A-Z]\w+\b",
+    r"\b\w+ Artifact Function\b",
+    r"\b[A-Z][a-z]+(?:[A-Z][a-z]+){2,}\b",  # CamelCase with 3+ parts
+    r"\bAE\b(?!\s+suffix)",  # bare "AE" from OBO
+]
+_JARGON_RE = re.compile("|".join(JARGON_PATTERNS))
+
+
+def compute_jargon_leak_rate(rows: list[dict]) -> dict:
+    if not rows:
+        return {"total_prompts": 0, "jargon_prompts": 0, "jargon_rate": 0}
+    jargon_count = 0
+    for row in rows:
+        prompt = row.get("prompt") or ""
+        if _JARGON_RE.search(prompt):
+            jargon_count += 1
+    return {
+        "total_prompts": len(rows),
+        "jargon_prompts": jargon_count,
+        "jargon_rate": round(jargon_count / len(rows), 3),
+    }
+
+
+_AXIS_STOPWORDS = frozenset({
+    "a", "an", "the", "of", "in", "on", "at", "to", "for", "and", "or", "is", "by",
+    "act", "function",  # too generic in ontology labels
+})
+
+
+def _axis_words(label: str) -> set[str]:
+    return {w.lower() for w in label.split() if len(w) > 2 and w.lower() not in _AXIS_STOPWORDS}
+
+
+def compute_axis_fidelity(rows: list[dict]) -> dict:
+    full = 0
+    partial = 0
+    improvised = 0
+    fidelities = []
+    for row in rows:
+        axes = row.get("sampled_axes", [])
+        if not axes:
+            continue
+        matched = 0
+        for sa in axes:
+            label = sa.get("sampled_label", "")
+            words = _axis_words(label)
+            if not words:
+                matched += 1
+                continue
+            prompt_lower = (row.get("prompt") or "").lower()
+            if any(w in prompt_lower for w in words):
+                matched += 1
+        fidelity = matched / len(axes)
+        fidelities.append(fidelity)
+        if fidelity == 1.0:
+            full += 1
+        elif fidelity == 0:
+            improvised += 1
+        else:
+            partial += 1
+    return {
+        "total_prompts": len(fidelities),
+        "full_fidelity": full,
+        "partial": partial,
+        "improvised": improvised,
+        "mean_fidelity": round(sum(fidelities) / len(fidelities), 3) if fidelities else 0,
+    }
+
+
+_NAMED_ENTITY_RE = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b")
+_CAMELCASE_RE = re.compile(r"\b[A-Z][a-z]+[A-Z][a-zA-Z]*\b")
+_COMMON_PHRASES = frozenset({
+    "The", "This", "These", "Those", "That", "Also", "Include",
+})
+
+
+def _extract_named_entities(text: str) -> set[str]:
+    entities = set()
+    for m in _NAMED_ENTITY_RE.finditer(text):
+        phrase = m.group()
+        words = phrase.split()
+        if words[0] not in _COMMON_PHRASES:
+            entities.add(phrase)
+    for m in _CAMELCASE_RE.finditer(text):
+        entities.add(m.group())
+    return entities
+
+
+def compute_named_entity_utilization(
+    rows: list[dict], policies: dict[str, str],
+) -> dict:
+    if not rows:
+        return {"total_prompts": 0, "prompts_with_entities": 0, "utilization_rate": 0}
+    entities_by_policy: dict[str, set[str]] = {}
+    for pc, defn in policies.items():
+        entities_by_policy[pc] = _extract_named_entities(defn)
+    hits = 0
+    for row in rows:
+        pc = row.get("policy_concept", "")
+        entities = entities_by_policy.get(pc, set())
+        if not entities:
+            continue
+        prompt_lower = (row.get("prompt") or "").lower()
+        if any(e.lower() in prompt_lower for e in entities):
+            hits += 1
+    return {
+        "total_prompts": len(rows),
+        "prompts_with_entities": hits,
+        "utilization_rate": round(hits / len(rows), 3),
+        "entities_by_policy": {pc: sorted(ents) for pc, ents in entities_by_policy.items() if ents},
+    }
+
+
+def compute_weak_match_impact(
+    weak_matches: list[dict], prompt_rows: list[dict],
+) -> dict:
+    weak_ids = {wm["risk_id"] for wm in weak_matches}
+    distances = [wm["distance"] for wm in weak_matches]
+
+    weak_prompts = [r for r in prompt_rows if r.get("risk_id") in weak_ids]
+    strong_prompts = [r for r in prompt_rows if r.get("risk_id") not in weak_ids]
+
+    result: dict = {
+        "weak_match_risks": len(weak_ids),
+        "weak_match_prompts": len(weak_prompts),
+        "strong_match_prompts": len(strong_prompts),
+        "mean_weak_distance": round(sum(distances) / len(distances), 3) if distances else 0,
+    }
+
+    weak_scores = [r["judge_score"] for r in weak_prompts if "judge_score" in r]
+    strong_scores = [r["judge_score"] for r in strong_prompts if "judge_score" in r]
+    if weak_scores:
+        result["weak_match_mean_score"] = round(sum(weak_scores) / len(weak_scores), 3)
+    if strong_scores:
+        result["strong_match_mean_score"] = round(sum(strong_scores) / len(strong_scores), 3)
+
+    return result
+
+
+def _tfidf_vectors(docs: list[list[str]]) -> tuple[list[dict[str, float]], dict[str, float]]:
+    df: dict[str, int] = defaultdict(int)
+    for doc in docs:
+        for term in set(doc):
+            df[term] += 1
+    n = len(docs)
+    idf = {term: math.log(n / count) for term, count in df.items() if count < n}
+    vectors = []
+    for doc in docs:
+        tf: dict[str, int] = defaultdict(int)
+        for term in doc:
+            tf[term] += 1
+        vec = {}
+        for term, count in tf.items():
+            if term in idf:
+                vec[term] = count * idf[term]
+        vectors.append(vec)
+    return vectors, idf
+
+
+def _cosine_distance(a: dict[str, float], b: dict[str, float]) -> float:
+    if not a and not b:
+        return 0.0  # both empty = identical (no distinguishing features)
+    keys = set(a) & set(b)
+    if not keys:
+        return 1.0
+    dot = sum(a[k] * b[k] for k in keys)
+    mag_a = math.sqrt(sum(v * v for v in a.values()))
+    mag_b = math.sqrt(sum(v * v for v in b.values()))
+    if mag_a == 0 or mag_b == 0:
+        return 1.0
+    return 1.0 - (dot / (mag_a * mag_b))
+
+
+def compute_semantic_diversity(rows: list[dict], max_pairs: int = 5000) -> dict:
+    if len(rows) <= 1:
+        return {"mean_pairwise_distance": 0, "total_prompts": len(rows)}
+
+    docs = [(row.get("prompt") or "").lower().split() for row in rows]
+    vectors, _ = _tfidf_vectors(docs)
+
+    # Compute pairwise distances (sample if too many pairs)
+    import random
+    n = len(vectors)
+    total_pairs = n * (n - 1) // 2
+    if total_pairs <= max_pairs:
+        distances = []
+        for i in range(n):
+            for j in range(i + 1, n):
+                distances.append(_cosine_distance(vectors[i], vectors[j]))
+    else:
+        distances = []
+        rng = random.Random(42)
+        for _ in range(max_pairs):
+            i, j = rng.sample(range(n), 2)
+            distances.append(_cosine_distance(vectors[i], vectors[j]))
+
+    mean_dist = sum(distances) / len(distances) if distances else 0
+
+    # Per-policy diversity
+    by_policy: dict[str, list[int]] = defaultdict(list)
+    for idx, row in enumerate(rows):
+        by_policy[row.get("policy_concept", "unknown")].append(idx)
+
+    per_policy = {}
+    for pc, indices in sorted(by_policy.items()):
+        if len(indices) <= 1:
+            per_policy[pc] = 0
+            continue
+        pc_distances = []
+        for ii in range(len(indices)):
+            for jj in range(ii + 1, len(indices)):
+                pc_distances.append(_cosine_distance(vectors[indices[ii]], vectors[indices[jj]]))
+        per_policy[pc] = round(sum(pc_distances) / len(pc_distances), 3) if pc_distances else 0
+
+    return {
+        "mean_pairwise_distance": round(mean_dist, 3),
+        "total_prompts": len(rows),
+        "per_policy": per_policy,
+    }
+
+
+_RELEVANCE_SCORES = {"high": 3, "medium": 2, "low": 1}
+
+
+def compute_sibling_relevance(profiles: list[dict]) -> dict:
+    sub_relevance: dict[str, int] = defaultdict(int)
+    sib_relevance: dict[str, int] = defaultdict(int)
+    sub_scores: list[int] = []
+    sib_scores: list[int] = []
+
+    for p in profiles:
+        for axis in p.get("axes", []):
+            for enum in axis.get("enumerations", []):
+                prov = enum.get("provenance", "subclass")
+                rel = enum.get("relevance", "low")
+                score = _RELEVANCE_SCORES.get(rel, 1)
+                if prov == "sibling":
+                    sib_relevance[rel] += 1
+                    sib_scores.append(score)
+                else:
+                    sub_relevance[rel] += 1
+                    sub_scores.append(score)
+
+    return {
+        "subclass_count": sum(sub_relevance.values()),
+        "sibling_count": sum(sib_relevance.values()),
+        "subclass_relevance": dict(sub_relevance),
+        "sibling_relevance": dict(sib_relevance),
+        "subclass_mean_score": round(sum(sub_scores) / len(sub_scores), 3) if sub_scores else 0,
+        "sibling_mean_score": round(sum(sib_scores) / len(sib_scores), 3) if sib_scores else 0,
+    }
+
+
 def compute_adversarial_metrics(rows: list[dict]) -> dict:
     if not rows:
         return {
@@ -341,6 +687,17 @@ def run_evaluation(
     if profiles:
         coverage["policy"] = compute_policy_coverage(profiles, emit_data=emit_rows, all_policies=all_policies)
         coverage["ontological"] = compute_ontological_coverage(profiles)
+        coverage["single_value_axis_dominance"] = compute_single_value_axis_dominance(profiles)
+        selected_domains = (
+            result.get("stage_quality", {})
+            .get("identify_domains", {})
+            .get("selected_domains", [])
+        )
+        if selected_domains:
+            coverage["enumeration_domain_mismatch"] = compute_enumeration_domain_mismatch(
+                profiles, selected_domains
+            )
+        coverage["sibling_relevance"] = compute_sibling_relevance(profiles)
     if taxonomy_data:
         if profiles:
             risk_ids = list({p["risk_id"] for p in profiles})
@@ -354,11 +711,26 @@ def run_evaluation(
         result["coverage"] = coverage
 
     if emit_rows and profiles:
-        result["generation_metrics"] = compute_generation_metrics(emit_rows, profiles)
+        gen = compute_generation_metrics(emit_rows, profiles)
+        gen["enumeration_concentration"] = compute_enumeration_concentration(emit_rows)
+        result["generation_metrics"] = gen
 
     if adversarial_path and adversarial_path.exists():
         adv_rows = [json.loads(line) for line in adversarial_path.read_text().strip().split("\n") if line]
-        result["prompt_metrics"] = compute_adversarial_metrics(adv_rows)
+        pm = compute_adversarial_metrics(adv_rows)
+        pm["policy_coverage_balance"] = compute_policy_coverage_balance(pm["per_policy"])
+        pm["jargon_leak_rate"] = compute_jargon_leak_rate(adv_rows)
+        pm["axis_fidelity"] = compute_axis_fidelity(adv_rows)
+        if all_policies:
+            pm["named_entity_utilization"] = compute_named_entity_utilization(adv_rows, all_policies)
+        weak_matches = (
+            result.get("stage_quality", {})
+            .get("map_risks", {})
+            .get("weak_matches", [])
+        )
+        pm["weak_match_impact"] = compute_weak_match_impact(weak_matches, adv_rows)
+        pm["semantic_diversity"] = compute_semantic_diversity(adv_rows)
+        result["prompt_metrics"] = pm
 
     return result
 
@@ -390,24 +762,64 @@ def format_summary(evaluation: dict) -> str:
         policy = cov.get("policy", [])
         onto = cov.get("ontological", {})
         total_risks = sum(p.get("risks_matched", 0) for p in policy)
+        svad = cov.get("single_value_axis_dominance", {})
+        edm = cov.get("enumeration_domain_mismatch", {})
+        cov_extra = ""
+        if svad:
+            cov_extra += f", {svad.get('single_value_rate', 0)} single-value axis rate"
+        if edm:
+            cov_extra += f", {edm.get('mismatched', 0)} enum domain mismatch(es)"
+        sr = cov.get("sibling_relevance", {})
+        if sr and sr.get("sibling_count", 0) > 0:
+            cov_extra += (
+                f", sibling enums {sr.get('sibling_count', 0)}"
+                f" (mean score {sr.get('sibling_mean_score', 0)}"
+                f" vs subclass {sr.get('subclass_mean_score', 0)})"
+            )
         lines.append(
             f"  Coverage: {total_risks} risks, "
             f"{onto.get('unique_enumeration_uris', 0)} unique ontology classes"
+            f"{cov_extra}"
         )
 
     gen = evaluation.get("generation_metrics", {})
     if gen:
+        ec = gen.get("enumeration_concentration", {})
+        conc_str = ""
+        if ec:
+            conc_str = f", top-{ec.get('top_k', 5)} concentration {ec.get('top_k_share', 0)}"
         lines.append(
             f"  Generation: axis diversity {gen.get('axis_diversity', {}).get('overall_mean', 0)}, "
             f"dedup saturation {len(gen.get('dedup_saturation', {}))} risks tracked"
+            f"{conc_str}"
         )
 
     pm = evaluation.get("prompt_metrics", {})
     if pm:
+        pcb = pm.get("policy_coverage_balance", {})
+        jlr = pm.get("jargon_leak_rate", {})
+        extra = ""
+        if pcb:
+            extra += f", balance {pcb.get('normalized_entropy', 0)}"
+        if jlr:
+            extra += f", {jlr.get('jargon_prompts', 0)} jargon leak(s)"
+        af = pm.get("axis_fidelity", {})
+        if af:
+            extra += f", fidelity {af.get('mean_fidelity', 0)} ({af.get('improvised', 0)} improvised)"
+        neu = pm.get("named_entity_utilization", {})
+        if neu:
+            extra += f", entity utilization {neu.get('utilization_rate', 0)}"
+        wmi = pm.get("weak_match_impact", {})
+        if wmi and wmi.get("weak_match_prompts", 0) > 0:
+            extra += f", {wmi.get('weak_match_prompts', 0)} weak-match prompts"
+        sd = pm.get("semantic_diversity", {})
+        if sd:
+            extra += f", semantic diversity {sd.get('mean_pairwise_distance', 0)}"
         lines.append(
             f"  Prompts: TTR {pm.get('lexical_diversity', 0)}, "
             f"domain hit rate {pm.get('domain_term_hit_rate', 0)}, "
             f"{pm.get('red_flag_count', 0)} red flags"
+            f"{extra}"
         )
 
     je = evaluation.get("judge_evaluation", {})

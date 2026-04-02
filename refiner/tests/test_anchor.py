@@ -57,7 +57,7 @@ def test_anchor_searches_ontology(mock_client, mock_config, mock_onto_handlers):
     assert result[0].axes[0].roles == ["agent"]  # falls back to LLM role (no BFO ancestor)
     assert result[0].risk_id == "atlas-fraud"
     assert result[0].policy_concept == "Fraud"
-    mock_onto_handlers["search_classes"].assert_called_once()
+    assert mock_onto_handlers["search_classes"].call_count >= 1
 
 
 def test_anchor_filters_invalid_uris(mock_client, mock_config, mock_onto_handlers):
@@ -110,9 +110,9 @@ def test_anchor_filters_candidates_by_domain(mock_client, mock_config, mock_onto
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers,
                     selected_domains=["CCO", "Commons", "FIBO"])
     assert len(result) == 1
-    # The search was called with top_k=10 (extra headroom for filtering)
-    mock_onto_handlers["search_classes"].assert_called_once()
-    call_kwargs = mock_onto_handlers["search_classes"].call_args
+    # The search was called at least once with top_k=10 (extra headroom for filtering)
+    assert mock_onto_handlers["search_classes"].call_count >= 1
+    call_kwargs = mock_onto_handlers["search_classes"].call_args_list[0]
     assert call_kwargs[1]["top_k"] == 10
 
 
@@ -212,8 +212,8 @@ def test_anchor_derives_roles_from_bfo(mock_client, mock_config, mock_onto_handl
     assert result[0].axes[0].roles == ["agent"]  # derived from CCO Agent, not LLM's "object"
 
 
-def test_anchor_emits_domain_filtered(mock_client, mock_config, mock_onto_handlers):
-    """When selected_domains filters candidates, emit domain_filtered."""
+def test_anchor_emits_candidate_expansion_with_domain_filter(mock_client, mock_config, mock_onto_handlers):
+    """When selected_domains filters candidates, candidate_expansion shows kept count."""
     mappings = [_make_mapping()]
     risk_details = _make_risk_details()
     # Search returns 3 results: 2 OBO + 1 FIBO
@@ -237,10 +237,9 @@ def test_anchor_emits_domain_filtered(mock_client, mock_config, mock_onto_handle
     report = RunReport(model="m", policy_set="p", timestamp="t")
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers,
                     selected_domains=["CCO", "Commons", "FIBO"], report=report)
-    filtered = [e for e in report.events if e["event"] == "domain_filtered"]
-    assert len(filtered) == 1
-    assert filtered[0]["filtered_count"] == 2  # 2 OBO candidates removed
-    assert filtered[0]["kept_count"] == 1  # 1 FIBO kept
+    expansion = [e for e in report.events if e["event"] == "candidate_expansion"]
+    assert len(expansion) == 1
+    assert expansion[0]["kept_after_filter"] == 1  # only FIBO kept after domain filter
 
 
 def test_anchor_emits_cache_hit(mock_client, mock_config, mock_onto_handlers):
@@ -541,3 +540,109 @@ def test_expand_candidates_tracks_query_sources(mock_onto_handlers):
     assert "description" in a["query_sources"]
     assert "concern" in a["query_sources"]
     assert "action" in a["query_sources"]
+
+
+# Integration tests: expand_candidates wired into anchor()
+
+
+def test_anchor_uses_expand_candidates_with_actions(mock_client, mock_config, mock_onto_handlers):
+    """When risk_actions are provided, expand_candidates uses them."""
+    mappings = [_make_mapping()]
+    risk_details = _make_risk_details()
+    risk_actions = {"atlas-fraud": ["Monitor financial transactions"]}
+    # 3 calls: description, concern (from _make_risk_details), action
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/Person", "label": "Person", "distance": 0.3}],
+        [{"uri": "http://example.org/Person", "label": "Person", "distance": 0.4}],
+        [{"uri": "http://example.org/Transaction", "label": "Transaction", "distance": 0.2}],
+    ]
+    mock_onto_handlers["get_class_definition"].side_effect = lambda uri: {
+        "uri": uri, "label": uri.split("/")[-1], "definition": "d", "superclasses": [],
+    }
+    mock_onto_handlers["get_siblings"].return_value = []
+    mock_onto_handlers["get_superclasses"].return_value = []
+    mock_client.chat.completions.create.return_value = _AnchorResponse(
+        axes=[_SlimAxis(
+            cco_class_uri="http://example.org/Transaction",
+            cco_class_label="Transaction", role="object", rationale="r",
+        )],
+    )
+    result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers,
+                    risk_actions=risk_actions)
+    assert result[0].axes[0].cco_class_uri == "http://example.org/Transaction"
+    assert mock_onto_handlers["search_classes"].call_count == 3
+
+
+def test_anchor_uses_cross_mapped_descriptions(mock_client, mock_config, mock_onto_handlers):
+    """When related_risks have descriptions, they drive additional searches."""
+    mappings = [_make_mapping()]
+    risk_details = _make_risk_details()
+    related_risks = {
+        "atlas-fraud": [
+            {"id": "owasp-fraud", "mapping_type": "close", "description": "Social engineering attacks"},
+        ],
+    }
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/Person", "label": "Person", "distance": 0.3}],
+        [{"uri": "http://example.org/Person", "label": "Person", "distance": 0.4}],
+        [{"uri": "http://example.org/SocialEngineer", "label": "Social Engineer", "distance": 0.2}],
+    ]
+    mock_onto_handlers["get_class_definition"].side_effect = lambda uri: {
+        "uri": uri, "label": uri.split("/")[-1], "definition": "d", "superclasses": [],
+    }
+    mock_onto_handlers["get_siblings"].return_value = []
+    mock_onto_handlers["get_superclasses"].return_value = []
+    mock_client.chat.completions.create.return_value = _AnchorResponse(
+        axes=[_SlimAxis(
+            cco_class_uri="http://example.org/SocialEngineer",
+            cco_class_label="Social Engineer", role="agent", rationale="r",
+        )],
+    )
+    result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers,
+                    related_risks=related_risks)
+    assert result[0].axes[0].cco_class_uri == "http://example.org/SocialEngineer"
+
+
+def test_anchor_emits_candidate_expansion(mock_client, mock_config, mock_onto_handlers):
+    """Anchor emits candidate_expansion event with stats."""
+    mappings = [_make_mapping()]
+    risk_details = _make_risk_details()
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": "http://example.org/A", "label": "A", "distance": 0.3},
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/A", "label": "A", "definition": "d", "superclasses": [],
+    }
+    mock_onto_handlers["get_siblings"].return_value = []
+    mock_onto_handlers["get_superclasses"].return_value = []
+    mock_client.chat.completions.create.return_value = _AnchorResponse(
+        axes=[_SlimAxis(cco_class_uri="http://example.org/A", cco_class_label="A", role="agent", rationale="r")],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers, report=report)
+    expansion = [e for e in report.events if e["event"] == "candidate_expansion"]
+    assert len(expansion) == 1
+    assert expansion[0]["queries_run"] >= 1
+
+
+def test_anchor_emits_multi_query_hit(mock_client, mock_config, mock_onto_handlers):
+    """Anchor emits multi_query_hit per kept candidate."""
+    mappings = [_make_mapping()]
+    risk_details = _make_risk_details()
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.3}],
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.2}],
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/A", "label": "A", "definition": "d", "superclasses": [],
+    }
+    mock_onto_handlers["get_siblings"].return_value = []
+    mock_onto_handlers["get_superclasses"].return_value = []
+    mock_client.chat.completions.create.return_value = _AnchorResponse(
+        axes=[_SlimAxis(cco_class_uri="http://example.org/A", cco_class_label="A", role="agent", rationale="r")],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers, report=report)
+    hits = [e for e in report.events if e["event"] == "multi_query_hit"]
+    assert len(hits) >= 1
+    assert hits[0]["hit_count"] >= 1

@@ -29,6 +29,7 @@ class PipelineState:
     risk_details: dict[str, dict] | None = None
     seen_risk_ids: set[str] | None = None
     related_risks: dict[str, list[dict]] | None = None
+    risk_actions: dict[str, list[str]] | None = None
     variation_axes: list[RiskVariationAxes] | None = None
     domain_context: list[DomainContextProfile] | None = None
     report: RunReport | None = None
@@ -58,7 +59,7 @@ def run_pipeline(
     if until == "identify_domains":
         return state
 
-    state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks = map_risks(
+    state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions = map_risks(
         state.classifications, client, config, risk_handlers, report=report
     )
     if report:
@@ -68,7 +69,10 @@ def run_pipeline(
 
     state.variation_axes = anchor(
         state.risk_mappings, state.risk_details, client, config, onto_handlers,
-        selected_domains=state.selected_domains, report=report,
+        selected_domains=state.selected_domains,
+        risk_actions=state.risk_actions,
+        related_risks=state.related_risks,
+        report=report,
     )
     if report:
         report.stages_completed.append("anchor")
