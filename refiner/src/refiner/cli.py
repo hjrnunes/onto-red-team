@@ -288,6 +288,9 @@ def evaluate(
     judge_api_key: str = typer.Option(None, "--judge-api-key", help="Judge model API key"),
     judge_sample: int = typer.Option(None, "--judge-sample", help="Score only N random prompts"),
     output: Path = typer.Option(None, "--output", "-o", help="Output evaluation JSON path"),
+    track: bool = typer.Option(False, "--track", help="Log evaluation to MLflow"),
+    tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
+    description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
 ):
     """Evaluate pipeline outputs with metrics and optional judge scoring."""
     if not output_dir.is_dir():
@@ -361,6 +364,26 @@ def evaluate(
     html_path = out_path.with_suffix(".html")
     build_html_report(evaluation, html_path)
     typer.echo(f"HTML report written to {html_path}")
+
+    if track:
+        try:
+            from refiner.tracking import log_run_to_mlflow, read_run_id, write_run_id
+        except ImportError:
+            typer.echo("Error: MLflow is required for --track. Install with: uv sync --extra tracking", err=True)
+            raise typer.Exit(1)
+
+        if not tracking_uri:
+            typer.echo("Error: --tracking-uri or MLFLOW_TRACKING_URI is required for --track", err=True)
+            raise typer.Exit(1)
+
+        existing_run_id = read_run_id(output_dir)
+        run_id = log_run_to_mlflow(
+            evaluation, output_dir, tracking_uri,
+            description=description, run_id=existing_run_id,
+        )
+        if not existing_run_id:
+            write_run_id(output_dir, run_id)
+        typer.echo(f"Logged to MLflow: run {run_id}")
 
 
 if __name__ == "__main__":
