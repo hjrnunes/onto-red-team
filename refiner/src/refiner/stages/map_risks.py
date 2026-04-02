@@ -45,13 +45,14 @@ def map_risks(
         config: LLMConfig,
         risk_handlers: dict,
         report=None,
-) -> tuple[list[PolicyRiskMapping], dict[str, dict], set[str], dict[str, list[dict]]]:
+) -> tuple[list[PolicyRiskMapping], dict[str, dict], set[str], dict[str, list[dict]], dict[str, list[str]]]:
     if not classifications:
-        return [], {}, set(), {}
+        return [], {}, set(), {}, {}
 
     risk_details_cache: dict[str, dict] = {}
     seen_risk_ids: set[str] = set()  # all risk IDs shown to the model (candidates + related)
     related_risks: dict[str, list[dict]] = {}  # risk_id -> related risk entries from knowledge graph
+    risk_actions_cache: dict[str, list[str]] = {}
     mappings: list[PolicyRiskMapping] = []
 
     for cls in classifications:
@@ -71,6 +72,9 @@ def map_risks(
             related_risks[c["id"]] = related
             for r in related:
                 seen_risk_ids.add(r["id"])
+            # 4. Get related actions (stored for anchor stage)
+            actions = risk_handlers["get_related_actions"](c["id"])
+            risk_actions_cache[c["id"]] = [a.get("description", "") for a in actions if a.get("description")]
             enriched_candidates.append({**details, "distance": c.get("distance"), "related": related})
 
         if not enriched_candidates:
@@ -166,4 +170,4 @@ def map_risks(
             matched_risks=valid_risks,
         ))
 
-    return mappings, risk_details_cache, seen_risk_ids, related_risks
+    return mappings, risk_details_cache, seen_risk_ids, related_risks, risk_actions_cache
