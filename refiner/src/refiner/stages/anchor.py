@@ -104,9 +104,9 @@ def expand_candidates(
 ) -> tuple[list[dict], dict]:
     """Run multiple ontology searches, merge by URI, annotate with hit count."""
     queries: list[tuple[str, str]] = []
-    if description.strip():
+    if description and description.strip():
         queries.append((description, "description"))
-    if concern.strip():
+    if concern and concern.strip():
         queries.append((concern, "concern"))
     for a in action_descriptions:
         if a.strip():
@@ -154,11 +154,66 @@ def expand_candidates(
     )
     kept = sorted_candidates[:max_candidates]
 
+    # Restriction/equivalence expansion
+    restriction_added = 0
+    if onto_handlers.get("get_restrictions"):
+        restriction_candidates = []
+        seen_uris = {c["uri"] for c in kept}
+        for c in kept:
+            for r in onto_handlers["get_restrictions"](c["uri"]):
+                filler = r.get("filler", "")
+                if not filler or filler in seen_uris:
+                    continue
+                defn = onto_handlers["get_class_definition"](filler)
+                if defn is None:
+                    continue
+                seen_uris.add(filler)
+                restriction_candidates.append({
+                    "uri": filler,
+                    "label": defn.get("label", ""),
+                    "hit_count": 0,
+                    "best_distance": 0.0,
+                    "query_sources": ["restriction"],
+                    "restriction_property": r.get("property", ""),
+                    "restriction_from": c["uri"],
+                })
+
+        if onto_handlers.get("get_equivalent_axioms"):
+            for c in kept:
+                for eq in onto_handlers["get_equivalent_axioms"](c["uri"]):
+                    for member in eq.get("members", []):
+                        if member in seen_uris:
+                            continue
+                        defn = onto_handlers["get_class_definition"](member)
+                        if defn is None:
+                            continue
+                        seen_uris.add(member)
+                        restriction_candidates.append({
+                            "uri": member,
+                            "label": defn.get("label", ""),
+                            "hit_count": 0,
+                            "best_distance": 0.0,
+                            "query_sources": ["equivalence"],
+                        })
+
+        # Domain filter restriction candidates
+        if selected_domains and restriction_candidates:
+            restriction_candidates = [
+                c for c in restriction_candidates
+                if derive_source_ontology(c["uri"]) in selected_domains
+            ]
+
+        # Cap at 3 additional candidates
+        restriction_candidates = restriction_candidates[:3]
+        kept = kept + restriction_candidates
+        restriction_added = len(restriction_candidates)
+
     stats = {
         "queries_run": len(queries),
         "raw_total": raw_total,
         "unique_after_dedup": len(by_uri),
         "kept_after_filter": len(kept),
+        "restriction_candidates_added": restriction_added,
     }
 
     return kept, stats
@@ -216,6 +271,15 @@ def anchor(
                 onto_handlers=onto_handlers,
                 selected_domains=selected_domains,
             )
+
+            if report and expansion_stats.get("restriction_candidates_added", 0) > 0:
+                report.events.append({
+                    "stage": "anchor", "event": "restriction_expansion",
+                    "risk_id": rm.risk_id,
+                    "source_uri": "",  # multiple sources
+                    "candidates_added": expansion_stats["restriction_candidates_added"],
+                    "source_type": "restriction",
+                })
 
             if report:
                 report.events.append({

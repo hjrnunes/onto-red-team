@@ -646,3 +646,89 @@ def test_anchor_emits_multi_query_hit(mock_client, mock_config, mock_onto_handle
     hits = [e for e in report.events if e["event"] == "multi_query_hit"]
     assert len(hits) >= 1
     assert hits[0]["hit_count"] >= 1
+
+
+# Restriction/equivalence expansion tests
+
+
+def test_expand_candidates_with_restriction_expansion(mock_onto_handlers):
+    """Restriction fillers are added as candidates when get_restrictions is available."""
+    # Set up search to return one candidate
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": "http://example.org/Artifact", "label": "Artifact", "distance": 0.1},
+    ]
+    # Artifact has a restriction: someValuesFrom -> ContentEntity
+    mock_onto_handlers["get_restrictions"].return_value = [
+        {"type": "someValuesFrom", "property": "http://example.org/is_about", "filler": "http://example.org/ContentEntity"},
+    ]
+    mock_onto_handlers["get_class_definition"].side_effect = lambda uri: (
+        {"uri": uri, "label": "Content Entity", "definition": "d", "superclasses": []}
+        if uri == "http://example.org/ContentEntity"
+        else None
+    )
+
+    candidates, stats = expand_candidates(
+        description="Information artifact",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    uris = {c["uri"] for c in candidates}
+    assert "http://example.org/ContentEntity" in uris
+    # Check it has restriction metadata
+    restriction_cand = next(c for c in candidates if c["uri"] == "http://example.org/ContentEntity")
+    assert "restriction" in restriction_cand["query_sources"]
+
+
+def test_expand_candidates_restriction_cap_at_3(mock_onto_handlers):
+    """At most 3 restriction candidates are added."""
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": "http://example.org/A", "label": "A", "distance": 0.1},
+    ]
+    # 5 restrictions — should be capped at 3
+    mock_onto_handlers["get_restrictions"].return_value = [
+        {"type": "someValuesFrom", "property": "p", "filler": f"http://example.org/F{i}"}
+        for i in range(5)
+    ]
+    mock_onto_handlers["get_class_definition"].side_effect = lambda uri: (
+        {"uri": uri, "label": uri.split("/")[-1], "definition": "d", "superclasses": []}
+    )
+
+    candidates, stats = expand_candidates(
+        description="test",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    restriction_cands = [c for c in candidates if "restriction" in c.get("query_sources", [])]
+    assert len(restriction_cands) == 3
+
+
+def test_expand_candidates_no_restriction_when_handler_absent():
+    """Without get_restrictions handler, no restriction expansion occurs."""
+    from unittest.mock import MagicMock
+    handlers = {
+        "search_classes": MagicMock(return_value=[
+            {"uri": "http://example.org/A", "label": "A", "distance": 0.1},
+        ]),
+        "get_class_definition": MagicMock(return_value=None),
+        "get_subclasses": MagicMock(return_value=[]),
+        "get_superclasses": MagicMock(return_value=[]),
+        "get_siblings": MagicMock(return_value=[]),
+        "get_properties": MagicMock(return_value=[]),
+        "explore_class": MagicMock(return_value=None),
+        # No get_restrictions key
+    }
+    candidates, stats = expand_candidates(
+        description="test",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=handlers,
+        selected_domains=None,
+    )
+    assert stats.get("restriction_candidates_added", 0) == 0
