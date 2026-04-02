@@ -92,6 +92,78 @@ class _AnchorResponse(BaseModel):
     axes: list[_SlimAxis]
 
 
+def expand_candidates(
+    description: str,
+    concern: str,
+    action_descriptions: list[str],
+    cross_mapped_descriptions: list[str],
+    onto_handlers: dict,
+    selected_domains: list[str] | None,
+    top_k_per_query: int = 10,
+    max_candidates: int = 5,
+) -> tuple[list[dict], dict]:
+    """Run multiple ontology searches, merge by URI, annotate with hit count."""
+    queries: list[tuple[str, str]] = []
+    if description.strip():
+        queries.append((description, "description"))
+    if concern.strip():
+        queries.append((concern, "concern"))
+    for a in action_descriptions:
+        if a.strip():
+            queries.append((a, "action"))
+    for d in cross_mapped_descriptions:
+        if d.strip():
+            queries.append((d, "cross_mapping"))
+
+    by_uri: dict[str, dict] = {}
+    raw_total = 0
+    for query_text, source_label in queries:
+        results = onto_handlers["search_classes"](query_text, top_k=top_k_per_query)
+        raw_total += len(results)
+        for r in results:
+            uri = r.get("uri", "")
+            if not uri:
+                continue
+            if uri not in by_uri:
+                by_uri[uri] = {
+                    "uri": uri,
+                    "label": r.get("label", ""),
+                    "hit_count": 0,
+                    "best_distance": float("inf"),
+                    "query_sources": [],
+                }
+            entry = by_uri[uri]
+            entry["hit_count"] += 1
+            dist = r.get("distance", 1.0)
+            if dist < entry["best_distance"]:
+                entry["best_distance"] = dist
+            if source_label not in entry["query_sources"]:
+                entry["query_sources"].append(source_label)
+
+    if selected_domains:
+        filtered = {
+            uri: c for uri, c in by_uri.items()
+            if derive_source_ontology(uri) in selected_domains
+        }
+    else:
+        filtered = by_uri
+
+    sorted_candidates = sorted(
+        filtered.values(),
+        key=lambda c: (-c["hit_count"], c["best_distance"]),
+    )
+    kept = sorted_candidates[:max_candidates]
+
+    stats = {
+        "queries_run": len(queries),
+        "raw_total": raw_total,
+        "unique_after_dedup": len(by_uri),
+        "kept_after_filter": len(kept),
+    }
+
+    return kept, stats
+
+
 def anchor(
     risk_mappings: list[PolicyRiskMapping],
     risk_details: dict[str, dict],

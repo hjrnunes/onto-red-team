@@ -361,3 +361,183 @@ def test_anchor_no_report_works(mock_client, mock_config, mock_onto_handlers):
 def test_anchor_empty_mappings(mock_client, mock_config, mock_onto_handlers):
     result = anchor([], {}, mock_client, mock_config, mock_onto_handlers)
     assert result == []
+
+
+# expand_candidates() tests
+
+
+from refiner.stages.anchor import expand_candidates
+
+
+def test_expand_candidates_single_query(mock_onto_handlers):
+    """With only a description, behaves like current single search."""
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": "http://example.org/A", "label": "A", "distance": 0.2},
+        {"uri": "http://example.org/B", "label": "B", "distance": 0.4},
+    ]
+    candidates, stats = expand_candidates(
+        description="Fraud risk",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    assert len(candidates) == 2
+    assert candidates[0]["uri"] == "http://example.org/A"
+    assert stats["queries_run"] == 1
+    mock_onto_handlers["search_classes"].assert_called_once()
+
+
+def test_expand_candidates_multi_query_dedup(mock_onto_handlers):
+    """Same URI from multiple queries gets hit_count > 1."""
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.3},
+         {"uri": "http://example.org/B", "label": "B", "distance": 0.5}],
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.2},
+         {"uri": "http://example.org/C", "label": "C", "distance": 0.4}],
+    ]
+    candidates, stats = expand_candidates(
+        description="Fraud risk",
+        concern="Loss",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    assert stats["queries_run"] == 2
+    assert stats["unique_after_dedup"] == 3
+    a = next(c for c in candidates if c["uri"] == "http://example.org/A")
+    assert a["hit_count"] == 2
+    assert a["best_distance"] == 0.2
+
+
+def test_expand_candidates_with_actions(mock_onto_handlers):
+    """Action descriptions generate additional search queries."""
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.3}],
+        [{"uri": "http://example.org/B", "label": "B", "distance": 0.4}],
+        [{"uri": "http://example.org/C", "label": "C", "distance": 0.5}],
+    ]
+    candidates, stats = expand_candidates(
+        description="Fraud risk",
+        concern="",
+        action_descriptions=["Monitor transactions", "Verify identity"],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    assert stats["queries_run"] == 3
+    assert len(candidates) == 3
+
+
+def test_expand_candidates_with_cross_mappings(mock_onto_handlers):
+    """Cross-mapped descriptions generate additional search queries."""
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.3}],
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.1}],
+    ]
+    candidates, stats = expand_candidates(
+        description="Fraud risk",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=["Financial fraud and scams"],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    assert stats["queries_run"] == 2
+    a = next(c for c in candidates if c["uri"] == "http://example.org/A")
+    assert a["hit_count"] == 2
+    assert a["best_distance"] == 0.1
+
+
+def test_expand_candidates_domain_filter(mock_onto_handlers):
+    """Domain filtering is applied after merge."""
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": "http://purl.obolibrary.org/obo/MAXO_001", "label": "MaxO1", "distance": 0.1},
+        {"uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Foo", "label": "Foo", "distance": 0.2},
+    ]
+    candidates, stats = expand_candidates(
+        description="Fraud risk",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=["CCO", "Commons", "FIBO", "D3FEND", "CSO"],
+    )
+    assert all(c["uri"] != "http://purl.obolibrary.org/obo/MAXO_001" for c in candidates)
+    assert stats["kept_after_filter"] == 1
+
+
+def test_expand_candidates_max_candidates(mock_onto_handlers):
+    """Results are capped at max_candidates."""
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": f"http://example.org/{i}", "label": f"C{i}", "distance": i * 0.1}
+        for i in range(10)
+    ]
+    candidates, stats = expand_candidates(
+        description="Fraud risk",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+        max_candidates=5,
+    )
+    assert len(candidates) == 5
+
+
+def test_expand_candidates_sorts_by_hit_count_then_distance(mock_onto_handlers):
+    """Candidates sorted by hit_count desc, then best_distance asc."""
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.5},
+         {"uri": "http://example.org/B", "label": "B", "distance": 0.1}],
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.4}],
+    ]
+    candidates, _ = expand_candidates(
+        description="Fraud",
+        concern="Loss",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    assert candidates[0]["uri"] == "http://example.org/A"
+    assert candidates[1]["uri"] == "http://example.org/B"
+
+
+def test_expand_candidates_skips_empty_queries(mock_onto_handlers):
+    """Empty strings are not searched."""
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": "http://example.org/A", "label": "A", "distance": 0.3},
+    ]
+    candidates, stats = expand_candidates(
+        description="Fraud risk",
+        concern="",
+        action_descriptions=["", "  "],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    assert stats["queries_run"] == 1
+
+
+def test_expand_candidates_tracks_query_sources(mock_onto_handlers):
+    """Each candidate tracks which query sources found it."""
+    mock_onto_handlers["search_classes"].side_effect = [
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.3}],
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.2}],
+        [{"uri": "http://example.org/A", "label": "A", "distance": 0.4}],
+    ]
+    candidates, _ = expand_candidates(
+        description="Fraud",
+        concern="Loss",
+        action_descriptions=["Monitor"],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+    )
+    a = candidates[0]
+    assert "description" in a["query_sources"]
+    assert "concern" in a["query_sources"]
+    assert "action" in a["query_sources"]
