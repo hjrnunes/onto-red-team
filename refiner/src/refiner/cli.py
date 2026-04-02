@@ -120,6 +120,9 @@ def run(
     nexus_base_dir: str = typer.Option(None, "--nexus-base-dir", envvar="NEXUS_BASE_DIR", help="Path to ai-atlas-nexus repo"),
     ontoquery_chroma_dir: Path = typer.Option(Path(".chroma"), "--ontoquery-chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="Ontoquery ChromaDB directory"),
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR", help="Nexus ChromaDB directory"),
+    track: bool = typer.Option(False, "--track", help="Enable MLflow tracking + tracing"),
+    tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
+    description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
 ):
     """Run the refiner pipeline on a policy JSON file."""
     if not policy_json.exists():
@@ -177,80 +180,129 @@ def run(
     # Output
     out = output_dir or Path(".")
     out.mkdir(parents=True, exist_ok=True)
-    client_slug = policy_json.stem
 
-    if state.domain_context is not None and state.classifications is not None and state.risk_mappings is not None:
-        # Enrich domain context profiles with risk details and cross-mappings
-        from refiner.stages.identify_domains import derive_source_ontology
-        FRAMEWORK_LABELS = {
-            "ibm-risk-atlas": "IBM Risk Atlas",
-            "owasp-llm": "OWASP LLM Top 10",
-            "nist-ai-rmf": "NIST AI RMF",
-            "air-2024": "AIR 2024",
-            "mit-ai-risk": "MIT AI Risk Repository",
-            "ailuminate": "AILuminate",
-            "credo": "Credo",
-            "aiuc": "AIUC-1",
-            "csiro": "CSIRO",
-        }
-        for profile in state.domain_context:
-            if state.risk_details:
-                details = state.risk_details.get(profile.risk_id, {})
-                profile.risk_description = details.get("description") or ""
-                profile.risk_concern = details.get("concern") or ""
-                taxonomy_id = details.get("taxonomy", "")
-                profile.risk_framework = taxonomy_id
-                for prefix, label in FRAMEWORK_LABELS.items():
-                    if profile.risk_id.startswith(prefix):
-                        profile.risk_framework = label
-                        break
-            if state.related_risks:
-                profile.cross_mappings = state.related_risks.get(profile.risk_id, [])
+    mlflow_active = False
+    if track:
+        try:
+            import mlflow
+            from refiner.tracking import _get_git_context, write_run_id
+        except ImportError:
+            typer.echo("Error: MLflow is required for --track. Install with: uv sync --extra tracking", err=True)
+            raise typer.Exit(1)
 
-        # Validate cross-mapping targets against all risk IDs shown to the model
-        valid_ids = state.seen_risk_ids
-        taxonomy, profiles = structure(
-            client_slug, state.classifications, state.risk_mappings, state.domain_context,
-            related_risks=state.related_risks,
-            valid_risk_ids=valid_ids,
-            report=report,
-        )
-        report.stages_completed.append("structure")
+        if not tracking_uri:
+            typer.echo("Error: --tracking-uri or MLFLOW_TRACKING_URI is required for --track", err=True)
+            raise typer.Exit(1)
 
-        tax_path = out / f"{client_slug}-taxonomy.yaml"
-        tax_path.write_text(yaml.dump(taxonomy, default_flow_style=False, sort_keys=False))
-        typer.echo(f"Taxonomy written to {tax_path}")
+        mlflow.set_tracking_uri(tracking_uri)
+        mlflow.set_experiment(policy_json.stem)
+        mlflow.start_run()
+        mlflow_active = True
 
-        prof_path = out / f"{client_slug}-domain-context.yaml"
-        prof_path.write_text(yaml.dump(profiles, default_flow_style=False, sort_keys=False))
-        typer.echo(f"Domain context written to {prof_path}")
+        git_sha, git_dirty = _get_git_context()
+        mlflow.log_params({
+            "model": config.model,
+            "policy_set": policy_json.name,
+            "git_sha": git_sha,
+            "git_dirty": str(git_dirty),
+        })
+        if description:
+            mlflow.set_tag("description", description)
 
-        report_path = out / f"{client_slug}-report.yaml"
-        report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
-        typer.echo(f"Report written to {report_path}")
-    else:
-        # Partial run — dump intermediate state as JSON
-        state_path = out / f"{client_slug}-state.json"
-        state_data = {
-            "policies": [p.model_dump() for p in state.policies],
-        }
-        if state.classifications:
-            state_data["classifications"] = [c.model_dump() for c in state.classifications]
-        if state.selected_domains:
-            state_data["selected_domains"] = state.selected_domains
-        if state.risk_mappings:
-            state_data["risk_mappings"] = [m.model_dump() for m in state.risk_mappings]
-        if state.risk_details:
-            state_data["risk_details"] = state.risk_details
-        if state.variation_axes:
-            state_data["variation_axes"] = [a.model_dump() for a in state.variation_axes]
-        state_path.write_text(json.dumps(state_data, indent=2))
-        typer.echo(f"Intermediate state written to {state_path}")
+        write_run_id(out, mlflow.active_run().info.run_id)
 
-        if report.events:
+    try:
+        client_slug = policy_json.stem
+
+        if state.domain_context is not None and state.classifications is not None and state.risk_mappings is not None:
+            # Enrich domain context profiles with risk details and cross-mappings
+            from refiner.stages.identify_domains import derive_source_ontology
+            FRAMEWORK_LABELS = {
+                "ibm-risk-atlas": "IBM Risk Atlas",
+                "owasp-llm": "OWASP LLM Top 10",
+                "nist-ai-rmf": "NIST AI RMF",
+                "air-2024": "AIR 2024",
+                "mit-ai-risk": "MIT AI Risk Repository",
+                "ailuminate": "AILuminate",
+                "credo": "Credo",
+                "aiuc": "AIUC-1",
+                "csiro": "CSIRO",
+            }
+            for profile in state.domain_context:
+                if state.risk_details:
+                    details = state.risk_details.get(profile.risk_id, {})
+                    profile.risk_description = details.get("description") or ""
+                    profile.risk_concern = details.get("concern") or ""
+                    taxonomy_id = details.get("taxonomy", "")
+                    profile.risk_framework = taxonomy_id
+                    for prefix, label in FRAMEWORK_LABELS.items():
+                        if profile.risk_id.startswith(prefix):
+                            profile.risk_framework = label
+                            break
+                if state.related_risks:
+                    profile.cross_mappings = state.related_risks.get(profile.risk_id, [])
+
+            # Validate cross-mapping targets against all risk IDs shown to the model
+            valid_ids = state.seen_risk_ids
+            taxonomy, profiles = structure(
+                client_slug, state.classifications, state.risk_mappings, state.domain_context,
+                related_risks=state.related_risks,
+                valid_risk_ids=valid_ids,
+                report=report,
+            )
+            report.stages_completed.append("structure")
+
+            tax_path = out / f"{client_slug}-taxonomy.yaml"
+            tax_path.write_text(yaml.dump(taxonomy, default_flow_style=False, sort_keys=False))
+            typer.echo(f"Taxonomy written to {tax_path}")
+
+            prof_path = out / f"{client_slug}-domain-context.yaml"
+            prof_path.write_text(yaml.dump(profiles, default_flow_style=False, sort_keys=False))
+            typer.echo(f"Domain context written to {prof_path}")
+
             report_path = out / f"{client_slug}-report.yaml"
             report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
             typer.echo(f"Report written to {report_path}")
+        else:
+            # Partial run — dump intermediate state as JSON
+            state_path = out / f"{client_slug}-state.json"
+            state_data = {
+                "policies": [p.model_dump() for p in state.policies],
+            }
+            if state.classifications:
+                state_data["classifications"] = [c.model_dump() for c in state.classifications]
+            if state.selected_domains:
+                state_data["selected_domains"] = state.selected_domains
+            if state.risk_mappings:
+                state_data["risk_mappings"] = [m.model_dump() for m in state.risk_mappings]
+            if state.risk_details:
+                state_data["risk_details"] = state.risk_details
+            if state.variation_axes:
+                state_data["variation_axes"] = [a.model_dump() for a in state.variation_axes]
+            state_path.write_text(json.dumps(state_data, indent=2))
+            typer.echo(f"Intermediate state written to {state_path}")
+
+            if report.events:
+                report_path = out / f"{client_slug}-report.yaml"
+                report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
+                typer.echo(f"Report written to {report_path}")
+    except Exception:
+        if mlflow_active:
+            import mlflow
+            mlflow.end_run(status="FAILED")
+        raise
+    else:
+        if mlflow_active:
+            import mlflow
+            from refiner.tracking import _collect_artifacts
+            files, dirs = _collect_artifacts(out)
+            for f in files:
+                mlflow.log_artifact(str(f))
+            for d in dirs:
+                mlflow.log_artifacts(str(d), artifact_path=d.name)
+            run_id = mlflow.active_run().info.run_id
+            mlflow.end_run()
+            typer.echo(f"Logged to MLflow: run {run_id}")
 
 
 @app.command()
