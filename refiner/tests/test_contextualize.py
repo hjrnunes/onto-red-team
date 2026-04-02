@@ -389,3 +389,95 @@ def test_contextualize_no_report_works(mock_client, mock_config, mock_onto_handl
     mock_client.chat.completions.create.return_value = _ContextResponse(axes=[])
     result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
     assert len(result) == 1
+
+
+def test_contextualize_subclass_provenance(mock_client, mock_config, mock_onto_handlers):
+    """Enumerations from subclass traversal should have provenance='subclass'."""
+    axes = [_make_axes()]
+    mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/Employee", "label": "Employee", "definition": "d", "superclasses": []
+    }
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        axes=[_AxisResponse(
+            cco_class_uri="http://example.org/Person",
+            enumerations=[_EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high")],
+        )],
+    )
+    result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
+    assert result[0].axes[0].enumerations[0].provenance == "subclass"
+
+
+def test_contextualize_sibling_provenance(mock_client, mock_config, mock_onto_handlers):
+    """Enumerations from sibling fallback should have provenance='sibling'."""
+    axes = [_make_axes()]
+    mock_onto_handlers["get_subclasses"].return_value = []
+    mock_onto_handlers["get_siblings"].return_value = [
+        {"uri": "http://example.org/Person", "label": "Person"},
+        {"uri": "http://example.org/Organization", "label": "Organization"},
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/Organization", "label": "Organization", "definition": "d", "superclasses": []
+    }
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        axes=[_AxisResponse(
+            cco_class_uri="http://example.org/Person",
+            enumerations=[_EnumResponse(class_uri="http://example.org/Organization", class_label="Organization", relevance="high")],
+        )],
+    )
+    result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
+    assert result[0].axes[0].enumerations[0].provenance == "sibling"
+
+
+def test_contextualize_includes_risk_description_in_prompt(mock_client, mock_config, mock_onto_handlers):
+    """When risk_details provided, description and concern appear in LLM prompt."""
+    axes = [RiskVariationAxes(
+        risk_id="atlas-fraud", risk_name="Fraud", policy_concept="Fraud",
+        axes=[VariationAxis(
+            cco_class_uri="http://example.org/Person", cco_class_label="Person",
+            roles=["agent"], rationale="r",
+        )],
+    )]
+    risk_details = {
+        "atlas-fraud": {
+            "description": "Fraudulent activities targeting financial systems",
+            "concern": "Financial loss and trust erosion",
+        },
+    }
+    mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
+    ]
+    mock_client.chat.completions.create.return_value = _ContextResponse(axes=[
+        _AxisResponse(cco_class_uri="http://example.org/Person", enumerations=[
+            _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+        ]),
+    ])
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/Employee", "label": "Employee", "definition": "d", "superclasses": [],
+    }
+    result = contextualize(axes, mock_client, mock_config, mock_onto_handlers,
+                           risk_details=risk_details)
+    # Check the LLM was called with description and concern in the prompt
+    call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+    messages = call_kwargs["messages"]
+    user_msg = messages[1]["content"]
+    assert "Fraudulent activities targeting financial systems" in user_msg
+    assert "Financial loss and trust erosion" in user_msg
+
+
+def test_contextualize_works_without_risk_details(mock_client, mock_config, mock_onto_handlers):
+    """Backward compat: risk_details=None still works."""
+    axes = [RiskVariationAxes(
+        risk_id="atlas-fraud", risk_name="Fraud", policy_concept="Fraud",
+        axes=[VariationAxis(
+            cco_class_uri="http://example.org/Person", cco_class_label="Person",
+            roles=["agent"], rationale="r",
+        )],
+    )]
+    mock_onto_handlers["get_subclasses"].return_value = []
+    mock_onto_handlers["get_siblings"].return_value = []
+    mock_client.chat.completions.create.return_value = _ContextResponse(axes=[])
+    result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
+    assert len(result) == 1

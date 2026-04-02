@@ -50,6 +50,7 @@ def contextualize(
     config: LLMConfig,
     onto_handlers: dict,
     selected_domains: list[str] | None = None,
+    risk_details: dict[str, dict] | None = None,
     report: RunReport | None = None,
 ) -> list[DomainContextProfile]:
     if not variation_axes:
@@ -81,6 +82,7 @@ def contextualize(
 
         # Build lookup of input axes by URI for stitching back metadata
         input_axes_by_uri = {axis.cco_class_uri: axis for axis in rva.axes}
+        axis_provenance: dict[str, str] = {}  # axis URI -> "subclass" or "sibling"
 
         # Gather candidates for each axis — subclasses first, siblings as fallback
         axis_context = []
@@ -89,10 +91,12 @@ def contextualize(
             if subclasses:
                 candidates = subclasses[:10]
                 source = "Subclasses"
+                axis_provenance[axis.cco_class_uri] = "subclass"
             else:
                 siblings = onto_handlers["get_siblings"](axis.cco_class_uri)
                 candidates = [s for s in siblings if s.get("uri") != axis.cco_class_uri][:10]
                 source = "Siblings"
+                axis_provenance[axis.cco_class_uri] = "sibling"
                 if report:
                     report.events.append({
                         "stage": "contextualize", "event": "sibling_fallback",
@@ -107,8 +111,14 @@ def contextualize(
                 f"{source}:\n" + ("\n".join(candidate_lines) if candidate_lines else "  (none)")
             )
 
+        details = risk_details.get(rva.risk_id, {}) if risk_details else {}
+        description = details.get("description", "")
+        concern = details.get("concern", "")
+
         user_content = (
             f"Risk: {rva.risk_name} (ID: {rva.risk_id})\n"
+            f"Description: {description}\n"
+            f"Concern: {concern}\n"
             f"Policy: {rva.policy_concept}\n\n"
             + "\n\n".join(axis_context)
         )
@@ -174,6 +184,7 @@ def contextualize(
                         class_label=enum.class_label,
                         source_ontology=derive_source_ontology(enum.class_uri),
                         relevance=enum.relevance,
+                        provenance=axis_provenance.get(input_axis.cco_class_uri, "subclass"),
                     ))
                 else:
                     logger.warning("Filtering invalid enumeration class_uri: %s", enum.class_uri)
