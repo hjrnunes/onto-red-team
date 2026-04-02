@@ -240,8 +240,70 @@ def test_load_policies(tmp_path):
     ]
     p = tmp_path / "policies.json"
     p.write_text(json.dumps(policies))
-    result = load_policies(p)
-    assert result == {"Fraud": "About fraud", "Violence": "About violence"}
+    result, doc_ctx = load_policies(p)
+    assert doc_ctx is None
+    assert "Fraud" in result
+    assert result["Fraud"].concept_definition == "About fraud"
+    assert "Violence" in result
+
+
+def test_load_policies_enriched_format(tmp_path):
+    doc = {
+        "airo_version": "0.2",
+        "organization": "Test Org",
+        "domain": "healthcare",
+        "policies": [
+            {
+                "policy_concept": "PHI",
+                "concept_definition": "No PII",
+                "boundary_examples": [
+                    {"prohibited": "enter patient data", "acceptable": "draft template"}
+                ],
+                "acceptable_uses": ["non-clinical drafting"],
+            },
+        ],
+    }
+    p = tmp_path / "enriched.json"
+    p.write_text(json.dumps(doc))
+
+    policies, doc_context = load_policies(p)
+    assert "PHI" in policies
+    assert doc_context is not None
+    assert doc_context.organization == "Test Org"
+    assert len(policies["PHI"].boundary_examples) == 1
+
+
+def test_build_prompt_with_boundary_examples():
+    from refiner.models import Policy, BoundaryExample, PolicyDocument
+
+    policy = Policy(
+        policy_concept="Clinical",
+        concept_definition="No clinical decisions",
+        boundary_examples=[
+            BoundaryExample(prohibited="care plan for John", acceptable="summarise guidelines")
+        ],
+        acceptable_uses=["General health concepts"],
+    )
+    doc_ctx = PolicyDocument(
+        organization="NHS Trust",
+        domain="healthcare",
+        ai_subjects=["patients"],
+    )
+
+    messages = build_prompt("Clinical", "No clinical decisions", "Misdiagnosis", [], policy=policy, doc_context=doc_ctx)
+    user_msg = messages[1]["content"]
+    assert "PROHIBITED: care plan for John" in user_msg
+    assert "ACCEPTABLE: summarise guidelines" in user_msg
+    assert "General health concepts" in user_msg
+    assert "NHS Trust" in user_msg
+    assert "patients" in user_msg
+
+
+def test_build_prompt_without_enrichments():
+    messages = build_prompt("Fraud", "About fraud", "Financial Fraud", [])
+    user_msg = messages[1]["content"]
+    assert "PROHIBITED:" not in user_msg
+    assert "About fraud" in user_msg
 
 
 from refiner.emit import emit
