@@ -575,3 +575,32 @@ def test_contextualize_no_disjoint_filter_when_handler_absent(mock_client, mock_
     mock_config_local.max_tokens = 500
     result = contextualize(axes, mock_client, mock_config_local, handlers)
     assert len(result[0].axes[0].enumerations) == 1
+
+
+def test_contextualize_includes_restriction_context_in_prompt(mock_client, mock_config, mock_onto_handlers):
+    """When restrictions exist for an axis, they appear in the LLM prompt."""
+    axes = [_make_axes()]
+    mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
+    ]
+    mock_onto_handlers["get_restrictions"].return_value = [
+        {"type": "someValuesFrom", "property": "http://example.org/member_of", "filler": "http://example.org/Organization"},
+    ]
+    mock_onto_handlers["get_class_definition"].return_value = {
+        "uri": "http://example.org/Employee", "label": "Employee", "definition": "d", "superclasses": []
+    }
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        axes=[_AxisResponse(
+            cco_class_uri="http://example.org/Person",
+            enumerations=[_EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high")],
+        )],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    contextualize(axes, mock_client, mock_config, mock_onto_handlers, report=report)
+
+    call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+    user_msg = call_kwargs["messages"][1]["content"]
+    assert "Ontology constraints:" in user_msg
+
+    context_events = [e for e in report.events if e["event"] == "restriction_context_added"]
+    assert len(context_events) == 1

@@ -109,9 +109,30 @@ def contextualize(
             candidate_lines = []
             for c in candidates:
                 candidate_lines.append(f"  - {c.get('uri', '')}: {c.get('label', '')}")
+
+            # Add restriction context if available
+            restriction_lines = []
+            if onto_handlers.get("get_restrictions"):
+                restrictions = onto_handlers["get_restrictions"](axis.cco_class_uri)
+                for r in restrictions[:5]:  # cap at 5 to avoid prompt bloat
+                    prop_label = r.get("property", "").split("#")[-1].split("/")[-1]
+                    filler_label = r.get("filler", "").split("#")[-1].split("/")[-1]
+                    restriction_lines.append(f"  - {r['type']}: {prop_label} -> {filler_label}")
+                if restriction_lines and report:
+                    report.events.append({
+                        "stage": "contextualize", "event": "restriction_context_added",
+                        "axis_uri": axis.cco_class_uri,
+                        "restriction_count": len(restrictions),
+                    })
+
+            constraint_block = ""
+            if restriction_lines:
+                constraint_block = "Ontology constraints:\n" + "\n".join(restriction_lines) + "\n"
+
             axis_context.append(
                 f"Axis: {axis.cco_class_label} ({axis.cco_class_uri})\n"
                 f"Roles: {', '.join(axis.roles)}\n"
+                f"{constraint_block}"
                 f"{source}:\n" + ("\n".join(candidate_lines) if candidate_lines else "  (none)")
             )
 
