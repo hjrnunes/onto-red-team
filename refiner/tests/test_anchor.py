@@ -869,7 +869,10 @@ def test_weighted_merge_guarantees_domain_selected_slots():
     per_domain = _make_domain_candidates()
     selected = ["CCO", "Commons", "D3FEND", "CSO", "FIBO"]
 
-    result = strategy.merge(per_domain, selected, max_candidates=5)
+    result = strategy.merge(
+        per_domain, selected, max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
 
     # FIBO must be represented
@@ -883,7 +886,10 @@ def test_weighted_merge_fills_with_always_included():
     per_domain = _make_domain_candidates()
     selected = ["CCO", "CSO", "FIBO"]
 
-    result = strategy.merge(per_domain, selected, max_candidates=5)
+    result = strategy.merge(
+        per_domain, selected, max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
 
     # CSO X has best distance (0.05) among always-included — should be present
@@ -897,7 +903,10 @@ def test_weighted_merge_no_domain_selected():
     per_domain = _make_domain_candidates()
     selected = ["CCO", "CSO"]
 
-    result = strategy.merge(per_domain, selected, max_candidates=3)
+    result = strategy.merge(
+        per_domain, selected, max_candidates=3,
+        risk_context={}, generic_safety_uris=set(),
+    )
     # All from always-included, sorted by hit_count then distance
     assert len(result) == 3
     assert result[0]["uri"] == "http://cso/X"  # hit_count 3, distance 0.05
@@ -910,7 +919,10 @@ def test_weighted_merge_deduplicates():
         "FIBO": [{"uri": "http://shared/A", "label": "A", "hit_count": 1, "best_distance": 0.1, "domain": "FIBO", "query_sources": []}],
         "CSO": [{"uri": "http://shared/A", "label": "A", "hit_count": 1, "best_distance": 0.2, "domain": "CSO", "query_sources": []}],
     }
-    result = strategy.merge(per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
     assert uris.count("http://shared/A") == 1
 
@@ -921,7 +933,10 @@ def test_grouped_merge_equal_distribution():
     per_domain = _make_domain_candidates()
     selected = ["CCO", "CSO", "FIBO"]
 
-    result = strategy.merge(per_domain, selected, max_candidates=6)
+    result = strategy.merge(
+        per_domain, selected, max_candidates=6,
+        risk_context={}, generic_safety_uris=set(),
+    )
     # 6 / 3 domains = 2 per domain
     domains_in_result = [c["domain"] for c in result]
     assert domains_in_result.count("FIBO") <= 2
@@ -936,7 +951,10 @@ def test_grouped_merge_caps_at_max():
     per_domain = _make_domain_candidates()
     selected = ["CCO", "CSO", "FIBO"]
 
-    result = strategy.merge(per_domain, selected, max_candidates=3)
+    result = strategy.merge(
+        per_domain, selected, max_candidates=3,
+        risk_context={}, generic_safety_uris=set(),
+    )
     assert len(result) <= 3
 
 
@@ -946,7 +964,10 @@ def test_grouped_merge_skips_empty_domains():
     per_domain = {"FIBO": _make_domain_candidates()["FIBO"]}
     selected = ["CCO", "CSO", "FIBO"]
 
-    result = strategy.merge(per_domain, selected, max_candidates=5)
+    result = strategy.merge(
+        per_domain, selected, max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     assert all(c["domain"] == "FIBO" for c in result)
 
 
@@ -1083,7 +1104,10 @@ def test_weighted_merge_filters_poor_distance_candidate():
              "domain": "CSO", "query_sources": []},
         ],
     }
-    result = strategy.merge(per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
     assert "http://fibo/bad" not in uris
     assert "http://cso/X" in uris
@@ -1102,7 +1126,10 @@ def test_weighted_merge_keeps_good_single_candidate():
              "domain": "CSO", "query_sources": []},
         ],
     }
-    result = strategy.merge(per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
     assert "http://fibo/good" in uris
 
@@ -1120,7 +1147,10 @@ def test_weighted_merge_filters_domain_outlier_by_zscore():
              "domain": "CSO", "query_sources": []},
         ],
     }
-    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
     assert "http://cso/good" in uris
     assert "http://cso/ok" in uris
@@ -1139,7 +1169,10 @@ def test_weighted_merge_pool_filters_by_threshold():
              "domain": "CSO", "query_sources": []},
         ],
     }
-    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
     assert "http://cso/good" in uris
     assert "http://cso/bad" not in uris
@@ -1153,7 +1186,6 @@ from refiner.stages.anchor import build_generic_safety_uris
 def test_weighted_merge_filters_generic_safety_uris():
     """Candidates in generic_safety_uris are excluded from merge results."""
     strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
-    strategy.generic_safety_uris = {"http://cso/arson", "http://cso/cbrn"}
     per_domain = {
         "CSO": [
             {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 3, "best_distance": 0.20,
@@ -1168,7 +1200,10 @@ def test_weighted_merge_filters_generic_safety_uris():
              "domain": "CSO", "query_sources": []},
         ],
     }
-    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={}, generic_safety_uris={"http://cso/arson", "http://cso/cbrn"},
+    )
     uris = [c["uri"] for c in result]
     assert "http://cso/fraud" in uris
     assert "http://cso/privacy" in uris
@@ -1186,7 +1221,10 @@ def test_weighted_merge_no_filter_when_generic_safety_empty():
              "domain": "CSO", "query_sources": []},
         ],
     }
-    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
     uris = [c["uri"] for c in result]
     assert "http://cso/arson" in uris
 
@@ -1194,7 +1232,6 @@ def test_weighted_merge_no_filter_when_generic_safety_empty():
 def test_weighted_merge_generic_safety_filters_quota_pass():
     """Generic safety filter also applies to domain-selected quota slots."""
     strategy = WeightedMergeStrategy(always_included=["CCO"])
-    strategy.generic_safety_uris = {"http://cso/arson"}
     per_domain = {
         "CSO": [
             {"uri": "http://cso/arson", "label": "Arson", "hit_count": 3, "best_distance": 0.20,
@@ -1206,7 +1243,10 @@ def test_weighted_merge_generic_safety_filters_quota_pass():
         ],
     }
     # CSO is domain-selected (not in always_included=["CCO"])
-    result = strategy.merge(per_domain, ["CCO", "CSO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CCO", "CSO"], max_candidates=5,
+        risk_context={}, generic_safety_uris={"http://cso/arson"},
+    )
     uris = [c["uri"] for c in result]
     assert "http://cso/arson" not in uris
     assert "http://cso/fraud" in uris
@@ -1216,7 +1256,6 @@ def test_grouped_merge_filters_generic_safety_uris():
     """GroupedMergeStrategy also filters generic_safety_uris."""
     from refiner.stages.anchor import GroupedMergeStrategy
     strategy = GroupedMergeStrategy(always_included=["CCO", "CSO"])
-    strategy.generic_safety_uris = {"http://cso/arson"}
     per_domain = {
         "CSO": [
             {"uri": "http://cso/arson", "label": "Arson", "hit_count": 3, "best_distance": 0.2,
@@ -1225,7 +1264,10 @@ def test_grouped_merge_filters_generic_safety_uris():
              "domain": "CSO", "query_sources": []},
         ],
     }
-    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={}, generic_safety_uris={"http://cso/arson"},
+    )
     uris = [c["uri"] for c in result]
     assert "http://cso/arson" not in uris
     assert "http://cso/fraud" in uris
