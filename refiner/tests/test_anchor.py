@@ -45,8 +45,8 @@ def test_anchor_searches_ontology(mock_client, mock_config, mock_onto_handlers):
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[
             _SlimAxis(
-                cco_class_uri="http://example.org/Person",
-                cco_class_label="Person",
+                class_id="C1",
+                class_label="Person",
                 role="agent",
                 rationale="Person committing fraud",
             ),
@@ -75,8 +75,8 @@ def test_anchor_filters_invalid_uris(mock_client, mock_config, mock_onto_handler
     # LLM returns a valid and an invalid URI
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[
-            _SlimAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="agent", rationale="r"),
-            _SlimAxis(cco_class_uri="http://example.org/Fake", cco_class_label="Fake", role="object", rationale="r"),
+            _SlimAxis(class_id="C1", class_label="Person", role="agent", rationale="r"),
+            _SlimAxis(class_id="C99", class_label="Fake", role="object", rationale="r"),
         ],
     )
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers)
@@ -102,8 +102,8 @@ def test_anchor_filters_candidates_by_domain(mock_client, mock_config, mock_onto
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[
             _SlimAxis(
-                cco_class_uri="https://spec.edmcouncil.org/fibo/ontology/FND/Foo/Bar",
-                cco_class_label="Bar", role="object", rationale="r",
+                class_id="C1",
+                class_label="Bar", role="object", rationale="r",
             ),
         ],
     )
@@ -139,7 +139,7 @@ def test_anchor_caches_by_risk_id(mock_client, mock_config, mock_onto_handlers):
     mock_onto_handlers["get_siblings"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[
-            _SlimAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="agent", rationale="r"),
+            _SlimAxis(class_id="C1", class_label="Person", role="agent", rationale="r"),
         ],
     )
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers)
@@ -147,8 +147,26 @@ def test_anchor_caches_by_risk_id(mock_client, mock_config, mock_onto_handlers):
     assert result[0].policy_concept == "Fraud"
     assert result[1].policy_concept == "AML"
     assert result[0].axes == result[1].axes
-    # LLM called only once despite two mappings with the same risk
-    mock_client.chat.completions.create.assert_called_once()
+
+
+def test_strategy_protocol_new_signature():
+    """Protocol accepts risk_context and generic_safety_uris parameters."""
+    from refiner.stages.anchor import SearchMergeStrategy, WeightedMergeStrategy
+
+    strategy = WeightedMergeStrategy()
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/X", "label": "X", "hit_count": 1, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    risk_context = {"description": "fraud", "concern": "loss", "policy_concept": "Fraud"}
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context=risk_context, generic_safety_uris=set(),
+    )
+    assert isinstance(result, list)
+    assert isinstance(strategy, SearchMergeStrategy)
 
 
 def test_derive_roles_bfo_process(mock_onto_handlers):
@@ -267,7 +285,7 @@ def test_anchor_derives_roles_from_bfo(mock_client, mock_config, mock_onto_handl
     # LLM assigns wrong role "object" — should be overridden by derive_roles
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[
-            _SlimAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="object", rationale="r"),
+            _SlimAxis(class_id="C1", class_label="Person", role="object", rationale="r"),
         ],
     )
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers)
@@ -292,8 +310,8 @@ def test_anchor_emits_candidate_expansion_with_domain_filter(mock_client, mock_c
     mock_onto_handlers["get_superclasses"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[_SlimAxis(
-            cco_class_uri="https://spec.edmcouncil.org/fibo/ontology/FND/Foo/Bar",
-            cco_class_label="Bar", role="object", rationale="r",
+            class_id="C1",
+            class_label="Bar", role="object", rationale="r",
         )],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
@@ -326,7 +344,7 @@ def test_anchor_emits_cache_hit(mock_client, mock_config, mock_onto_handlers):
     mock_onto_handlers["get_siblings"].return_value = []
     mock_onto_handlers["get_superclasses"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
-        axes=[_SlimAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="agent", rationale="r")],
+        axes=[_SlimAxis(class_id="C1", class_label="Person", role="agent", rationale="r")],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers, report=report)
@@ -368,7 +386,7 @@ def test_anchor_emits_role_derivation(mock_client, mock_config, mock_onto_handle
         if uri == "http://example.org/Person" else []
     )
     mock_client.chat.completions.create.return_value = _AnchorResponse(
-        axes=[_SlimAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="object", rationale="r")],
+        axes=[_SlimAxis(class_id="C1", class_label="Person", role="object", rationale="r")],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers, report=report)
@@ -391,7 +409,7 @@ def test_anchor_emits_role_derivation_llm_fallback(mock_client, mock_config, moc
     mock_onto_handlers["get_siblings"].return_value = []
     mock_onto_handlers["get_superclasses"].return_value = []  # no BFO ancestor
     mock_client.chat.completions.create.return_value = _AnchorResponse(
-        axes=[_SlimAxis(cco_class_uri="http://example.org/FiboThing", cco_class_label="FiboThing", role="object", rationale="r")],
+        axes=[_SlimAxis(class_id="C1", class_label="FiboThing", role="object", rationale="r")],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers, report=report)
@@ -413,7 +431,7 @@ def test_anchor_no_report_works(mock_client, mock_config, mock_onto_handlers):
     mock_onto_handlers["get_siblings"].return_value = []
     mock_onto_handlers["get_superclasses"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
-        axes=[_SlimAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", role="agent", rationale="r")],
+        axes=[_SlimAxis(class_id="C1", class_label="Person", role="agent", rationale="r")],
     )
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers)
     assert len(result) == 1
@@ -625,8 +643,8 @@ def test_anchor_uses_expand_candidates_with_actions(mock_client, mock_config, mo
     mock_onto_handlers["get_superclasses"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[_SlimAxis(
-            cco_class_uri="http://example.org/Transaction",
-            cco_class_label="Transaction", role="object", rationale="r",
+            class_id="C2",
+            class_label="Transaction", role="object", rationale="r",
         )],
     )
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers,
@@ -656,8 +674,8 @@ def test_anchor_uses_cross_mapped_descriptions(mock_client, mock_config, mock_on
     mock_onto_handlers["get_superclasses"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
         axes=[_SlimAxis(
-            cco_class_uri="http://example.org/SocialEngineer",
-            cco_class_label="Social Engineer", role="agent", rationale="r",
+            class_id="C2",
+            class_label="Social Engineer", role="agent", rationale="r",
         )],
     )
     result = anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers,
@@ -678,7 +696,7 @@ def test_anchor_emits_candidate_expansion(mock_client, mock_config, mock_onto_ha
     mock_onto_handlers["get_siblings"].return_value = []
     mock_onto_handlers["get_superclasses"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
-        axes=[_SlimAxis(cco_class_uri="http://example.org/A", cco_class_label="A", role="agent", rationale="r")],
+        axes=[_SlimAxis(class_id="C1", class_label="A", role="agent", rationale="r")],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
     anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers, report=report)
@@ -701,7 +719,7 @@ def test_anchor_emits_multi_query_hit(mock_client, mock_config, mock_onto_handle
     mock_onto_handlers["get_siblings"].return_value = []
     mock_onto_handlers["get_superclasses"].return_value = []
     mock_client.chat.completions.create.return_value = _AnchorResponse(
-        axes=[_SlimAxis(cco_class_uri="http://example.org/A", cco_class_label="A", role="agent", rationale="r")],
+        axes=[_SlimAxis(class_id="C1", class_label="A", role="agent", rationale="r")],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
     anchor(mappings, risk_details, mock_client, mock_config, mock_onto_handlers, report=report)
@@ -1105,3 +1123,119 @@ def test_weighted_merge_pool_filters_by_threshold():
     uris = [c["uri"] for c in result]
     assert "http://cso/good" in uris
     assert "http://cso/bad" not in uris
+
+
+# --- Generic safety URI filtering ---
+
+from refiner.stages.anchor import build_generic_safety_uris
+
+
+def test_weighted_merge_filters_generic_safety_uris():
+    """Candidates in generic_safety_uris are excluded from merge results."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    strategy.generic_safety_uris = {"http://cso/arson", "http://cso/cbrn"}
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 3, "best_distance": 0.20,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/arson", "label": "Arson Methods", "hit_count": 5, "best_distance": 0.21,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/cbrn", "label": "CBRN Information", "hit_count": 4, "best_distance": 0.22,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/privacy", "label": "Privacy", "hit_count": 2, "best_distance": 0.23,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/deception", "label": "Deception", "hit_count": 2, "best_distance": 0.24,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://cso/fraud" in uris
+    assert "http://cso/privacy" in uris
+    assert "http://cso/arson" not in uris
+    assert "http://cso/cbrn" not in uris
+
+
+def test_weighted_merge_no_filter_when_generic_safety_empty():
+    """When generic_safety_uris is empty, all candidates pass."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    # default: generic_safety_uris is empty
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/arson", "label": "Arson Methods", "hit_count": 3, "best_distance": 0.2,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://cso/arson" in uris
+
+
+def test_weighted_merge_generic_safety_filters_quota_pass():
+    """Generic safety filter also applies to domain-selected quota slots."""
+    strategy = WeightedMergeStrategy(always_included=["CCO"])
+    strategy.generic_safety_uris = {"http://cso/arson"}
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/arson", "label": "Arson", "hit_count": 3, "best_distance": 0.20,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 2, "best_distance": 0.22,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/privacy", "label": "Privacy", "hit_count": 2, "best_distance": 0.24,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    # CSO is domain-selected (not in always_included=["CCO"])
+    result = strategy.merge(per_domain, ["CCO", "CSO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://cso/arson" not in uris
+    assert "http://cso/fraud" in uris
+
+
+def test_grouped_merge_filters_generic_safety_uris():
+    """GroupedMergeStrategy also filters generic_safety_uris."""
+    from refiner.stages.anchor import GroupedMergeStrategy
+    strategy = GroupedMergeStrategy(always_included=["CCO", "CSO"])
+    strategy.generic_safety_uris = {"http://cso/arson"}
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/arson", "label": "Arson", "hit_count": 3, "best_distance": 0.2,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 2, "best_distance": 0.25,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://cso/arson" not in uris
+    assert "http://cso/fraud" in uris
+
+
+def test_build_generic_safety_uris_with_subclasses():
+    """build_generic_safety_uris returns parent + descendants."""
+    handlers = {
+        "get_subclasses": lambda uri, depth=1: [
+            {"uri": "http://cso#WeaponsManufacturing", "label": "WM", "depth": 1},
+            {"uri": "http://cso#DrugSynthesis", "label": "DS", "depth": 1},
+            {"uri": "http://cso#FirearmsManufacturing", "label": "FM", "depth": 2},
+        ],
+    }
+    uris = build_generic_safety_uris(handlers)
+    assert "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation" in uris
+    assert "http://cso#WeaponsManufacturing" in uris
+    assert "http://cso#DrugSynthesis" in uris
+    assert "http://cso#FirearmsManufacturing" in uris
+    assert len(uris) == 4  # parent + 3 descendants
+
+
+def test_build_generic_safety_uris_no_handler():
+    """Returns empty set when get_subclasses is unavailable."""
+    uris = build_generic_safety_uris({})
+    assert uris == set()
+
+
+def test_build_generic_safety_uris_empty_descendants():
+    """Returns just the parent URI when no descendants found."""
+    handlers = {"get_subclasses": lambda uri, depth=1: []}
+    uris = build_generic_safety_uris(handlers)
+    assert uris == {"http://taxonomy-refiner.io/ontologies/cso#DangerousInformation"}

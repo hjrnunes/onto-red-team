@@ -90,6 +90,8 @@ class SearchMergeStrategy(Protocol):
         per_domain_candidates: dict[str, list[dict]],
         selected_domains: list[str],
         max_candidates: int,
+        risk_context: dict,
+        generic_safety_uris: set[str],
     ) -> list[dict]: ...
 
 
@@ -100,6 +102,10 @@ class WeightedMergeStrategy:
     - DISTANCE_CEILING: raw distance above which candidates are always rejected
     - ZSCORE_THRESHOLD: z-score above which candidates are rejected (when
       per-domain normalization is available, i.e. n >= 2 with nonzero std)
+
+    generic_safety_uris: URIs of ontology classes that are only relevant for
+    generic AI safety testing (e.g. CSO DangerousInformation branch). Filtered
+    out when set is non-empty.
     """
 
     DISTANCE_CEILING = 0.6
@@ -130,8 +136,10 @@ class WeightedMergeStrategy:
         for c in candidates:
             c["normalized_distance"] = (c.get("best_distance", 1.0) - mean) / std
 
-    def _passes_threshold(self, c: dict) -> bool:
-        """Check if candidate passes both raw distance ceiling and z-score threshold."""
+    def _passes_threshold(self, c: dict, generic_safety_uris: set[str]) -> bool:
+        """Check if candidate passes distance thresholds and context filter."""
+        if generic_safety_uris and c.get("uri", "") in generic_safety_uris:
+            return False
         if c.get("best_distance", 1.0) >= self.DISTANCE_CEILING:
             return False
         if c.get("normalized_distance", 0.0) >= self.ZSCORE_THRESHOLD:
@@ -143,6 +151,8 @@ class WeightedMergeStrategy:
         per_domain_candidates: dict[str, list[dict]],
         selected_domains: list[str],
         max_candidates: int,
+        risk_context: dict,
+        generic_safety_uris: set[str],
     ) -> list[dict]:
         selected_set = set(selected_domains)
         domain_selected = sorted(selected_set - self._always_included)
@@ -162,7 +172,7 @@ class WeightedMergeStrategy:
                 for c in per_domain_candidates.get(domain, []):
                     if (c["uri"] not in seen
                         and remaining > 0
-                        and self._passes_threshold(c)
+                        and self._passes_threshold(c, generic_safety_uris)
                         and len([r for r in result if r.get("domain") == domain]) < quota_per):
                         result.append(c)
                         seen.add(c["uri"])
@@ -176,7 +186,7 @@ class WeightedMergeStrategy:
         pool.sort(key=lambda c: (-c.get("hit_count", 0), c.get("normalized_distance", 0.0)))
 
         for c in pool:
-            if c["uri"] not in seen and remaining > 0 and self._passes_threshold(c):
+            if c["uri"] not in seen and remaining > 0 and self._passes_threshold(c, generic_safety_uris):
                 result.append(c)
                 seen.add(c["uri"])
                 remaining -= 1
@@ -189,6 +199,7 @@ class GroupedMergeStrategy:
 
     def __init__(self, always_included: list[str] | None = None):
         self._always_included = set(always_included or ALWAYS_INCLUDED)
+        self.generic_safety_uris: set[str] = set()
 
     def merge(
         self,
@@ -207,12 +218,40 @@ class GroupedMergeStrategy:
         for domain in active_domains:
             taken = 0
             for c in per_domain_candidates.get(domain, []):
-                if c["uri"] not in seen and taken < per_domain_quota:
+                uri = c["uri"]
+                if uri in seen:
+                    continue
+                if self.generic_safety_uris and uri in self.generic_safety_uris:
+                    continue
+                if taken < per_domain_quota:
                     result.append(c)
-                    seen.add(c["uri"])
+                    seen.add(uri)
                     taken += 1
 
         return result[:max_candidates]
+
+
+# CSO DangerousInformation branch — physical harm classes that are only relevant
+# for generic AI safety testing.  Filtered out in domain-specific policy runs.
+_CSO_DANGEROUS_INFO_URI = "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation"
+
+
+def build_generic_safety_uris(onto_handlers: dict) -> set[str]:
+    """Build set of CSO DangerousInformation URIs from the ontology graph.
+
+    Returns the parent URI plus all descendants (depth 3 covers the full branch).
+    Returns empty set if get_subclasses is unavailable.
+    """
+    get_subclasses = onto_handlers.get("get_subclasses")
+    if not get_subclasses:
+        return set()
+    descendants = get_subclasses(_CSO_DANGEROUS_INFO_URI, depth=3)
+    uris = {_CSO_DANGEROUS_INFO_URI}
+    for d in descendants:
+        uri = d.get("uri", "")
+        if uri:
+            uris.add(uri)
+    return uris
 
 
 def _search_per_domain(
@@ -278,12 +317,14 @@ A variation axis is an ontology class that represents a dimension along which di
 
 Given a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.
 
+Reference each selected class by its candidate ID (e.g. C1). Use the class name as the class_label.
+
 Return 2-3 axes max."""
 
 
 class _SlimAxis(BaseModel):
-    cco_class_uri: str
-    cco_class_label: str
+    class_id: str
+    class_label: str
     role: str
     rationale: str
 
@@ -540,31 +581,40 @@ def anchor(
                 ))
                 continue
 
-            # Build context for LLM
+            # Build context for LLM — assign short IDs, use Markdown format
+            id_to_uri = {}
             class_lines = []
-            for ec in enriched:
+            for idx, ec in enumerate(enriched, 1):
+                cand_id = f"C{idx}"
+                id_to_uri[cand_id] = ec["uri"]
                 cand = next((c for c in candidates if c["uri"] == ec["uri"]), None)
-                hit_info = ""
+
+                lines = [f"## {cand_id}: {ec.get('label', '')}"]
+                lines.append(f"Definition: {ec.get('definition', '')}")
+
                 if cand and cand.get("restriction_from"):
                     prop_label = cand.get("restriction_property", "").split("#")[-1].split("/")[-1]
                     from_label = cand.get("restriction_from", "").split("#")[-1].split("/")[-1]
-                    hit_info = f" [from restriction: {prop_label} on {from_label}]"
+                    lines.append(f"Source: restriction ({prop_label} on {from_label})")
                 elif cand and "equivalence" in cand.get("query_sources", []):
-                    hit_info = " [from equivalence]"
+                    lines.append("Source: equivalence")
                 elif cand and cand.get("hit_count", 1) > 1:
-                    hit_info = f" [found by {cand['hit_count']}/{expansion_stats['queries_run']} queries]"
-                line = f"- {ec['uri']}: {ec.get('label', '')} — {ec.get('definition', '')}{hit_info}"
+                    ratio = cand["hit_count"] / expansion_stats["queries_run"]
+                    label = "high" if ratio >= 0.5 else "medium"
+                    lines.append(f"Relevance: {label}")
+
                 if ec.get("siblings"):
                     sibs = ", ".join(s.get("label", s.get("uri", "")) for s in ec["siblings"][:3])
-                    line += f"\n  Siblings: {sibs}"
-                class_lines.append(line)
+                    lines.append(f"Siblings: {sibs}")
+
+                class_lines.append("\n".join(lines))
 
             user_content = (
                 f"Risk: {rm.risk_name}\n"
                 f"Description: {description}\n"
                 f"Concern: {concern}\n"
                 f"Policy: {mapping.policy_concept}\n\n"
-                f"Candidate ontology classes:\n" + "\n".join(class_lines)
+                f"Candidate classes:\n\n" + "\n\n".join(class_lines)
             )
 
             messages = [
@@ -586,24 +636,28 @@ def anchor(
                 "num_candidates": len(enriched),
             })
 
-            # Post-processing: validate URIs, derive roles from BFO/CCO hierarchy
+            # Post-processing: map short IDs back to URIs, validate, derive roles
             valid_axes = []
             for axis in result.axes:
-                check = onto_handlers["get_class_definition"](axis.cco_class_uri)
-                if check is None:
-                    logger.warning("Filtering invalid cco_class_uri: %s", axis.cco_class_uri)
+                actual_uri = id_to_uri.get(axis.class_id)
+                if actual_uri is None:
+                    logger.warning("Filtering unknown class_id: %s", axis.class_id)
                     continue
-                derived = derive_roles(axis.cco_class_uri, onto_handlers)
+                check = onto_handlers["get_class_definition"](actual_uri)
+                if check is None:
+                    logger.warning("Filtering invalid URI for class_id %s: %s", axis.class_id, actual_uri)
+                    continue
+                derived = derive_roles(actual_uri, onto_handlers)
                 if report:
                     report.events.append({
                         "stage": "anchor", "event": "role_derivation",
-                        "uri": axis.cco_class_uri,
+                        "uri": actual_uri,
                         "method": "derived" if derived is not None else "llm_fallback",
                     })
                 roles = derived if derived is not None else [axis.role]
                 valid_axes.append(VariationAxis(
-                    cco_class_uri=axis.cco_class_uri,
-                    cco_class_label=axis.cco_class_label,
+                    cco_class_uri=actual_uri,
+                    cco_class_label=axis.class_label,
                     roles=roles,
                     rationale=axis.rationale,
                 ))
