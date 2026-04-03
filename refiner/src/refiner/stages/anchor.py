@@ -232,6 +232,101 @@ class GroupedMergeStrategy:
         return result[:max_candidates]
 
 
+_MERGE_SYSTEM_PROMPT = """\
+You are selecting ontology classes relevant to an AI risk.
+
+Given a risk (with description, concern, and policy context) and a numbered list of candidate ontology classes, select the classes most relevant to this specific risk. Return their indices.
+
+Select up to {max_candidates} classes. Prefer classes that directly relate to the risk over tangentially related ones."""
+
+
+class _MergeSelection(BaseModel):
+    selected: list[int]
+
+
+class LLMMergeStrategy:
+    """LLM-judged contextual relevance selection.
+
+    Pre-filters by distance ceiling and generic safety URIs, then asks the LLM
+    to select the most relevant candidates for the given risk context.
+    Falls back to distance-sorted order on LLM failure.
+    """
+
+    DISTANCE_CEILING = 0.6
+
+    def __init__(self, client: instructor.Instructor, config: LLMConfig):
+        self._client = client
+        self._config = config
+
+    def merge(
+        self,
+        per_domain_candidates: dict[str, list[dict]],
+        selected_domains: list[str],
+        max_candidates: int,
+        risk_context: dict,
+        generic_safety_uris: set[str],
+    ) -> list[dict]:
+        # Pre-filter: distance ceiling + safety URIs
+        pool: list[dict] = []
+        for domain in sorted(per_domain_candidates):
+            for c in per_domain_candidates[domain]:
+                if c.get("best_distance", 1.0) >= self.DISTANCE_CEILING:
+                    continue
+                if generic_safety_uris and c.get("uri", "") in generic_safety_uris:
+                    continue
+                pool.append(c)
+
+        pool.sort(key=lambda c: (-c.get("hit_count", 0), c.get("best_distance", 1.0)))
+
+        if not pool:
+            return []
+
+        if len(pool) <= max_candidates:
+            return pool[:max_candidates]
+
+        # Build numbered candidate list for LLM
+        lines = []
+        for idx, c in enumerate(pool):
+            lines.append(f"{idx}. {c.get('label', '')} [{c.get('domain', '')}]")
+
+        user_content = (
+            f"Risk: {risk_context.get('description', '')}\n"
+            f"Concern: {risk_context.get('concern', '')}\n"
+            f"Policy: {risk_context.get('policy_concept', '')}\n\n"
+            f"Candidate classes:\n" + "\n".join(lines)
+        )
+
+        messages = [
+            {"role": "system", "content": _MERGE_SYSTEM_PROMPT.format(max_candidates=max_candidates)},
+            {"role": "user", "content": user_content},
+        ]
+
+        try:
+            result = self._client.chat.completions.create(
+                model=self._config.model,
+                response_model=_MergeSelection,
+                messages=messages,
+                temperature=self._config.temperature,
+                max_retries=self._config.max_retries,
+                max_tokens=self._config.max_tokens,
+            )
+            debug.log_call("merge", messages, result, context={
+                "policy_concept": risk_context.get("policy_concept", ""),
+                "pool_size": len(pool),
+                "selected_count": len(result.selected),
+            })
+
+            selected = []
+            for idx in result.selected:
+                if 0 <= idx < len(pool):
+                    selected.append(pool[idx])
+            return selected[:max_candidates]
+
+        except Exception:
+            logger.warning("LLM merge failed, falling back to distance-sorted order", exc_info=True)
+            return pool[:max_candidates]
+
+
 # CSO DangerousInformation branch — physical harm classes that are only relevant
 # for generic AI safety testing.  Filtered out in domain-specific policy runs.
 _CSO_DANGEROUS_INFO_URI = "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation"

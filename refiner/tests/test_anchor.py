@@ -972,9 +972,10 @@ def test_grouped_merge_skips_empty_domains():
 
 
 def test_strategy_protocol_compliance():
-    """Both strategy implementations satisfy the Protocol."""
+    """All strategy implementations satisfy the Protocol."""
     assert isinstance(WeightedMergeStrategy(), SearchMergeStrategy)
     assert isinstance(GroupedMergeStrategy(), SearchMergeStrategy)
+    # LLMMergeStrategy needs client/config so tested separately in test_llm_merge_protocol_compliance
 
 
 # Per-domain search integration in expand_candidates
@@ -1337,3 +1338,198 @@ def test_expand_candidates_passes_risk_context_to_strategy(mock_onto_handlers):
         "policy_concept": "Fraud Prevention",
     }
     assert call_kwargs[1]["generic_safety_uris"] == {"http://cso/arson"}
+
+
+# LLMMergeStrategy tests
+
+
+def test_llm_merge_prefilter_removes_high_distance():
+    """Pre-filter removes candidates above distance ceiling before LLM call."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/good", "label": "Good", "hit_count": 2, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": ["description"]},
+            {"uri": "http://cso/bad", "label": "Bad", "hit_count": 1, "best_distance": 0.7,
+             "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud", "concern": "", "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+    uris = [c["uri"] for c in result]
+    assert "http://cso/good" in uris
+    assert "http://cso/bad" not in uris
+
+
+def test_llm_merge_prefilter_removes_safety_uris():
+    """Pre-filter removes candidates in generic_safety_uris before LLM call."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 2, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": ["description"]},
+            {"uri": "http://cso/arson", "label": "Arson", "hit_count": 3, "best_distance": 0.05,
+             "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud", "concern": "", "policy_concept": "Fraud"},
+        generic_safety_uris={"http://cso/arson"},
+    )
+    uris = [c["uri"] for c in result]
+    assert "http://cso/fraud" in uris
+    assert "http://cso/arson" not in uris
+
+
+def test_llm_merge_selects_by_llm_judgment():
+    """LLM merge selects candidates by LLM response indices."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/A", "label": "Fraud", "hit_count": 2, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": ["description"]},
+            {"uri": "http://cso/B", "label": "Privacy", "hit_count": 1, "best_distance": 0.2,
+             "domain": "CSO", "query_sources": ["description"]},
+        ],
+        "FIBO": [
+            {"uri": "http://fibo/C", "label": "Lending", "hit_count": 1, "best_distance": 0.15,
+             "domain": "FIBO", "query_sources": ["description"]},
+            {"uri": "http://fibo/D", "label": "Federal Reserve", "hit_count": 1, "best_distance": 0.3,
+             "domain": "FIBO", "query_sources": ["description"]},
+        ],
+    }
+    # LLM picks indices 0 and 2 (Fraud and Privacy, skipping Lending and Federal Reserve)
+    # Pool sorted by (-hit_count, best_distance): A(2,0.1), C(1,0.15), B(1,0.2), D(1,0.3)
+    # Indices 0 and 2 = A and B
+    client.chat.completions.create.return_value = MagicMock(selected=[0, 2])
+
+    result = strategy.merge(
+        per_domain, ["CSO", "FIBO"], max_candidates=2,
+        risk_context={"description": "fraud", "concern": "loss", "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+    uris = [c["uri"] for c in result]
+    assert uris == ["http://cso/A", "http://cso/B"]
+
+
+def test_llm_merge_fallback_on_failure():
+    """Falls back to distance-sorted order when LLM call fails."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/A", "label": "A", "hit_count": 1, "best_distance": 0.3,
+             "domain": "CSO", "query_sources": ["description"]},
+            {"uri": "http://cso/B", "label": "B", "hit_count": 2, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.side_effect = Exception("LLM failed")
+
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud", "concern": "", "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+    # Fallback: sorted by (-hit_count, best_distance)
+    assert result[0]["uri"] == "http://cso/B"  # hit_count 2, distance 0.1
+    assert result[1]["uri"] == "http://cso/A"  # hit_count 1, distance 0.3
+
+
+def test_llm_merge_truncates_to_max_candidates():
+    """Result truncated to max_candidates even if LLM returns more."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": f"http://cso/{i}", "label": f"C{i}", "hit_count": 1, "best_distance": 0.1 + i * 0.01,
+             "domain": "CSO", "query_sources": ["description"]}
+            for i in range(10)
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0, 1, 2, 3, 4, 5, 6, 7])
+
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=3,
+        risk_context={"description": "fraud", "concern": "", "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+    assert len(result) == 3
+
+
+def test_llm_merge_empty_pool_no_llm_call():
+    """Empty pre-filtered pool returns empty without calling LLM."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/bad", "label": "Bad", "hit_count": 1, "best_distance": 0.8,
+             "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud", "concern": "", "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+    assert result == []
+    client.chat.completions.create.assert_not_called()
+
+
+def test_llm_merge_protocol_compliance():
+    """LLMMergeStrategy satisfies the SearchMergeStrategy protocol."""
+    from refiner.stages.anchor import SearchMergeStrategy, LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+    assert isinstance(strategy, SearchMergeStrategy)
