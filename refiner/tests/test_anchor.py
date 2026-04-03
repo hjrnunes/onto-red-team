@@ -1301,3 +1301,39 @@ def test_build_generic_safety_uris_empty_descendants():
     handlers = {"get_subclasses": lambda uri, depth=1: []}
     uris = build_generic_safety_uris(handlers)
     assert uris == {"http://taxonomy-refiner.io/ontologies/cso#DangerousInformation"}
+
+
+def test_expand_candidates_passes_risk_context_to_strategy(mock_onto_handlers):
+    """expand_candidates assembles risk_context and passes to merge strategy."""
+    from unittest.mock import MagicMock
+    from refiner.stages.anchor import expand_candidates
+
+    mock_strategy = MagicMock()
+    mock_strategy.merge.return_value = [
+        {"uri": "http://cso/X", "label": "X", "hit_count": 1, "best_distance": 0.1,
+         "domain": "CSO", "query_sources": ["description"]},
+    ]
+    mock_onto_handlers["search_domains"] = MagicMock(return_value={
+        "CSO": [{"uri": "http://cso/X", "label": "X", "distance": 0.1}],
+    })
+
+    candidates, stats = expand_candidates(
+        description="fraud risk",
+        concern="financial loss",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=["CSO"],
+        merge_strategy=mock_strategy,
+        policy_concept="Fraud Prevention",
+        generic_safety_uris={"http://cso/arson"},
+    )
+
+    mock_strategy.merge.assert_called_once()
+    call_kwargs = mock_strategy.merge.call_args
+    assert call_kwargs[1]["risk_context"] == {
+        "description": "fraud risk",
+        "concern": "financial loss",
+        "policy_concept": "Fraud Prevention",
+    }
+    assert call_kwargs[1]["generic_safety_uris"] == {"http://cso/arson"}

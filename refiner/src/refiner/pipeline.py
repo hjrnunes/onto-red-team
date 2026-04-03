@@ -1,6 +1,9 @@
+import logging
 from dataclasses import dataclass
 
 import instructor
+
+logger = logging.getLogger(__name__)
 from refiner.llm import LLMConfig
 from refiner.models import (
     Policy,
@@ -14,7 +17,8 @@ from refiner.models import (
 from refiner.stages.classify import classify
 from refiner.stages.identify_domains import identify_domains
 from refiner.stages.map_risks import map_risks
-from refiner.stages.anchor import anchor, SearchMergeStrategy
+from refiner.stages.anchor import anchor, SearchMergeStrategy, build_generic_safety_uris
+from refiner.stages.identify_domains import ALWAYS_INCLUDED
 from refiner.stages.contextualize import contextualize
 
 STAGES = ("classify", "identify_domains", "map_risks", "anchor", "contextualize")
@@ -57,6 +61,20 @@ def run_pipeline(
     state.selected_domains = identify_domains(state.classifications, client, config, report=report)
     if report:
         report.stages_completed.append("identify_domains")
+
+    # Compute CSO DangerousInformation filter for domain-specific runs
+    generic_safety_uris: set[str] = set()
+    if state.selected_domains:
+        domain_specific = set(state.selected_domains) - set(ALWAYS_INCLUDED)
+        if domain_specific:
+            uris = build_generic_safety_uris(onto_handlers)
+            if uris:
+                generic_safety_uris = uris
+                logger.info(
+                    "Filtering %d CSO generic-safety URIs (domain-specific: %s)",
+                    len(uris), ", ".join(sorted(domain_specific)),
+                )
+
     if until == "identify_domains":
         return state
 
@@ -75,6 +93,7 @@ def run_pipeline(
         related_risks=state.related_risks,
         merge_strategy=merge_strategy,
         report=report,
+        generic_safety_uris=generic_safety_uris,
     )
     if report:
         report.stages_completed.append("anchor")

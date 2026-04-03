@@ -344,6 +344,8 @@ def expand_candidates(
     merge_strategy: SearchMergeStrategy | None = None,
     top_k_per_query: int = 10,
     max_candidates: int = 5,
+    policy_concept: str = "",
+    generic_safety_uris: set[str] | None = None,
 ) -> tuple[list[dict], dict]:
     """Run multiple ontology searches, merge by URI, annotate with hit count."""
     queries: list[tuple[str, str]] = []
@@ -363,7 +365,15 @@ def expand_candidates(
         per_domain, raw_total, unique_total = _search_per_domain(
             queries, onto_handlers, selected_domains, top_k_per_query,
         )
-        kept = merge_strategy.merge(per_domain, selected_domains, max_candidates)
+        kept = merge_strategy.merge(
+            per_domain, selected_domains, max_candidates,
+            risk_context={
+                "description": description,
+                "concern": concern,
+                "policy_concept": policy_concept,
+            },
+            generic_safety_uris=generic_safety_uris or set(),
+        )
         stats = {
             "queries_run": len(queries),
             "raw_total": raw_total,
@@ -489,6 +499,7 @@ def anchor(
     related_risks: dict[str, list[dict]] | None = None,
     merge_strategy: SearchMergeStrategy | None = None,
     report=None,
+    generic_safety_uris: set[str] | None = None,
 ) -> list[RiskVariationAxes]:
     if not risk_mappings:
         return []
@@ -531,6 +542,8 @@ def anchor(
                 onto_handlers=onto_handlers,
                 selected_domains=selected_domains,
                 merge_strategy=merge_strategy,
+                policy_concept=mapping.policy_concept,
+                generic_safety_uris=generic_safety_uris,
             )
 
             if report and expansion_stats.get("restriction_candidates_added", 0) > 0:
