@@ -3,6 +3,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from unittest.mock import patch, MagicMock
+
 from run_battery import (
     load_config,
     resolve_policy_file,
@@ -11,6 +13,7 @@ from run_battery import (
     build_emit_cmd,
     build_generate_cmd,
     build_evaluate_cmd,
+    run_model,
 )
 
 
@@ -200,3 +203,89 @@ def test_build_evaluate_cmd():
     assert "--adversarial" in cmd
     assert "--track" in cmd
     assert cmd[cmd.index("--tag") + 1] == "exp1"
+
+
+def _make_model_cfg(tmp_path):
+    policy_dir = tmp_path / "policies"
+    policy_dir.mkdir()
+    (policy_dir / "swb.json").write_text("{}")
+    runs_dir = tmp_path / "runs"
+    runs_dir.mkdir()
+    onto = tmp_path / "onto"
+    onto.mkdir()
+    nexus = tmp_path / "nexus"
+    nexus.mkdir()
+    return {
+        "policy_dir": policy_dir,
+        "runs_dir": runs_dir,
+        "nexus_base_dir": Path("/nexus"),
+        "ontoquery_chroma_dir": onto,
+        "nexus_chroma_dir": nexus,
+        "samples_per_risk": 15,
+        "tracking_uri": "https://mlflow.example.com",
+    }
+
+
+def test_run_model_dry_run(tmp_path, capsys):
+    cfg = _make_model_cfg(tmp_path)
+    results = run_model(
+        model_name="phi-4",
+        model_url="http://localhost/v1",
+        run_name="v1",
+        policies=["swb"],
+        cfg=cfg,
+        api_key="secret",
+        tags=[],
+        skip_ingest=True,
+        skip_refine=False,
+        skip_generate=True,
+        dry_run=True,
+        repo_root=tmp_path,
+    )
+    assert results == {"swb": "OK"}
+    out = capsys.readouterr().out
+    assert "refiner" in out
+
+
+def test_run_model_calls_subprocess(tmp_path):
+    cfg = _make_model_cfg(tmp_path)
+    mock_run = MagicMock()
+    with patch("run_battery.subprocess.run", mock_run):
+        results = run_model(
+            model_name="phi-4",
+            model_url="http://localhost/v1",
+            run_name="v1",
+            policies=["swb"],
+            cfg=cfg,
+            api_key="secret",
+            tags=[],
+            skip_ingest=True,
+            skip_refine=True,
+            skip_generate=True,
+            dry_run=False,
+            repo_root=tmp_path,
+        )
+    assert results == {"swb": "OK"}
+    assert mock_run.call_count == 1
+    call_args = mock_run.call_args
+    assert "emit" in call_args[0][0]
+
+
+def test_run_model_records_failure(tmp_path):
+    cfg = _make_model_cfg(tmp_path)
+    with patch("run_battery.subprocess.run", side_effect=Exception("boom")):
+        results = run_model(
+            model_name="phi-4",
+            model_url="http://localhost/v1",
+            run_name="v1",
+            policies=["swb"],
+            cfg=cfg,
+            api_key="",
+            tags=[],
+            skip_ingest=True,
+            skip_refine=True,
+            skip_generate=True,
+            dry_run=False,
+            repo_root=tmp_path,
+        )
+    assert results["swb"] == "FAIL"

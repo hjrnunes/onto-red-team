@@ -6,7 +6,11 @@
 
 from __future__ import annotations
 
+import os
+import shutil
+import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 import yaml
@@ -136,3 +140,139 @@ def build_evaluate_cmd(
     for tag in tags:
         cmd.extend(["--tag", tag])
     return cmd, "refiner"
+
+
+def _run_stage(
+    cmd: list[str], cwd: str, *, dry_run: bool, repo_root: Path, log_file=None,
+) -> None:
+    full_cwd = repo_root / cwd
+    if dry_run:
+        print(f"  [{cwd}] {' '.join(cmd)}")
+        return
+    subprocess.run(cmd, cwd=full_cwd, check=True, stdout=log_file, stderr=subprocess.STDOUT)
+
+
+def run_model(
+    *,
+    model_name: str,
+    model_url: str,
+    run_name: str,
+    policies: list[str],
+    cfg: dict,
+    api_key: str,
+    tags: list[str],
+    skip_ingest: bool,
+    skip_refine: bool,
+    skip_generate: bool,
+    dry_run: bool,
+    repo_root: Path,
+    log_path: Path | None = None,
+) -> dict[str, str]:
+    results: dict[str, str] = {}
+
+    tmp_onto = tmp_nexus = None
+    if not skip_refine and not dry_run:
+        tmp_onto = Path(tempfile.mkdtemp())
+        tmp_nexus = Path(tempfile.mkdtemp())
+        shutil.copytree(cfg["ontoquery_chroma_dir"], tmp_onto, dirs_exist_ok=True)
+        shutil.copytree(cfg["nexus_chroma_dir"], tmp_nexus, dirs_exist_ok=True)
+
+    log_fh = open(log_path, "w") if log_path and not dry_run else None
+    try:
+        for policy in policies:
+            run_dir = cfg["runs_dir"] / f"{policy}-{run_name}"
+            run_dir.mkdir(parents=True, exist_ok=True)
+            try:
+                _run_policy(
+                    policy=policy,
+                    run_dir=run_dir,
+                    model_name=model_name,
+                    model_url=model_url,
+                    cfg=cfg,
+                    api_key=api_key,
+                    tags=tags,
+                    skip_ingest=skip_ingest,
+                    skip_refine=skip_refine,
+                    skip_generate=skip_generate,
+                    dry_run=dry_run,
+                    repo_root=repo_root,
+                    tmp_onto=tmp_onto if tmp_onto else cfg["ontoquery_chroma_dir"],
+                    tmp_nexus=tmp_nexus if tmp_nexus else cfg["nexus_chroma_dir"],
+                    log_file=log_fh,
+                )
+                results[policy] = "OK"
+            except Exception as e:
+                msg = f"  FAILED: {policy}/{model_name}: {e}"
+                print(msg)
+                if log_fh:
+                    log_fh.write(msg + "\n")
+                results[policy] = "FAIL"
+    finally:
+        if log_fh:
+            log_fh.close()
+        if tmp_onto:
+            shutil.rmtree(tmp_onto, ignore_errors=True)
+        if tmp_nexus:
+            shutil.rmtree(tmp_nexus, ignore_errors=True)
+
+    return results
+
+
+def _run_policy(
+    *,
+    policy: str,
+    run_dir: Path,
+    model_name: str,
+    model_url: str,
+    cfg: dict,
+    api_key: str,
+    tags: list[str],
+    skip_ingest: bool,
+    skip_refine: bool,
+    skip_generate: bool,
+    dry_run: bool,
+    repo_root: Path,
+    tmp_onto: Path,
+    tmp_nexus: Path,
+    log_file=None,
+) -> None:
+    policy_dir = cfg["policy_dir"]
+    stage_kw = dict(dry_run=dry_run, repo_root=repo_root, log_file=log_file)
+
+    if not skip_ingest:
+        raw_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=False)
+        cmd, cwd = build_ingest_cmd(
+            policy_file=raw_file, run_dir=run_dir, policy=policy,
+            model_name=model_name, model_url=model_url, api_key=api_key,
+        )
+        _run_stage(cmd, cwd, **stage_kw)
+
+    if not skip_refine:
+        input_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
+        cmd, cwd = build_refine_cmd(
+            input_file=input_file, run_dir=run_dir, model_name=model_name,
+            model_url=model_url, api_key=api_key, nexus_base_dir=cfg["nexus_base_dir"],
+            onto_chroma=tmp_onto, nexus_chroma=tmp_nexus,
+            tracking_uri=cfg["tracking_uri"], tags=tags,
+        )
+        _run_stage(cmd, cwd, **stage_kw)
+
+    policy_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
+    cmd, cwd = build_emit_cmd(
+        run_dir=run_dir, policy_file=policy_file, samples_per_risk=cfg["samples_per_risk"],
+    )
+    _run_stage(cmd, cwd, **stage_kw)
+
+    if not skip_generate:
+        cmd, cwd = build_generate_cmd(
+            run_dir=run_dir, model_name=model_name, model_url=model_url, api_key=api_key,
+        )
+        _run_stage(cmd, cwd, **stage_kw)
+
+    if not skip_generate:
+        policy_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
+        cmd, cwd = build_evaluate_cmd(
+            run_dir=run_dir, policy_file=policy_file,
+            tracking_uri=cfg["tracking_uri"], tags=tags,
+        )
+        _run_stage(cmd, cwd, **stage_kw)
