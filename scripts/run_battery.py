@@ -49,7 +49,7 @@ def load_config(config_path: Path) -> dict:
 
 
 def resolve_policy_file(
-    policy: str, policy_dir: Path, *, run_dir: Path, prefer_enriched: bool
+        policy: str, policy_dir: Path, *, run_dir: Path, prefer_enriched: bool
 ) -> Path:
     if prefer_enriched:
         enriched = run_dir / f"{policy}-enriched.json"
@@ -63,29 +63,31 @@ def resolve_policy_file(
 
 
 def build_ingest_cmd(
-    *, policy_file: Path, run_dir: Path, policy: str, model_name: str, model_url: str, api_key: str
+        *, policy_file: Path, run_dir: Path, policy: str, model_name: str, model_url: str, api_key: str
 ) -> tuple[list[str], str]:
-    return [
+    cmd = [
         "uv", "run", "refiner", "ingest", str(policy_file),
         "--output", str(run_dir / f"{policy}-enriched.json"),
         "--base-url", model_url,
         "--model", model_name,
-        "--api-key", api_key,
-    ], "refiner"
+    ]
+    if api_key:
+        cmd.extend(["--api-key", api_key])
+    return cmd, "refiner"
 
 
 def build_refine_cmd(
-    *,
-    input_file: Path,
-    run_dir: Path,
-    model_name: str,
-    model_url: str,
-    api_key: str,
-    nexus_base_dir: Path,
-    onto_chroma: Path,
-    nexus_chroma: Path,
-    tracking_uri: str,
-    tags: list[str],
+        *,
+        input_file: Path,
+        run_dir: Path,
+        model_name: str,
+        model_url: str,
+        api_key: str,
+        nexus_base_dir: Path,
+        onto_chroma: Path,
+        nexus_chroma: Path,
+        tracking_uri: str,
+        tags: list[str],
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "refiner", "run", str(input_file),
@@ -93,13 +95,16 @@ def build_refine_cmd(
         "--debug", str(run_dir / "debug"),
         "--base-url", model_url,
         "--model", model_name,
-        "--api-key", api_key,
+    ]
+    if api_key:
+        cmd.extend(["--api-key", api_key])
+    cmd.extend([
         "--nexus-base-dir", str(nexus_base_dir),
         "--ontoquery-chroma-dir", str(onto_chroma),
         "--nexus-chroma-dir", str(nexus_chroma),
         "--track",
         "--tracking-uri", tracking_uri,
-    ]
+    ])
     for tag in tags:
         cmd.extend(["--tag", tag])
     return cmd, "refiner"
@@ -115,7 +120,7 @@ def build_emit_cmd(*, run_dir: Path, policy_file: Path, samples_per_risk: int) -
 
 
 def build_generate_cmd(
-    *, run_dir: Path, model_name: str, model_url: str, api_key: str
+        *, run_dir: Path, model_name: str, model_url: str, api_key: str
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "redteam", str(run_dir / "dataset.jsonl"),
@@ -129,7 +134,7 @@ def build_generate_cmd(
 
 
 def build_evaluate_cmd(
-    *, run_dir: Path, policy_file: Path, tracking_uri: str, tags: list[str]
+        *, run_dir: Path, policy_file: Path, tracking_uri: str, tags: list[str]
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "refiner", "evaluate", str(run_dir),
@@ -144,8 +149,16 @@ def build_evaluate_cmd(
     return cmd, "refiner"
 
 
+def _log_tail(log_path: Path, n: int = 10) -> str:
+    try:
+        lines = log_path.read_text().splitlines()
+        return "\n".join(f"  | {l}" for l in lines[-n:])
+    except OSError:
+        return ""
+
+
 def _run_stage(
-    cmd: list[str], cwd: str, *, dry_run: bool, repo_root: Path, log_file=None,
+        cmd: list[str], cwd: str, *, dry_run: bool, repo_root: Path, log_file=None,
 ) -> None:
     full_cwd = repo_root / cwd
     if dry_run:
@@ -155,20 +168,20 @@ def _run_stage(
 
 
 def run_model(
-    *,
-    model_name: str,
-    model_url: str,
-    run_name: str,
-    policies: list[str],
-    cfg: dict,
-    api_key: str,
-    tags: list[str],
-    skip_ingest: bool,
-    skip_refine: bool,
-    skip_generate: bool,
-    dry_run: bool,
-    repo_root: Path,
-    log_path: Path | None = None,
+        *,
+        model_name: str,
+        model_url: str,
+        run_name: str,
+        policies: list[str],
+        cfg: dict,
+        api_key: str,
+        tags: list[str],
+        skip_ingest: bool,
+        skip_refine: bool,
+        skip_generate: bool,
+        dry_run: bool,
+        repo_root: Path,
+        log_path: Path | None = None,
 ) -> dict[str, str]:
     results: dict[str, str] = {}
 
@@ -203,6 +216,18 @@ def run_model(
                     log_file=log_fh,
                 )
                 results[policy] = "OK"
+            except subprocess.CalledProcessError as e:
+                # Flush log so we can read the tail
+                if log_fh:
+                    log_fh.flush()
+                tail = _log_tail(log_path, 10) if log_path else ""
+                msg = f"  FAILED: {policy}/{model_name} (exit {e.returncode})"
+                if tail:
+                    msg += f"\n  --- last lines of {log_path.name} ---\n{tail}"
+                print(msg)
+                if log_fh:
+                    log_fh.write(msg + "\n")
+                results[policy] = "FAIL"
             except Exception as e:
                 msg = f"  FAILED: {policy}/{model_name}: {e}"
                 print(msg)
@@ -221,22 +246,22 @@ def run_model(
 
 
 def _run_policy(
-    *,
-    policy: str,
-    run_dir: Path,
-    model_name: str,
-    model_url: str,
-    cfg: dict,
-    api_key: str,
-    tags: list[str],
-    skip_ingest: bool,
-    skip_refine: bool,
-    skip_generate: bool,
-    dry_run: bool,
-    repo_root: Path,
-    tmp_onto: Path,
-    tmp_nexus: Path,
-    log_file=None,
+        *,
+        policy: str,
+        run_dir: Path,
+        model_name: str,
+        model_url: str,
+        cfg: dict,
+        api_key: str,
+        tags: list[str],
+        skip_ingest: bool,
+        skip_refine: bool,
+        skip_generate: bool,
+        dry_run: bool,
+        repo_root: Path,
+        tmp_onto: Path,
+        tmp_nexus: Path,
+        log_file=None,
 ) -> None:
     policy_dir = cfg["policy_dir"]
     stage_kw = dict(dry_run=dry_run, repo_root=repo_root, log_file=log_file)

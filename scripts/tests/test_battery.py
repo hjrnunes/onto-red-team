@@ -124,6 +124,18 @@ def test_build_ingest_cmd():
     assert "secret" in cmd
 
 
+def test_build_ingest_cmd_no_key():
+    cmd, _ = build_ingest_cmd(
+        policy_file=Path("/p/swb.json"),
+        run_dir=Path("/runs/swb-phi4-v1"),
+        policy="swb",
+        model_name="phi-4",
+        model_url="http://localhost/v1",
+        api_key="",
+    )
+    assert "--api-key" not in cmd
+
+
 def test_build_refine_cmd():
     cmd, cwd = build_refine_cmd(
         input_file=Path("/runs/swb-phi4-v1/swb-enriched.json"),
@@ -143,6 +155,23 @@ def test_build_refine_cmd():
     assert cmd[cmd.index("--tag") + 1] == "exp1"
     tag_indices = [i for i, x in enumerate(cmd) if x == "--tag"]
     assert len(tag_indices) == 2
+
+
+def test_build_refine_cmd_no_key():
+    cmd, _ = build_refine_cmd(
+        input_file=Path("/in.json"),
+        run_dir=Path("/runs/x"),
+        model_name="m",
+        model_url="http://u",
+        api_key="",
+        nexus_base_dir=Path("/n"),
+        onto_chroma=Path("/o"),
+        nexus_chroma=Path("/c"),
+        tracking_uri="https://t",
+        tags=[],
+    )
+    assert "--api-key" not in cmd
+    assert "--nexus-base-dir" in cmd
 
 
 def test_build_refine_cmd_no_tags():
