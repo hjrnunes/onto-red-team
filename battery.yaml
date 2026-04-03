@@ -1,0 +1,23 @@
+# battery.yaml — pipeline battery configuration
+policy_dir: policy_examples
+runs_dir: runs
+nexus_base_dir: /Users/hjrnunes/workspace/redhat/ibm/ai-atlas-nexus
+ontoquery_chroma_dir: ontoquery/.chroma
+nexus_chroma_dir: nexus-mcp/.chroma
+
+samples_per_risk: 15
+tracking_uri: https://mlflow.taxonomy-refiner.orb.local
+
+policies:
+  - swb
+  - generic
+  - aramco
+  - healthcare
+  - rdash-nhs
+
+models:
+  phi-4: https://phi-4-model-serving.apps.rosa.hnunes-421.0o92.p3.openshiftapps.com/v1
+  gemma-2-9b-it-abliterated: https://gemma-2-9b-it-abliterated-model-serving.apps.rosa.u1q6z7t9c5c9x9t.262f.p3.openshiftapps.com/v1
+  gemma-3-12b-it: https://gemma-3-12b-it-model-serving.apps.rosa.u1q6z7t9c5c9x9t.262f.p3.openshiftapps.com/v1
+  mistral-small-3-1-24b: https://mistral-small-3-1-24b-model-serving.apps.rosa.hnunes-421.0o92.p3.openshiftapps.com/v1
+  gemma-4-e4b-it: http://localhost:1234/v1
