@@ -1533,3 +1533,68 @@ def test_llm_merge_protocol_compliance():
     config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
     strategy = LLMMergeStrategy(client, config)
     assert isinstance(strategy, SearchMergeStrategy)
+
+
+def test_expand_candidates_with_llm_strategy(mock_onto_handlers):
+    """expand_candidates uses LLMMergeStrategy end-to-end."""
+    from refiner.stages.anchor import LLMMergeStrategy, expand_candidates
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    mock_client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(mock_client, config)
+
+    # search_domains will be called twice (description + concern)
+    # Return more candidates than max_candidates to trigger LLM selection
+    call_count = [0]
+
+    def mock_search_domains(query, domains, top_k_per_domain=10):
+        call_count[0] += 1
+        if call_count[0] == 1:  # description query
+            return {
+                "CSO": [
+                    {"uri": "http://cso/fraud", "label": "Fraud", "distance": 0.1},
+                    {"uri": "http://cso/privacy", "label": "Privacy", "distance": 0.2},
+                    {"uri": "http://cso/deception", "label": "Deception", "distance": 0.25},
+                ],
+                "FIBO": [
+                    {"uri": "http://fibo/lending", "label": "Lending", "distance": 0.15},
+                    {"uri": "http://fibo/account", "label": "Account", "distance": 0.22},
+                ],
+            }
+        else:  # concern query
+            return {
+                "CSO": [
+                    {"uri": "http://cso/fraud", "label": "Fraud", "distance": 0.12},
+                    {"uri": "http://cso/privacy", "label": "Privacy", "distance": 0.18},
+                ],
+                "FIBO": [
+                    {"uri": "http://fibo/lending", "label": "Lending", "distance": 0.18},
+                ],
+            }
+
+    mock_onto_handlers["search_domains"] = mock_search_domains
+
+    # LLM selects indices 0 and 2 (Fraud and Deception)
+    # Pool after aggregation and sorting:
+    # Fraud (hit=2, dist=0.1), Lending (hit=2, dist=0.15), Privacy (hit=2, dist=0.18),
+    # Account (hit=1, dist=0.22), Deception (hit=1, dist=0.25)
+    mock_client.chat.completions.create.return_value = MagicMock(selected=[0, 2])
+
+    candidates, stats = expand_candidates(
+        description="fraud risk in banking",
+        concern="financial loss",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=["CSO", "FIBO"],
+        merge_strategy=strategy,
+        policy_concept="Fraud Prevention",
+        generic_safety_uris=set(),
+        max_candidates=3,  # Less than 5 candidates in pool to trigger LLM
+    )
+
+    assert stats["search_strategy"] == "LLMMergeStrategy"
+    assert len(candidates) >= 1
+    mock_client.chat.completions.create.assert_called_once()
