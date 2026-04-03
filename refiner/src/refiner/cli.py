@@ -197,8 +197,12 @@ def run(
     onto_handlers = _create_onto_handlers(ontoquery_chroma_dir) if needs_onto else {}
 
     # Create search merge strategy
-    from refiner.stages.anchor import WeightedMergeStrategy, GroupedMergeStrategy
-    strategy_map = {"weighted": WeightedMergeStrategy, "grouped": GroupedMergeStrategy}
+    from refiner.stages.anchor import WeightedMergeStrategy, GroupedMergeStrategy, LLMMergeStrategy
+    strategy_map = {
+        "weighted": lambda: WeightedMergeStrategy(),
+        "grouped": lambda: GroupedMergeStrategy(),
+        "llm": lambda: LLMMergeStrategy(client, config),
+    }
     if search_strategy not in strategy_map:
         typer.echo(f"Error: --search-strategy must be one of: {', '.join(strategy_map)}", err=True)
         raise typer.Exit(1)
