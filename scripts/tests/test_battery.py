@@ -3,7 +3,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from run_battery import load_config
+from run_battery import load_config, resolve_policy_file
 
 
 def test_load_config_resolves_relative_paths(tmp_path):
@@ -43,4 +43,52 @@ def test_load_config_missing_required_field(tmp_path):
         load_config(cfg_file)
         assert False, "Should have raised"
     except SystemExit:
+        pass
+
+
+def test_resolve_raw_policy_json(tmp_path):
+    policy_dir = tmp_path / "policies"
+    policy_dir.mkdir()
+    (policy_dir / "swb.json").write_text("{}")
+    result = resolve_policy_file("swb", policy_dir, run_dir=tmp_path / "run", prefer_enriched=False)
+    assert result == policy_dir / "swb.json"
+
+
+def test_resolve_raw_policy_md(tmp_path):
+    policy_dir = tmp_path / "policies"
+    policy_dir.mkdir()
+    (policy_dir / "rdash.md").write_text("# Policy")
+    result = resolve_policy_file("rdash", policy_dir, run_dir=tmp_path / "run", prefer_enriched=False)
+    assert result == policy_dir / "rdash.md"
+
+
+def test_resolve_prefers_enriched(tmp_path):
+    policy_dir = tmp_path / "policies"
+    policy_dir.mkdir()
+    (policy_dir / "swb.json").write_text("{}")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    enriched = run_dir / "swb-enriched.json"
+    enriched.write_text("{}")
+    result = resolve_policy_file("swb", policy_dir, run_dir=run_dir, prefer_enriched=True)
+    assert result == enriched
+
+
+def test_resolve_falls_back_to_raw_when_no_enriched(tmp_path):
+    policy_dir = tmp_path / "policies"
+    policy_dir.mkdir()
+    (policy_dir / "swb.json").write_text("{}")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    result = resolve_policy_file("swb", policy_dir, run_dir=run_dir, prefer_enriched=True)
+    assert result == policy_dir / "swb.json"
+
+
+def test_resolve_missing_policy_raises(tmp_path):
+    policy_dir = tmp_path / "policies"
+    policy_dir.mkdir()
+    try:
+        resolve_policy_file("missing", policy_dir, run_dir=tmp_path / "run", prefer_enriched=False)
+        assert False, "Should have raised"
+    except FileNotFoundError:
         pass

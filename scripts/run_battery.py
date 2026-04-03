@@ -40,3 +40,17 @@ def load_config(config_path: Path) -> dict:
             p = root / p
         raw[key] = p
     return raw
+
+
+def resolve_policy_file(
+    policy: str, policy_dir: Path, *, run_dir: Path, prefer_enriched: bool
+) -> Path:
+    if prefer_enriched:
+        enriched = run_dir / f"{policy}-enriched.json"
+        if enriched.exists():
+            return enriched
+    for ext in ("json", "md"):
+        candidate = policy_dir / f"{policy}.{ext}"
+        if candidate.exists():
+            return candidate
+    raise FileNotFoundError(f"No policy file found for '{policy}' in {policy_dir}")
