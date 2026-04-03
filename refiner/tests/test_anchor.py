@@ -169,6 +169,26 @@ def test_strategy_protocol_new_signature():
     assert isinstance(strategy, SearchMergeStrategy)
 
 
+def test_grouped_merge_new_signature():
+    """GroupedMergeStrategy accepts new protocol parameters."""
+    from refiner.stages.anchor import GroupedMergeStrategy, SearchMergeStrategy
+
+    strategy = GroupedMergeStrategy()
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/X", "label": "X", "hit_count": 1, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    risk_context = {"description": "fraud", "concern": "loss", "policy_concept": "Fraud"}
+    result = strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context=risk_context, generic_safety_uris=set(),
+    )
+    assert isinstance(result, list)
+    assert isinstance(strategy, SearchMergeStrategy)
+
+
 def test_derive_roles_bfo_process(mock_onto_handlers):
     """Class whose superclass is BFO process should get ['object'] roles."""
     mock_onto_handlers["get_superclasses"].side_effect = lambda uri: (

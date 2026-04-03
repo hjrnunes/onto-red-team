@@ -199,13 +199,14 @@ class GroupedMergeStrategy:
 
     def __init__(self, always_included: list[str] | None = None):
         self._always_included = set(always_included or ALWAYS_INCLUDED)
-        self.generic_safety_uris: set[str] = set()
 
     def merge(
         self,
         per_domain_candidates: dict[str, list[dict]],
         selected_domains: list[str],
         max_candidates: int,
+        risk_context: dict,
+        generic_safety_uris: set[str],
     ) -> list[dict]:
         active_domains = [d for d in selected_domains if d in per_domain_candidates]
         if not active_domains:
@@ -221,7 +222,7 @@ class GroupedMergeStrategy:
                 uri = c["uri"]
                 if uri in seen:
                     continue
-                if self.generic_safety_uris and uri in self.generic_safety_uris:
+                if generic_safety_uris and uri in generic_safety_uris:
                     continue
                 if taken < per_domain_quota:
                     result.append(c)
