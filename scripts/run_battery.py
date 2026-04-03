@@ -276,3 +276,19 @@ def _run_policy(
             tracking_uri=cfg["tracking_uri"], tags=tags,
         )
         _run_stage(cmd, cwd, **stage_kw)
+
+
+def format_summary_table(results: dict[str, dict[str, str]], policies: list[str]) -> str:
+    models = list(results.keys())
+    col_widths = [max(len(m), 4) for m in models]
+    policy_col = max(len(p) for p in policies) if policies else 8
+
+    header = " " * (policy_col + 2) + "  ".join(m.rjust(w) for m, w in zip(models, col_widths))
+    lines = [header]
+    for policy in policies:
+        cells = []
+        for model, width in zip(models, col_widths):
+            status = results.get(model, {}).get(policy, "—")
+            cells.append(status.rjust(width))
+        lines.append(f"{policy.ljust(policy_col)}  {'  '.join(cells)}")
+    return "\n".join(lines)

@@ -14,6 +14,7 @@ from run_battery import (
     build_generate_cmd,
     build_evaluate_cmd,
     run_model,
+    format_summary_table,
 )
 
 
@@ -289,3 +290,23 @@ def test_run_model_records_failure(tmp_path):
             repo_root=tmp_path,
         )
     assert results["swb"] == "FAIL"
+
+
+def test_format_summary_table():
+    results = {
+        "phi-4": {"swb": "OK", "generic": "OK"},
+        "gemma": {"swb": "FAIL", "generic": "OK"},
+    }
+    table = format_summary_table(results, ["swb", "generic"])
+    assert "phi-4" in table
+    assert "gemma" in table
+    assert "FAIL" in table
+    assert "OK" in table
+    lines = table.strip().split("\n")
+    assert len(lines) == 3  # header + 2 policies
+
+
+def test_format_summary_table_single():
+    results = {"m1": {"p1": "OK"}}
+    table = format_summary_table(results, ["p1"])
+    assert "OK" in table
