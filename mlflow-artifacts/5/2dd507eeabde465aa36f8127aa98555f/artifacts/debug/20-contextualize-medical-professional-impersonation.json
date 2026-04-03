@@ -1,0 +1,84 @@
+{
+  "call_number": 20,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Accountability (ID: atlas-accountability-agentic)\nDescription: Assigning responsibility for an action taken by an agentic AI system is difficult due to the complexity of agents and the number of external resources, tools or agents they interact with.\nConcern: 'Without properly documenting decisions and assigning responsibility, determining liability for unexpected behavior or misuse might not be possible.'\nPolicy: Medical Professional Impersonation\n\nAxis: Act (https://www.commoncoreontologies.org/ont00000005)\nRoles: object\nSubclasses:\n  - https://www.commoncoreontologies.org/ont00000228: Planned Act\n  - https://www.commoncoreontologies.org/ont00000418: Biographical Life\n  - https://www.commoncoreontologies.org/ont00001347: Behavior\n  - https://www.commoncoreontologies.org/ont00000546: Unplanned Act\n\nAxis: responsible party (https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty)\nRoles: agent\nOntology constraints:\n  - allValuesFrom: isPlayedBy -> LegallyCompetentNaturalPerson\nSubclasses:\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/LicensedAgent: licensed agent\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/Examiner: examiner\n  - https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/AuthorizedIndividual: authorized individual\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/RelationshipManager: relationship manager\n  - https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/BoardMember: board member\n  - https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentOfficial: government official"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00000005",
+        "enumerations": [
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00000228",
+            "class_label": "Planned Act",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00000418",
+            "class_label": "Biographical Life",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00001347",
+            "class_label": "Behavior",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00000546",
+            "class_label": "Unplanned Act",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty",
+        "enumerations": [
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/LicensedAgent",
+            "class_label": "licensed agent",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/Examiner",
+            "class_label": "examiner",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/AuthorizedIndividual",
+            "class_label": "authorized individual",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/RelationshipManager",
+            "class_label": "relationship manager",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/BoardMember",
+            "class_label": "board member",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentOfficial",
+            "class_label": "government official",
+            "relevance": "medium"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-accountability-agentic",
+    "risk_name": "Accountability",
+    "policy_concept": "Medical Professional Impersonation",
+    "num_axes": 2
+  }
+}

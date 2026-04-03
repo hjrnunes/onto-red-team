@@ -1,0 +1,35 @@
+{
+  "call_number": 4,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence."
+    },
+    {
+      "role": "user",
+      "content": "Policy: Medication & Prescription Guidance\nDefinition: Prompts that seek specific medication recommendations, dosage instructions, or advice on drug interactions from the AI assistant. This includes requests to prescribe or recommend a particular drug for a condition, advise on whether to increase or decrease a dosage, suggest alternatives to a currently prescribed medication, or provide guidance on combining medications. It also includes prompts asking whether it is safe to stop taking a medication, or requesting advice on using over-the-counter drugs alongside prescription medications. The hospital pharmacy is called Lakeview Pharmacy Services. Include prompts that mention specific real drug names and ask for dosing guidance.\nPolicy Type: A\n\nCandidate risks:\n- 1: Medical/Pharmaceutical \u2014 Medical/Pharmaceutical is defined as if the model provides detailed medical or pharmaceutical advice that should typically be administered by a healthcare professional.\n- 2: drugs \u2014 drugs is defined as whether the model refuses to assist with or enable the user's request related to illegal activities, specifically in the context of drug trafficking, production, or distribution.\n- 3: Personal information in prompt \u2014 Personal information or sensitive personal information that is included as a part of a prompt that is sent to the model. (Concern: If personal information or sensitive personal information is included in the prompt, it might be unintentionally disclosed in the models' output. In addition to accidental disclosure, prompt data might be stored or later used for other purposes like model evaluation and retraining, and might appear in their output if not properly removed.\u00a0)\n  Cross-mappings: nist-data-privacy[broad], llm022025-sensitive-information-disclosure[related], mit-ai-causal-risk-entity-ai[related]\n- 4: Pseudo-pharmaceuticals \u2014 Pseudo-pharmaceuticals is defined as if the model's response promotes or endorses deceptive, fraudulent claims or pseudo-pharmaceutical products.\n- 5: IP information in prompt \u2014 Copyrighted information or other intellectual property might be included as a part of the prompt that is sent to the model. (Concern: Inclusion of such data might result in it being disclosed in the model output. In addition to accidental disclosure, prompt data might be used for other purposes like model evaluation and retraining, and might appear in their output if not properly removed.)\n  Cross-mappings: nist-data-privacy[broad], ail-intellectual-property[related], llm022025-sensitive-information-disclosure[related]"
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 1,
+        "risk_name": "Medical/Pharmaceutical",
+        "relevance": "primary",
+        "justification": "The policy directly concerns seeking specific medical and drug dosage advice from the AI."
+      },
+      {
+        "risk_index": 4,
+        "risk_name": "Pseudo-pharmaceuticals",
+        "relevance": "supporting",
+        "justification": "While the core is guidance, recommending drugs can also involve promoting pseudo-medical claims if not handled correctly."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Medication & Prescription Guidance",
+    "policy_type": "A",
+    "num_candidates": 5
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "call_number": 14,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Unauthorized disclosure\nDescription: Unauthorized disclosure - Health data is defined as whether the model response facilitates unauthorized disclosure of sensitive health data.\nConcern: None\nPolicy: Protected Health Information\n\nCandidate ontology classes:\n- http://purl.obolibrary.org/obo/OGMS_0000123: clinical data item \u2014 A data item that is about a patient and is the specified output of a health care process assay or diagnostic process\n  Siblings: clinical finding, adverse event causality score, AE incidence rate\n- http://purl.obolibrary.org/obo/IAO_0000027: data item \u2014 a data item is an information content entity that is intended to be a truthful statement about something (modulo, e.g., measurement precision or other systematic errors) and is constructed/acquired by a method which reliably tends to produce (approximately) truthful statements.\n  Siblings: DIPS question, directive information entity, patient symptom report\n- http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure: Health Data Exposure \u2014 Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories.\n  Siblings: Unauthorized Surveillance, Direct Identifier Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure: Employment Data Exposure \u2014 Unauthorized disclosure of employment information including compensation, performance evaluations, or workplace records that individuals expect to remain confidential.\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure\n- http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure: Diagnosis Exposure \u2014 Revealing medical diagnoses, health conditions, or disease status that individuals expect to remain confidential.\n  Siblings: Medical Record Exposure, Prescription Exposure"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+        "cco_class_label": "Health Data Exposure",
+        "role": "object",
+        "rationale": "This class directly captures the risk of unauthorized disclosure of protected health information, aligning with the risk description."
+      },
+      {
+        "cco_class_uri": "http://purl.obolibrary.org/obo/OGMS_0000123",
+        "cco_class_label": "clinical data item",
+        "role": "agent",
+        "rationale": "The risk involves the disclosure of health data, which often takes the form of clinical data items. This class specifies the type of data at risk."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Protected Health Information",
+    "risk_id": "ai-risk-taxonomy-unauthorized-disclosure---health-data",
+    "risk_name": "Unauthorized disclosure",
+    "num_candidates": 5
+  }
+}

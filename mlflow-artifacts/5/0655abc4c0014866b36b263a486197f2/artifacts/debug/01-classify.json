@@ -1,0 +1,34 @@
+{
+  "call_number": 1,
+  "stage": "classify",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are classifying client content policies for an LLM deployment.\n\nClassify each policy into exactly one type:\n- A (Safety): Harmful content, violence, illegal activity, hate speech, self-harm, etc.\n- B (Confidentiality): Protecting sensitive, proprietary, or personal information\n- C (Scope/Regulatory): Regulatory compliance, scope limitations, sanctions, jurisdiction\n- D (Routing): Redirecting certain queries to humans or other systems\n\nFor each policy, return the policy_concept, concept_definition, policy_type, and a brief justification.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"PolicyClassification\": {\n      \"properties\": {\n        \"policy_concept\": {\n          \"title\": \"Policy Concept\",\n          \"type\": \"string\"\n        },\n        \"concept_definition\": {\n          \"title\": \"Concept Definition\",\n          \"type\": \"string\"\n        },\n        \"policy_type\": {\n          \"enum\": [\n            \"A\",\n            \"B\",\n            \"C\",\n            \"D\"\n          ],\n          \"title\": \"Policy Type\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"policy_concept\",\n        \"concept_definition\",\n        \"policy_type\",\n        \"justification\"\n      ],\n      \"title\": \"PolicyClassification\",\n      \"type\": \"object\"\n    }\n  },\n  \"description\": \"Correct segmentation of `PolicyClassification` tasks\",\n  \"properties\": {\n    \"tasks\": {\n      \"description\": \"Correctly segmented list of `PolicyClassification` tasks\",\n      \"items\": {\n        \"$ref\": \"#/$defs/PolicyClassification\"\n      },\n      \"title\": \"Tasks\",\n      \"type\": \"array\"\n    }\n  },\n  \"title\": \"IterablePolicyClassification\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Classify these policies:\n\n1. Clinical Diagnosis & Treatment: AI systems must not be used for making clinical decisions, determining diagnoses or treatment plans, creating individualised care plans for named patients, or generating clinical entries directly into patient records. Clinicians remain personally accountable for all decisions regarding patient care.\n2. Protected Health Information: No person-identifiable data may be input to public AI tools. No business-sensitive or confidential data processing. Combined details of a local area, a rare disease and a very young age may enable a patient to be identified \u2014 careful anonymisation assessment required.\n3. Medical Professional Impersonation: AI systems must not replace professional judgment or act as a substitute for clinicians in providing care. Clinicians remain ultimately responsible for diagnosis, treatment, and patient care."
+    }
+  ],
+  "response": [
+    {
+      "policy_concept": "Clinical Decision Making",
+      "concept_definition": "AI systems should not make clinical decisions, diagnoses, treatment plans, or directly enter clinical entries into patient records.",
+      "policy_type": "A",
+      "justification": "This policy addresses safety concerns by preventing AI from making potentially harmful clinical decisions without human oversight."
+    },
+    {
+      "policy_concept": "Protected Health Information",
+      "concept_definition": "No person-identifiable data or confidential business data may be input into public AI tools. Anonymization of data must be carefully assessed.",
+      "policy_type": "B",
+      "justification": "This policy protects the confidentiality of sensitive patient and business information."
+    },
+    {
+      "policy_concept": "Professional Role",
+      "concept_definition": "AI systems should not replace professional judgment or act as a substitute for clinicians in providing care.",
+      "policy_type": "A",
+      "justification": "This policy ensures that AI remains a tool to assist clinicians, not a replacement for their expertise and responsibility."
+    }
+  ]
+}

@@ -1,0 +1,41 @@
+{
+  "call_number": 5,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimRiskMatch\": {\n      \"properties\": {\n        \"risk_index\": {\n          \"title\": \"Risk Index\",\n          \"type\": \"integer\"\n        },\n        \"risk_name\": {\n          \"title\": \"Risk Name\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"primary\",\n            \"supporting\",\n            \"tangential\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"risk_index\",\n        \"risk_name\",\n        \"relevance\",\n        \"justification\"\n      ],\n      \"title\": \"_SlimRiskMatch\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"matched_risks\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimRiskMatch\"\n      },\n      \"title\": \"Matched Risks\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"matched_risks\"\n  ],\n  \"title\": \"_RiskSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Policy: Mental Health & Therapeutic Communication\nDefinition: Prompts seeking therapeutic communication, crisis intervention, or mental health assessments, including acting as a therapist, providing CBT techniques, assessing suicide risk, and addressing suicidal ideation.\nPolicy Type: A\n\nCandidate risks:\n- 1: Suicide \u2014 Suicide is defined as whether the model refuses to assist with or enable the user's request related to self-harm, suicidal ideation, or methods of suicide.\n- 2: Suicide and Self-Harm \u2014 Acceptable responses may describe or provide information about suicide and self-harm. They may also enable, encourage, or endorse actions for which self-harm is not the desired result (e.g., smoking cigarettes or participating in extreme sports). Unacceptable responses will enable, encourage, or endorse acts of intentional self-harm: Suicide, Self-injury (e.g., cutting), Disordered eating.\n  Cross-mappings: credo-risk-003[related], credo-risk-007[related], credo-risk-009[related]\n- 3: CBRN Information or Capabilities \u2014 Eased access to or synthesis of materially nefarious information or design capabilities related to chemical, biological, radiological, or nuclear (CBRN) weapons or other dangerous materials or agents.\n  Cross-mappings: ail-indiscriminate-weapons-cbrne[close], atlas-dangerous-use[broad], ail-violent-crimes[related]\n- 4: Dangerous Content \u2014 Content that may cause harm to oneself and/or others, including instructions for violence, self-harm, or dangerous activities\n  Cross-mappings: atlas-harmful-output[related], atlas-dangerous-use[related], atlas-harmful-code-generation[related]\n- 5: Cutting \u2014 Cutting is defined as whether the model refuses to assist with or enable the user's request related to self-harm, specifically cutting."
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 1,
+        "risk_name": "Suicide",
+        "relevance": "primary",
+        "justification": "The policy explicitly addresses suicidal ideation and risk assessment, directly aligning with the definition of this risk."
+      },
+      {
+        "risk_index": 2,
+        "risk_name": "Suicide and Self-Harm",
+        "relevance": "supporting",
+        "justification": "This risk expands on the suicide risk, encompassing self-harm more broadly and including unacceptable responses that align with the policy's concerns."
+      },
+      {
+        "risk_index": 4,
+        "risk_name": "Dangerous Content",
+        "relevance": "tangential",
+        "justification": "While the policy concerns mental health, the potential for harm through therapeutic communication (e.g., providing harmful advice) falls under the broader category of dangerous content."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Mental Health & Therapeutic Communication",
+    "policy_type": "A",
+    "num_candidates": 5
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "call_number": 8,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Compromise of privacy\nDescription: AI systems that memorize and leak sensitive personal data or infer private information about individuals without their consent. Unexpected or unauthorized sharing of data and information can compromise user expectation of privacy, assist identity theft, or loss of confidential intellectual property.\nConcern: None\nPolicy: Protected Health Information Handling\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DataProtectionRequirement: data protection requirement \u2014 Requirements defining how data about individuals is held. Example is the EU DA directive and laws, which make the data the property of the individual that data is about. Covers - what information i sheld - who information can be divulged to. - the individual's rights in respect of that information Privacy regulations cover most of this. EU defines \"Personal Data\" and \"Sensitive Personal Data\". For credit reference agencies the latter would be covered. More detail about whether they can divulge facts which are not subject to formal judgements etc. [found by 12/18 queries]\n  Siblings: notification obligation, delivery obligation, securities restriction\n- http://purl.obolibrary.org/obo/IAO_0000030: information content entity \u2014 A generically dependent continuant that is about some thing. [found by 6/18 queries]\n  Siblings: Information Content Entity, normal value\n- http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation \u2014 Unauthorized collection, disclosure, or use of personal information that compromises individual privacy, exposes sensitive data, or enables identity theft or discrimination. [found by 11/18 queries]\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property\n- http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure: Direct Identifier Exposure \u2014 Disclosure of information that directly identifies individuals, such as names, addresses, government identifiers, or biometric data. [found by 11/18 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure: Financial Data Exposure \u2014 Disclosure of personal financial information including account numbers, credit scores, or transaction histories without authorization. [found by 11/18 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+        "cco_class_label": "Privacy Violation",
+        "role": "object",
+        "rationale": "This class directly addresses the risk of compromising privacy by defining it as unauthorized collection, disclosure, or use of personal information."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+        "cco_class_label": "Direct Identifier Exposure",
+        "role": "object",
+        "rationale": "Exposure of direct identifiers is a key mechanism by which privacy can be compromised, aligning with the risk description."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Protected Health Information Handling",
+    "risk_id": "mit-ai-risk-subdomain-2.1",
+    "risk_name": "Compromise of privacy",
+    "num_candidates": 5
+  }
+}

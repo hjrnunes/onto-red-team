@@ -1,0 +1,59 @@
+{
+  "call_number": 17,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Legal accountability (ID: atlas-legal-accountability)\nDescription: Determining who is responsible for an AI model is challenging without good documentation and governance processes. The use of synthetic data in model development adds further complexity, since the lack of standardized frameworks for recording synthetic data design choices and verification steps makes accountability harder to establish.\nConcern: 'If ownership for development of the model is uncertain, it may not be clear who would be liable and responsible for the problems with it or can answer questions about it. Users of models without clear ownership might find challenges with compliance with regulations.'\nPolicy: Professional Judgment Replacement\n\nAxis: authorising party (https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty)\nRoles: agent\nOntology constraints:\n  - someValuesFrom: isPlayedBy -> LegalPerson\n  - someValuesFrom: authorizesThrough -> Authorization\nSubclasses:\n  - https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency: regulatory agency\n  - https://www.omg.org/spec/Commons/RegistrationAuthorities/RegistrationAuthority: registration authority\n\nAxis: authorised party (https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty)\nRoles: agent, instrument\nOntology constraints:\n  - someValuesFrom: isPlayedBy -> LegalPerson\n  - someValuesFrom: isAuthorizedThrough -> Authorization\nSubclasses:\n  - https://www.omg.org/spec/Commons/BusinessAuthorizations/LegallyDelegatedAuthority: legally delegated authority\n  - https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/Auditor: auditor\n  - https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty: responsible party"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty",
+        "enumerations": [
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency",
+            "class_label": "regulatory agency",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/RegistrationAuthorities/RegistrationAuthority",
+            "class_label": "registration authority",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty",
+        "enumerations": [
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/LegallyDelegatedAuthority: legally delegated authority",
+            "class_label": "legally delegated authority",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/Auditor: auditor",
+            "class_label": "auditor",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty: responsible party",
+            "class_label": "responsible party",
+            "relevance": "high"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-legal-accountability",
+    "risk_name": "Legal accountability",
+    "policy_concept": "Professional Judgment Replacement",
+    "num_axes": 2
+  }
+}

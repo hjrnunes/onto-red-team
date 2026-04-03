@@ -1,0 +1,170 @@
+taxonomies:
+- id: client-rdash-nhs-enriched
+  name: Client RDASH-NHS-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-rdash-nhs-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+- id: client-rdash-nhs-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+entries:
+- id: client-rdash-nhs-enriched-lack-of-transparency
+  name: Lack of Transparency
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-safety
+  tag: lack-of-transparency
+  related_mappings:
+  - credo-risk-005
+  - credo-risk-006
+  - credo-risk-007
+  - credo-risk-008
+  - credo-risk-009
+  - credo-risk-017
+  - credo-risk-028
+  - credo-risk-033
+  - atlas-inaccessible-training-data
+  - atlas-lack-of-model-transparency
+  - atlas-non-disclosure
+  - atlas-unexplainable-output
+  - atlas-unreliable-source-attribution
+  - atlas-untraceable-attribution
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 1
+    source_ontologies:
+    - Commons
+    axes:
+    - class: Software Agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 0
+    - class: Specification
+      uri: https://www.omg.org/spec/Commons/Documents/Specification
+      roles:
+      - object
+      enumeration_count: 1
+- id: client-rdash-nhs-enriched-opaque-system
+  name: Opaque System
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-safety
+  tag: opaque-system
+  related_mappings:
+  - granite-guardian-harm
+  - atlas-lack-of-data-transparency
+  - mit-ai-risk-subdomain-7.4
+  - nist-human-ai-configuration
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 10
+    source_ontologies:
+    - CSO
+    - Commons
+    axes:
+    - class: reference
+      uri: https://www.omg.org/spec/Commons/Documents/Reference
+      roles:
+      - object
+      enumeration_count: 1
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - agent
+      enumeration_count: 9
+- id: client-rdash-nhs-enriched-privacy-compromise
+  name: Privacy Compromise
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: privacy-compromise
+  close_mappings:
+  - credo-risk-036
+  related_mappings:
+  - ail-intellectual-property
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - credo-risk-024
+  - credo-risk-029
+  - credo-risk-037
+  - credo-risk-038
+  - credo-risk-040
+  - atlas-confidential-data-in-prompt
+  - atlas-confidential-information-in-data
+  - atlas-exposing-personal-information
+  - atlas-ip-information-in-prompt
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  - atlas-revealing-confidential-information
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 10
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - object
+      enumeration_count: 6
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-rdash-nhs-enriched-data-sharing-risk
+  name: Data Sharing Risk
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: data-sharing-risk
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 4
+    source_ontologies:
+    - CCO
+    - OBO
+    axes:
+    - class: Agent
+      uri: https://www.commoncoreontologies.org/ont00001017
+      roles:
+      - agent
+      enumeration_count: 1
+    - class: directive information entity
+      uri: http://purl.obolibrary.org/obo/IAO_0000033
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-rdash-nhs-enriched-ai-deception
+  name: AI Deception
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-safety
+  tag: ai-deception
+  related_mappings:
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-7.2
+  - nist-human-ai-configuration
+  - llm062025-excessive-agency
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 1
+    source_ontologies:
+    - CCO
+    axes:
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 1
+    - class: 'obsolete: behavior AE'
+      uri: http://purl.obolibrary.org/obo/OAE_0000246
+      roles:
+      - object
+      enumeration_count: 0

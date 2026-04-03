@@ -1,0 +1,1086 @@
+{
+  "run": {
+    "model": "gemma-4-26b-a4b-it",
+    "policy_set": "swb-enriched.json",
+    "timestamp": "2026-04-03T09:09:25.695056+00:00",
+    "stages_completed": [
+      "classify",
+      "identify_domains",
+      "map_risks",
+      "anchor",
+      "contextualize",
+      "structure"
+    ]
+  },
+  "stage_quality": {
+    "classify": {
+      "type_distribution": {
+        "B": 1,
+        "D": 2,
+        "C": 1,
+        "A": 2
+      }
+    },
+    "identify_domains": {
+      "selected_domains": [
+        "CCO",
+        "Commons",
+        "D3FEND",
+        "CSO",
+        "FIBO"
+      ]
+    },
+    "map_risks": {
+      "weak_matches": [
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "distance": 0.6406503915786743
+        },
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "distance": 0.628268837928772
+        }
+      ],
+      "match_counts": [
+        {
+          "policy_concept": "Executive Compensation",
+          "count": 2
+        },
+        {
+          "policy_concept": "Debt Repayment Negotiation",
+          "count": 1
+        },
+        {
+          "policy_concept": "Investment Advice",
+          "count": 1
+        },
+        {
+          "policy_concept": "Suspicious Activity Reporting",
+          "count": 3
+        },
+        {
+          "policy_concept": "Fraud",
+          "count": 3
+        },
+        {
+          "policy_concept": "Money Laundering",
+          "count": 1
+        }
+      ]
+    },
+    "anchor": {
+      "restriction_expansions": [
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "source_uri": "",
+          "candidates_added": 3,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "source_uri": "",
+          "candidates_added": 3,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "source_uri": "",
+          "candidates_added": 2,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        }
+      ],
+      "candidate_expansions": [
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "queries_run": 8,
+          "raw_total": 320,
+          "unique_after_dedup": 171,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "queries_run": 9,
+          "raw_total": 360,
+          "unique_after_dedup": 194,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "queries_run": 1,
+          "raw_total": 40,
+          "unique_after_dedup": 40,
+          "kept_after_filter": 8
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financial",
+          "queries_run": 1,
+          "raw_total": 40,
+          "unique_after_dedup": 40,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "queries_run": 10,
+          "raw_total": 400,
+          "unique_after_dedup": 218,
+          "kept_after_filter": 8
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "queries_run": 1,
+          "raw_total": 40,
+          "unique_after_dedup": 40,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "queries_run": 1,
+          "raw_total": 40,
+          "unique_after_dedup": 40,
+          "kept_after_filter": 7
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "queries_run": 7,
+          "raw_total": 280,
+          "unique_after_dedup": 180,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "queries_run": 21,
+          "raw_total": 840,
+          "unique_after_dedup": 362,
+          "kept_after_filter": 5
+        }
+      ],
+      "multi_query_hits": [
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/IssuanceProcess/RegistrationInformation",
+          "hit_count": 5,
+          "best_distance": 0.4592350125312805,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DataProtectionRequirement",
+          "hit_count": 5,
+          "best_distance": 0.5077987313270569,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/Documents/Notice",
+          "hit_count": 6,
+          "best_distance": 0.6014962196350098,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/ContextualIdentifiers/ContextualIdentificationScheme",
+          "hit_count": 6,
+          "best_distance": 0.6189953684806824,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 5,
+          "best_distance": 0.3385275602340698,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-personal-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/ContextualDesignators/Context",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DataProtectionRequirement",
+          "hit_count": 5,
+          "best_distance": 0.5077987313270569,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/IssuanceProcess/RegistrationInformation",
+          "hit_count": 5,
+          "best_distance": 0.5177399516105652,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/Documents/Notice",
+          "hit_count": 7,
+          "best_distance": 0.5907090902328491,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/ContextualIdentifiers/ContextualIdentificationScheme",
+          "hit_count": 7,
+          "best_distance": 0.6866527795791626,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "https://www.commoncoreontologies.org/ont00002011",
+          "hit_count": 6,
+          "best_distance": 0.5368897914886475,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/ContextualDesignators/Context",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerCreditRequirement",
+          "hit_count": 1,
+          "best_distance": 0.3995998501777649,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating",
+          "hit_count": 1,
+          "best_distance": 0.40750837326049805,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "https://www.commoncoreontologies.org/ont00000884",
+          "hit_count": 1,
+          "best_distance": 0.5074541568756104,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "https://www.commoncoreontologies.org/ont00001039",
+          "hit_count": 1,
+          "best_distance": 0.5522685050964355,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#CreditScoreExposure",
+          "hit_count": 1,
+          "best_distance": 0.6096405386924744,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerProtectionAgency",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerRight",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financing-eligibility/creditworthiness",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRatingAgency",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financial",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialMarketsRegulation",
+          "hit_count": 1,
+          "best_distance": 0.3903490900993347,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financial",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinanceCompany",
+          "hit_count": 1,
+          "best_distance": 0.40075957775115967,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financial",
+          "uri": "https://www.commoncoreontologies.org/ont00001295",
+          "hit_count": 1,
+          "best_distance": 0.43653327226638794,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financial",
+          "uri": "https://www.commoncoreontologies.org/ont00000322",
+          "hit_count": 1,
+          "best_distance": 0.5077930092811584,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-financial",
+          "uri": "https://www.commoncoreontologies.org/ont00000537",
+          "hit_count": 1,
+          "best_distance": 0.5081878304481506,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/Law",
+          "hit_count": 6,
+          "best_distance": 0.5971536636352539,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/ListedSecurityIdentifier",
+          "hit_count": 6,
+          "best_distance": 0.6433974504470825,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+          "hit_count": 8,
+          "best_distance": 0.43189650774002075,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 6,
+          "best_distance": 0.4726067781448364,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 6,
+          "best_distance": 0.5004451274871826,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesListings/ListedSecurity",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityRegistry",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentificationScheme",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/CardAccounts/MagneticStripeVerificationCodeValue",
+          "hit_count": 1,
+          "best_distance": 0.6277210712432861,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/CardAccounts/CardVerificationCodeValue",
+          "hit_count": 1,
+          "best_distance": 0.6425140500068665,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception",
+          "hit_count": 1,
+          "best_distance": 0.5103599429130554,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud",
+          "hit_count": 1,
+          "best_distance": 0.5290974378585815,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "uri": "https://www.commoncoreontologies.org/ont00000629",
+          "hit_count": 1,
+          "best_distance": 0.5466166734695435,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-phishing/catfishing",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/CardAccounts/PaymentCard",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Offering",
+          "hit_count": 1,
+          "best_distance": 0.6307452917098999,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Funds/CollectiveInvestmentVehicles/FundRedemptionTerms",
+          "hit_count": 1,
+          "best_distance": 0.631800651550293,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#InvestmentScam",
+          "hit_count": 1,
+          "best_distance": 0.40211808681488037,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud",
+          "hit_count": 1,
+          "best_distance": 0.4535507559776306,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialFraud",
+          "hit_count": 1,
+          "best_distance": 0.46697676181793213,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Offeror",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-scams",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Funds/CollectiveInvestmentVehicles/ReferToFundOrderDesk",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/MuniIssuance/RemarketingAgent",
+          "hit_count": 5,
+          "best_distance": 0.7068336606025696,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem",
+          "hit_count": 4,
+          "best_distance": 0.6223024129867554,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+          "hit_count": 5,
+          "best_distance": 0.3079332709312439,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "https://www.commoncoreontologies.org/ont00000146",
+          "hit_count": 5,
+          "best_distance": 0.5746277570724487,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+          "hit_count": 5,
+          "best_distance": 0.6298580169677734,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/MuniIssuance/SecuritiesUnderwritingIssuanceProcess",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem",
+          "hit_count": 9,
+          "best_distance": 0.5245009660720825,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Debt/SyntheticCDOs/SyntheticAmortizingSecurity",
+          "hit_count": 7,
+          "best_distance": 0.644073486328125,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 13,
+          "best_distance": 0.4514739513397217,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+          "hit_count": 13,
+          "best_distance": 0.5362517237663269,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Agent",
+          "hit_count": 13,
+          "best_distance": 0.5968881845474243,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        }
+      ],
+      "role_derivation": {
+        "derived": 6,
+        "llm_fallback": 17
+      },
+      "cache_hits": 2
+    },
+    "contextualize": {
+      "sibling_fallbacks": 7,
+      "restriction_contexts_added": 3,
+      "self_references_filtered": 1,
+      "disjoint_filtered": [
+        {
+          "risk_id": "ail-nonviolent-crimes",
+          "axis_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Agent",
+          "kept": [
+            "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem",
+            "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+            "https://www.commoncoreontologies.org/ont00001017"
+          ],
+          "filtered": [
+            "https://www.omg.org/spec/Commons/PartiesAndSituations/Party"
+          ]
+        }
+      ]
+    },
+    "candidate_expansion": {
+      "mean_queries_run": 6.555555555555555,
+      "mean_unique_candidates": 142.77777777777777,
+      "multi_hit_fraction": 0.43859649122807015
+    },
+    "query_source_contribution": {
+      "description": 37,
+      "concern": 10,
+      "cross_mapping": 25,
+      "restriction": 12,
+      "action": 5
+    }
+  },
+  "coverage": {
+    "policy": [
+      {
+        "policy_concept": "Executive Compensation",
+        "risks_matched": 2,
+        "total_axes": 5,
+        "axes_with_enumerations": 5,
+        "total_enumerations": 16,
+        "prompts_generated": 18
+      },
+      {
+        "policy_concept": "Debt Repayment Negotiation",
+        "risks_matched": 1,
+        "total_axes": 2,
+        "axes_with_enumerations": 2,
+        "total_enumerations": 5,
+        "prompts_generated": 5
+      },
+      {
+        "policy_concept": "Investment Advice",
+        "risks_matched": 1,
+        "total_axes": 3,
+        "axes_with_enumerations": 3,
+        "total_enumerations": 13,
+        "prompts_generated": 15
+      },
+      {
+        "policy_concept": "Suspicious Activity Reporting",
+        "risks_matched": 3,
+        "total_axes": 8,
+        "axes_with_enumerations": 8,
+        "total_enumerations": 35,
+        "prompts_generated": 44
+      },
+      {
+        "policy_concept": "Fraud",
+        "risks_matched": 3,
+        "total_axes": 8,
+        "axes_with_enumerations": 8,
+        "total_enumerations": 28,
+        "prompts_generated": 38
+      },
+      {
+        "policy_concept": "Money Laundering",
+        "risks_matched": 1,
+        "total_axes": 2,
+        "axes_with_enumerations": 2,
+        "total_enumerations": 8,
+        "prompts_generated": 14
+      }
+    ],
+    "ontological": {
+      "unique_axis_classes": 20,
+      "unique_enumeration_uris": 66,
+      "by_source_ontology": {
+        "CCO": {
+          "unique_classes": 7,
+          "axes_using": 4
+        },
+        "CSO": {
+          "unique_classes": 31,
+          "axes_using": 9
+        },
+        "Commons": {
+          "unique_classes": 3,
+          "axes_using": 3
+        },
+        "FIBO": {
+          "unique_classes": 25,
+          "axes_using": 9
+        }
+      }
+    },
+    "single_value_axis_dominance": {
+      "total_axes": 28,
+      "single_value_axes": 2,
+      "single_value_rate": 0.071
+    },
+    "enumeration_domain_mismatch": {
+      "total_enumerations": 105,
+      "mismatched": 0,
+      "mismatch_rate": 0.0,
+      "by_mismatched_ontology": {}
+    },
+    "sibling_relevance": {
+      "subclass_count": 73,
+      "sibling_count": 32,
+      "subclass_relevance": {
+        "high": 43,
+        "medium": 17,
+        "low": 13
+      },
+      "sibling_relevance": {
+        "high": 11,
+        "medium": 14,
+        "low": 7
+      },
+      "subclass_mean_score": 2.411,
+      "sibling_mean_score": 2.125
+    },
+    "disjoint_filter_rate": {
+      "risks_with_disjoint_filtering": 1,
+      "total_risks": 9,
+      "disjoint_filter_rate": 0.111
+    },
+    "restriction_discovery_rate": {
+      "risks_with_restriction_expansion": 7,
+      "total_risks": 9,
+      "total_candidates_from_axioms": 12,
+      "restriction_discovery_rate": 0.778
+    },
+    "risk_framework": {
+      "total_matched": 9,
+      "by_framework": {
+        "unknown": 7,
+        "mit_ai_risk_repository": 1,
+        "credo": 1
+      }
+    },
+    "cross_mapping": {
+      "risks_with_cross_mappings": 4,
+      "risks_without": 4,
+      "total_cross_mappings_used": 42,
+      "filtered_unknown_targets": 0,
+      "by_mapping_type": {
+        "exact": 0,
+        "close": 2,
+        "broad": 2,
+        "narrow": 0,
+        "related": 38
+      }
+    }
+  },
+  "generation_metrics": {
+    "axis_diversity": {
+      "per_risk": {
+        "atlas-personal-information-in-prompt": 1.0,
+        "atlas-confidential-data-in-prompt": 0.875,
+        "ai-risk-taxonomy-financing-eligibility/creditworthiness": 1.0,
+        "ai-risk-taxonomy-financial": 1.0,
+        "credo-risk-026": 1.0,
+        "ai-risk-taxonomy-phishing/catfishing": 0.9523809523809524,
+        "ai-risk-taxonomy-scams": 1.0,
+        "mit-ai-risk-subdomain-4.3": 1.0,
+        "ail-nonviolent-crimes": 1.0
+      },
+      "overall_mean": 0.981
+    },
+    "role_distribution": {
+      "object": 184,
+      "instrument": 101,
+      "location": 18,
+      "agent": 66
+    },
+    "relevance_distribution": {
+      "high": 200,
+      "low": 49,
+      "medium": 105
+    },
+    "dedup_saturation": {
+      "atlas-personal-information-in-prompt": {
+        "combinatorial_space": 21,
+        "samples": 15,
+        "saturation": 0.7142857142857143
+      },
+      "atlas-confidential-data-in-prompt": {
+        "combinatorial_space": 4,
+        "samples": 3,
+        "saturation": 0.75
+      },
+      "ai-risk-taxonomy-financing-eligibility/creditworthiness": {
+        "combinatorial_space": 6,
+        "samples": 5,
+        "saturation": 0.8333333333333334
+      },
+      "ai-risk-taxonomy-financial": {
+        "combinatorial_space": 63,
+        "samples": 15,
+        "saturation": 0.23809523809523808
+      },
+      "credo-risk-026": {
+        "combinatorial_space": 15,
+        "samples": 26,
+        "saturation": 1.7333333333333334
+      },
+      "ai-risk-taxonomy-phishing/catfishing": {
+        "combinatorial_space": 84,
+        "samples": 15,
+        "saturation": 0.17857142857142858
+      },
+      "ai-risk-taxonomy-scams": {
+        "combinatorial_space": 80,
+        "samples": 30,
+        "saturation": 0.375
+      },
+      "mit-ai-risk-subdomain-4.3": {
+        "combinatorial_space": 12,
+        "samples": 11,
+        "saturation": 0.9166666666666666
+      },
+      "ail-nonviolent-crimes": {
+        "combinatorial_space": 15,
+        "samples": 14,
+        "saturation": 0.9333333333333333
+      }
+    },
+    "enumeration_concentration": {
+      "total_samples": 354,
+      "top_k": 5,
+      "top_k_share": 0.201,
+      "top_values": [
+        {
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/BorrowerDataProtectionRequirement",
+          "count": 18
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#RomanceScam",
+          "count": 14
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick",
+          "count": 13
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#InsuranceFraud",
+          "count": 13
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PonziScheme",
+          "count": 13
+        }
+      ]
+    }
+  },
+  "prompt_metrics": {
+    "lexical_diversity": 0.182,
+    "mean_prompt_length": 85.8,
+    "domain_term_hit_rate": 0.212,
+    "red_flag_count": 1,
+    "per_policy": [
+      {
+        "policy_concept": "Debt Repayment Negotiation",
+        "count": 5
+      },
+      {
+        "policy_concept": "Executive Compensation",
+        "count": 18
+      },
+      {
+        "policy_concept": "Fraud",
+        "count": 38
+      },
+      {
+        "policy_concept": "Investment Advice",
+        "count": 15
+      },
+      {
+        "policy_concept": "Money Laundering",
+        "count": 14
+      },
+      {
+        "policy_concept": "Suspicious Activity Reporting",
+        "count": 44
+      }
+    ],
+    "policy_coverage_balance": {
+      "entropy": 2.303,
+      "normalized_entropy": 0.891
+    },
+    "jargon_leak_rate": {
+      "total_prompts": 134,
+      "jargon_prompts": 0,
+      "jargon_rate": 0.0
+    },
+    "axis_fidelity": {
+      "total_prompts": 134,
+      "full_fidelity": 29,
+      "partial": 67,
+      "improvised": 38,
+      "mean_fidelity": 0.46
+    },
+    "named_entity_utilization": {
+      "total_prompts": 134,
+      "prompts_with_entities": 62,
+      "utilization_rate": 0.463,
+      "entities_by_policy": {
+        "Executive Compensation": [
+          "Jenny Carlson",
+          "Mark Warden",
+          "South West Bank",
+          "Ursula Berger"
+        ],
+        "Debt Repayment Negotiation": [
+          "CreditAlpha",
+          "South West Bank"
+        ],
+        "Suspicious Activity Reporting": [
+          "South West Bank"
+        ]
+      }
+    },
+    "weak_match_impact": {
+      "weak_match_risks": 2,
+      "weak_match_prompts": 17,
+      "strong_match_prompts": 117,
+      "mean_weak_distance": 0.634
+    },
+    "semantic_diversity": {
+      "mean_pairwise_distance": 0.958,
+      "total_prompts": 134,
+      "per_policy": {
+        "Debt Repayment Negotiation": 0.799,
+        "Executive Compensation": 0.797,
+        "Fraud": 0.938,
+        "Investment Advice": 0.857,
+        "Money Laundering": 0.887,
+        "Suspicious Activity Reporting": 0.908
+      }
+    }
+  }
+}

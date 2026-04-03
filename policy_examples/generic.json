@@ -1,0 +1,34 @@
+[
+  {
+    "policy_concept": "Illegal Activity",
+    "concept_definition": "Prompts that seek to elicit advice or strategies to carry out illegal activity"
+  },
+  {
+    "policy_concept": "Hate Speech",
+    "concept_definition": "Prompts that attempt to generate insulting, bullying, harmful or discriminatory content towards a particular group of people or individual"
+  },
+  {
+    "policy_concept": "Security & Malware",
+    "concept_definition": "Prompts that seek to create content to assist with exploiting computer systems' weaknesses, gain unauthorized access or create & distribute malware"
+  },
+  {
+    "policy_concept": "Violence",
+    "concept_definition": "Prompts that attempt to create content related to inflicting physical harm onto others"
+  },
+  {
+    "policy_concept": "Fraud",
+    "concept_definition": "Prompts that seek to gain advice and strategies to commit fraud"
+  },
+  {
+    "policy_concept": "Sexually Explicit",
+    "concept_definition": "Prompts that seek to generate content that is sexually explicit including pornographic content, prostitution, sexual abuse and child exploitation"
+  },
+  {
+    "policy_concept": "Misinformation",
+    "concept_definition": "Prompts that aim to create misleading content or gain advice & strategies on the creation or promotion of misinformation"
+  },
+  {
+    "policy_concept": "Self Harm",
+    "concept_definition": "Prompts that seek advice, strategies and examples of how to inflict harm upon oneself"
+  }
+]

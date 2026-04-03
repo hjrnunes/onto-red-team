@@ -1,0 +1,89 @@
+{
+  "call_number": 25,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Direct instructions attack (ID: atlas-direct-instructions-attack)\nDescription: Prompts, questions, or requests designed to elicit undesirable responses from the application. This approach directly instructs the model to engage in the undesired behavior.\nConcern: Direct instructions attacks can be used to alter model behavior and benefit the attacker. The content it generates may cause harms for the user or others.\nPolicy: Operational Security & Critical Infrastructure\n\nAxis: Sabotage Instructions (http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions)\nRoles: instrument\nSiblings:\n  - http://taxonomy-refiner.io/ontologies/cso#ArsonMethods: Arson Methods\n  - http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing: Lock Picking and Bypassing\n\nAxis: Content Safety Hazard (http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard)\nRoles: object\nSubclasses:\n  - http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information\n  - http://taxonomy-refiner.io/ontologies/cso#SexualContent: Sexual Content\n  - http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty: Intellectual Property\n  - http://taxonomy-refiner.io/ontologies/cso#HateAndDiscrimination: Hate and Discrimination\n  - http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation\n  - http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception: Fraud and Deception\n  - http://taxonomy-refiner.io/ontologies/cso#Violence: Violence\n  - http://taxonomy-refiner.io/ontologies/cso#SexualExploitation: Sexual Exploitation\n  - http://taxonomy-refiner.io/ontologies/cso#SelfHarm: Self-Harm"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#ArsonMethods",
+            "class_label": "Arson Methods",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing",
+            "class_label": "Lock Picking and Bypassing",
+            "relevance": "medium"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+            "class_label": "Dangerous Information",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SexualContent",
+            "class_label": "Sexual Content",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#HateAndDiscrimination",
+            "class_label": "Hate and Discrimination",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+            "class_label": "Privacy Violation",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception",
+            "class_label": "Fraud and Deception",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#Violence",
+            "class_label": "Violence",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SexualExploitation",
+            "class_label": "Sexual Exploitation",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SelfHarm",
+            "class_label": "Self-Harm",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty",
+            "class_label": "Intellectual Property",
+            "relevance": "low"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-direct-instructions-attack",
+    "risk_name": "Direct instructions attack",
+    "policy_concept": "Operational Security & Critical Infrastructure",
+    "num_axes": 2
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "call_number": 26,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Information Integrity\nDescription: Lowered barrier to entry to generate and support the exchange and consumption of content which may not distinguish fact from opinion or fiction or acknowledge uncertainties, or could be leveraged for large-scale dis- and mis-information campaigns.\nConcern: None\nPolicy: Misinformation\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/Markets/ApprovedPublicationArrangement: approved publication arrangement \u2014 data reporting services provider that is authorized to provide the service of publishing certain trade reports on behalf of banks, investment firms, or asset management companies [found by 24/91 queries]\n  Siblings: approved reporting mechanism, consolidated tape provider\n- https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/Markets/ApprovedReportingMechanism: approved reporting mechanism \u2014 data reporting services provider that is authorized to provide the service of reporting details of transactions to competent authorities or ESMA (the European Securities and Markets Authority) on behalf of investment firms [found by 20/91 queries]\n  Siblings: approved publication arrangement, consolidated tape provider\n- https://www.commoncoreontologies.org/ont00001045: Artifact Model \u2014 A Prescriptive Information Content Entity that prescribes a common set of Functions and Qualities to inhere in a set of artifact instances. [found by 20/91 queries]\n- https://www.commoncoreontologies.org/ont00000592: Veracity Measurement Information Content Entity \u2014 A Measurement Information Content Entity that is a measurement of the extent to which a description conforms to the reality it describes. [found by 15/91 queries]\n  Siblings: Deviation Measurement Information Content Entity, Ordinal Measurement Information Content Entity, Interval Measurement Information Content Entity\n- https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport: regulatory report \u2014 document required to support operational transparency that demonstrates compliance with some specification, law, policy, restriction, or other rule specified by a regulatory agency [found by 13/91 queries]\n  Siblings: technical specification document, registry, transaction record"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00000592",
+        "cco_class_label": "Veracity Measurement Information Content Entity",
+        "role": "object",
+        "rationale": "The risk pertains to the integrity of information, specifically the veracity or truthfulness of the content. This class directly relates to measuring the accuracy of information, which is central to the concern of misinformation."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+        "cco_class_label": "regulatory report",
+        "role": "instrument",
+        "rationale": "Regulatory reports are tools used to ensure compliance and transparency, which can be leveraged to combat misinformation by enforcing standards and verifying the integrity of published information."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Misinformation",
+    "risk_id": "nist-information-integrity",
+    "risk_name": "Information Integrity",
+    "num_candidates": 5
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "call_number": 14,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Unauthorized collection - Health data\nDescription: Unauthorized collection/gathering/stealing - Health data is defined as if the model response facilitates unauthorized access, collection, or distribution of sensitive health data.\nConcern: None\nPolicy: Protected Health Information\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure: Health Data Exposure \u2014 Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories.\n  Siblings: Unauthorized Surveillance, Direct Identifier Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation \u2014 Unauthorized collection, disclosure, or use of personal information that compromises individual privacy, exposes sensitive data, or enables identity theft or discrimination.\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property\n- http://purl.obolibrary.org/obo/OGMS_0000123: clinical data item \u2014 A data item that is about a patient and is the specified output of a health care process assay or diagnostic process\n  Siblings: clinical finding, adverse event causality score, AE incidence rate\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0041: Physical Environment Access - ATLAS \u2014 In addition to the attacks that take place purely in the digital domain, adversaries may also exploit the physical environment for their attacks.\nIf the model is interacting with data collected from the real world in some way, the adversary can influence the model through access to wherever the data is being collected.\nBy modifying the data in the collection process, the adversary can perform modified versions of attacks designed for digital access.\n  Siblings: AI Model Inference API Access - ATLAS, Full AI Model Access - ATLAS, AI-Enabled Product or Service - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-202: Exposure of Sensitive Information Through Data Queries \u2014 When trying to keep information confidential, an attacker can often infer some of the information by using statistics.\n  Siblings: Improper Authorization of Index Containing Sensitive Information"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+        "cco_class_label": "Health Data Exposure",
+        "role": "object",
+        "rationale": "The risk explicitly concerns 'Health data', making this class directly relevant as the object being exposed."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+        "cco_class_label": "Privacy Violation",
+        "role": "agent",
+        "rationale": "The risk involves unauthorized collection and distribution, aligning with the broader concept of privacy violation. The model's actions could be considered a privacy violation."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Protected Health Information",
+    "risk_id": "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data",
+    "risk_name": "Unauthorized collection - Health data",
+    "num_candidates": 5
+  }
+}

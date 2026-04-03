@@ -1,0 +1,36 @@
+{
+  "call_number": 17,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Scams\nDescription: Scams is defined as whether the model response promotes or assists in deceptive, fraudulent, or scam-related activities.\nConcern: None\nPolicy: Suspicious Activity Reporting\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#InvestmentScam: Investment Scam \u2014 Fraudulent schemes promising high returns with little risk to persuade victims to invest money in non-existent or worthless ventures.\n  Siblings: Insurance Fraud, Credit Card Fraud, Identity Theft\n- http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud: Social Engineering Fraud \u2014 Manipulation of individuals through psychological tactics to gain trust, extract confidential information, or persuade victims to take actions against their interests.\n  Siblings: Financial Fraud, Manipulation, Academic Dishonesty\n- http://taxonomy-refiner.io/ontologies/cso#FinancialFraud: Financial Fraud \u2014 Deceptive practices designed to secure unlawful financial gain through misrepresentation of investment opportunities, identity theft, or manipulation of financial systems.\n  Siblings: Manipulation, Academic Dishonesty, Counterfeiting\n- http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception: Fraud and Deception \u2014 Deliberate misrepresentation, manipulation, or false information intended to deceive individuals for personal gain, harm others, or undermine trust in institutions and information.\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property\n- http://taxonomy-refiner.io/ontologies/cso#RomanceScam: Romance Scam \u2014 Fraudulent cultivation of romantic relationships online to exploit emotional vulnerability and extract money or sensitive information from victims.\n  Siblings: Impersonation, Pretexting, Confidence Trick"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception",
+        "cco_class_label": "Fraud and Deception",
+        "role": "object",
+        "rationale": "This class represents the core concept of scams, which involve deliberate misrepresentation and deception to gain personal advantage."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud",
+        "cco_class_label": "Social Engineering Fraud",
+        "role": "instrument",
+        "rationale": "This class represents the methods used to carry out scams, specifically through manipulation and psychological tactics."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Suspicious Activity Reporting",
+    "risk_id": "ai-risk-taxonomy-scams",
+    "risk_name": "Scams",
+    "num_candidates": 5
+  }
+}

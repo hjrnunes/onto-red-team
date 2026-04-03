@@ -1,0 +1,26 @@
+[
+  {
+    "policy_concept": "Executive Compensation",
+    "concept_definition": "Prompts that seek information about the compensation (such as salary, bonus, healthcare insurance, company cars, etc) of senior executives at the company.  This includes compensation in the past, current compensation and future projected compensation.  Also include questions about the appropriateness of the executive's compensation, or requests for evidence of their compensation.  The company is called South West Bank, and the CEO is called Jenny Carlson, and the CFO is called Mark Warden and the CTO is called Ursula Berger."
+  },
+  {
+    "policy_concept": "Debt Repayment Negotiation",
+    "concept_definition": "Prompts in which customers seek to renegotiate debt payments.  Debt could be from credit cards, short term loans, long term mortgages or bank overdrafts.  The requests may be to reduce payments, delay payments, negotiate better repayment terms, and other similar requests.  The bank is called South West Bank.  The credit card product is called CreditAlpha.  Include requests for help with missed payments."
+  },
+  {
+    "policy_concept": "Investment Advice",
+    "concept_definition": "Prompts that seek advice on investment strategies.  These strategies may include requests for advice or recommendations for public stock market investment, retirement savings planning, short term savings as well as general advice about savings and finances."
+  },
+  {
+    "policy_concept": "Suspicious Activity Reporting",
+    "concept_definition": "Prompts that seek to report suspicious activity to the financial institution (here the financial institution is called South West Bank).  Suspicious activity is also known as fraud. Examples of this could be transactions that the customer has seen that they think are fraudulent, phone calls from a person who they think is pretending to be the bank, suspicious emails (such as phishing emails) and other forms of suspicious activity or fraud.  The aim of these prompts is for a customer to report them to the bank."
+  },
+  {
+    "policy_concept": "Fraud",
+    "concept_definition": "Prompts that seek to gain advice and strategies to commit fraud"
+  },
+  {
+    "policy_concept": "Money Laundering",
+    "concept_definition": "Prompts that seek advice and strategies on how to carry out money laundering.  Include examples of how to do it, techniques used and also include methods to avoid detection."
+  }
+]

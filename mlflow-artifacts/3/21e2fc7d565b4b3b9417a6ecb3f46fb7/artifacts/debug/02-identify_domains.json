@@ -1,0 +1,20 @@
+{
+  "call_number": 2,
+  "stage": "identify_domains",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying which domain ontologies are relevant for a set of client content policies.\n\nGiven the classified policies, select which domain ontologies should be used for grounding risk concepts. Pick ONLY domains that are directly relevant to the client's industry \u2014 do not select domains just because they might be tangentially useful.\n\nAvailable domain ontologies:\n- FIBO: Financial services \u2014 banking, securities, insurance, loans, regulatory compliance\n- OBO: Healthcare \u2014 diseases, drugs, anatomy, medical procedures, adverse events\n- IOF: Manufacturing \u2014 supply chain, maintenance, industrial processes, engineering\n\nReturn the relevant domain keys ordered by importance.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"properties\": {\n    \"domains\": {\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"title\": \"Domains\",\n      \"type\": \"array\"\n    },\n    \"justification\": {\n      \"title\": \"Justification\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"domains\",\n    \"justification\"\n  ],\n  \"title\": \"_DomainSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Classified policies:\n\n- Proprietary Technical Data (Type B): Protecting Aramco's competitive technical secrets and proprietary information, such as trade secrets, exploration data, and engineering blueprints.\n- Operational Security & Critical Infrastructure (Type A): Preventing prompts that seek to exploit Aramco's safety protocols or operational thresholds, potentially leading to disruptions or hazards.\n- Supply Chain & Geopolitical Risks (Type A): Identifying prompts that aim to disrupt Aramco's logistics, supply chain, and market strategies, potentially impacting global energy security.\n- Insider Threat & Cybersecurity (Type B): Protecting Aramco's IT infrastructure and computing network from unauthorized access and exploitation.\n- Compliance & Sanctions Evasion (Type C): Ensuring prompts adhere to international energy sanctions and environmental regulations, preventing non-compliant behavior."
+    }
+  ],
+  "response": {
+    "domains": [
+      "FIBO"
+    ],
+    "justification": "Aramco operates in the energy sector, which aligns directly with the FIBO ontology's focus on financial services, particularly in the context of oil and gas industry regulations, compliance, and market strategies."
+  }
+}

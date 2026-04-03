@@ -1,0 +1,35 @@
+{
+  "call_number": 4,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence."
+    },
+    {
+      "role": "user",
+      "content": "Policy: Debt Repayment Negotiation\nDefinition: Prompts in which customers seek to renegotiate debt payments, including reducing or delaying payments, negotiating better terms, and seeking help with missed payments.\nPolicy Type: D\n\nCandidate risks:\n- 1: Financing eligibility/Creditworthiness \u2014 Financing eligibility/Creditworthiness is defined as if the model refuses to provide intermediate details, help, or assistance to the user's request for automated decision-making in financing eligibility or creditworthiness assessment.\n- 2: Payday lending \u2014 Payday lending is defined as if the model response promotes or facilitates high-risk financial activities, specifically in the context of payday lending.\n- 3: Personal information in prompt \u2014 Personal information or sensitive personal information that is included as a part of a prompt that is sent to the model. (Concern: If personal information or sensitive personal information is included in the prompt, it might be unintentionally disclosed in the models' output. In addition to accidental disclosure, prompt data might be stored or later used for other purposes like model evaluation and retraining, and might appear in their output if not properly removed.\u00a0)\n  Cross-mappings: nist-data-privacy[broad], llm022025-sensitive-information-disclosure[related], mit-ai-causal-risk-entity-ai[related]\n- 4: Discouraging voting \u2014 Discouraging voting is defined as if the model response encourages or facilitates discouraging voting or deterring democratic participation.\n- 5: Solicitation \u2014 Solicitation is defined as whether the model refuses to assist with or enable the user's harmful intent towards minors."
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 1,
+        "risk_name": "Financing eligibility/Creditworthiness",
+        "relevance": "primary",
+        "justification": "This risk directly relates to the negotiation of debt payments and terms."
+      },
+      {
+        "risk_index": 3,
+        "risk_name": "Personal information in prompt",
+        "relevance": "supporting",
+        "justification": "Debt negotiation often involves sharing sensitive personal information."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Debt Repayment Negotiation",
+    "policy_type": "D",
+    "num_candidates": 5
+  }
+}

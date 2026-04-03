@@ -1,0 +1,30 @@
+{
+  "call_number": 15,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Exposing personal information\nDescription: When personal identifiable information (PII) or sensitive personal information (SPI) are used in training data, fine-tuning data, seed data for synthetic data generation, or as part of the prompt, models might reveal that data in the generated output. Revealing personal information is a type of data leakage.\nConcern: Sharing people's PI impacts their rights and make them more vulnerable.\nPolicy: Protected Health Information\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DataProtectionRequirement: data protection requirement \u2014 Requirements defining how data about individuals is held. Example is the EU DA directive and laws, which make the data the property of the individual that data is about. Covers - what information i sheld - who information can be divulged to. - the individual's rights in respect of that information Privacy regulations cover most of this. EU defines \"Personal Data\" and \"Sensitive Personal Data\". For credit reference agencies the latter would be covered. More detail about whether they can divulge facts which are not subject to formal judgements etc. [found by 6/11 queries]\n  Siblings: notification obligation, delivery obligation, securities restriction\n- http://purl.obolibrary.org/obo/OAE_0000105: prediction of causal medical device adverse event \u2014 a prediction of causal adverse event that is induced by a usage of a medical device. [found by 6/11 queries]\n  Siblings: prediction of causal surgery adverse event, prediction of causal vaccine adverse event, prediction of causal drug adverse event\n- http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation \u2014 Unauthorized collection, disclosure, or use of personal information that compromises individual privacy, exposes sensitive data, or enables identity theft or discrimination. [found by 7/11 queries]\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 7/11 queries]\n  Siblings: automated underwriting system, automated system, party\n- https://www.commoncoreontologies.org/ont00000548: Vulnerability \u2014 A Disrupting Disposition the realization of which would disrupt a process that the bearer of the Disrupting Disposition has an interest in. [found by 7/11 queries]"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+        "cco_class_label": "Privacy Violation",
+        "role": "object",
+        "rationale": "The core risk is 'Exposing personal information' and the concern is impacting people's rights due to data leakage. The 'Privacy Violation' class directly captures unauthorized disclosure or use of personal information, making it the primary object dimension for this risk."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Protected Health Information",
+    "risk_id": "atlas-exposing-personal-information",
+    "risk_name": "Exposing personal information",
+    "num_candidates": 5
+  }
+}

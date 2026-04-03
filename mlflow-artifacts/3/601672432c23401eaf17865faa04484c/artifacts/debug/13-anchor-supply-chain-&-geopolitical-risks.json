@@ -1,0 +1,36 @@
+{
+  "call_number": 13,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: LLM Supply Chain\nDescription: LLM supply chains are susceptible to various vulnerabilities, which can affect the integrity of training data, models, and deployment platforms. These risks can result in biased outputs, security breaches, or system failures. While traditional software vulnerabilities focus on issues like code flaws and dependencies, in ML the risks also extend to third-party pre-trained models and data.\nConcern: None\nPolicy: Supply Chain & Geopolitical Risks\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/QualitativeValue: qualitative value \u2014 value that has less precision or accuracy than a value determined via quantitative methods and which is usually expressed in codes rather than actual numbers [found by 6/13 queries]\n  Siblings: expected value, observed value, quantitative value\n- https://www.omg.org/spec/Commons/Documents/Specification: specification \u2014 explicit requirement or set of requirements to be satisfied by something, such as a product, material, model, process or system [found by 8/13 queries]\n- http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure: Health Data Exposure \u2014 Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories. [found by 7/13 queries]\n  Siblings: Unauthorized Surveillance, Direct Identifier Exposure, Employment Data Exposure\n- https://www.omg.org/spec/Commons/Documents/Reference: reference \u2014 source that may be used to ascertain, interpret, or understand something [found by 7/13 queries]\n- http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure: Financial Data Exposure \u2014 Disclosure of personal financial information including account numbers, credit scores, or transaction histories without authorization. [found by 7/13 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/Documents/Specification",
+        "cco_class_label": "Specification",
+        "role": "instrument",
+        "rationale": "LLM supply chains rely on specifications for training data, model architectures, and deployment platforms.  Deviations from these specifications can introduce vulnerabilities."
+      },
+      {
+        "cco_class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Assessments/QualitativeValue",
+        "cco_class_label": "Qualitative Value",
+        "role": "object",
+        "rationale": "The quality and integrity of training data, models, and platforms are often assessed qualitatively, considering factors like bias, fairness, and robustness.  These qualitative assessments are crucial for identifying vulnerabilities."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Supply Chain & Geopolitical Risks",
+    "risk_id": "llm032025-supply-chain",
+    "risk_name": "LLM Supply Chain",
+    "num_candidates": 5
+  }
+}

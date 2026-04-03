@@ -1,0 +1,36 @@
+{
+  "call_number": 14,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Intentional financial goals\nDescription: The risk occurs due to an expected outcome from pursuing a goal\nConcern: None\nPolicy: Investment Advice\n\nCandidate ontology classes:\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0016.002: Generative AI - ATLAS \u2014 Adversaries may search for and obtain generative AI models or tools, such as large language models (LLMs), to assist them in various steps of their operation. Generative AI can be used in a variety of malicious ways, including generating malware or offensive cyber scripts, [Retrieval Content Crafting](/techniques/AML.T0066), or generating [Phishing](/techniques/AML.T0052) content.\n\nAdversaries may obtain an open source model or they may leverage a generative AI service. They may need to jailbreak the generative AI model to bypass any restrictions put in place to limit the types of responses it can generate. They may also need to break the terms of service of the generative AI. [found by 6/15 queries]\n  Siblings: Adversarial AI Attack Implementations - ATLAS, Software Tools - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1426: Improper Validation of Generative AI Output \u2014 The product invokes a generative AI/ML component whose behaviors and outputs cannot be directly controlled, but the product does not validate or insufficiently validates the outputs to ensure that they align with the intended security, content, or privacy policy. [found by 5/15 queries]\n  Siblings: Improper Input Validation, Improper Handling of Syntactically Invalid Structure, Deletion of Data Structure Sentinel\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0065: LLM Prompt Crafting - ATLAS \u2014 Adversaries may use their acquired knowledge of the target generative AI system to craft prompts that bypass its defenses and allow malicious instructions to be executed.\n\nThe adversary may iterate on the prompt to ensure that it works as-intended consistently. [found by 5/15 queries]\n  Siblings: Retrieval Content Crafting - ATLAS, Publish Poisoned Datasets - ATLAS, Develop Capabilities - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015: Evade AI Model - ATLAS \u2014 Adversaries can [Craft Adversarial Data](/techniques/AML.T0043) that prevents an AI model from correctly identifying the contents of the data or [Generate Deepfakes](/techniques/AML.T0088) that fools an AI model expecting authentic data.\n\nThis technique can be used to evade a downstream task where AI is utilized. The adversary may evade AI-based virus/malware detection or network scanning towards the goal of a traditional cyber attack. AI model evasion through deepfake generation may also provide initial access to systems that use AI-based biometric authentication. [found by 4/15 queries]\n  Siblings: Denial of AI Service - ATLAS, Spamming AI System with Chaff Data - ATLAS, Erode Dataset Integrity - ATLAS\n- http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation: Deepfake Disinformation \u2014 Use of AI-generated synthetic media depicting individuals saying or doing things they did not, created intentionally to deceive and manipulate audiences. [found by 3/15 queries]\n  Siblings: State-Sponsored Propaganda, Conspiracy Theory Promotion"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0065",
+        "cco_class_label": "LLM Prompt Crafting - ATLAS",
+        "role": "instrument",
+        "rationale": "The risk involves the use of generative AI models or tools to craft prompts that can bypass defenses and execute malicious instructions, which is directly related to the instrument used in the risk."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+        "cco_class_label": "Deepfake Disinformation",
+        "role": "object",
+        "rationale": "The risk can involve the generation of synthetic media to deceive and manipulate, which aligns with the object of the risk, i.e., what is acted upon to achieve the financial goals."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Investment Advice",
+    "risk_id": "mit-ai-causal-risk-intent-intentional",
+    "risk_name": "Intentional financial goals",
+    "num_candidates": 5
+  }
+}

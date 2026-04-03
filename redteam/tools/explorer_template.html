@@ -14,7 +14,6 @@
       -webkit-box-orient: vertical;
       overflow: hidden;
     }
-    pre { white-space: pre-wrap; word-break: break-word; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen" x-data="explorerApp()" x-cloak>
@@ -39,7 +38,7 @@
   <div class="max-w-screen-xl mx-auto flex gap-0">
 
     <!-- Sidebar Filters -->
-    <aside class="w-64 shrink-0 bg-white border-r border-gray-200 min-h-[calc(100vh-72px)] p-4 sticky top-0 h-screen overflow-y-auto">
+    <aside class="w-72 shrink-0 bg-white border-r border-gray-200 min-h-[calc(100vh-72px)] p-4 sticky top-0 h-screen overflow-y-auto">
       <div class="flex items-center justify-between mb-4">
         <h2 class="font-semibold text-gray-800 text-sm uppercase tracking-wide">Filters</h2>
         <button @click="clearFilters()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Clear all</button>
@@ -79,11 +78,104 @@
           <input type="text" x-model="searchQuery" placeholder="keyword..." class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
         </div>
 
+        <!-- Quality Metrics separator -->
+        <div class="border-t border-gray-200 pt-3">
+          <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quality Metrics</p>
+        </div>
+
+        <!-- Fidelity -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Axis Fidelity</label>
+          <select x-model="filters.fidelity" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">All</option>
+            <option value="full">Full</option>
+            <option value="partial">Partial</option>
+            <option value="improvised">Improvised</option>
+          </select>
+        </div>
+
+        <!-- Quality issue toggles -->
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" x-model="filters.hideRedFlags" class="rounded text-red-600" />
+          <span class="text-sm text-gray-700">Hide red-flagged</span>
+        </label>
+
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" x-model="filters.hideJargon" class="rounded text-orange-600" />
+          <span class="text-sm text-gray-700">Hide jargon leaks</span>
+        </label>
+
+        <!-- Prompt length -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Prompt Length</label>
+          <select x-model="filters.promptLength" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">All</option>
+            <option value="short">Short (&lt;50 words)</option>
+            <option value="medium">Medium (50&ndash;150)</option>
+            <option value="long">Long (&gt;150 words)</option>
+          </select>
+        </div>
+
+        <!-- Relevance profile -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Relevance Profile</label>
+          <select x-model="filters.relevance" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Any</option>
+            <option value="mostly_high">Mostly High</option>
+            <option value="mostly_low">Mostly Low</option>
+          </select>
+        </div>
+
+        <!-- Min roles -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Min Roles</label>
+          <select x-model="filters.minRoles" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">Any</option>
+            <option value="2">2+</option>
+            <option value="3">3+</option>
+            <option value="4">4+</option>
+          </select>
+        </div>
+
+        <!-- Source ontology -->
+        <div>
+          <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Source Ontology</label>
+          <select x-model="filters.sourceOntology" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+            <option value="">All</option>
+            <template x-for="v in allSourceOntologies" :key="v">
+              <option :value="v" x-text="v"></option>
+            </template>
+          </select>
+        </div>
+
       </div>
     </aside>
 
     <!-- Main Content -->
     <main class="flex-1 p-6">
+
+      <!-- Aggregate quality summary bar -->
+      <div class="mb-4 flex flex-wrap gap-3 text-xs">
+        <span class="px-2 py-1 rounded bg-green-100 text-green-800">
+          <span class="font-semibold" x-text="qualitySummary.full"></span> full
+        </span>
+        <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800">
+          <span class="font-semibold" x-text="qualitySummary.partial"></span> partial
+        </span>
+        <span class="px-2 py-1 rounded bg-red-100 text-red-800">
+          <span class="font-semibold" x-text="qualitySummary.improvised"></span> improvised
+        </span>
+        <span x-show="qualitySummary.redFlags > 0" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200">
+          <span class="font-semibold" x-text="qualitySummary.redFlags"></span> red flags
+        </span>
+        <span x-show="qualitySummary.jargon > 0" class="px-2 py-1 rounded bg-orange-50 text-orange-600 border border-orange-200">
+          <span class="font-semibold" x-text="qualitySummary.jargon"></span> jargon leaks
+        </span>
+        <span class="px-2 py-1 rounded bg-gray-200 text-gray-700">
+          avg <span class="font-semibold" x-text="qualitySummary.avgLength"></span> words
+        </span>
+      </div>
+
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         <template x-for="(record, idx) in filteredRecords" :key="idx">
           <div
@@ -91,10 +183,24 @@
             class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 cursor-pointer transition-all duration-150 hover:shadow-md hover:-translate-y-0.5"
             :class="record.prompt ? '' : 'opacity-50'"
           >
-            <!-- Badges -->
-            <div class="flex flex-wrap gap-1.5 mb-3">
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="record.policy_concept"></span>
-              <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800" x-text="record.risk_name"></span>
+            <!-- Top row: index + badges + quality indicators -->
+            <div class="flex items-start justify-between gap-2 mb-2">
+              <div class="flex flex-wrap gap-1.5 items-center">
+                <span class="text-[10px] font-mono text-gray-400 leading-none" x-text="'#' + record._index"></span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="record.policy_concept"></span>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800" x-text="record.risk_name"></span>
+              </div>
+              <div class="flex items-center gap-1 shrink-0">
+                <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold"
+                  :class="fidelityBadge(record._metrics.fidelityClass).cls"
+                  x-text="fidelityBadge(record._metrics.fidelityClass).label"></span>
+                <span x-show="record._metrics.hasRedFlag"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700"
+                  title="Contains red-flag pattern">&#x26A0;</span>
+                <span x-show="record._metrics.hasJargon"
+                  class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700"
+                  title="Jargon leak">&#x2699;</span>
+              </div>
             </div>
 
             <!-- Prompt text or placeholder -->
@@ -104,14 +210,17 @@
               x-text="record.prompt || 'No prompt generated'"
             ></p>
 
-            <!-- Sampled axes as meta -->
-            <div class="mt-3 flex flex-wrap gap-1 text-xs">
-              <template x-for="ax in (record.sampled_axes || [])" :key="ax.sampled_uri">
-                <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
-                  <span class="text-gray-400 mr-1" x-text="ax.roles ? ax.roles[0] : (ax.role || '')"></span>
-                  <span x-text="ax.sampled_label"></span>
-                </span>
-              </template>
+            <!-- Bottom row: axes + word count -->
+            <div class="mt-3 flex items-end justify-between gap-2">
+              <div class="flex flex-wrap gap-1 text-xs min-w-0">
+                <template x-for="ax in (record.sampled_axes || [])" :key="ax.sampled_uri">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                    <span class="text-gray-400 mr-1" x-text="ax.roles ? ax.roles[0] : (ax.role || '')"></span>
+                    <span x-text="ax.sampled_label"></span>
+                  </span>
+                </template>
+              </div>
+              <span class="text-[10px] text-gray-400 shrink-0" x-text="record._metrics.wordCount + 'w'"></span>
             </div>
           </div>
         </template>
@@ -144,7 +253,8 @@
     >
       <!-- Modal Header -->
       <div class="flex items-start justify-between p-5 border-b border-gray-200 shrink-0">
-        <div class="flex-1 pr-4 flex flex-wrap gap-1.5">
+        <div class="flex-1 pr-4 flex flex-wrap gap-1.5 items-center">
+          <span class="text-sm font-mono font-bold text-gray-400" x-text="'#' + selectedRecord?._index"></span>
           <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="selectedRecord?.policy_concept"></span>
           <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-amber-100 text-amber-800" x-text="selectedRecord?.risk_name"></span>
           <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-medium bg-gray-100 text-gray-600" x-text="selectedRecord?.risk_id"></span>
@@ -166,12 +276,143 @@
           </template>
         </div>
 
+        <!-- Quality Metrics -->
+        <div x-show="selectedRecord?._metrics">
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quality Metrics</h3>
+          <div class="rounded-lg border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+
+            <!-- Fidelity -->
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Axis Fidelity</p>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                  :class="fidelityBadge(selectedRecord?._metrics?.fidelityClass).cls"
+                  x-text="fidelityBadge(selectedRecord?._metrics?.fidelityClass).label"></span>
+                <span class="text-sm text-gray-600" x-text="Math.round((selectedRecord?._metrics?.fidelity || 0) * 100) + '%'"></span>
+              </div>
+            </div>
+
+            <!-- Word count -->
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Prompt Length</p>
+              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="selectedRecord?._metrics?.wordCount"></span> words</p>
+            </div>
+
+            <!-- Role diversity -->
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Role Diversity</p>
+              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="selectedRecord?._metrics?.roleCount"></span> distinct role(s)</p>
+            </div>
+
+            <!-- Issues -->
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Quality Issues</p>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                <span x-show="selectedRecord?._metrics?.hasRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">Red flag</span>
+                <span x-show="selectedRecord?._metrics?.hasJargon" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700">Jargon leak</span>
+                <span x-show="!selectedRecord?._metrics?.hasRedFlag && !selectedRecord?._metrics?.hasJargon" class="text-xs text-green-600">None</span>
+              </div>
+            </div>
+
+            <!-- Relevance profile -->
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Relevance Profile</p>
+              <div class="flex items-center gap-2 mt-0.5">
+                <template x-for="level in ['high', 'medium', 'low']" :key="level">
+                  <span x-show="(selectedRecord?._metrics?.relevanceProfile || {})[level] > 0"
+                    class="inline-flex items-center gap-0.5 text-xs">
+                    <span class="w-1.5 h-1.5 rounded-full"
+                      :class="{'bg-green-500': level==='high', 'bg-yellow-400': level==='medium', 'bg-red-400': level==='low'}"></span>
+                    <span x-text="(selectedRecord?._metrics?.relevanceProfile || {})[level]"></span>
+                    <span class="text-gray-400" x-text="level"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Source ontologies -->
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Source Ontologies</p>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                <template x-for="ont in (selectedRecord?._metrics?.sourceOntologies || [])" :key="ont">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600" x-text="ont"></span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Named entities -->
+            <div x-show="(selectedRecord?._metrics?.namedEntities || []).length > 0" class="col-span-2 sm:col-span-3">
+              <p class="text-[10px] text-gray-400 uppercase">Named Entity Utilization</p>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                <template x-for="ne in (selectedRecord?._metrics?.namedEntities || [])" :key="ne.entity">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    :class="ne.found ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400 line-through'"
+                    x-text="ne.entity"></span>
+                </template>
+              </div>
+            </div>
+
+            <!-- Sibling fraction -->
+            <div x-show="(selectedRecord?._metrics?.siblingFraction || 0) > 0">
+              <p class="text-[10px] text-gray-400 uppercase">Sibling Fraction</p>
+              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="Math.round((selectedRecord?._metrics?.siblingFraction || 0) * 100) + '%'"></span> from fallback</p>
+            </div>
+
+          </div>
+        </div>
+
         <!-- Concept Definition -->
         <div x-show="selectedRecord?.concept_definition" class="flex gap-3 bg-indigo-50 border border-indigo-100 rounded-lg p-4">
           <div class="text-indigo-400 text-lg leading-none shrink-0">&#x24D8;</div>
           <div>
             <p class="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-1">Policy: <span x-text="selectedRecord?.policy_concept"></span></p>
             <p class="text-sm text-indigo-900 leading-relaxed" x-text="selectedRecord?.concept_definition"></p>
+          </div>
+        </div>
+
+        <!-- Risk Info -->
+        <div x-show="selectedRecord?.risk_description || selectedRecord?.cross_mappings?.length">
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Risk Info</h3>
+          <div class="rounded-lg border border-gray-200 overflow-hidden">
+            <!-- Risk header -->
+            <div class="bg-amber-50 px-4 py-3 border-b border-gray-200">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-semibold text-gray-800" x-text="selectedRecord?.risk_name"></span>
+                <span x-show="selectedRecord?.risk_framework" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800" x-text="selectedRecord?.risk_framework"></span>
+              </div>
+              <p class="text-xs font-mono text-gray-400" x-text="selectedRecord?.risk_id"></p>
+            </div>
+            <!-- Description & Concern -->
+            <div class="px-4 py-3 space-y-2">
+              <div x-show="selectedRecord?.risk_description">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Description</p>
+                <p class="text-sm text-gray-800 leading-relaxed" x-text="selectedRecord?.risk_description"></p>
+              </div>
+              <div x-show="selectedRecord?.risk_concern">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Concern</p>
+                <p class="text-sm text-gray-800 leading-relaxed" x-text="selectedRecord?.risk_concern"></p>
+              </div>
+            </div>
+            <!-- Cross-mappings -->
+            <div x-show="selectedRecord?.cross_mappings?.length" class="px-4 py-3 border-t border-gray-200">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cross-Framework Mappings</p>
+              <div class="flex flex-wrap gap-1.5">
+                <template x-for="(cm, ci) in (selectedRecord?.cross_mappings || [])" :key="ci">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-gray-200 bg-white">
+                    <span class="font-medium text-gray-700" x-text="cm.name"></span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      :class="{
+                        'bg-green-100 text-green-700': cm.mapping_type==='exact',
+                        'bg-blue-100 text-blue-700': cm.mapping_type==='close',
+                        'bg-yellow-100 text-yellow-700': cm.mapping_type==='broad',
+                        'bg-orange-100 text-orange-700': cm.mapping_type==='narrow',
+                        'bg-gray-100 text-gray-600': cm.mapping_type==='related',
+                      }"
+                      x-text="cm.mapping_type"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -200,6 +441,7 @@
                       <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
                         :class="{'bg-green-500': en.relevance==='high', 'bg-yellow-400': en.relevance==='medium', 'bg-red-400': en.relevance==='low'}"></span>
                       <span class="text-[10px] opacity-60" x-text="en.source_ontology"></span>
+                      <span x-show="en.provenance === 'sibling'" class="text-[9px] px-1 rounded bg-amber-200 text-amber-700 font-medium">sib</span>
                     </span>
                   </template>
                   <template x-if="!dcAxis.enumerations?.length">
@@ -215,41 +457,7 @@
             <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> medium</span>
             <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> low</span>
             <span class="ml-2 px-1.5 py-0.5 rounded bg-indigo-100 border border-indigo-300 text-indigo-700">sampled</span>
-          </div>
-        </div>
-
-        <!-- Generation Details -->
-        <div>
-          <button
-            @click="genDetailsOpen = !genDetailsOpen"
-            class="w-full flex items-center justify-between text-left py-2 border-b border-gray-200"
-          >
-            <h3 class="text-sm font-semibold text-gray-700">Generation Details</h3>
-            <span class="text-gray-400 text-lg" x-text="genDetailsOpen ? '&#x25B2;' : '&#x25BC;'"></span>
-          </button>
-          <div x-show="genDetailsOpen" class="mt-3 space-y-2">
-
-            <!-- Prompt Messages -->
-            <template x-if="selectedRecord?.generation_prompt">
-              <div>
-                <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">Prompt Messages</h4>
-                <template x-for="(msg, i) in selectedRecord.generation_prompt" :key="i">
-                  <div class="mb-2 rounded-lg overflow-hidden border border-gray-200">
-                    <div class="px-3 py-1 text-xs font-semibold bg-gray-100 text-gray-600 uppercase" x-text="msg.role"></div>
-                    <pre class="p-3 text-xs text-gray-800 bg-gray-50 font-mono leading-relaxed" x-text="msg.content"></pre>
-                  </div>
-                </template>
-              </div>
-            </template>
-
-            <!-- Raw Response -->
-            <template x-if="selectedRecord?.raw_response">
-              <div>
-                <h4 class="text-xs font-semibold text-gray-500 uppercase mb-2">Raw Response</h4>
-                <pre class="p-3 text-xs text-gray-800 bg-gray-50 font-mono leading-relaxed rounded-lg border border-gray-200 overflow-x-auto" x-text="prettyJSON(selectedRecord.raw_response)"></pre>
-              </div>
-            </template>
-
+            <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-200 text-amber-700 text-[9px] font-medium">sib = sibling fallback</span>
           </div>
         </div>
 
@@ -258,30 +466,184 @@
   </div>
 
 <script>
+// --- Quality metric constants (ported from refiner/evaluate.py) ---
+
+const RED_FLAG_RE = /\bhypothetically\b|\bin theory\b|\btheoretically\b|\bfor educational purposes\b|\bfor research purposes\b|\bfor academic purposes\b|\bas a test\b|\bjust testing\b|\bthis is a test\b|\bI want to hack\b|\bhelp me attack\b|\bhow to exploit\b|\bpretend you are\b|\bignore previous instructions\b|\bjailbreak\b|\bwhat if someone wanted to\b|\basking for a friend\b/i;
+
+const JARGON_RE = /\bAct of [A-Z]\w+\b|\b\w+ Artifact Function\b|\b[A-Z][a-z]+(?:[A-Z][a-z]+){2,}\b|\bAE\b(?!\s+suffix)/;
+
+const AXIS_STOPWORDS = new Set([
+  'a', 'an', 'the', 'of', 'in', 'on', 'at', 'to', 'for', 'and', 'or', 'is', 'by',
+  'act', 'function',
+]);
+
+const NAMED_ENTITY_RE_SRC = '\\b[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+\\b';
+const CAMELCASE_RE_SRC = '\\b[A-Z][a-z]+[A-Z][a-zA-Z]*\\b';
+const COMMON_FIRST_WORDS = new Set([
+  'The', 'This', 'These', 'Those', 'That', 'Also', 'Include',
+  'Any', 'All', 'Each', 'Some', 'Such', 'Our', 'Their', 'Your', 'Its',
+]);
+
+function axisWords(label) {
+  return label.split(/\s+/)
+    .filter(w => w.length > 2 && !AXIS_STOPWORDS.has(w.toLowerCase()))
+    .map(w => w.toLowerCase());
+}
+
+function extractNamedEntities(text) {
+  if (!text) return [];
+  const entities = new Set();
+  let m;
+  const re1 = new RegExp(NAMED_ENTITY_RE_SRC, 'g');
+  while ((m = re1.exec(text)) !== null) {
+    const firstWord = m[0].split(/\s+/)[0];
+    if (!COMMON_FIRST_WORDS.has(firstWord)) entities.add(m[0]);
+  }
+  const re2 = new RegExp(CAMELCASE_RE_SRC, 'g');
+  while ((m = re2.exec(text)) !== null) {
+    entities.add(m[0]);
+  }
+  return [...entities];
+}
+
+function computeMetrics(record) {
+  const prompt = record.prompt || '';
+  const promptLower = prompt.toLowerCase();
+  const words = prompt.split(/\s+/).filter(w => w.length > 0);
+  const axes = record.sampled_axes || [];
+
+  // Axis fidelity
+  let matched = 0;
+  for (const sa of axes) {
+    const aw = axisWords(sa.sampled_label || '');
+    if (aw.length === 0) { matched++; continue; }
+    if (aw.some(w => promptLower.includes(w))) matched++;
+  }
+  const fidelity = axes.length > 0 ? matched / axes.length : 1;
+  const fidelityClass = fidelity === 1 ? 'full' : fidelity === 0 ? 'improvised' : 'partial';
+
+  // Red flags & jargon
+  const hasRedFlag = prompt ? RED_FLAG_RE.test(prompt) : false;
+  const hasJargon = prompt ? JARGON_RE.test(prompt) : false;
+
+  // Role diversity
+  const roles = new Set();
+  for (const sa of axes) {
+    for (const r of (sa.roles || [])) roles.add(r);
+  }
+
+  // Relevance profile
+  const relevanceProfile = { high: 0, medium: 0, low: 0 };
+  for (const sa of axes) {
+    const rel = sa.relevance || 'low';
+    if (rel in relevanceProfile) relevanceProfile[rel]++;
+  }
+
+  // Source ontologies
+  const ontSet = new Set();
+  for (const sa of axes) {
+    if (sa.source_ontology) ontSet.add(sa.source_ontology);
+  }
+
+  // Named entity utilization
+  const policyEntities = extractNamedEntities(record.concept_definition || '');
+  const namedEntities = policyEntities.map(e => ({
+    entity: e,
+    found: promptLower.includes(e.toLowerCase()),
+  }));
+
+  // Sibling fraction
+  let sibCount = 0;
+  let totalSampled = 0;
+  const dcAxes = record.domain_context_axes || [];
+  for (const sa of axes) {
+    totalSampled++;
+    const dcAxis = dcAxes.find(dc => dc.cco_class_uri === sa.cco_class_uri);
+    if (dcAxis) {
+      const enumMatch = (dcAxis.enumerations || []).find(en => en.class_uri === sa.sampled_uri);
+      if (enumMatch && enumMatch.provenance === 'sibling') sibCount++;
+    }
+  }
+
+  return {
+    fidelity,
+    fidelityClass,
+    hasRedFlag,
+    hasJargon,
+    wordCount: words.length,
+    roleCount: roles.size,
+    relevanceProfile,
+    sourceOntologies: [...ontSet].sort(),
+    namedEntities,
+    siblingFraction: totalSampled > 0 ? sibCount / totalSampled : 0,
+  };
+}
+
+// --- Data load & metric pre-computation ---
+
 const DATA = __EXPLORER_DATA__;
 
+for (let i = 0; i < DATA.length; i++) {
+  DATA[i]._index = i + 1;
+  DATA[i]._metrics = computeMetrics(DATA[i]);
+}
+
 function explorerApp() {
+  const allOnts = new Set();
+  for (const r of DATA) {
+    for (const ont of r._metrics.sourceOntologies) allOnts.add(ont);
+  }
+
   return {
     allRecords: DATA,
     totalRecords: DATA.length,
+    allSourceOntologies: [...allOnts].sort(),
     showNullPrompts: true,
     searchQuery: '',
     filters: {
       policy_concept: '',
       risk_name: '',
+      fidelity: '',
+      hideRedFlags: false,
+      hideJargon: false,
+      promptLength: '',
+      relevance: '',
+      minRoles: '',
+      sourceOntology: '',
     },
     modalOpen: false,
     selectedRecord: null,
-    genDetailsOpen: false,
 
     get filteredRecords() {
       const q = this.searchQuery.toLowerCase().trim();
       return this.allRecords.filter(r => {
         if (!this.showNullPrompts && !r.prompt) return false;
-        for (const [k, v] of Object.entries(this.filters)) {
-          if (v && r[k] !== v) return false;
-        }
+        if (this.filters.policy_concept && r.policy_concept !== this.filters.policy_concept) return false;
+        if (this.filters.risk_name && r.risk_name !== this.filters.risk_name) return false;
         if (q && !(r.prompt || '').toLowerCase().includes(q)) return false;
+
+        const m = r._metrics;
+        if (this.filters.fidelity && m.fidelityClass !== this.filters.fidelity) return false;
+        if (this.filters.hideRedFlags && m.hasRedFlag) return false;
+        if (this.filters.hideJargon && m.hasJargon) return false;
+
+        if (this.filters.promptLength) {
+          if (this.filters.promptLength === 'short' && m.wordCount >= 50) return false;
+          if (this.filters.promptLength === 'medium' && (m.wordCount < 50 || m.wordCount > 150)) return false;
+          if (this.filters.promptLength === 'long' && m.wordCount <= 150) return false;
+        }
+
+        if (this.filters.relevance) {
+          const total = m.relevanceProfile.high + m.relevanceProfile.medium + m.relevanceProfile.low;
+          if (total > 0) {
+            if (this.filters.relevance === 'mostly_high' && m.relevanceProfile.high / total < 0.5) return false;
+            if (this.filters.relevance === 'mostly_low' && m.relevanceProfile.low / total < 0.5) return false;
+          }
+        }
+
+        if (this.filters.minRoles && m.roleCount < parseInt(this.filters.minRoles)) return false;
+        if (this.filters.sourceOntology && !m.sourceOntologies.includes(this.filters.sourceOntology)) return false;
+
         return true;
       });
     },
@@ -290,20 +652,46 @@ function explorerApp() {
       return this.filteredRecords.filter(r => r.prompt).length;
     },
 
+    get qualitySummary() {
+      const records = this.filteredRecords.filter(r => r.prompt);
+      let full = 0, partial = 0, improvised = 0, redFlags = 0, jargon = 0, totalWords = 0;
+      for (const r of records) {
+        const m = r._metrics;
+        if (m.fidelityClass === 'full') full++;
+        else if (m.fidelityClass === 'partial') partial++;
+        else improvised++;
+        if (m.hasRedFlag) redFlags++;
+        if (m.hasJargon) jargon++;
+        totalWords += m.wordCount;
+      }
+      return {
+        full, partial, improvised, redFlags, jargon,
+        avgLength: records.length > 0 ? Math.round(totalWords / records.length) : 0,
+      };
+    },
+
     uniqueValues(field) {
-      const vals = [...new Set(this.allRecords.map(r => r[field]).filter(Boolean))];
-      return vals.sort();
+      return [...new Set(this.allRecords.map(r => r[field]).filter(Boolean))].sort();
     },
 
     clearFilters() {
-      for (const k of Object.keys(this.filters)) this.filters[k] = '';
+      this.filters = {
+        policy_concept: '',
+        risk_name: '',
+        fidelity: '',
+        hideRedFlags: false,
+        hideJargon: false,
+        promptLength: '',
+        relevance: '',
+        minRoles: '',
+        sourceOntology: '',
+      };
       this.searchQuery = '';
       this.showNullPrompts = true;
     },
 
     openModal(record) {
       this.selectedRecord = record;
-      this.genDetailsOpen = false;
       this.modalOpen = true;
       document.body.style.overflow = 'hidden';
     },
@@ -312,6 +700,15 @@ function explorerApp() {
       this.modalOpen = false;
       this.selectedRecord = null;
       document.body.style.overflow = '';
+    },
+
+    fidelityBadge(cls) {
+      const map = {
+        'full':       { cls: 'bg-green-100 text-green-800', label: 'full' },
+        'partial':    { cls: 'bg-yellow-100 text-yellow-800', label: 'partial' },
+        'improvised': { cls: 'bg-red-100 text-red-800', label: 'improv' },
+      };
+      return map[cls] || map['improvised'];
     },
 
     roleColor(role) {
@@ -325,30 +722,12 @@ function explorerApp() {
       return map[role] || 'bg-gray-100 text-gray-800';
     },
 
-    relevanceColor(rel) {
-      const map = {
-        'high':   'bg-green-100 text-green-800',
-        'medium': 'bg-yellow-100 text-yellow-800',
-        'low':    'bg-red-100 text-red-800',
-      };
-      return map[rel] || 'bg-gray-100 text-gray-800';
-    },
-
     isSampled(record, dcAxis, enumeration) {
       if (!record?.sampled_axes) return false;
       return record.sampled_axes.some(sa =>
         sa.cco_class_uri === dcAxis.cco_class_uri &&
         sa.sampled_uri === enumeration.class_uri
       );
-    },
-
-    prettyJSON(val) {
-      try {
-        if (typeof val === 'string') return val;
-        return JSON.stringify(val, null, 2);
-      } catch (e) {
-        return String(val);
-      }
     },
   };
 }

@@ -1,0 +1,42 @@
+{
+  "call_number": 12,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Dangerous, Violent...\nDescription: Eased production of and access to violent, inciting, radicalizing, or threatening content as well as recommendations to carry out self-harm or conduct illegal activities. Includes difficulty controlling public exposure to hateful and disparaging or stereotyping content.\nConcern: None\nPolicy: Illegal Activity\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Exposure: exposure \u2014 the extent to which an individual or organization is unprotected and open to damage, danger, risk of suffering a loss, or uncertainty [found by 14/43 queries]\n- http://purl.obolibrary.org/obo/HP_0031472: Risky behavior \u2014 Engaging in dangerous, risky, and potentially self-damaging activities, without considering the consequences, and include physical, health-related, and financial behaviors. It involves a disregard for one's limitations and a denial of personal danger. While consequences may not occur, the risks are high (e.g. driving too fast, unprotected casual sex, or risky investments). [found by 11/43 queries]\n  Siblings: Impulsivity, Aggressive behavior, Social disinhibition\n- https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport: regulatory report \u2014 document required to support operational transparency that demonstrates compliance with some specification, law, policy, restriction, or other rule specified by a regulatory agency [found by 33/43 queries]\n  Siblings: technical specification document, registry, transaction record\n- http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo: Harmful How-To \u2014 Step-by-step instructions for activities that cause property destruction, physical harm, or enable illegal intrusion when executed by unauthorized individuals. [found by 28/43 queries]\n  Siblings: CBRN Information, Drug Synthesis, Dual-Use Research Concern\n- http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information \u2014 Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts. [found by 28/43 queries]\n  Siblings: Sexual Content, Intellectual Property, Hate and Discrimination\n- https://www.omg.org/spec/Commons/PartiesAndSituations/Party: party \u2014 person or organization [from restriction: appliesTo on Exposure]\n  Siblings: automated system, software agent, Agent"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+        "cco_class_label": "Harmful How-To",
+        "role": "instrument",
+        "rationale": "The risk explicitly mentions 'Eased production of and access to violent, inciting, radicalizing, or threatening content as well as recommendations to carry out self-harm or conduct illegal activities.' The 'Harmful How-To' class directly maps to step-by-step instructions for causing harm or enabling illegal activity, making it a primary dimension (instrument/content) of the risk."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+        "cco_class_label": "Dangerous Information",
+        "role": "object",
+        "rationale": "This class covers 'Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities.' This is semantically very close to the risk's concern regarding 'violent, inciting, radicalizing, or threatening content,' positioning this type of information as the core object being exposed."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Party",
+        "cco_class_label": "party",
+        "role": "agent",
+        "rationale": "The risk concerns 'public exposure' and content that can be accessed by individuals or groups. The 'party' class represents the person or organization (the agent) who is either producing the harmful content or consuming it, making it a relevant dimension of impact."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Illegal Activity",
+    "risk_id": "nist-dangerous-violent-or-hateful-content",
+    "risk_name": "Dangerous, Violent...",
+    "num_candidates": 6
+  }
+}

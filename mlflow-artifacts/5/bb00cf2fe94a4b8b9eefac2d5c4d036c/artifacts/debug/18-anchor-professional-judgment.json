@@ -1,0 +1,36 @@
+{
+  "call_number": 18,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Lack of capability or robustness\nDescription: AI systems that fail to perform reliably or effectively under varying conditions, exposing them to errors and failures that can have significant consequences, especially in critical applications or areas that require moral reasoning.\nConcern: None\nPolicy: Professional Judgment\n\nCandidate ontology classes:\n- http://purl.obolibrary.org/obo/HP_0033071: Impaired task monitoring \u2014 Impaired ability to keep track of one's problem-solving success or failure, and to identify and correct mistakes during performance of a goal. [found by 9/22 queries]\n  Siblings: Impaired ability to plan, Impaired self monitoring, Impaired ability to organize\n- http://purl.obolibrary.org/obo/HP_0033055: Impaired ability to plan \u2014 Impaired ability to anticipate future events, implement instructions or goals, and develop appropriate steps ahead of time in order to carry out a task or activity. [found by 8/22 queries]\n  Siblings: Impaired task monitoring, Impaired self monitoring, Impaired ability to organize\n- http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination: Algorithmic Discrimination \u2014 Systematic bias in automated decision-making systems that disadvantages specific groups based on protected characteristics. [found by 17/22 queries]\n  Siblings: Employment Discrimination, Discriminatory Denial of Service, Housing Discrimination\n- http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information \u2014 Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts. [found by 16/22 queries]\n  Siblings: Sexual Content, Intellectual Property, Hate and Discrimination\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 16/22 queries]\n  Siblings: automated underwriting system, automated system, party"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination",
+        "cco_class_label": "Algorithmic Discrimination",
+        "role": "object",
+        "rationale": "The risk of lack of capability or robustness can lead to systematic bias in automated decision-making systems, which is a form of algorithmic discrimination."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+        "cco_class_label": "software agent",
+        "role": "agent",
+        "rationale": "The risk of lack of capability or robustness directly affects the performance of software agents, which are digital entities performing tasks."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Professional Judgment",
+    "risk_id": "mit-ai-risk-subdomain-7.3",
+    "risk_name": "Lack of capability or robustness",
+    "num_candidates": 5
+  }
+}

@@ -359,6 +359,11 @@ JARGON_PATTERNS = [
     r"\b\w+ Artifact Function\b",
     r"\b[A-Z][a-z]+(?:[A-Z][a-z]+){2,}\b",  # CamelCase with 3+ parts
     r"\bAE\b(?!\s+suffix)",  # bare "AE" from OBO
+    r" - ATLAS\b",  # D3FEND ATLAS framework suffix
+    r" - ATTACK\b",  # D3FEND ATT&CK framework suffix
+    r" - SPARTA\b",  # D3FEND SPARTA framework suffix
+    r"\bD3FEND\b",  # D3FEND literal
+    r"\bATLAS\b(?! [a-z])",  # bare ATLAS not followed by lowercase (natural text)
 ]
 _JARGON_RE = re.compile("|".join(JARGON_PATTERNS))
 

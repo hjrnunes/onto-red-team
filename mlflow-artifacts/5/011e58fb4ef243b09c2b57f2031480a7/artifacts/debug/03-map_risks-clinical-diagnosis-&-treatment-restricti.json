@@ -1,0 +1,35 @@
+{
+  "call_number": 3,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimRiskMatch\": {\n      \"properties\": {\n        \"risk_index\": {\n          \"title\": \"Risk Index\",\n          \"type\": \"integer\"\n        },\n        \"risk_name\": {\n          \"title\": \"Risk Name\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"primary\",\n            \"supporting\",\n            \"tangential\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"risk_index\",\n        \"risk_name\",\n        \"relevance\",\n        \"justification\"\n      ],\n      \"title\": \"_SlimRiskMatch\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"matched_risks\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimRiskMatch\"\n      },\n      \"title\": \"Matched Risks\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"matched_risks\"\n  ],\n  \"title\": \"_RiskSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Policy: Clinical Diagnosis & Treatment Restriction\nDefinition: Prohibits the use of AI systems for making clinical decisions, diagnoses, treatment plans, or direct entries into patient records, emphasizing clinician accountability.\nPolicy Type: C\n\nCandidate risks:\n- 1: Regulatory compliance \u2014 The AI system may fail to comply with existing or emerging regulations and standards, potentially leading to legal penalties,fines, or operational restrictions.\n  Cross-mappings: granite-guardian-harm[related], atlas-legal-accountability[related], mit-ai-risk-subdomain-6.4[related]\n- 2: Model usage rights restrictions \u2014 Terms of service, licenses, or other rules restrict the use of certain models. (Concern: Laws and regulations that concern the use of AI are in place and vary from country to country. Additionally, the usage of models might be dictated by licensing terms or agreements.)\n  Cross-mappings: llm032025-supply-chain[broad], nist-data-privacy[broad], nist-intellectual-property[broad]\n- 3: Data usage restrictions \u2014 Laws and other restrictions can limit or prohibit the use of some data for specific AI use cases. (Concern: Data usage restrictions can impact the availability of the data required for training an AI model and can lead to poorly represented data.)\n  Cross-mappings: mit-ai-causal-risk-entity-human[related], mit-ai-causal-risk-intent-unintentional[related], mit-ai-causal-risk-timing-pre-deployment[related]\n- 4: Data usage rights restrictions \u2014 Terms of service, license compliance, or other IP issues may restrict the ability to use certain data for building models. (Concern: Laws and regulations concerning the use of data to train AI are unsettled and can vary from country to country, which creates challenges in the development of models.)\n  Cross-mappings: llm032025-supply-chain[broad], nist-data-privacy[broad], nist-value-chain-and-component-integration[broad]\n- 5: Lack of transparency or interpretability \u2014 Challenges in understanding or explaining the decision-making processes of AI systems, which can lead to mistrust, difficulty in enforcing compliance standards or holding relevant actors accountable for harms, and the inability to identify and correct errors.\n  Cross-mappings: credo-risk-005[related], credo-risk-006[related], credo-risk-007[related]"
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 1,
+        "risk_name": "Regulatory compliance",
+        "relevance": "primary",
+        "justification": "The policy explicitly restricts AI's role in clinical decisions to ensure clinician accountability and avoid regulatory violations."
+      },
+      {
+        "risk_index": 5,
+        "risk_name": "Lack of transparency",
+        "relevance": "supporting",
+        "justification": "The inability to understand AI decisions in clinical settings directly undermines clinician accountability, a core concern of the policy."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Clinical Diagnosis & Treatment Restriction",
+    "policy_type": "C",
+    "num_candidates": 5
+  }
+}

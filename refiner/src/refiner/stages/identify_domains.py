@@ -36,22 +36,12 @@ class _DomainSelection(BaseModel):
 
 
 def derive_source_ontology(uri: str) -> str:
-    """Map a class URI to its source ontology key."""
-    if "commoncoreontologies.org" in uri:
-        return "CCO"
-    if "spec.edmcouncil.org/fibo" in uri:
-        return "FIBO"
-    if "omg.org/spec/Commons" in uri:
-        return "Commons"
-    if "purl.obolibrary.org/obo" in uri:
-        return "OBO"
-    if "industrialontologies.org" in uri:
-        return "IOF"
-    if "d3fend.mitre.org" in uri:
-        return "D3FEND"
-    if "taxonomy-refiner.io/ontologies/cso" in uri:
-        return "CSO"
-    return "unknown"
+    """Map a class URI to its source ontology key.
+
+    Delegates to ontoquery.index.derive_domain for the canonical mapping.
+    """
+    from ontoquery.index import derive_domain
+    return derive_domain(uri)
 
 
 def identify_domains(

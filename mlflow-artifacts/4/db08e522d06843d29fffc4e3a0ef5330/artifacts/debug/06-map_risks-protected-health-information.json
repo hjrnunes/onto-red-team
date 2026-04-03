@@ -1,0 +1,41 @@
+{
+  "call_number": 6,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimRiskMatch\": {\n      \"properties\": {\n        \"risk_index\": {\n          \"title\": \"Risk Index\",\n          \"type\": \"integer\"\n        },\n        \"risk_name\": {\n          \"title\": \"Risk Name\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"primary\",\n            \"supporting\",\n            \"tangential\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"risk_index\",\n        \"risk_name\",\n        \"relevance\",\n        \"justification\"\n      ],\n      \"title\": \"_SlimRiskMatch\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"matched_risks\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimRiskMatch\"\n      },\n      \"title\": \"Matched Risks\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"matched_risks\"\n  ],\n  \"title\": \"_RiskSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Policy: Protected Health Information\nDefinition: Prompts attempting to extract sensitive patient data, medical records, or personally identifiable information (PII) through social engineering or data mining.\nPolicy Type: B\n\nCandidate risks:\n- 1: Compromised personally identifiable information (Slattery et al., 2024) \u2014 The AI system may expose personally identifiable information (PII), either inadvertently or due to adversarial inputs, derived from training data, accessible data, or inferences. PII is any data that can be used to directly identify or contact a specific individual, either alone or in combination with other information.\n  Cross-mappings: mit-ai-risk-subdomain-2.1[close], ail-privacy[related], ail-specialized-advice[related]\n- 2: Personal information in data \u2014 Inclusion or presence of personal identifiable information (PII) and sensitive personal information (SPI)\u202fin the data used for training or fine tuning the model might result in unwanted disclosure of that information. (Concern: If not properly developed to protect sensitive data, the model might expose personal information in the generated output.\u00a0 Additionally, personal, or sensitive data must be reviewed and handled in accordance with privacy laws and regulations.)\n  Cross-mappings: nist-data-privacy[broad], ail-privacy[related], llm022025-sensitive-information-disclosure[related]\n- 3: Exposing personal information \u2014 When personal identifiable information (PII) or sensitive personal information (SPI) are used in training data, fine-tuning data, seed data for synthetic data generation, or as part of the prompt, models might reveal that data in the generated output. Revealing personal information is a type of data leakage. (Concern: Sharing people's PI impacts their rights and make them more vulnerable.)\n  Cross-mappings: llm022025-sensitive-information-disclosure[broad], nist-data-privacy[broad], credo-risk-024[related]\n- 4: Unauthorized processing - PII (Personal Identifiable Information) \u2014 Unauthorized processing - PII (Personal Identifiable Information) is defined as if the model response involves unauthorized processing or misuse of Personal Identifiable Information (PII) in any form.\n- 5: Unauthorized generation - PII (Personal Identifiable Information) \u2014 Unauthorized generation - PII (Personal Identifiable Information) is defined as whether the model response involves unauthorized generation or handling of Personal Identifiable Information (PII) that could potentially lead to privacy violations."
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 1,
+        "risk_name": "Compromised personally identifiable information",
+        "relevance": "primary",
+        "justification": "Directly addresses the risk of exposing PII through adversarial inputs or inferences."
+      },
+      {
+        "risk_index": 2,
+        "risk_name": "Personal information in data",
+        "relevance": "supporting",
+        "justification": "Relates to the presence of sensitive information in training data that could lead to disclosure."
+      },
+      {
+        "risk_index": 4,
+        "risk_name": "Unauthorized processing - PII",
+        "relevance": "supporting",
+        "justification": "Covers the misuse or unauthorized processing of personal identifiable information in model responses."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Protected Health Information",
+    "policy_type": "B",
+    "num_candidates": 5
+  }
+}

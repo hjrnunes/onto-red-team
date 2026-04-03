@@ -107,6 +107,12 @@ def _flatten_metrics(evaluation: dict) -> dict[str, float]:
             if dim_data := je.get(dim):
                 metrics[f"judge.{dim}"] = dim_data["mean"]
 
+    # Token usage metrics (from report)
+    if tu := evaluation.get("token_usage"):
+        for key in ("prompt_tokens", "completion_tokens", "total_tokens", "calls"):
+            if key in tu:
+                metrics[f"tokens.{key}"] = tu[key]
+
     return metrics
 
 
@@ -180,15 +186,20 @@ def _extract_params(evaluation: dict) -> dict[str, str]:
     }
 
 
-def _extract_tags(evaluation: dict, description: str | None) -> dict[str, str]:
+def _extract_tags(
+    evaluation: dict,
+    description: str | None,
+    extra_tags: dict[str, str] | None = None,
+) -> dict[str, str]:
     """Extract MLflow tags from evaluation dict.
 
     Args:
         evaluation: Evaluation dict from run_evaluation()
         description: Optional run description
+        extra_tags: Optional extra key-value tags
 
     Returns:
-        Dict of string tags (timestamp, stages_completed, description)
+        Dict of string tags (timestamp, stages_completed, description, extras)
     """
     run = evaluation.get("run", {})
     tags: dict[str, str] = {
@@ -197,6 +208,8 @@ def _extract_tags(evaluation: dict, description: str | None) -> dict[str, str]:
     }
     if description:
         tags["description"] = description
+    if extra_tags:
+        tags.update(extra_tags)
     return tags
 
 
@@ -218,6 +231,7 @@ def log_run_to_mlflow(
     tracking_uri: str,
     description: str | None = None,
     run_id: str | None = None,
+    extra_tags: dict[str, str] | None = None,
 ) -> str:
     """Log pipeline run to MLflow with params, metrics, and artifacts.
 
@@ -227,6 +241,7 @@ def log_run_to_mlflow(
         tracking_uri: MLflow tracking server URI
         description: Optional run description (logged as tag)
         run_id: Optional existing run ID to append to (for incremental updates)
+        extra_tags: Optional extra key-value tags
 
     Returns:
         MLflow run ID (new or existing)
@@ -249,7 +264,7 @@ def log_run_to_mlflow(
             params = _extract_params(evaluation)
             mlflow.log_params(params)
 
-        tags = _extract_tags(evaluation, description)
+        tags = _extract_tags(evaluation, description, extra_tags)
         mlflow.set_tags(tags)
 
         metrics = _flatten_metrics(evaluation)

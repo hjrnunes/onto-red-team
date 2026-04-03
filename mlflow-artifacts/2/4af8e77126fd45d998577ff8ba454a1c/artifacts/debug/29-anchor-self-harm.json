@@ -1,0 +1,36 @@
+{
+  "call_number": 29,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Violence\nDescription: Promoting or describing physical harm to individuals or groups. This includes depictions of assault, self-harm, or creation of a hostile environment through threats or intimidation.\nConcern: None\nPolicy: Self Harm\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/Law: law \u2014 rule recognized by some community as regulating the behavior of its members and that it may enforce through the imposition of penalties [found by 4/6 queries]\n- https://spec.edmcouncil.org/fibo/ontology/FND/GoalsAndObjectives/Objectives/Aim: aim \u2014 intention specifying a desired direction, condition, or situation toward which an agent's actions are directed, without requiring precise scope or measurable criteria [found by 4/6 queries]\n- http://taxonomy-refiner.io/ontologies/cso#ThreatsOfViolence: Threats of Violence \u2014 Communication of intent to inflict harm or damage to create fear, even if not carried out. [found by 5/6 queries]\n  Siblings: Homicide, Glorification of Violence, Weapons Use\n- https://www.omg.org/spec/Commons/Documents/Reference: reference \u2014 source that may be used to ascertain, interpret, or understand something [found by 5/6 queries]\n- https://www.commoncoreontologies.org/ont00001147: Act of Violence \u2014 A Planned Act of causing harm to oneself or to another through the use of physical or verbal force. [found by 4/6 queries]\n  Siblings: Act of Measuring, Act of Military Force, Act of Prediction"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#ThreatsOfViolence",
+        "cco_class_label": "Threats of Violence",
+        "role": "object",
+        "rationale": "This class directly relates to the description of the risk, as it involves communication that can create a hostile environment through threats or intimidation."
+      },
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00001147",
+        "cco_class_label": "Act of Violence",
+        "role": "object",
+        "rationale": "This class is directly relevant as it encompasses the physical harm to individuals or groups, which is central to the risk description."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Self Harm",
+    "risk_id": "granite-violence",
+    "risk_name": "Violence",
+    "num_candidates": 5
+  }
+}

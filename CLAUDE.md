@@ -6,6 +6,7 @@ prompt generation against LLM deployments. Built on the AI Atlas Nexus knowledge
 ## Documentation
 
 Detailed docs in `docs/`:
+
 - `docs/architecture.md` — data flow, key concepts, three-layer ontology stack
 - `docs/refiner.md` — pipeline stages, CLI, config, emit, evaluation, MLflow tracking
 - `docs/ontoquery.md` — ontology query CLI + MCP server
@@ -67,21 +68,25 @@ cd refiner && uv run pytest      # ~313 tests
 ## Code Conventions
 
 ### Pydantic Models for LLM Calls
+
 - Private `_`-prefixed models (e.g. `_SlimRiskMatch`) — only fields the LLM must reason about
 - NO docstrings on these models — Instructor embeds them in JSON schema, confusing small models
 - Known metadata stitched back programmatically after LLM response
 
 ### MCP Server Pattern
+
 - `create_tool_handlers()` returns dict of callables — enables testing without MCP transport
 - Lazy-singleton `_get_handlers()` loads heavy state on first call
 - Refiner pipeline calls handler dicts directly (no MCP transport)
 
 ### Backend Protocol
+
 - `GraphBackend` (`typing.Protocol`) abstracts oxigraph (default) and rdflib (fallback)
 - Factory: `create_index_backend()` for indexing, `load_backend()` for runtime
 - Extended with `get_restrictions()`, `get_disjoint_classes()`, `get_equivalent_axioms()`
 
 ### Pipeline Patterns
+
 - Ground-truth cross-mappings from knowledge graph, never LLM-generated
 - Domain filtering: always-included (CCO, Commons, D3FEND, CSO) + selectable (FIBO, OBO, IOF)
 - Per-domain ChromaDB collections with merge strategies (weighted/grouped)
@@ -92,22 +97,29 @@ cd refiner && uv run pytest      # ~313 tests
 - Disjointness validation guarded by `onto_handlers.get()` for backward compat
 
 ### URI Namespace Mapping
+
 - Canonical: `derive_domain(uri)` in `ontoquery/index.py`
 - Refiner delegates: `derive_source_ontology(uri)` in `identify_domains.py`
 
 ## Environment
 
-| Variable | Purpose |
-|----------|---------|
-| `REFINER_BASE_URL` | LLM endpoint |
-| `REFINER_MODEL` | Model name |
-| `REFINER_API_KEY` | API key |
-| `NEXUS_BASE_DIR` | Path to ai-atlas-nexus repo |
-| `ONTOQUERY_CHROMA_DIR` | ontoquery ChromaDB path |
-| `NEXUS_CHROMA_DIR` | nexus-mcp ChromaDB path |
-| `MLFLOW_TRACKING_URI` | MLflow server URL |
+| Variable               | Purpose                     |
+|------------------------|-----------------------------|
+| `REFINER_BASE_URL`     | LLM endpoint                |
+| `REFINER_MODEL`        | Model name                  |
+| `REFINER_API_KEY`      | API key                     |
+| `NEXUS_BASE_DIR`       | Path to ai-atlas-nexus repo |
+| `ONTOQUERY_CHROMA_DIR` | ontoquery ChromaDB path     |
+| `NEXUS_CHROMA_DIR`     | nexus-mcp ChromaDB path     |
+| `MLFLOW_TRACKING_URI`  | MLflow server URL           |
 
 ## Related Projects
 
 - **AI Atlas Nexus**: `/Users/hjrnunes/workspace/redhat/ibm/ai-atlas-nexus` — schema, knowledge graph, mappings
 - **CCO source**: `/Users/hjrnunes/workspace/sandbox/CommonCoreOntologies`
+
+## Runs assessemnt
+
+Produce an assessment.md inside each run's folder (check previous runs for format). 
+There is also a script you can use: assess_run.py 
+Do a global assessment in the end.

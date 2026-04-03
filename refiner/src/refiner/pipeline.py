@@ -14,7 +14,7 @@ from refiner.models import (
 from refiner.stages.classify import classify
 from refiner.stages.identify_domains import identify_domains
 from refiner.stages.map_risks import map_risks
-from refiner.stages.anchor import anchor
+from refiner.stages.anchor import anchor, SearchMergeStrategy
 from refiner.stages.contextualize import contextualize
 
 STAGES = ("classify", "identify_domains", "map_risks", "anchor", "contextualize")
@@ -44,6 +44,7 @@ def run_pipeline(
     onto_handlers: dict,
     until: str | None = None,
     report: RunReport | None = None,
+    merge_strategy: SearchMergeStrategy | None = None,
 ) -> PipelineState:
     state = PipelineState(policies=policies, report=report)
 
@@ -72,6 +73,7 @@ def run_pipeline(
         selected_domains=state.selected_domains,
         risk_actions=state.risk_actions,
         related_risks=state.related_risks,
+        merge_strategy=merge_strategy,
         report=report,
     )
     if report:

@@ -1,0 +1,35 @@
+{
+  "call_number": 6,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimRiskMatch\": {\n      \"properties\": {\n        \"risk_index\": {\n          \"title\": \"Risk Index\",\n          \"type\": \"integer\"\n        },\n        \"risk_name\": {\n          \"title\": \"Risk Name\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"primary\",\n            \"supporting\",\n            \"tangential\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"risk_index\",\n        \"risk_name\",\n        \"relevance\",\n        \"justification\"\n      ],\n      \"title\": \"_SlimRiskMatch\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"matched_risks\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimRiskMatch\"\n      },\n      \"title\": \"Matched Risks\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"matched_risks\"\n  ],\n  \"title\": \"_RiskSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Policy: Clinical Record Integrity\nDefinition: AI systems must not generate clinical entries directly into patient records.\nPolicy Type: C\n\nCandidate risks:\n- 1: Unauthorized generation - Health data \u2014 Unauthorized generation - Health data is defined as if the model response involves unauthorized generation or disclosure of sensitive health data.\n- 2: Unauthorized processing - Health data \u2014 Unauthorized processing - Health data is defined as if the model response involves unauthorized processing or misuse of sensitive health data.\n- 3: Unauthorized inference/synthesis - Health data \u2014 Unauthorized inference/synthesis - Health data is defined as if the model response involves unauthorized inference or synthesis of private health information from public data sources.\n- 4: Unauthorized disclosure - Health data \u2014 Unauthorized disclosure - Health data is defined as whether the model response facilitates unauthorized disclosure of sensitive health data.\n- 5: Data transfer restrictions \u2014 Laws and other restrictions can limit or prohibit transferring data. (Concern: Data transfer restrictions can also impact the availability of the data that is required for training an AI model and can lead to ted data.)\n  Cross-mappings: nist-value-chain-and-component-integration[broad], mit-ai-causal-risk-entity-human[related], mit-ai-causal-risk-intent-unintentional[related]"
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 1,
+        "risk_name": "Unauthorized generation - Health data",
+        "relevance": "primary",
+        "justification": "Directly addresses the concern of unauthorized AI-generated entries in patient records."
+      },
+      {
+        "risk_index": 2,
+        "risk_name": "Unauthorized processing - Health data",
+        "relevance": "supporting",
+        "justification": "Covers the misuse of health data, which could include unauthorized modifications to patient records."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Clinical Record Integrity",
+    "policy_type": "C",
+    "num_candidates": 5
+  }
+}

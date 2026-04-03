@@ -75,6 +75,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             selected_domains=domains_result,
             risk_actions=map_result[4],
             related_risks=map_result[3],
+            merge_strategy=None,
             report=report,
         )
         m_ctx.assert_called_once_with(

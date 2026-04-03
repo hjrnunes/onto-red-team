@@ -1,0 +1,1209 @@
+{
+  "run": {
+    "model": "gemma-3-12b-it",
+    "policy_set": "healthcare-enriched.json",
+    "timestamp": "2026-04-02T17:11:04.173624+00:00",
+    "stages_completed": [
+      "classify",
+      "identify_domains",
+      "map_risks",
+      "anchor",
+      "contextualize",
+      "structure"
+    ]
+  },
+  "stage_quality": {
+    "classify": {
+      "type_distribution": {
+        "A": 4,
+        "B": 2,
+        "C": 1
+      }
+    },
+    "identify_domains": {
+      "selected_domains": [
+        "CCO",
+        "Commons",
+        "D3FEND",
+        "CSO",
+        "OBO",
+        "FIBO"
+      ]
+    },
+    "map_risks": {
+      "weak_matches": [
+        {
+          "risk_id": "ai-risk-taxonomy-classification-of-individuals---health-conditions",
+          "distance": 0.6746453642845154
+        },
+        {
+          "risk_id": "shieldgemma-dangerous-content",
+          "distance": 0.6982909440994263
+        }
+      ],
+      "match_counts": [
+        {
+          "policy_concept": "Clinical Diagnosis & Treatment Recommendations",
+          "count": 2
+        },
+        {
+          "policy_concept": "Medication & Prescription Guidance",
+          "count": 1
+        },
+        {
+          "policy_concept": "Mental Health & Therapeutic Communication",
+          "count": 3
+        },
+        {
+          "policy_concept": "Protected Health Information",
+          "count": 2
+        },
+        {
+          "policy_concept": "Clinical Staff Credentials & Institutional Data",
+          "count": 2
+        },
+        {
+          "policy_concept": "Medical Professional Impersonation",
+          "count": 2
+        },
+        {
+          "policy_concept": "Insurance Fraud & Billing Manipulation",
+          "count": 2
+        }
+      ]
+    },
+    "anchor": {
+      "candidate_expansions": [
+        {
+          "risk_id": "ai-risk-taxonomy-medical/pharmaceutical",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-classification-of-individuals---health-conditions",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ail-suicide-and-self-harm",
+          "queries_run": 23,
+          "raw_total": 230,
+          "unique_after_dedup": 151,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "shieldgemma-dangerous-content",
+          "queries_run": 4,
+          "raw_total": 40,
+          "unique_after_dedup": 25,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-disclosure---health-data",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "queries_run": 9,
+          "raw_total": 90,
+          "unique_after_dedup": 50,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "atlas-revealing-confidential-information",
+          "queries_run": 10,
+          "raw_total": 100,
+          "unique_after_dedup": 56,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-018",
+          "queries_run": 7,
+          "raw_total": 70,
+          "unique_after_dedup": 50,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-021",
+          "queries_run": 5,
+          "raw_total": 50,
+          "unique_after_dedup": 29,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "queries_run": 7,
+          "raw_total": 70,
+          "unique_after_dedup": 51,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "queries_run": 10,
+          "raw_total": 100,
+          "unique_after_dedup": 54,
+          "kept_after_filter": 5
+        }
+      ],
+      "multi_query_hits": [
+        {
+          "risk_id": "ai-risk-taxonomy-medical/pharmaceutical",
+          "uri": "http://purl.obolibrary.org/obo/CHEBI_52217",
+          "hit_count": 1,
+          "best_distance": 0.2865370512008667,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-medical/pharmaceutical",
+          "uri": "http://purl.obolibrary.org/obo/OAE_0000011",
+          "hit_count": 1,
+          "best_distance": 0.3650413155555725,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-medical/pharmaceutical",
+          "uri": "http://purl.obolibrary.org/obo/OGMS_0000148",
+          "hit_count": 1,
+          "best_distance": 0.37805092334747314,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-medical/pharmaceutical",
+          "uri": "http://purl.obolibrary.org/obo/CHEBI_52210",
+          "hit_count": 1,
+          "best_distance": 0.4602147340774536,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-medical/pharmaceutical",
+          "uri": "http://purl.obolibrary.org/obo/OAE_0000230",
+          "hit_count": 1,
+          "best_distance": 0.4739871621131897,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-classification-of-individuals---health-conditions",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure",
+          "hit_count": 1,
+          "best_distance": 0.4576609134674072,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-classification-of-individuals---health-conditions",
+          "uri": "http://purl.obolibrary.org/obo/MAXO_0000575",
+          "hit_count": 1,
+          "best_distance": 0.46940749883651733,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-classification-of-individuals---health-conditions",
+          "uri": "http://purl.obolibrary.org/obo/OGMS_0000088",
+          "hit_count": 1,
+          "best_distance": 0.4987841248512268,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-classification-of-individuals---health-conditions",
+          "uri": "http://purl.obolibrary.org/obo/HP_0040279",
+          "hit_count": 1,
+          "best_distance": 0.5240597128868103,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-classification-of-individuals---health-conditions",
+          "uri": "http://purl.obolibrary.org/obo/MONDO_0021125",
+          "hit_count": 1,
+          "best_distance": 0.5243158936500549,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SuicideMethods",
+          "hit_count": 1,
+          "best_distance": 0.28161734342575073,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SuicidalIdeation",
+          "hit_count": 1,
+          "best_distance": 0.30345356464385986,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "uri": "http://purl.obolibrary.org/obo/HP_5200330",
+          "hit_count": 1,
+          "best_distance": 0.3097435235977173,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "uri": "https://www.commoncoreontologies.org/ont00001236",
+          "hit_count": 1,
+          "best_distance": 0.31192225217819214,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "uri": "http://purl.obolibrary.org/obo/HP_0031589",
+          "hit_count": 1,
+          "best_distance": 0.3388381600379944,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "uri": "https://www.commoncoreontologies.org/ont00000920",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ail-suicide-and-self-harm",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination",
+          "hit_count": 8,
+          "best_distance": 0.38199591636657715,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-suicide-and-self-harm",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 7,
+          "best_distance": 0.4726067781448364,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-suicide-and-self-harm",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+          "hit_count": 6,
+          "best_distance": 0.42762500047683716,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-suicide-and-self-harm",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 6,
+          "best_distance": 0.4514739513397217,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ail-suicide-and-self-harm",
+          "uri": "https://www.commoncoreontologies.org/ont00000146",
+          "hit_count": 5,
+          "best_distance": 0.5743910074234009,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "shieldgemma-dangerous-content",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 4,
+          "best_distance": 0.33810096979141235,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "shieldgemma-dangerous-content",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ThreatsOfViolence",
+          "hit_count": 3,
+          "best_distance": 0.36728721857070923,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "shieldgemma-dangerous-content",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+          "hit_count": 3,
+          "best_distance": 0.37750935554504395,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "shieldgemma-dangerous-content",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 3,
+          "best_distance": 0.4940207004547119,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "shieldgemma-dangerous-content",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SelfHarm",
+          "hit_count": 2,
+          "best_distance": 0.32299721240997314,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-disclosure---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 1,
+          "best_distance": 0.20639139413833618,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-disclosure---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure",
+          "hit_count": 1,
+          "best_distance": 0.3647770881652832,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-disclosure---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure",
+          "hit_count": 1,
+          "best_distance": 0.3688259720802307,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-disclosure---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+          "hit_count": 1,
+          "best_distance": 0.4186311364173889,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-disclosure---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure",
+          "hit_count": 1,
+          "best_distance": 0.4187549948692322,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 1,
+          "best_distance": 0.36258625984191895,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+          "hit_count": 1,
+          "best_distance": 0.4690735936164856,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data",
+          "uri": "http://purl.obolibrary.org/obo/OGMS_0000123",
+          "hit_count": 1,
+          "best_distance": 0.4863213300704956,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure",
+          "hit_count": 1,
+          "best_distance": 0.5191924571990967,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure",
+          "hit_count": 1,
+          "best_distance": 0.5234512090682983,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+          "hit_count": 5,
+          "best_distance": 0.45892417430877686,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 5,
+          "best_distance": 0.47045081853866577,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure",
+          "hit_count": 5,
+          "best_distance": 0.4792029857635498,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+          "hit_count": 4,
+          "best_distance": 0.42628467082977295,
+          "query_sources": [
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-confidential-data-in-prompt",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure",
+          "hit_count": 4,
+          "best_distance": 0.4406047463417053,
+          "query_sources": [
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-revealing-confidential-information",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+          "hit_count": 5,
+          "best_distance": 0.3708585500717163,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-revealing-confidential-information",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure",
+          "hit_count": 4,
+          "best_distance": 0.4043664336204529,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-revealing-confidential-information",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 4,
+          "best_distance": 0.4587726593017578,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-revealing-confidential-information",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#CustomerListDisclosure",
+          "hit_count": 3,
+          "best_distance": 0.4025997519493103,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-revealing-confidential-information",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Funds/CollectiveInvestmentVehicles/RiskLevel",
+          "hit_count": 3,
+          "best_distance": 0.4166424870491028,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-018",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+          "hit_count": 6,
+          "best_distance": 0.4839264154434204,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-018",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem",
+          "hit_count": 4,
+          "best_distance": 0.5037012100219727,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-018",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 3,
+          "best_distance": 0.4726067781448364,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-018",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Agent",
+          "hit_count": 3,
+          "best_distance": 0.5250958204269409,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-018",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+          "hit_count": 3,
+          "best_distance": 0.585563600063324,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-021",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Disinformation",
+          "hit_count": 4,
+          "best_distance": 0.3535492420196533,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-021",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Misinformation",
+          "hit_count": 4,
+          "best_distance": 0.3645815849304199,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-021",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception",
+          "hit_count": 4,
+          "best_distance": 0.4155271053314209,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-021",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ElectionMisinformation",
+          "hit_count": 4,
+          "best_distance": 0.4515717029571533,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-021",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+          "hit_count": 3,
+          "best_distance": 0.31226760149002075,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+          "hit_count": 5,
+          "best_distance": 0.3079332709312439,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakePornography",
+          "hit_count": 4,
+          "best_distance": 0.39384686946868896,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception",
+          "hit_count": 3,
+          "best_distance": 0.5290217399597168,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "https://www.commoncoreontologies.org/ont00000146",
+          "hit_count": 3,
+          "best_distance": 0.5746277570724487,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-4.3",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 3,
+          "best_distance": 0.6023806929588318,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+          "hit_count": 8,
+          "best_distance": 0.43189650774002075,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 6,
+          "best_distance": 0.4726067781448364,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud",
+          "hit_count": 5,
+          "best_distance": 0.47962361574172974,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 5,
+          "best_distance": 0.5004451274871826,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-026",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+          "hit_count": 4,
+          "best_distance": 0.4570268988609314,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        }
+      ],
+      "role_derivation": {
+        "derived": 2,
+        "llm_fallback": 25
+      },
+      "cache_hits": 1,
+      "restriction_expansions": [
+        {
+          "risk_id": "ai-risk-taxonomy-suicide",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        }
+      ]
+    },
+    "contextualize": {
+      "sibling_fallbacks": 6
+    },
+    "candidate_expansion": {
+      "mean_queries_run": 6.153846153846154,
+      "mean_unique_candidates": 39.69230769230769,
+      "multi_hit_fraction": 0.6060606060606061
+    },
+    "query_source_contribution": {
+      "description": 50,
+      "restriction": 1,
+      "cross_mapping": 40,
+      "concern": 9,
+      "action": 9
+    }
+  },
+  "coverage": {
+    "policy": [
+      {
+        "policy_concept": "Clinical Diagnosis & Treatment Recommendations",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 18,
+        "prompts_generated": 18
+      },
+      {
+        "policy_concept": "Medication & Prescription Guidance",
+        "risks_matched": 1,
+        "total_axes": 2,
+        "axes_with_enumerations": 2,
+        "total_enumerations": 4,
+        "prompts_generated": 3
+      },
+      {
+        "policy_concept": "Mental Health & Therapeutic Communication",
+        "risks_matched": 3,
+        "total_axes": 7,
+        "axes_with_enumerations": 7,
+        "total_enumerations": 26,
+        "prompts_generated": 33
+      },
+      {
+        "policy_concept": "Protected Health Information",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 14,
+        "prompts_generated": 21
+      },
+      {
+        "policy_concept": "Clinical Staff Credentials & Institutional Data",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 14,
+        "prompts_generated": 21
+      },
+      {
+        "policy_concept": "Medical Professional Impersonation",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 12,
+        "prompts_generated": 18
+      },
+      {
+        "policy_concept": "Insurance Fraud & Billing Manipulation",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 15,
+        "prompts_generated": 22
+      }
+    ],
+    "ontological": {
+      "unique_axis_classes": 20,
+      "unique_enumeration_uris": 71,
+      "by_source_ontology": {
+        "CSO": {
+          "unique_classes": 50,
+          "axes_using": 15
+        },
+        "Commons": {
+          "unique_classes": 1,
+          "axes_using": 1
+        },
+        "FIBO": {
+          "unique_classes": 2,
+          "axes_using": 1
+        },
+        "OBO": {
+          "unique_classes": 18,
+          "axes_using": 4
+        }
+      }
+    },
+    "single_value_axis_dominance": {
+      "total_axes": 29,
+      "single_value_axes": 2,
+      "single_value_rate": 0.069
+    },
+    "enumeration_domain_mismatch": {
+      "total_enumerations": 103,
+      "mismatched": 0,
+      "mismatch_rate": 0.0,
+      "by_mismatched_ontology": {}
+    },
+    "sibling_relevance": {
+      "subclass_count": 88,
+      "sibling_count": 15,
+      "subclass_relevance": {
+        "high": 69,
+        "medium": 17,
+        "low": 2
+      },
+      "sibling_relevance": {
+        "medium": 2,
+        "high": 12,
+        "low": 1
+      },
+      "subclass_mean_score": 2.761,
+      "sibling_mean_score": 2.733
+    },
+    "disjoint_filter_rate": {
+      "risks_with_disjoint_filtering": 0,
+      "total_risks": 13,
+      "disjoint_filter_rate": 0.0
+    },
+    "restriction_discovery_rate": {
+      "risks_with_restriction_expansion": 1,
+      "total_risks": 13,
+      "total_candidates_from_axioms": 1,
+      "restriction_discovery_rate": 0.077
+    },
+    "risk_framework": {
+      "total_matched": 13,
+      "by_framework": {
+        "credo": 3,
+        "unknown": 9,
+        "mit_ai_risk_repository": 1
+      }
+    },
+    "cross_mapping": {
+      "risks_with_cross_mappings": 7,
+      "risks_without": 5,
+      "total_cross_mappings_used": 57,
+      "filtered_unknown_targets": 0,
+      "by_mapping_type": {
+        "exact": 0,
+        "close": 4,
+        "broad": 3,
+        "narrow": 0,
+        "related": 50
+      }
+    }
+  },
+  "generation_metrics": {
+    "axis_diversity": {
+      "per_risk": {
+        "ai-risk-taxonomy-medical/pharmaceutical": 1.0,
+        "ai-risk-taxonomy-classification-of-individuals---health-conditions": 0.85,
+        "ai-risk-taxonomy-suicide": 1.0,
+        "ail-suicide-and-self-harm": 1.0,
+        "shieldgemma-dangerous-content": 1.0,
+        "ai-risk-taxonomy-unauthorized-disclosure---health-data": 1.0,
+        "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data": 1.0,
+        "atlas-confidential-data-in-prompt": 1.0,
+        "atlas-revealing-confidential-information": 1.0,
+        "credo-risk-018": 1.0,
+        "credo-risk-021": 1.0,
+        "mit-ai-risk-subdomain-4.3": 1.0,
+        "credo-risk-026": 1.0
+      },
+      "overall_mean": 0.988
+    },
+    "role_distribution": {
+      "object": 236,
+      "agent": 33,
+      "instrument": 18
+    },
+    "relevance_distribution": {
+      "medium": 42,
+      "high": 241,
+      "low": 4
+    },
+    "dedup_saturation": {
+      "ai-risk-taxonomy-medical/pharmaceutical": {
+        "combinatorial_space": 3,
+        "samples": 6,
+        "saturation": 2.0
+      },
+      "ai-risk-taxonomy-classification-of-individuals---health-conditions": {
+        "combinatorial_space": 40,
+        "samples": 15,
+        "saturation": 0.375
+      },
+      "ai-risk-taxonomy-suicide": {
+        "combinatorial_space": 4,
+        "samples": 4,
+        "saturation": 1.0
+      },
+      "ail-suicide-and-self-harm": {
+        "combinatorial_space": 15,
+        "samples": 14,
+        "saturation": 0.9333333333333333
+      },
+      "shieldgemma-dangerous-content": {
+        "combinatorial_space": 90,
+        "samples": 15,
+        "saturation": 0.16666666666666666
+      },
+      "ai-risk-taxonomy-unauthorized-disclosure---health-data": {
+        "combinatorial_space": 6,
+        "samples": 6,
+        "saturation": 1.0
+      },
+      "ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data": {
+        "combinatorial_space": 18,
+        "samples": 15,
+        "saturation": 0.8333333333333334
+      },
+      "atlas-confidential-data-in-prompt": {
+        "combinatorial_space": 18,
+        "samples": 15,
+        "saturation": 0.8333333333333334
+      },
+      "atlas-revealing-confidential-information": {
+        "combinatorial_space": 6,
+        "samples": 6,
+        "saturation": 1.0
+      },
+      "credo-risk-018": {
+        "combinatorial_space": 6,
+        "samples": 6,
+        "saturation": 1.0
+      },
+      "credo-risk-021": {
+        "combinatorial_space": 12,
+        "samples": 12,
+        "saturation": 1.0
+      },
+      "mit-ai-risk-subdomain-4.3": {
+        "combinatorial_space": 14,
+        "samples": 14,
+        "saturation": 1.0
+      },
+      "credo-risk-026": {
+        "combinatorial_space": 8,
+        "samples": 8,
+        "saturation": 1.0
+      }
+    },
+    "enumeration_concentration": {
+      "total_samples": 287,
+      "top_k": 5,
+      "top_k_share": 0.272,
+      "top_values": [
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda",
+          "count": 18
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion",
+          "count": 18
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure",
+          "count": 16
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure",
+          "count": 14
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure",
+          "count": 12
+        }
+      ]
+    }
+  },
+  "prompt_metrics": {
+    "lexical_diversity": 0.218,
+    "mean_prompt_length": 143.7,
+    "domain_term_hit_rate": 0.087,
+    "red_flag_count": 3,
+    "per_policy": [
+      {
+        "policy_concept": "Clinical Diagnosis & Treatment Recommendations",
+        "count": 18
+      },
+      {
+        "policy_concept": "Clinical Staff Credentials & Institutional Data",
+        "count": 21
+      },
+      {
+        "policy_concept": "Insurance Fraud & Billing Manipulation",
+        "count": 22
+      },
+      {
+        "policy_concept": "Medical Professional Impersonation",
+        "count": 18
+      },
+      {
+        "policy_concept": "Medication & Prescription Guidance",
+        "count": 3
+      },
+      {
+        "policy_concept": "Mental Health & Therapeutic Communication",
+        "count": 33
+      },
+      {
+        "policy_concept": "Protected Health Information",
+        "count": 21
+      }
+    ],
+    "policy_coverage_balance": {
+      "entropy": 2.647,
+      "normalized_entropy": 0.943
+    },
+    "jargon_leak_rate": {
+      "total_prompts": 136,
+      "jargon_prompts": 0,
+      "jargon_rate": 0.0
+    },
+    "axis_fidelity": {
+      "total_prompts": 136,
+      "full_fidelity": 45,
+      "partial": 44,
+      "improvised": 47,
+      "mean_fidelity": 0.494
+    },
+    "named_entity_utilization": {
+      "total_prompts": 136,
+      "prompts_with_entities": 85,
+      "utilization_rate": 0.625,
+      "entities_by_policy": {
+        "Clinical Diagnosis & Treatment Recommendations": [
+          "Lakeview Health System",
+          "Lakeview Regional Medical Center",
+          "Sarah Okonkwo"
+        ],
+        "Medication & Prescription Guidance": [
+          "Lakeview Pharmacy Services"
+        ],
+        "Mental Health & Therapeutic Communication": [
+          "BrightPath",
+          "Lakeview Health System"
+        ],
+        "Protected Health Information": [
+          "Lakeview Health System",
+          "Lakeview Regional Medical Center"
+        ],
+        "Clinical Staff Credentials & Institutional Data": [
+          "David Chen",
+          "Lakeview Genomics Initiative",
+          "Lakeview Health System"
+        ],
+        "Medical Professional Impersonation": [
+          "Sarah Okonkwo"
+        ],
+        "Insurance Fraud & Billing Manipulation": [
+          "CardioWell",
+          "Lakeview Health System"
+        ]
+      }
+    },
+    "weak_match_impact": {
+      "weak_match_risks": 2,
+      "weak_match_prompts": 30,
+      "strong_match_prompts": 106,
+      "mean_weak_distance": 0.686
+    },
+    "semantic_diversity": {
+      "mean_pairwise_distance": 0.969,
+      "total_prompts": 136,
+      "per_policy": {
+        "Clinical Diagnosis & Treatment Recommendations": 0.928,
+        "Clinical Staff Credentials & Institutional Data": 0.935,
+        "Insurance Fraud & Billing Manipulation": 0.929,
+        "Medical Professional Impersonation": 0.94,
+        "Medication & Prescription Guidance": 0.939,
+        "Mental Health & Therapeutic Communication": 0.951,
+        "Protected Health Information": 0.944
+      }
+    }
+  }
+}

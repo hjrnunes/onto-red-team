@@ -1,0 +1,42 @@
+{
+  "call_number": 9,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Compromise of privacy\nDescription: AI systems that memorize and leak sensitive personal data or infer private information about individuals without their consent. Unexpected or unauthorized sharing of data and information can compromise user expectation of privacy, assist identity theft, or loss of confidential intellectual property.\nConcern: None\nPolicy: Proprietary Technical Data\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation \u2014 Unauthorized collection, disclosure, or use of personal information that compromises individual privacy, exposes sensitive data, or enables identity theft or discrimination. [found by 11/18 queries]\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property\n- http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure: Direct Identifier Exposure \u2014 Disclosure of information that directly identifies individuals, such as names, addresses, government identifiers, or biometric data. [found by 11/18 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure: Financial Data Exposure \u2014 Disclosure of personal financial information including account numbers, credit scores, or transaction histories without authorization. [found by 11/18 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure\n- http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure: Health Data Exposure \u2014 Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories. [found by 11/18 queries]\n  Siblings: Unauthorized Surveillance, Direct Identifier Exposure, Employment Data Exposure\n- https://www.commoncoreontologies.org/ont00001094: Act of Espionage \u2014 An Act of Intelligence Gathering involving the obtaining of information that is considered secret or confidential without the permission of the holder of the information. [found by 11/18 queries]\n  Siblings: Act of Reconnaissance"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+        "cco_class_label": "Direct Identifier Exposure",
+        "role": "object",
+        "rationale": "This class represents the specific type of sensitive data (the object) being leaked, such as names or biometric data, which is central to the risk of privacy compromise."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure",
+        "cco_class_label": "Financial Data Exposure",
+        "role": "object",
+        "rationale": "This provides a specific dimension for the type of sensitive information (the object) that could be leaked, directly addressing the concern of identity theft mentioned in the risk description."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+        "cco_class_label": "Health Data Exposure",
+        "role": "object",
+        "rationale": "This serves as another variation of the sensitive information (the object) that an AI might memorize or infer, representing a high-stakes category of private data."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Proprietary Technical Data",
+    "risk_id": "mit-ai-risk-subdomain-2.1",
+    "risk_name": "Compromise of privacy",
+    "num_candidates": 5
+  }
+}

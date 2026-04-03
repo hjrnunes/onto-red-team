@@ -1,0 +1,36 @@
+{
+  "call_number": 11,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Adversarial Attacks\nDescription: The AI system may be vulnerable to adversarial attacks, including prompt-based attacks, which may induce the model to behave outside of its intended functionality.\nConcern: None\nPolicy: Operational Security & Critical Infrastructure\n\nCandidate ontology classes:\n- http://d3fend.mitre.org/ontologies/d3fend.owl#T0820: Exploitation for Evasion - ATTACK ICS \u2014 Adversaries may exploit a software vulnerability to take advantage of a programming error in a program, service, or within the operating system software or kernel itself to evade detection. Vulnerabilities may exist in software that can be used to disable or circumvent security features. [found by 5/9 queries]\n  Siblings: Rootkit - ATTACK ICS, Spoof Reporting Message - ATTACK ICS, System Binary Proxy Execution - ATTACK ICS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0031: Erode AI Model Integrity - ATLAS \u2014 Adversaries may degrade the target model's performance with adversarial data inputs to erode confidence in the system over time.\nThis can lead to the victim organization wasting time and money both attempting to fix the system and performing the tasks it was meant to automate by hand. [found by 3/9 queries]\n  Siblings: Denial of AI Service - ATLAS, Evade AI Model - ATLAS, Spamming AI System with Chaff Data - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0065: LLM Prompt Crafting - ATLAS \u2014 Adversaries may use their acquired knowledge of the target generative AI system to craft prompts that bypass its defenses and allow malicious instructions to be executed.\n\nThe adversary may iterate on the prompt to ensure that it works as-intended consistently. [found by 3/9 queries]\n  Siblings: Retrieval Content Crafting - ATLAS, Publish Poisoned Datasets - ATLAS, Develop Capabilities - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0020: Poison Training Data - ATLAS \u2014 Adversaries may attempt to poison datasets used by an AI model by modifying the underlying data or its labels.\nThis allows the adversary to embed vulnerabilities in AI models trained on the data that may not be easily detectable.\nData poisoning attacks may or may not require modifying the labels.\nThe embedded vulnerability is activated at a later time by data samples with an [Insert Backdoor Trigger](/techniques/AML.T0043.004)\n\nPoisoned data can be introduced via [AI Supply Chain Compromise](/techniques/AML.T0010) or the data may be poisoned after the adversary gains [Initial Access](/tactics/AML.TA0004) to the system. [found by 2/9 queries]\n  Siblings: Prompt Infiltration via Public-Facing Application - ATLAS, LLM Prompt Self-Replication - ATLAS, Modify AI Agent Configuration - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0018.000: Poison AI Model - ATLAS \u2014 Adversaries may manipulate an AI model's weights to change it's behavior or performance, resulting in a poisoned model.\nAdversaries may poison a model by by directly manipulating its weights, training the model on poisoned data, further fine-tuning the model, or otherwise interfering with its training process.\n\nThe change in behavior of poisoned models may be limited to targeted categories in predictive AI models, or targeted topics, concepts, or facts in generative AI models, or aim for a general performance degradation. [found by 2/9 queries]\n  Siblings: Embed Malware - ATLAS, Modify AI Model Architecture - ATLAS"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0065",
+        "cco_class_label": "LLM Prompt Crafting",
+        "role": "agent",
+        "rationale": "Adversarial attacks often involve crafting specific prompts to manipulate the AI's behavior, aligning with the 'LLM Prompt Crafting' ontology class."
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0031",
+        "cco_class_label": "Erode AI Model Integrity",
+        "role": "object",
+        "rationale": "The risk focuses on the AI system's vulnerability to attacks that degrade its performance and integrity, directly corresponding to 'Erode AI Model Integrity'."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Operational Security & Critical Infrastructure",
+    "risk_id": "credo-risk-041",
+    "risk_name": "Adversarial Attacks",
+    "num_candidates": 5
+  }
+}

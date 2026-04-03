@@ -1,0 +1,705 @@
+model: gemma-3-12b-it
+policy_set: aramco-enriched.json
+timestamp: '2026-04-02T17:04:13.306381+00:00'
+stages_completed:
+- classify
+- identify_domains
+- map_risks
+- anchor
+- contextualize
+- structure
+events:
+- stage: classify
+  event: type_distribution
+  distribution:
+    B: 4
+    C: 1
+- stage: identify_domains
+  event: selected_domains
+  domains:
+  - CCO
+  - Commons
+  - D3FEND
+  - CSO
+  - IOF
+  - FIBO
+- stage: map_risks
+  event: weak_match
+  risk_id: atlas-ip-information-in-prompt
+  distance: 0.6051768064498901
+- stage: map_risks
+  event: weak_match
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  distance: 0.6209696531295776
+- stage: map_risks
+  event: match_count
+  policy_concept: Proprietary Technical Data
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Operational Security & Critical Infrastructure
+  count: 2
+- stage: map_risks
+  event: weak_match
+  risk_id: llm032025-supply-chain
+  distance: 0.6316190958023071
+- stage: map_risks
+  event: weak_match
+  risk_id: atlas-external-resources-attack-agentic
+  distance: 0.6282826066017151
+- stage: map_risks
+  event: match_count
+  policy_concept: Supply Chain & Geopolitical Risks
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Insider Threat & Cybersecurity
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Compliance & Sanctions Evasion
+  count: 2
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-ip-information-in-prompt
+  queries_run: 9
+  raw_total: 90
+  unique_after_dedup: 54
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+  hit_count: 4
+  best_distance: 0.3385275602340698
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+  hit_count: 4
+  best_distance: 0.3712470531463623
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+  hit_count: 4
+  best_distance: 0.3754141330718994
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+  hit_count: 4
+  best_distance: 0.38781458139419556
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+  hit_count: 4
+  best_distance: 0.42057979106903076
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  hit_count: 1
+  best_distance: 0.3931668996810913
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty
+  hit_count: 1
+  best_distance: 0.4523963928222656
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://taxonomy-refiner.io/ontologies/cso#ProcessDisclosure
+  hit_count: 1
+  best_distance: 0.5519213080406189
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://taxonomy-refiner.io/ontologies/cso#CustomerListDisclosure
+  hit_count: 1
+  best_distance: 0.5581780672073364
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ProductDisclosureRight
+  hit_count: 1
+  best_distance: 0.5620064735412598
+  query_sources:
+  - description
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-network-disruption
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: https://www.commoncoreontologies.org/ont00000548
+  hit_count: 1
+  best_distance: 0.5030117034912109
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: https://www.commoncoreontologies.org/ont00002011
+  hit_count: 1
+  best_distance: 0.5382369756698608
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  hit_count: 1
+  best_distance: 0.5761828422546387
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: https://www.commoncoreontologies.org/ont00000997
+  hit_count: 1
+  best_distance: 0.5940040946006775
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: https://www.commoncoreontologies.org/ont00001271
+  hit_count: 1
+  best_distance: 0.5958373546600342
+  query_sources:
+  - description
+- stage: anchor
+  event: role_derivation
+  uri: https://www.commoncoreontologies.org/ont00000997
+  method: derived
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-harmful-code-generation
+  queries_run: 10
+  raw_total: 100
+  unique_after_dedup: 54
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  hit_count: 7
+  best_distance: 0.33810096979141235
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  hit_count: 6
+  best_distance: 0.37750935554504395
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+  hit_count: 6
+  best_distance: 0.484408438205719
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  hit_count: 4
+  best_distance: 0.45966029167175293
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions
+  hit_count: 4
+  best_distance: 0.5870343446731567
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: llm032025-supply-chain
+  queries_run: 13
+  raw_total: 130
+  unique_after_dedup: 98
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://taxonomy-refiner.io/ontologies/cso#ScientificMisinformation
+  hit_count: 4
+  best_distance: 0.4883168935775757
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+  hit_count: 3
+  best_distance: 0.4892652630805969
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesRestrictions/TradingRestriction
+  hit_count: 3
+  best_distance: 0.5359488129615784
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesRestrictions/SecuritiesRestriction
+  hit_count: 3
+  best_distance: 0.5414023995399475
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+  hit_count: 3
+  best_distance: 0.5616382360458374
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesRestrictions/SecuritiesRestriction
+  method: llm_fallback
+- stage: anchor
+  event: restriction_expansion
+  risk_id: atlas-external-resources-attack-agentic
+  source_uri: ''
+  candidates_added: 1
+  source_type: restriction
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-external-resources-attack-agentic
+  queries_run: 2
+  raw_total: 20
+  unique_after_dedup: 14
+  kept_after_filter: 6
+  restriction_candidates_added: 1
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+  hit_count: 2
+  best_distance: 0.5379619598388672
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: https://www.commoncoreontologies.org/ont00001017
+  hit_count: 2
+  best_distance: 0.5638723373413086
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  hit_count: 2
+  best_distance: 0.5780174136161804
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: https://www.omg.org/spec/Commons/PartiesAndSituations/Agent
+  hit_count: 2
+  best_distance: 0.5854082107543945
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  hit_count: 2
+  best_distance: 0.5929437875747681
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: https://www.commoncoreontologies.org/ont00001379
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: role_derivation
+  uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  method: llm_fallback
+- stage: anchor
+  event: restriction_expansion
+  risk_id: nist-information-security
+  source_uri: ''
+  candidates_added: 2
+  source_type: restriction
+- stage: anchor
+  event: candidate_expansion
+  risk_id: nist-information-security
+  queries_run: 67
+  raw_total: 670
+  unique_after_dedup: 329
+  kept_after_filter: 7
+  restriction_candidates_added: 2
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+  hit_count: 20
+  best_distance: 0.4502360224723816
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/Markets/ApprovedReportingMechanism
+  hit_count: 17
+  best_distance: 0.5309778451919556
+  query_sources:
+  - action
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  hit_count: 15
+  best_distance: 0.4569283127784729
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  hit_count: 14
+  best_distance: 0.45966029167175293
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentifier
+  hit_count: 12
+  best_distance: 0.5346765518188477
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentificationScheme
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/Security
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: credo-risk-038
+  queries_run: 9
+  raw_total: 90
+  unique_after_dedup: 47
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  hit_count: 4
+  best_distance: 0.3708585500717163
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+  hit_count: 4
+  best_distance: 0.4043664336204529
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+  hit_count: 4
+  best_distance: 0.4406047463417053
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+  hit_count: 4
+  best_distance: 0.4587726593017578
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+  hit_count: 4
+  best_distance: 0.4726067781448364
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ail-nonviolent-crimes
+  queries_run: 21
+  raw_total: 210
+  unique_after_dedup: 114
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  hit_count: 8
+  best_distance: 0.42762500047683716
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  hit_count: 8
+  best_distance: 0.45966029167175293
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+  hit_count: 7
+  best_distance: 0.5362517237663269
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  hit_count: 6
+  best_distance: 0.3591580390930176
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+  hit_count: 6
+  best_distance: 0.4102236032485962
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests
+  uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+  hit_count: 1
+  best_distance: 0.5087563991546631
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests
+  uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+  hit_count: 1
+  best_distance: 0.5286865234375
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  hit_count: 1
+  best_distance: 0.5352091193199158
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests
+  uri: https://www.commoncoreontologies.org/ont00000548
+  hit_count: 1
+  best_distance: 0.540141224861145
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests
+  uri: http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure
+  hit_count: 1
+  best_distance: 0.5421290397644043
+  query_sources:
+  - description
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  method: llm_fallback
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  sibling_count: 2
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions
+  sibling_count: 2
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+  sibling_count: 3
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  sibling_count: 2
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+  sibling_count: 2
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure
+  sibling_count: 3

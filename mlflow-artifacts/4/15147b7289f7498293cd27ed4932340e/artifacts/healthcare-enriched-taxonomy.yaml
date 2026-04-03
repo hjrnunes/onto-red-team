@@ -1,0 +1,472 @@
+taxonomies:
+- id: client-healthcare-enriched
+  name: Client HEALTHCARE-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-healthcare-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+- id: client-healthcare-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+entries:
+- id: client-healthcare-enriched-medicalpharmaceutical
+  name: Medical/Pharmaceutical
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: medicalpharmaceutical
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 4
+    source_ontologies:
+    - OBO
+    axes:
+    - class: pharmaceutical
+      uri: http://purl.obolibrary.org/obo/CHEBI_52217
+      roles:
+      - object
+      enumeration_count: 3
+    - class: drug administration
+      uri: http://purl.obolibrary.org/obo/OAE_0000011
+      roles:
+      - object
+      enumeration_count: 1
+    - class: administration of drug with incorrect route
+      uri: http://purl.obolibrary.org/obo/OAE_0000230
+      roles:
+      - object
+      enumeration_count: 0
+- id: client-healthcare-enriched-specialized-advice
+  name: Specialized Advice
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: specialized-advice
+  related_mappings:
+  - credo-risk-005
+  - credo-risk-027
+  - credo-risk-033
+  - credo-risk-036
+  - granite-answer-relevance
+  - granite-evasiveness
+  - granite-groundedness
+  - granite-guardian-harm
+  - granite-harm-engagement
+  - granite-relevance
+  - granite-social-bias
+  - granite-unethical-behavior
+  - atlas-incomplete-advice
+  - atlas-model-usage-rights
+  - mit-ai-risk-subdomain-5.1
+  - nist-data-privacy
+  - nist-information-integrity
+  - llm092025-misinformation
+  - credo-risk-029
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    - OBO
+    axes:
+    - class: Failure to offer information to initiate social interaction
+      uri: http://purl.obolibrary.org/obo/HP_5200113
+      roles:
+      - agent
+      enumeration_count: 2
+    - class: Misinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-healthcare-enriched-pseudo-pharmaceuticals
+  name: Pseudo-pharmaceuticals
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: pseudo-pharmaceuticals
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 13
+    source_ontologies:
+    - OBO
+    axes:
+    - class: pharmaceutical
+      uri: http://purl.obolibrary.org/obo/CHEBI_52217
+      roles:
+      - object
+      enumeration_count: 3
+    - class: drug
+      uri: http://purl.obolibrary.org/obo/CHEBI_23888
+      roles:
+      - object
+      enumeration_count: 10
+- id: client-healthcare-enriched-suicide-and-self-harm
+  name: Suicide and Self-Harm
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: suicide-and-self-harm
+  related_mappings:
+  - credo-risk-003
+  - credo-risk-007
+  - credo-risk-009
+  - credo-risk-010
+  - credo-risk-033
+  - credo-risk-036
+  - credo-risk-037
+  - granite-answer-relevance
+  - granite-groundedness
+  - granite-guardian-harm
+  - granite-harm-engagement
+  - granite-sexual-content
+  - atlas-data-curation
+  - atlas-harmful-output
+  - atlas-nonconsensual-use
+  - mit-ai-risk-subdomain-1.2
+  - mit-ai-risk-subdomain-1.3
+  - mit-ai-risk-subdomain-2.2
+  - nist-dangerous-violent-or-hateful-content
+  - nist-harmful-bias-or-homogenization
+  - nist-human-ai-configuration
+  - nist-obscene-degrading-and-or-abusive-content
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Societal Harm - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.002
+      roles:
+      - agent
+      enumeration_count: 4
+    - class: Algorithmic Discrimination
+      uri: http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination
+      roles:
+      - instrument
+      enumeration_count: 3
+- id: client-healthcare-enriched-harm-engagement
+  name: Harm Engagement
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: harm-engagement
+  broad_mappings:
+  - granite-guardian-harm
+  related_mappings:
+  - atlas-harmful-output
+  - ail-child-sexual-exploitation
+  - ail-defamation
+  - ail-hate
+  - ail-intellectual-property
+  - ail-specialized-advice
+  - ail-suicide-and-self-harm
+  - credo-risk-002
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 15
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Dangerous Information
+      uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+      roles:
+      - object
+      enumeration_count: 5
+    - class: Exposure of Sensitive Information Due to Incompatible Policies
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213
+      roles:
+      - object
+      enumeration_count: 10
+- id: client-healthcare-enriched-provoking
+  name: Provoking
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: provoking
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 10
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Incitement to Hatred
+      uri: http://taxonomy-refiner.io/ontologies/cso#IncitementToHatred
+      roles:
+      - object
+      enumeration_count: 6
+    - class: Harassment
+      uri: http://taxonomy-refiner.io/ontologies/cso#Harassment
+      roles:
+      - agent
+      enumeration_count: 4
+- id: client-healthcare-enriched-unauthorized-disclosure
+  name: Unauthorized disclosure
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-disclosure
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Diagnosis Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      roles:
+      - object
+      enumeration_count: 2
+    - class: Medical Record Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      roles:
+      - object
+      enumeration_count: 2
+- id: client-healthcare-enriched-unauthorized-collection
+  name: Unauthorized collection
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-collection
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 9
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - agent
+      enumeration_count: 6
+- id: client-healthcare-enriched-unauthorized-generation
+  name: Unauthorized generation
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-generation
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Diagnosis Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      roles:
+      - object
+      enumeration_count: 2
+- id: client-healthcare-enriched-confidential-data-in-prompt
+  name: Confidential data in prompt
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: confidential-data-in-prompt
+  broad_mappings:
+  - nist-intellectual-property
+  related_mappings:
+  - ail-privacy
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-other
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Exposure of Sensitive Information Due to Incompatible Policies
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213
+      roles:
+      - object
+      enumeration_count: 7
+    - class: LLM Data Leakage - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057
+      roles:
+      - instrument
+      enumeration_count: 4
+- id: client-healthcare-enriched-data-privacy
+  name: Data Privacy
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: data-privacy
+  broad_mappings:
+  - atlas-attribute-inference-attack
+  - atlas-data-privacy-rights
+  - atlas-data-usage-rights
+  - atlas-exposing-personal-information
+  - atlas-ip-information-in-prompt
+  - atlas-legal-accountability
+  - atlas-membership-inference-attack
+  - atlas-model-usage-rights
+  - atlas-nonconsensual-use
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  related_mappings:
+  - ail-intellectual-property
+  - ail-privacy
+  - ail-specialized-advice
+  - credo-risk-023
+  - credo-risk-029
+  - credo-risk-036
+  - credo-risk-037
+  - atlas-harmful-output
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 8
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Infer Training Data Membership - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024.000
+      roles:
+      - instrument
+      enumeration_count: 2
+    - class: Exfiltration via AI Inference API - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+      roles:
+      - instrument
+      enumeration_count: 3
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-regulatory-compliance
+  name: Regulatory compliance
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: regulatory-compliance
+  related_mappings:
+  - granite-guardian-harm
+  - atlas-legal-accountability
+  - mit-ai-risk-subdomain-6.4
+  - mit-ai-risk-subdomain-6.5
+  - nist-data-privacy
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: AI Software - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001
+      roles:
+      - instrument
+      enumeration_count: 4
+    - class: AI-Enabled Product or Service - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-governance-failures
+  name: Governance failures
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: governance-failures
+  close_mappings:
+  - mit-ai-risk-subdomain-6.5
+  related_mappings:
+  - atlas-legal-accountability
+  - mit-ai-risk-subdomain-7.3
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 8
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Hardware - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.000
+      roles:
+      - instrument
+      enumeration_count: 4
+    - class: AI Software - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-healthcare-enriched-fraud-scams
+  name: Fraud, scams
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: fraud-scams
+  close_mappings:
+  - credo-risk-026
+  related_mappings:
+  - ail-defamation
+  - ail-nonviolent-crimes
+  - atlas-bypassing-learning
+  - atlas-nonconsensual-use
+  - atlas-plagiarism
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 16
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Generate Deepfakes
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0088
+      roles:
+      - instrument
+      enumeration_count: 4
+    - class: Generative AI
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0016.002
+      roles:
+      - instrument
+      enumeration_count: 2
+    - class: Evade AI Model
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015
+      roles:
+      - instrument
+      enumeration_count: 10
+- id: client-healthcare-enriched-financial-records
+  name: Financial records
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: financial-records
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 9
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Financial Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - agent
+      enumeration_count: 6

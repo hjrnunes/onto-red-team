@@ -1,0 +1,36 @@
+{
+  "call_number": 14,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Supply Chain Vulnerabilities\nDescription: LLM supply chains are susceptible to various vulnerabilities, which can affect the integrity of training data, models, and deployment platforms. These risks can result in biased outputs, security breaches, or system failures. While traditional software vulnerabilities focus on issues like code flaws and dependencies, in ML the risks also extend to third-party pre-trained models and data.\nConcern: None\nPolicy: Supply Chain & Geopolitical Risks\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#ScientificMisinformation: Scientific Misinformation \u2014 Inaccurate claims about scientific findings, research methods, or consensus that undermine evidence-based understanding of natural phenomena. [found by 4/13 queries]\n  Siblings: Political Misinformation, Health Misinformation, Election Misinformation\n- http://taxonomy-refiner.io/ontologies/cso#Misinformation: Misinformation \u2014 False or inaccurate information shared without malicious intent to deceive, often due to misunderstanding, carelessness, or lack of fact-checking. [found by 3/13 queries]\n  Siblings: Financial Fraud, Manipulation, Academic Dishonesty\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesRestrictions/TradingRestriction: trading restriction \u2014 restriction that limits trading in some manner, typically summarized on term sheets or in other documentation, including but not limited to restrictions on day trading [found by 3/13 queries]\n  Siblings: legal holding restriction, fund investment restrictions set, contractual restriction\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesRestrictions/SecuritiesRestriction: securities restriction \u2014 legal obligation that is applicable to a financial instrument or listing as mandated in a law or by contract [found by 3/13 queries]\n  Siblings: notification obligation, delivery obligation, consumer credit requirement\n- http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure: Health Data Exposure \u2014 Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories. [found by 3/13 queries]\n  Siblings: Unauthorized Surveillance, Direct Identifier Exposure, Employment Data Exposure"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#Misinformation",
+        "cco_class_label": "Misinformation",
+        "role": "object",
+        "rationale": "The risk involves the integrity of training data, which can be compromised by misinformation, leading to biased outputs."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+        "cco_class_label": "Health Data Exposure",
+        "role": "object",
+        "rationale": "The risk can involve unauthorized disclosure of sensitive data, including health data, which can be part of the training data or model outputs."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Supply Chain & Geopolitical Risks",
+    "risk_id": "llm032025-supply-chain",
+    "risk_name": "Supply Chain Vulnerabilities",
+    "num_candidates": 5
+  }
+}

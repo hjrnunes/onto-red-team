@@ -1,0 +1,42 @@
+{
+  "call_number": 26,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Spreading disinformation\nDescription: Generative AI models might be used to intentionally create misleading or false information to deceive or influence a targeted audience.\nConcern: Spreading disinformation might affect human's ability to make informed decisions. A model that has this potential must be properly governed.\nPolicy: Misinformation\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/MuniIssuance/Dissemination: dissemination \u2014 None [found by 4/10 queries]\n- https://spec.edmcouncil.org/fibo/ontology/FND/GoalsAndObjectives/Objectives/Strategy: strategy \u2014 high-level approach that guides decision-making and the coordination of actions and plans in pursuit of some aim [found by 4/10 queries]\n  Siblings: method\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 9/10 queries]\n  Siblings: automated underwriting system, automated system, party\n- https://www.omg.org/spec/Commons/Documents/Notice: notice \u2014 announcement, communication, intimation, or advance warning of something, usually, but not necessarily, to allow preparations to be made [found by 8/10 queries]\n  Siblings: indication of interest, publication, reference document\n- http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation: Deepfake Disinformation \u2014 Use of AI-generated synthetic media depicting individuals saying or doing things they did not, created intentionally to deceive and manipulate audiences. [found by 7/10 queries]\n  Siblings: State-Sponsored Propaganda, Conspiracy Theory Promotion"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+        "cco_class_label": "software agent",
+        "role": "agent",
+        "rationale": "Represents the entity (AI or automated system) that performs the action of generating or spreading the disinformation."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+        "cco_class_label": "Deepfake Disinformation",
+        "role": "object",
+        "rationale": "Represents the specific type or medium of the disinformation being spread, serving as the content/object of the risk."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/Documents/Notice",
+        "cco_class_label": "notice",
+        "role": "object",
+        "rationale": "Represents the format or vehicle (announcements, communications) through which the disinformation is disseminated."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Misinformation",
+    "risk_id": "atlas-spreading-disinformation",
+    "risk_name": "Spreading disinformation",
+    "num_candidates": 5
+  }
+}

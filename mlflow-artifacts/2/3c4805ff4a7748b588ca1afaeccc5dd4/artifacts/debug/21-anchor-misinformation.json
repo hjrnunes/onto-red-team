@@ -1,0 +1,36 @@
+{
+  "call_number": 21,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Disinformation\nDescription: Generative AI models might be used to intentionally create misleading or false information to deceive or influence a targeted audience.\nConcern: Spreading disinformation might affect human's ability to make informed decisions. A model that has this potential must be properly governed.\nPolicy: Misinformation\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#Disinformation: Disinformation \u2014 Deliberately false information spread with malicious intent to deceive, manipulate public opinion, or cause harm to individuals, groups, or institutions. [found by 7/10 queries]\n  Siblings: Financial Fraud, Manipulation, Academic Dishonesty\n- http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation: Deepfake Disinformation \u2014 Use of AI-generated synthetic media depicting individuals saying or doing things they did not, created intentionally to deceive and manipulate audiences. [found by 6/10 queries]\n  Siblings: State-Sponsored Propaganda, Conspiracy Theory Promotion\n- http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda: State-Sponsored Propaganda \u2014 Coordinated spread of biased or false information by government actors to shape public opinion, justify policies, or undermine adversaries. [found by 6/10 queries]\n  Siblings: Deepfake Disinformation, Conspiracy Theory Promotion\n- http://taxonomy-refiner.io/ontologies/cso#Misinformation: Misinformation \u2014 False or inaccurate information shared without malicious intent to deceive, often due to misunderstanding, carelessness, or lack of fact-checking. [found by 5/10 queries]\n  Siblings: Financial Fraud, Manipulation, Academic Dishonesty\n- http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception: Fraud and Deception \u2014 Deliberate misrepresentation, manipulation, or false information intended to deceive individuals for personal gain, harm others, or undermine trust in institutions and information. [found by 5/10 queries]\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#Disinformation",
+        "cco_class_label": "Disinformation",
+        "role": "object",
+        "rationale": "The core concern of the risk is the spread of disinformation, which is explicitly defined by this ontology class."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#Agent",
+        "cco_class_label": "Agent",
+        "role": "agent",
+        "rationale": "The risk involves AI models acting as the agents who generate and spread disinformation."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Misinformation",
+    "risk_id": "atlas-spreading-disinformation",
+    "risk_name": "Disinformation",
+    "num_candidates": 5
+  }
+}

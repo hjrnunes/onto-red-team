@@ -1,0 +1,313 @@
+taxonomies:
+- id: client-swb-enriched
+  name: Client SWB-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-swb-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-swb-enriched
+- id: client-swb-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-swb-enriched
+- id: client-swb-enriched-routing
+  name: Routing Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-swb-enriched
+entries:
+- id: client-swb-enriched-personal-info
+  name: Personal info
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-confidentiality
+  tag: personal-info
+  broad_mappings:
+  - nist-data-privacy
+  related_mappings:
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-ai
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 9
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - agent
+      enumeration_count: 4
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - concern
+      enumeration_count: 5
+- id: client-swb-enriched-confidential-data
+  name: Confidential data
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-confidentiality
+  tag: confidential-data
+  broad_mappings:
+  - nist-intellectual-property
+  related_mappings:
+  - ail-privacy
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-other
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 8
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Trade Secret Disclosure
+      uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - object
+      enumeration_count: 5
+- id: client-swb-enriched-creditworthiness
+  name: Creditworthiness
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-confidentiality
+  tag: creditworthiness
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 5
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: Credit Rating
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Consumer Credit Requirement
+      uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerCreditRequirement
+      roles:
+      - agent
+      enumeration_count: 2
+- id: client-swb-enriched-financial-advice
+  name: Financial Advice
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-confidentiality
+  tag: financial-advice
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: Finance Company
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinanceCompany
+      roles: &id001
+      - agent
+      enumeration_count: 3
+    - class: Financial Industry Context
+      uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext
+      roles: &id002
+      - object
+      enumeration_count: 8
+- id: client-swb-enriched-specialized-advice
+  name: Specialized Advice
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: specialized-advice
+  related_mappings:
+  - credo-risk-005
+  - credo-risk-027
+  - credo-risk-033
+  - credo-risk-036
+  - granite-answer-relevance
+  - granite-evasiveness
+  - granite-groundedness
+  - granite-guardian-harm
+  - granite-harm-engagement
+  - granite-relevance
+  - granite-social-bias
+  - granite-unethical-behavior
+  - atlas-incomplete-advice
+  - atlas-model-usage-rights
+  - mit-ai-risk-subdomain-5.1
+  - nist-data-privacy
+  - nist-information-integrity
+  - llm092025-misinformation
+  - credo-risk-029
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 13
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Misinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - agent
+      enumeration_count: 9
+- id: client-swb-enriched-financial
+  name: Financial
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: financial
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: Finance Company
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinanceCompany
+      roles: *id001
+      enumeration_count: 3
+    - class: Financial Industry Context
+      uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext
+      roles: *id002
+      enumeration_count: 8
+- id: client-swb-enriched-scams
+  name: Scams
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: scams
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles: &id003
+      - object
+      enumeration_count: 7
+    - class: Social Engineering Fraud
+      uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      roles: &id004
+      - agent
+      enumeration_count: 4
+- id: client-swb-enriched-fraud-scams
+  name: Fraud, scams
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: fraud-scams
+  close_mappings:
+  - mit-ai-risk-subdomain-4.3
+  related_mappings:
+  - ail-nonviolent-crimes
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-2.2
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 4
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Social Engineering Fraud
+      uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      roles:
+      - agent
+      enumeration_count: 4
+    - class: Deepfake Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      roles:
+      - instrument
+      enumeration_count: 0
+- id: client-swb-enriched-fraud-manipulation
+  name: Fraud & Manipulation
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: fraud-manipulation
+  close_mappings:
+  - credo-risk-026
+  related_mappings:
+  - ail-defamation
+  - ail-nonviolent-crimes
+  - atlas-bypassing-learning
+  - atlas-nonconsensual-use
+  - atlas-plagiarism
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 9
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles: &id005
+      - object
+      enumeration_count: 7
+    - class: Deepfake Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      roles: &id006
+      - agent
+      enumeration_count: 2
+- id: client-swb-enriched-ai-scams
+  name: AI Scams
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: ai-scams
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles: *id003
+      enumeration_count: 7
+    - class: Social Engineering Fraud
+      uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      roles: *id004
+      enumeration_count: 4
+- id: client-swb-enriched-financial-fraud
+  name: Financial Fraud
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: financial-fraud
+  close_mappings:
+  - credo-risk-026
+  related_mappings:
+  - ail-defamation
+  - ail-nonviolent-crimes
+  - atlas-bypassing-learning
+  - atlas-nonconsensual-use
+  - atlas-plagiarism
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 9
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles: *id005
+      enumeration_count: 7
+    - class: Deepfake Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      roles: *id006
+      enumeration_count: 2

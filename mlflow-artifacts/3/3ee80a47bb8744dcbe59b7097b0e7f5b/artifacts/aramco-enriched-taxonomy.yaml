@@ -1,0 +1,272 @@
+taxonomies:
+- id: client-aramco-enriched
+  name: Client ARAMCO-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-aramco-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-aramco-enriched
+- id: client-aramco-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-aramco-enriched
+- id: client-aramco-enriched-scope-regulatory
+  name: Scope & Regulatory Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-aramco-enriched
+entries:
+- id: client-aramco-enriched-ip-rights
+  name: IP Rights
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-confidentiality
+  tag: ip-rights
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Trade Secret Disclosure
+      uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Intellectual Property
+      uri: http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty
+      roles:
+      - agent
+      enumeration_count: 4
+- id: client-aramco-enriched-sensitive-info
+  name: Sensitive Info
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-confidentiality
+  tag: sensitive-info
+  close_mappings:
+  - credo-risk-037
+  broad_mappings:
+  - atlas-exposing-personal-information
+  - atlas-prompt-leaking
+  - atlas-revealing-confidential-information
+  related_mappings:
+  - ail-defamation
+  - ail-intellectual-property
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - ail-violent-crimes
+  - atlas-attribute-inference-attack
+  - atlas-confidential-data-in-prompt
+  - atlas-confidential-information-in-data
+  - atlas-ip-information-in-prompt
+  - atlas-membership-inference-attack
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  - credo-risk-036
+  - credo-risk-038
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 10
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - agent
+      enumeration_count: 6
+- id: client-aramco-enriched-network-disruption
+  name: Network disruption
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-safety
+  tag: network-disruption
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 1
+    source_ontologies:
+    - CCO
+    axes:
+    - class: Disrupting Disposition
+      uri: https://www.commoncoreontologies.org/ont00000997
+      roles:
+      - instrument
+      enumeration_count: 1
+    - class: Cyberterrorism
+      uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+      roles:
+      - agent
+      enumeration_count: 0
+- id: client-aramco-enriched-adversarial-attacks
+  name: Adversarial attacks
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-safety
+  tag: adversarial-attacks
+  related_mappings:
+  - granite-guardian-harm
+  - granite-jailbreak
+  - atlas-evasion-attack
+  - mit-ai-risk-subdomain-2.2
+  - mit-ai-risk-subdomain-7.3
+  - nist-information-security
+  - llm042025-data-and-model-poisoning
+  - llm072025-system-prompt-leakage
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 12
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - agent
+      enumeration_count: 9
+    - class: Harmful How-To
+      uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-aramco-enriched-supply-chain-risk
+  name: Supply Chain Risk
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-safety
+  tag: supply-chain-risk
+  broad_mappings:
+  - atlas-data-acquisition
+  - atlas-data-contamination
+  - atlas-data-curation
+  - atlas-data-provenance
+  - atlas-data-usage-rights
+  - atlas-lack-of-data-transparency
+  - atlas-model-usage-rights
+  - atlas-untraceable-attribution
+  related_mappings:
+  - atlas-improper-retraining
+  - atlas-inaccessible-training-data
+  - credo-risk-047
+  - credo-risk-048
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Misinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Scientific Misinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#ScientificMisinformation
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-aramco-enriched-cyberattacks
+  name: Cyberattacks
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-confidentiality
+  tag: cyberattacks
+  broad_mappings:
+  - atlas-attribute-inference-attack
+  - atlas-data-contamination
+  - atlas-data-poisoning
+  - atlas-evasion-attack
+  - atlas-extraction-attack
+  - atlas-harmful-code-generation
+  - atlas-prompt-injection
+  - atlas-prompt-leaking
+  - atlas-prompt-priming
+  - atlas-unreliable-source-attribution
+  related_mappings:
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - credo-risk-038
+  - credo-risk-040
+  - credo-risk-041
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Cyberterrorism
+      uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+      roles:
+      - agent
+      enumeration_count: 2
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - object
+      enumeration_count: 9
+- id: client-aramco-enriched-data-breaches
+  name: Data Breaches
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-confidentiality
+  tag: data-breaches
+  close_mappings:
+  - atlas-revealing-confidential-information
+  related_mappings:
+  - ail-privacy
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-2.1
+  - mit-ai-risk-subdomain-2.2
+  - nist-information-security
+  - llm022025-sensitive-information-disclosure
+  - llm072025-system-prompt-leakage
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Trade Secret Disclosure
+      uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Financial Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-aramco-enriched-regulatory-compliance
+  name: Regulatory Compliance
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-scope-regulatory
+  tag: regulatory-compliance
+  related_mappings:
+  - granite-guardian-harm
+  - atlas-legal-accountability
+  - mit-ai-risk-subdomain-6.4
+  - mit-ai-risk-subdomain-6.5
+  - nist-data-privacy
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: Regulation Identifier
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/RegulationIdentifier
+      roles:
+      - object
+      enumeration_count: 1
+    - class: Regulatory Capacity
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/RegulatoryCapacity
+      roles:
+      - agent
+      enumeration_count: 5

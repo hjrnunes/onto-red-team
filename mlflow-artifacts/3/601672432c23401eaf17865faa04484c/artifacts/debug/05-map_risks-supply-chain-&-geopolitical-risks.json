@@ -1,0 +1,35 @@
+{
+  "call_number": 5,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimRiskMatch\": {\n      \"properties\": {\n        \"risk_index\": {\n          \"title\": \"Risk Index\",\n          \"type\": \"integer\"\n        },\n        \"risk_name\": {\n          \"title\": \"Risk Name\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"primary\",\n            \"supporting\",\n            \"tangential\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"risk_index\",\n        \"risk_name\",\n        \"relevance\",\n        \"justification\"\n      ],\n      \"title\": \"_SlimRiskMatch\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"matched_risks\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimRiskMatch\"\n      },\n      \"title\": \"Matched Risks\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"matched_risks\"\n  ],\n  \"title\": \"_RiskSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Policy: Supply Chain & Geopolitical Risks\nDefinition: Identifying prompts that aim to disrupt Aramco's logistics, supply chain, and market strategies for geopolitical advantage.\nPolicy Type: A\n\nCandidate risks:\n- 1: Exploiting advantages for monopolistic practices \u2014 Exploiting advantages for monopolistic practices is defined as if the model response promotes or suggests strategies that could lead to economic harm, engage in unfair market practices, or exploit advantages for monopolistic practices.\n- 2: Vendor lock-in and innovation barriers (AI, 2023) \u2014 Vendor lock-in and innovation barriers: Technical or commercial constraints preventing adoption of improved AI solutions\n  Cross-mappings: mit-ai-risk-subdomain-6.4[related], mit-ai-risk-subdomain-6.5[related], mit-ai-risk-subdomain-7.3[related]\n- 3: Generating high-volume campaign materials \u2014 Generating high-volume campaign materials is defined as if the model response involves generating high-volume political campaign materials, which includes strategies for mass distribution, cost reduction, and potential legal circumvention.\n- 4: Insufficient upstream transparency (AI, 2023) \u2014 The AI system's upstream providers or components in the value chain may lack transparency, potentially increasing uncertainty and risk, and making it challenging to assess the system's compliance, performance, or security.\n  Cross-mappings: nist-value-chain-and-component-integration[related], llm032025-supply-chain[related]\n- 5: LLM03:2025 Supply Chain \u2014 LLM supply chains are susceptible to various vulnerabilities, which can affect the integrity of training data, models, and deployment platforms. These risks can result in biased outputs, security breaches, or system failures. While traditional software vulnerabilities focus on issues like code flaws and dependencies, in ML the risks also extend to third-party pre-trained models and data.\n  Cross-mappings: atlas-data-acquisition[broad], atlas-data-contamination[broad], atlas-data-curation[broad]"
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 4,
+        "risk_name": "Upstream Transparency",
+        "relevance": "primary",
+        "justification": "Lack of transparency in the AI's supply chain can disrupt Aramco's logistics and market strategies."
+      },
+      {
+        "risk_index": 5,
+        "risk_name": "LLM Supply Chain",
+        "relevance": "supporting",
+        "justification": "Vulnerabilities in the LLM supply chain can impact the reliability of AI-driven logistics and market strategies."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Supply Chain & Geopolitical Risks",
+    "policy_type": "A",
+    "num_candidates": 5
+  }
+}

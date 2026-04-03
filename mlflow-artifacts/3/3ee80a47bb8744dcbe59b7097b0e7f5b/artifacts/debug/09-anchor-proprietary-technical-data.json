@@ -1,0 +1,36 @@
+{
+  "call_number": 9,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Sensitive Info\nDescription: Sensitive information can affect both the LLM and its application context. This includes personal identifiable information (PII), financial details, health records, confidential business data, security credentials, and legal documents. Proprietary models may also have unique training methods and source code considered sensitive, especially in closed or foundation models.\nConcern: None\nPolicy: Proprietary Technical Data\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure: Financial Data Exposure \u2014 Disclosure of personal financial information including account numbers, credit scores, or transaction histories without authorization. [found by 10/20 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure\n- http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure: Employment Data Exposure \u2014 Unauthorized disclosure of employment information including compensation, performance evaluations, or workplace records that individuals expect to remain confidential. [found by 9/20 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure\n- http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure: Direct Identifier Exposure \u2014 Disclosure of information that directly identifies individuals, such as names, addresses, government identifiers, or biometric data. [found by 9/20 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure: Health Data Exposure \u2014 Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories. [found by 9/20 queries]\n  Siblings: Unauthorized Surveillance, Direct Identifier Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation \u2014 Unauthorized collection, disclosure, or use of personal information that compromises individual privacy, exposes sensitive data, or enables identity theft or discrimination. [found by 7/20 queries]\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+        "cco_class_label": "Direct Identifier Exposure",
+        "role": "object",
+        "rationale": "Sensitive information often includes direct identifiers like names, addresses, and government IDs which are the core focus of this risk."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+        "cco_class_label": "Privacy Violation",
+        "role": "agent",
+        "rationale": "The risk of sensitive information exposure directly relates to privacy violations, as unauthorized access or disclosure compromises individual privacy."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Proprietary Technical Data",
+    "risk_id": "llm022025-sensitive-information-disclosure",
+    "risk_name": "Sensitive Info",
+    "num_candidates": 5
+  }
+}

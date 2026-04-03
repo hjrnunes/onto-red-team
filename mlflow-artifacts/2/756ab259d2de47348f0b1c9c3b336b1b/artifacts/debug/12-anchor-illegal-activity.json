@@ -1,0 +1,36 @@
+{
+  "call_number": 12,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Dangerous Content\nDescription: Eased production of and access to violent, inciting, radicalizing, or threatening content as well as recommendations to carry out self-harm or conduct illegal activities. Includes difficulty controlling public exposure to hateful and disparaging or stereotyping content.\nConcern: None\nPolicy: Illegal Activity\n\nCandidate ontology classes:\n- http://d3fend.mitre.org/ontologies/d3fend.owl#OperationalRiskAssessment: Operational Risk Assessment \u2014 Operational risk assessment identifies and models the vulnerabilities of, and risks to, an organization's activities individually and as a whole. [found by 9/43 queries]\n  Siblings: Access Modeling, Organization Mapping, Operational Dependency Mapping\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048: External Harms - ATLAS \u2014 Adversaries may abuse their access to a victim system and use its resources or capabilities to further their goals by causing harms external to that system.\nThese harms could affect the organization (e.g. Financial Harm, Reputational Harm), its users (e.g. User Harm), or the general public (e.g. Societal Harm). [found by 6/43 queries]\n  Siblings: Denial of AI Service - ATLAS, Evade AI Model - ATLAS, Spamming AI System with Chaff Data - ATLAS\n- http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information \u2014 Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts. [found by 6/43 queries]\n  Siblings: Sexual Content, Intellectual Property, Hate and Discrimination\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Funds/CollectiveInvestmentVehicles/RiskLevel: risk level \u2014 None [found by 6/43 queries]\n  Siblings: moneyness, market level classifier, occurrence kind\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0011: Impact - ATLAS \u2014 The adversary is trying to manipulate, interrupt, erode confidence in, or destroy your AI systems and data.\n\nImpact consists of techniques that adversaries use to disrupt availability or compromise integrity by manipulating business and operational processes.\nTechniques used for impact can include destroying or tampering with data.\nIn some cases, business processes can look fine, but may have been altered to benefit the adversaries' goals.\nThese techniques might be used by adversaries to follow through on their end goal or to provide cover for a confidentiality breach. [found by 6/43 queries]\n  Siblings: Command and Control - ATTACK Mobile, Defense Evasion - SPARTA, Lateral Movement - ATTACK Mobile"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+        "cco_class_label": "Dangerous Information",
+        "role": "object",
+        "rationale": "The risk centers around the production and access to harmful content, aligning directly with the definition of 'Dangerous Information'."
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048",
+        "cco_class_label": "External Harms - ATLAS",
+        "role": "agent",
+        "rationale": "The risk involves potential harms to individuals and society caused by the content, fitting the description of 'External Harms' as defined by the ATLAS ontology."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Illegal Activity",
+    "risk_id": "nist-dangerous-violent-or-hateful-content",
+    "risk_name": "Dangerous Content",
+    "num_candidates": 5
+  }
+}

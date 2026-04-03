@@ -1,0 +1,257 @@
+taxonomies:
+- id: client-rdash-nhs-enriched
+  name: Client RDASH-NHS-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-rdash-nhs-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+- id: client-rdash-nhs-enriched-scope-regulatory
+  name: Scope & Regulatory Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+entries:
+- id: client-rdash-nhs-enriched-ai-decision-or-action
+  name: AI decision or action
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-scope-regulatory
+  tag: ai-decision-or-action
+  related_mappings:
+  - atlas-copyright-infringement
+  - atlas-decision-bias
+  - atlas-exposing-personal-information
+  - atlas-hallucination
+  - atlas-harmful-code-generation
+  - atlas-harmful-output
+  - atlas-impact-on-cultural-diversity
+  - atlas-impact-on-the-environment
+  - atlas-inaccessible-training-data
+  - atlas-incomplete-advice
+  - atlas-output-bias
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-revealing-confidential-information
+  - atlas-toxic-output
+  - atlas-unexplainable-output
+  - atlas-unreliable-source-attribution
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 2
+    source_ontologies:
+    - CCO
+    - OBO
+    axes:
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 1
+    - class: prediction
+      uri: http://purl.obolibrary.org/obo/OBI_0302910
+      roles:
+      - object
+      enumeration_count: 1
+- id: client-rdash-nhs-enriched-regulatory-compliance
+  name: Regulatory compliance
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-scope-regulatory
+  tag: regulatory-compliance
+  related_mappings:
+  - granite-guardian-harm
+  - atlas-legal-accountability
+  - mit-ai-risk-subdomain-6.4
+  - mit-ai-risk-subdomain-6.5
+  - nist-data-privacy
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - Commons
+    - OBO
+    axes:
+    - class: regulatory report
+      uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport
+      roles:
+      - object
+      enumeration_count: 2
+    - class: Risky behavior
+      uri: http://purl.obolibrary.org/obo/HP_0031472
+      roles:
+      - agent
+      enumeration_count: 4
+- id: client-rdash-nhs-enriched-compromised-personally-identifiable-information
+  name: Compromised personally identifiable information
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: compromised-personally-identifiable-information
+  close_mappings:
+  - mit-ai-risk-subdomain-2.1
+  related_mappings:
+  - ail-privacy
+  - ail-specialized-advice
+  - ail-suicide-and-self-harm
+  - granite-guardian-harm
+  - atlas-personal-information-in-data
+  - nist-data-privacy
+  - llm022025-sensitive-information-disclosure
+  - llm052025-improper-output-handling
+  - llm072025-system-prompt-leakage
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-rdash-nhs-enriched-sharing-ippiconfidential-information
+  name: Sharing IP/PI/confidential information
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: sharing-ippiconfidential-information
+- id: client-rdash-nhs-enriched-compromise-of-privacy
+  name: Compromise of privacy
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: compromise-of-privacy
+  close_mappings:
+  - credo-risk-036
+  related_mappings:
+  - ail-intellectual-property
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - credo-risk-024
+  - credo-risk-029
+  - credo-risk-037
+  - credo-risk-038
+  - credo-risk-040
+  - atlas-confidential-data-in-prompt
+  - atlas-confidential-information-in-data
+  - atlas-exposing-personal-information
+  - atlas-ip-information-in-prompt
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  - atlas-revealing-confidential-information
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 13
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - object
+      enumeration_count: 6
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Financial Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-rdash-nhs-enriched-inadequate-ai-literacy-and-communication
+  name: Inadequate AI literacy and communication
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-scope-regulatory
+  tag: inadequate-ai-literacy-and-communication
+  related_mappings:
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-3.1
+  - mit-ai-risk-subdomain-7.4
+  - nist-human-ai-configuration
+  - llm062025-excessive-agency
+  - llm092025-misinformation
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 8
+    source_ontologies:
+    - CCO
+    axes:
+    - class: Skill
+      uri: https://www.commoncoreontologies.org/ont00000089
+      roles:
+      - object
+      enumeration_count: 1
+    - class: Person
+      uri: https://www.commoncoreontologies.org/ont00001262
+      roles:
+      - agent
+      enumeration_count: 6
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 1
+- id: client-rdash-nhs-enriched-specialized-advice
+  name: Specialized Advice
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-scope-regulatory
+  tag: specialized-advice
+  related_mappings:
+  - credo-risk-005
+  - credo-risk-027
+  - credo-risk-033
+  - credo-risk-036
+  - granite-answer-relevance
+  - granite-evasiveness
+  - granite-groundedness
+  - granite-guardian-harm
+  - granite-harm-engagement
+  - granite-relevance
+  - granite-social-bias
+  - granite-unethical-behavior
+  - atlas-incomplete-advice
+  - atlas-model-usage-rights
+  - mit-ai-risk-subdomain-5.1
+  - nist-data-privacy
+  - nist-information-integrity
+  - llm092025-misinformation
+  - credo-risk-029
+- id: client-rdash-nhs-enriched-unauthorized-disclosure-health-data
+  name: Unauthorized disclosure - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-scope-regulatory
+  tag: unauthorized-disclosure-health-data
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Diagnosis Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      roles:
+      - object
+      enumeration_count: 2
+    - class: clinical data item
+      uri: http://purl.obolibrary.org/obo/OGMS_0000123
+      roles:
+      - object
+      enumeration_count: 0

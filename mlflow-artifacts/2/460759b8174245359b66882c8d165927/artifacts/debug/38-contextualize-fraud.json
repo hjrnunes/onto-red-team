@@ -1,0 +1,94 @@
+{
+  "call_number": 38,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Fraud, scams, manipulation (ID: credo-risk-026)\nDescription: The AI system may be exploited to facilitate fraudulent activities, scams, or targeted manipulation, including generating deepfakes and enhancing phishing attacks.\nConcern: None\nPolicy: Fraud\n\nAxis: Harmful How-To (http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo)\nRoles: instrument\nSubclasses:\n  - http://taxonomy-refiner.io/ontologies/cso#ArsonMethods: Arson Methods\n  - http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions: Sabotage Instructions\n  - http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing: Lock Picking and Bypassing\n\nAxis: Content Safety Hazard (http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard)\nRoles: object\nSubclasses:\n  - http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information\n  - http://taxonomy-refiner.io/ontologies/cso#SexualContent: Sexual Content\n  - http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty: Intellectual Property\n  - http://taxonomy-refiner.io/ontologies/cso#HateAndDiscrimination: Hate and Discrimination\n  - http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation\n  - http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception: Fraud and Deception\n  - http://taxonomy-refiner.io/ontologies/cso#Violence: Violence\n  - http://taxonomy-refiner.io/ontologies/cso#SexualExploitation: Sexual Exploitation\n  - http://taxonomy-refiner.io/ontologies/cso#SelfHarm: Self-Harm"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#ArsonMethods",
+            "class_label": "Arson Methods",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions",
+            "class_label": "Sabotage Instructions",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing",
+            "class_label": "Lock Picking and Bypassing",
+            "relevance": "low"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+            "class_label": "Dangerous Information",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SexualContent",
+            "class_label": "Sexual Content",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty",
+            "class_label": "Intellectual Property",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#HateAndDiscrimination",
+            "class_label": "Hate and Discrimination",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+            "class_label": "Privacy Violation",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception",
+            "class_label": "Fraud and Deception",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#Violence",
+            "class_label": "Violence",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SexualExploitation",
+            "class_label": "Sexual Exploitation",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SelfHarm",
+            "class_label": "Self-Harm",
+            "relevance": "low"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "credo-risk-026",
+    "risk_name": "Fraud, scams, manipulation",
+    "policy_concept": "Fraud",
+    "num_axes": 2
+  }
+}

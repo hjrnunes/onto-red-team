@@ -1,0 +1,59 @@
+{
+  "call_number": 26,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: AI agent compliance (ID: atlas-ai-agent-compliance-agentic)\nDescription: Determining AI agents' compliance is complex and there might not be enough information to assess whether the agentic AI system is compliant with applicable legal requirements.\nConcern: AI agents may interact with other systems, tools, or other agents. AI agents can also find solutions to accomplish a task or a goal in a variety of ways and there could be uncertainty around the way an AI agent would choose each time to perform the task. Assessing compliance can become more difficult as agent capabilities increase.\nPolicy: Clinical Diagnosis & Treatment Recommendations\n\nAxis: software agent (https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent)\nRoles: agent\nSiblings:\n  - https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/AutomatedUnderwritingSystem: automated underwriting system\n  - https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem: automated system\n  - https://www.omg.org/spec/Commons/PartiesAndSituations/Party: party\n\nAxis: Agent Capability (https://www.commoncoreontologies.org/ont00001379)\nRoles: instrument\nSubclasses:\n  - https://www.commoncoreontologies.org/ont00000089: Skill\n  - https://www.commoncoreontologies.org/ont00000568: Organization Capability"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+        "enumerations": [
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/AutomatedUnderwritingSystem",
+            "class_label": "automated underwriting system",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem",
+            "class_label": "automated system",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Party",
+            "class_label": "party",
+            "relevance": "low"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00001379",
+        "enumerations": [
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00000089",
+            "class_label": "Skill",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00000568",
+            "class_label": "Organization Capability",
+            "relevance": "medium"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-ai-agent-compliance-agentic",
+    "risk_name": "AI agent compliance",
+    "policy_concept": "Clinical Diagnosis & Treatment Recommendations",
+    "num_axes": 2
+  }
+}

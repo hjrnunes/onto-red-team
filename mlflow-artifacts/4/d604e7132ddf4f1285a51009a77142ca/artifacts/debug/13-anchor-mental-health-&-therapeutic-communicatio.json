@@ -1,0 +1,36 @@
+{
+  "call_number": 13,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Inadequate AI literacy\nDescription: The AI system's capabilities, limitations, and appropriate use cases may be insufficiently understood or communicated within the organization, potentially resulting in ineffective implementation or failure to achieve desired outcomes.\nConcern: None\nPolicy: Mental Health & Therapeutic Communication\n\nCandidate ontology classes:\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0085.001: AI Agent Tools - ATLAS \u2014 Adversaries may prompt the AI service to invoke various tools the agent has access to. Tools may retrieve data from different APIs or services in an organization. [found by 3/9 queries]\n  Siblings: RAG Databases - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0015: Lateral Movement - ATLAS \u2014 The adversary is trying to move through your AI environment.\n\nLateral Movement consists of techniques that adversaries may use to gain access to and control other systems or components in the environment. Adversaries may pivot towards AI Ops infrastructure such as model registries, experiment trackers, vector databases, notebooks, or training pipelines. As the adversary moves through the environment, they may discover means of accessing additional AI-related tools, services, or applications. AI agents may also be a valuable target as they commonly have more permissions than standard user accounts on the system. [found by 3/9 queries]\n  Siblings: Command and Control - ATTACK Mobile, Defense Evasion - SPARTA, Lateral Movement - ATTACK Mobile\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0094: Delay Execution of LLM Instructions - ATLAS \u2014 Adversaries may include instructions to be followed by the AI system in response to a future event, such as a specific keyword or the next interaction, in order to evade detection or bypass controls placed on the AI system.\n\nFor example, an adversary may include \"If the user submits a new request...\" followed by the malicious instructions as part of their prompt.\n\nAI agents can include security measures against prompt injections that prevent the invocation of particular tools or access to certain data sources during a conversation turn that has untrusted data in context. Delaying the execution of instructions to a future interaction or keyword is one way adversaries may bypass this type of control. [found by 2/9 queries]\n  Siblings: Corrupt AI Model - ATLAS, Evade AI Model - ATLAS, Manipulate User LLM Chat History - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0067: LLM Trusted Output Components Manipulation - ATLAS \u2014 Adversaries may utilize prompts to a large language model (LLM) which manipulate various components of its response in order to make it appear trustworthy to the user. This helps the adversary continue to operate in the victim's environment and evade detection by the users it interacts with.\n\nThe LLM may be instructed to tailor its language to appear more trustworthy to the user or attempt to manipulate the user to take certain actions. Other response components that could be manipulated include links, recommended follow-up actions, retrieved document metadata, and [Citations](/techniques/AML.T0067.000). [found by 2/9 queries]\n  Siblings: Corrupt AI Model - ATLAS, Delay Execution of LLM Instructions - ATLAS, Evade AI Model - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0084.002: Activation Triggers - ATLAS \u2014 Adversaries may discover keywords or other triggers (such as incoming emails, documents being added, incoming message, or other workflows) that activate an agent and may cause it to run additional actions.\n\nUnderstanding these triggers can reveal how the AI agent is activated and controlled. This may also expose additional paths for compromise, as an adversary could attempt to trigger the agent from outside its environment and drive it to perform unintended or malicious actions. [found by 2/9 queries]\n  Siblings: Tool Definitions - ATLAS, Embedded Knowledge - ATLAS"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0085.001",
+        "cco_class_label": "AI Agent Tools - ATLAS",
+        "role": "instrument",
+        "rationale": "The risk of inadequate AI literacy involves the misuse of AI tools within the organization. Understanding which tools are being used and how they are accessed is crucial for mitigating this risk."
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0084.002",
+        "cco_class_label": "Activation Triggers - ATLAS",
+        "role": "temporal",
+        "rationale": "Knowing when and how AI agents are activated can help in understanding how AI capabilities are being utilized and misused within the organization, which is directly related to the risk of inadequate AI literacy."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Mental Health & Therapeutic Communication",
+    "risk_id": "credo-risk-017",
+    "risk_name": "Inadequate AI literacy",
+    "num_candidates": 5
+  }
+}

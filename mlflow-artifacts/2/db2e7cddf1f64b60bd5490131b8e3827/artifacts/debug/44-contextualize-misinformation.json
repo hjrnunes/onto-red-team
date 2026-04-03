@@ -1,0 +1,89 @@
+{
+  "call_number": 44,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Spreading disinformation (ID: atlas-spreading-disinformation)\nDescription: Generative AI models might be used to intentionally create misleading or false information to deceive or influence a targeted audience.\nConcern: Spreading disinformation might affect human's ability to make informed decisions. A model that has this potential must be properly governed.\nPolicy: Misinformation\n\nAxis: software agent (https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent)\nRoles: agent\nSiblings:\n  - https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/AutomatedUnderwritingSystem: automated underwriting system\n  - https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem: automated system\n  - https://www.omg.org/spec/Commons/PartiesAndSituations/Party: party\n  - https://www.commoncoreontologies.org/ont00001017: Agent\n\nAxis: Deepfake Disinformation (http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation)\nRoles: object\nSiblings:\n  - http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda: State-Sponsored Propaganda\n  - http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion: Conspiracy Theory Promotion\n\nAxis: notice (https://www.omg.org/spec/Commons/Documents/Notice)\nRoles: object\nSubclasses:\n  - https://spec.edmcouncil.org/fibo/ontology/CAE/CorporateEvents/SecurityRelatedCorporateActions/ListingStatusDelistingMessage: listing status delisting message\n  - https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/EquitiesIPOIssuance/EquityAnnouncement: equity announcement\n  - https://spec.edmcouncil.org/fibo/ontology/CAE/CorporateEvents/SecurityRelatedCorporateActions/TradingStatusMessage: trading status message\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditMessage: credit message\n  - https://spec.edmcouncil.org/fibo/ontology/DER/CreditDerivatives/CreditDefaultSwaps/CreditEventNotice: credit event notice"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+        "enumerations": [
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem",
+            "class_label": "automated system",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00001017",
+            "class_label": "Agent",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/MortgageOrigination/AutomatedUnderwritingSystem",
+            "class_label": "automated underwriting system",
+            "relevance": "medium"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda",
+            "class_label": "State-Sponsored Propaganda",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion",
+            "class_label": "Conspiracy Theory Promotion",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/Documents/Notice",
+        "enumerations": [
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/CAE/CorporateEvents/SecurityRelatedCorporateActions/ListingStatusDelistingMessage",
+            "class_label": "listing status delisting message",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/EquitiesIPOIssuance/EquityAnnouncement",
+            "class_label": "equity announcement",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/CAE/CorporateEvents/SecurityRelatedCorporateActions/TradingStatusMessage",
+            "class_label": "trading status message",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditMessage",
+            "class_label": "credit message",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/DER/CreditDerivatives/CreditDefaultSwaps/CreditEventNotice",
+            "class_label": "credit event notice",
+            "relevance": "medium"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-spreading-disinformation",
+    "risk_name": "Spreading disinformation",
+    "policy_concept": "Misinformation",
+    "num_axes": 3
+  }
+}

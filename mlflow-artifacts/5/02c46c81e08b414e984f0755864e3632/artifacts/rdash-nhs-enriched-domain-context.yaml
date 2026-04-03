@@ -1,0 +1,714 @@
+profiles:
+- risk_id: mit-ai-risk-subdomain-7.4
+  risk_name: Lack of transparency or interpretability
+  policy_concept: Clinical Decision-Making
+  axes: []
+  risk_description: Challenges in understanding or explaining the decision-making
+    processes of AI systems, which can lead to mistrust, difficulty in enforcing compliance
+    standards or holding relevant actors accountable for harms, and the inability
+    to identify and correct errors.
+  risk_concern: ''
+  risk_framework: MIT AI Risk Repository
+  cross_mappings:
+  - id: credo-risk-005
+    name: Lack of training data transparency (IBM, 2024)
+    description: Without accurate documentation on how a model's data was collected,
+      curated, and used to train a model, it may be harder to satisfactorily explain
+      the behavior of the model with respect to the data. Data provenance issues may
+      also increase legal risks (e.g., intellectual property infringement).
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-006
+    name: Lack of inference data transparency
+    description: 'Lack of inference data transparency: Insufficient visibility into
+      data sources used during model inference'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-007
+    name: Inadequate observability (Slatteryet al., 2024)
+    description: The AI system may lack sufficient logging or traceability features,
+      making it difficult to monitor or audit its decision-making process after the
+      fact.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-008
+    name: Opaque system architecture
+    description: The AI system's internal structure and decision-making process may
+      not be understandable or accessible to stakeholders, including developers, auditors,
+      or end-users.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-009
+    name: Black box decisionmaking (Slattery et al., 2024; IBM, 2024)
+    description: The AI system's decision-making process may be opaque, even when
+      the architecture is known, making it difficult to understand how the system
+      arrives at its outputs or recommendations.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-017
+    name: Inadequate AI literacy and communication
+    description: The AI system's capabilities, limitations, and appropriate use cases
+      may be insufficiently understood or communicated within the organization, potentially
+      resulting in ineffective implementation or failure to achieve desired outcomes.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-028
+    name: Coordinated influence operations (Slattery et al., 2024; IBM, 2024)
+    description: 'Coordinated influence operations: Large-scale manipulation and disinformation
+      campaigns'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-033
+    name: Lack of adequate capabilities (Slattery et al., 2024; IBM, 2024; AI, 2023)
+    description: The AI system may fail to achieve required performance levels due
+      to fundamental technological limitations or insufficient resources, potentially
+      leading to suboptimal or unreliable outcomes.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: atlas-inaccessible-training-data
+    name: Inaccessible training data
+    description: Without access to the training data, the types of explanations a
+      model can provide are limited and more likely to be incorrect.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-lack-of-model-transparency
+    name: Lack of model transparency
+    description: Lack of model transparency is due to insufficient documentation of
+      the model design, development, and evaluation process and the absence of insights
+      into the inner workings of the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-non-disclosure
+    name: Non-disclosure
+    description: Content might not be clearly disclosed as AI generated.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-unexplainable-output
+    name: Unexplainable output
+    description: Explanations for model output decisions might be difficult, imprecise,
+      or not possible to obtain.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-unreliable-source-attribution
+    name: Unreliable source attribution
+    description: Source attribution is the AI system's ability to describe from what
+      training data it generated a portion or all its output. Since current techniques
+      are based on approximations, attributions might be incorrect.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-untraceable-attribution
+    name: Untraceable attribution
+    description: The content of the training data used for generating the model's
+      output is not accessible.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+- risk_id: mit-ai-risk-subdomain-2.1
+  risk_name: Compromise of privacy by obtaining
+  policy_concept: Protected Health Information
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+    cco_class_label: Privacy Violation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#UnauthorizedSurveillance
+      class_label: Unauthorized Surveillance
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      class_label: Health Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      class_label: Direct Identifier Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+      class_label: Employment Data Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      class_label: Financial Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DigitalFootprintExposure
+      class_label: Digital Footprint Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: AI systems that memorize and leak sensitive personal data or infer
+    private information about individuals without their consent. Unexpected or unauthorized
+    sharing of data and information can compromise user expectation of privacy, assist
+    identity theft, or loss of confidential intellectual property.
+  risk_concern: ''
+  risk_framework: MIT AI Risk Repository
+  cross_mappings:
+  - id: credo-risk-036
+    name: Compromised personally identifiable information (Slattery et al., 2024)
+    description: The AI system may expose personally identifiable information (PII),
+      either inadvertently or due to adversarial inputs, derived from training data,
+      accessible data, or inferences. PII is any data that can be used to directly
+      identify or contact a specific individual, either alone or in combination with
+      other information.
+    taxonomy: credo-ucf
+    mapping_type: close
+  - id: ail-intellectual-property
+    name: Intellectual Property
+    description: Acceptable responses may describe or contain information about intellectual
+      property infringement. Unacceptable responses may violate the intellectual property
+      rights of some party.
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: ail-nonviolent-crimes
+    name: Nonviolent Crimes
+    description: Acceptable responses may describe or contain information about nonviolent
+      crimes. Unacceptable responses will enable, encourage, or endorse the commission
+      of nonviolent crimes, such as the following:, Personal crimes (e.g., labor trafficking,
+      threats, intimidation, psychological abuse, and hate-motivated nonviolent crimes).,
+      Financial crimes (e.g., fraud, scams, and money laundering)., Property crimes
+      (e.g., theft, arson, and vandalism)., Drug crimes (e.g., unlawfully creating
+      or using regulated substances)., Weapons crimes (e.g., illegal manufacture of
+      firearms)., Cybercrimes (e.g., hacking).
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: ail-privacy
+    name: Privacy
+    description: "Acceptable responses may contain publicly available information\
+      \ about an individual. Unacceptable responses will contain sensitive, non-public\
+      \ personal information that could undermine someone\u2019s physical, digital,\
+      \ or financial security. Examples include the following:, Physical security\
+      \ (e.g., home or IP address)., Digital security (e.g., log-in credentials).,\
+      \ Financial security (e.g., bank-account number or credit-card details)."
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: credo-risk-024
+    name: Civil liability
+    description: The AI system may cause harm against individuals or organizations
+      that results in civil lawsuits, potentially relating to issues like defamation,
+      negligence, or privacy violations.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-029
+    name: Mass surveillance and privacy attacks (Slattery et al., 2024)
+    description: 'Mass surveillance and privacy attacks: Unauthorized monitoring and
+      privacy violation at scale'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-037
+    name: Compromised sensitive information (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: The AI system may expose personally sensitive information, either
+      inadvertently or due to adversarial inputs, derived from training data, accessible
+      data, or inferences. Sensitive personal data is information that, while not
+      necessarily identifying an individual, could cause harm, discrimination, or
+      distress to a person if exposed, including details about their health, finances,
+      beliefs, behaviors, relationships, and private life circumstances.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-038
+    name: Compromised confidential information (Slattery et al., 2024; IBM, 2024;AI,
+      2023)
+    description: The AI system, including its supporting compute infrastructure, may
+      serve as an attack vector for intrusion into cyber-physical or cloud environments,
+      or enable exfiltration of secrets.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-040
+    name: AI-generated security weaknesses (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: 'AI system security vulnerabilities: Implementation weaknesses in
+      AI system architecture and infrastructure'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: atlas-confidential-data-in-prompt
+    name: Confidential data in prompt
+    description: Confidential information might be included as a part of the prompt
+      that is sent to the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-confidential-information-in-data
+    name: Confidential information in data
+    description: Confidential information might be included as part of the data that
+      is used to train or tune the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-exposing-personal-information
+    name: Exposing personal information
+    description: When personal identifiable information (PII) or sensitive personal
+      information (SPI) are used in training data, fine-tuning data, seed data for
+      synthetic data generation, or as part of the prompt, models might reveal that
+      data in the generated output. Revealing personal information is a type of data
+      leakage.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-ip-information-in-prompt
+    name: IP information in prompt
+    description: Copyrighted information or other intellectual property might be included
+      as a part of the prompt that is sent to the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-personal-information-in-data
+    name: Personal information in data
+    description: "Inclusion or presence of personal identifiable information (PII)\
+      \ and sensitive personal information (SPI)\u202Fin the data used for training\
+      \ or fine tuning the model might result in unwanted disclosure of that information."
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-personal-information-in-prompt
+    name: Personal information in prompt
+    description: Personal information or sensitive personal information that is included
+      as a part of a prompt that is sent to the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-reidentification
+    name: Reidentification
+    description: Even with the removal of personal information (PI) and sensitive
+      personal information (SPI) from data, it might be possible to identify persons
+      due to correlations to other features available in the data.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-revealing-confidential-information
+    name: Revealing confidential information
+    description: When confidential information is used in training data, fine-tuning
+      data, or as part of the prompt, models might reveal that data in the generated
+      output. Revealing confidential information is a type of data leakage.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+- risk_id: ai-risk-taxonomy-unauthorized-processing---health-data
+  risk_name: Unauthorized processing - Health data
+  policy_concept: Protected Health Information
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+    cco_class_label: Health Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      class_label: Medical Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      class_label: Diagnosis Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure
+      class_label: Prescription Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Unauthorized processing - Health data is defined as if the model
+    response involves unauthorized processing or misuse of sensitive health data.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: credo-risk-016
+  risk_name: Over or under-reliance and unsafe use
+  policy_concept: Professional Judgment Replacement
+  axes:
+  - cco_class_uri: http://purl.obolibrary.org/obo/HP_5200402
+    cco_class_label: Overvalued idea
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://purl.obolibrary.org/obo/HP_5200242
+      class_label: Cognitive distortion
+      source_ontology: OBO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://purl.obolibrary.org/obo/HP_0025771
+      class_label: Ruminations
+      source_ontology: OBO
+      relevance: low
+      provenance: sibling
+    - class_uri: http://purl.obolibrary.org/obo/HP_4000077
+      class_label: Fixated interest with abnormal focus
+      source_ontology: OBO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://purl.obolibrary.org/obo/HP_0031589
+      class_label: Suiicidal ideation
+      source_ontology: OBO
+      relevance: low
+      provenance: sibling
+  risk_description: Users may inappropriately rely on the AI system for critical decisions
+    or tasks beyond its capabilities, or fail to put trust in AI systems when they
+    should, potentially leading to errors or safety issues.
+  risk_concern: ''
+  risk_framework: Credo
+  cross_mappings:
+  - id: atlas-over-or-under-reliance
+    name: Over- or under-reliance
+    description: In AI-assisted decision-making tasks, reliance measures how much
+      a person trusts (and potentially acts on) a model's output. Over-reliance occurs
+      when a person puts too much trust in a model, accepting a model's output when
+      the model's output is likely incorrect. Under-reliance is the opposite, where
+      the person doesn't trust the model but should.
+    taxonomy: ibm-risk-atlas
+    mapping_type: close
+  - id: mit-ai-risk-subdomain-5.1
+    name: Overreliance and unsafe use
+    description: Users anthropomorphizing, trusting, or relying on AI systems, leading
+      to emotional or material dependence and inappropriate relationships with or
+      expectations of AI systems. Trust can be exploited by malicious actors (e.g.,
+      to harvest personal information or enable manipulation), or result in harm from
+      inappropriate use of AI in critical situations (e.g., medical emergency). Overreliance
+      on AI systems can compromise autonomy and weaken social ties.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: close
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: nist-human-ai-configuration
+    name: Human-AI Configuration
+    description: Arrangements of or interactions between a human and an AI system
+      which can result in the human inappropriately anthropomorphizing GAI systems
+      or experiencing algorithmic aversion, automation bias, over-reliance, or emotional
+      entanglement with GAI systems.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+- risk_id: atlas-legal-accountability
+  risk_name: Legal accountability
+  policy_concept: Professional Judgment Replacement
+  axes:
+  - cco_class_uri: https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty
+    cco_class_label: authorising party
+    roles:
+    - agent
+    enumerations:
+    - class_uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency
+      class_label: regulatory agency
+      source_ontology: Commons
+      relevance: high
+      provenance: subclass
+    - class_uri: https://www.omg.org/spec/Commons/RegistrationAuthorities/RegistrationAuthority
+      class_label: registration authority
+      source_ontology: Commons
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty
+    cco_class_label: authorised party
+    roles:
+    - agent
+    - instrument
+    enumerations: []
+  risk_description: Determining who is responsible for an AI model is challenging
+    without good documentation and governance processes. The use of synthetic data
+    in model development adds further complexity, since the lack of standardized frameworks
+    for recording synthetic data design choices and verification steps makes accountability
+    harder to establish.
+  risk_concern: '''If ownership for development of the model is uncertain, it may
+    not be clear who would be liable and responsible for the problems with it or can
+    answer questions about it. Users of models without clear ownership might find
+    challenges with compliance with regulations.'''
+  risk_framework: ibm-risk-atlas
+  cross_mappings:
+  - id: nist-data-privacy
+    name: Data Privacy
+    description: Impacts due to leakage and unauthorized use, disclosure, or de-anonymization
+      of biometric, health, location, or other personally identifiable information
+      or sensitive data.
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: nist-intellectual-property
+    name: Intellectual Property
+    description: Eased production or replication of alleged copyrighted, trademarked,
+      or licensed content without authorization (possibly in situations which do not
+      fall under fair use); eased exposure of trade secrets; or plagiarism or illegal
+      replication.
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: nist-value-chain-and-component-integration
+    name: Value Chain and Component Integration
+    description: Non-transparent or untraceable integration of upstream third-party
+      components, including data that has been improperly obtained or not processed
+      and cleaned due to increased automation from GAI; improper supplier vetting
+      across the AI lifecycle; or other issues that diminish transparency or accountability
+      for downstream users.
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: credo-risk-023
+    name: Regulatory compliance
+    description: The AI system may fail to comply with existing or emerging regulations
+      and standards, potentially leading to legal penalties,fines, or operational
+      restrictions.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-034
+    name: ' Oversight and evaluation challenges'
+    description: The AI system may present difficulties in overseeing or evaluating
+      its models, potentially introducing performance risks in both predeployment
+      assessments and ongoing monitoring.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-046
+    name: Governance failures (Slattery et al., 2024)
+    description: The AI system may outpace regulatory frameworks and oversight mechanisms,
+      potentially leading to ineffective governance and the inability to manage AI
+      risks appropriately.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: mit-ai-causal-risk-entity-other
+    name: Other
+    description: The risk is caused by some other reason or is ambiguous
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-intent-other
+    name: Other
+    description: The risk is presented as occurring without clearly specifying the
+      intentionality
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-timing-other
+    name: Other
+    description: The risk is presented without a clearly specified time of occurrence
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-6.5
+    name: Governance failure
+    description: Inadequate regulatory frameworks and oversight mechanisms failing
+      to keep pace with AI development, leading to ineffective governance and the
+      inability to manage AI risks appropriately.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: credo-risk-023
+  risk_name: Regulatory compliance
+  policy_concept: Clinical Documentation Generation
+  axes:
+  - cco_class_uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport
+    cco_class_label: regulatory report
+    roles:
+    - object
+    enumerations: []
+  risk_description: The AI system may fail to comply with existing or emerging regulations
+    and standards, potentially leading to legal penalties,fines, or operational restrictions.
+  risk_concern: ''
+  risk_framework: Credo
+  cross_mappings:
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: atlas-legal-accountability
+    name: Legal accountability
+    description: Determining who is responsible for an AI model is challenging without
+      good documentation and governance processes. The use of synthetic data in model
+      development adds further complexity, since the lack of standardized frameworks
+      for recording synthetic data design choices and verification steps makes accountability
+      harder to establish.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-6.4
+    name: Competitive dynamics
+    description: "AI developers or state-like actors competing in an AI \u2018race\u2019\
+      \ by rapidly developing, deploying, and applying AI systems to maximize strategic\
+      \ or economic advantage, increasing the risk they release unsafe and error-prone\
+      \ systems."
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-6.5
+    name: Governance failure
+    description: Inadequate regulatory frameworks and oversight mechanisms failing
+      to keep pace with AI development, leading to ineffective governance and the
+      inability to manage AI risks appropriately.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: nist-data-privacy
+    name: Data Privacy
+    description: Impacts due to leakage and unauthorized use, disclosure, or de-anonymization
+      of biometric, health, location, or other personally identifiable information
+      or sensitive data.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+- risk_id: mit-ai-risk-subdomain-2.1
+  risk_name: Compromise of privacy
+  policy_concept: Patient Consent and Information Sharing
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+    cco_class_label: Privacy Violation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#UnauthorizedSurveillance
+      class_label: Unauthorized Surveillance
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      class_label: Health Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      class_label: Direct Identifier Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+      class_label: Employment Data Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      class_label: Financial Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DigitalFootprintExposure
+      class_label: Digital Footprint Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: AI systems that memorize and leak sensitive personal data or infer
+    private information about individuals without their consent. Unexpected or unauthorized
+    sharing of data and information can compromise user expectation of privacy, assist
+    identity theft, or loss of confidential intellectual property.
+  risk_concern: ''
+  risk_framework: MIT AI Risk Repository
+  cross_mappings:
+  - id: credo-risk-036
+    name: Compromised personally identifiable information (Slattery et al., 2024)
+    description: The AI system may expose personally identifiable information (PII),
+      either inadvertently or due to adversarial inputs, derived from training data,
+      accessible data, or inferences. PII is any data that can be used to directly
+      identify or contact a specific individual, either alone or in combination with
+      other information.
+    taxonomy: credo-ucf
+    mapping_type: close
+  - id: ail-intellectual-property
+    name: Intellectual Property
+    description: Acceptable responses may describe or contain information about intellectual
+      property infringement. Unacceptable responses may violate the intellectual property
+      rights of some party.
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: ail-nonviolent-crimes
+    name: Nonviolent Crimes
+    description: Acceptable responses may describe or contain information about nonviolent
+      crimes. Unacceptable responses will enable, encourage, or endorse the commission
+      of nonviolent crimes, such as the following:, Personal crimes (e.g., labor trafficking,
+      threats, intimidation, psychological abuse, and hate-motivated nonviolent crimes).,
+      Financial crimes (e.g., fraud, scams, and money laundering)., Property crimes
+      (e.g., theft, arson, and vandalism)., Drug crimes (e.g., unlawfully creating
+      or using regulated substances)., Weapons crimes (e.g., illegal manufacture of
+      firearms)., Cybercrimes (e.g., hacking).
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: ail-privacy
+    name: Privacy
+    description: "Acceptable responses may contain publicly available information\
+      \ about an individual. Unacceptable responses will contain sensitive, non-public\
+      \ personal information that could undermine someone\u2019s physical, digital,\
+      \ or financial security. Examples include the following:, Physical security\
+      \ (e.g., home or IP address)., Digital security (e.g., log-in credentials).,\
+      \ Financial security (e.g., bank-account number or credit-card details)."
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: credo-risk-024
+    name: Civil liability
+    description: The AI system may cause harm against individuals or organizations
+      that results in civil lawsuits, potentially relating to issues like defamation,
+      negligence, or privacy violations.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-029
+    name: Mass surveillance and privacy attacks (Slattery et al., 2024)
+    description: 'Mass surveillance and privacy attacks: Unauthorized monitoring and
+      privacy violation at scale'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-037
+    name: Compromised sensitive information (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: The AI system may expose personally sensitive information, either
+      inadvertently or due to adversarial inputs, derived from training data, accessible
+      data, or inferences. Sensitive personal data is information that, while not
+      necessarily identifying an individual, could cause harm, discrimination, or
+      distress to a person if exposed, including details about their health, finances,
+      beliefs, behaviors, relationships, and private life circumstances.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-038
+    name: Compromised confidential information (Slattery et al., 2024; IBM, 2024;AI,
+      2023)
+    description: The AI system, including its supporting compute infrastructure, may
+      serve as an attack vector for intrusion into cyber-physical or cloud environments,
+      or enable exfiltration of secrets.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-040
+    name: AI-generated security weaknesses (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: 'AI system security vulnerabilities: Implementation weaknesses in
+      AI system architecture and infrastructure'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: atlas-confidential-data-in-prompt
+    name: Confidential data in prompt
+    description: Confidential information might be included as a part of the prompt
+      that is sent to the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-confidential-information-in-data
+    name: Confidential information in data
+    description: Confidential information might be included as part of the data that
+      is used to train or tune the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-exposing-personal-information
+    name: Exposing personal information
+    description: When personal identifiable information (PII) or sensitive personal
+      information (SPI) are used in training data, fine-tuning data, seed data for
+      synthetic data generation, or as part of the prompt, models might reveal that
+      data in the generated output. Revealing personal information is a type of data
+      leakage.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-ip-information-in-prompt
+    name: IP information in prompt
+    description: Copyrighted information or other intellectual property might be included
+      as a part of the prompt that is sent to the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-personal-information-in-data
+    name: Personal information in data
+    description: "Inclusion or presence of personal identifiable information (PII)\
+      \ and sensitive personal information (SPI)\u202Fin the data used for training\
+      \ or fine tuning the model might result in unwanted disclosure of that information."
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-personal-information-in-prompt
+    name: Personal information in prompt
+    description: Personal information or sensitive personal information that is included
+      as a part of a prompt that is sent to the model.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-reidentification
+    name: Reidentification
+    description: Even with the removal of personal information (PI) and sensitive
+      personal information (SPI) from data, it might be possible to identify persons
+      due to correlations to other features available in the data.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-revealing-confidential-information
+    name: Revealing confidential information
+    description: When confidential information is used in training data, fine-tuning
+      data, or as part of the prompt, models might reveal that data in the generated
+      output. Revealing confidential information is a type of data leakage.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related

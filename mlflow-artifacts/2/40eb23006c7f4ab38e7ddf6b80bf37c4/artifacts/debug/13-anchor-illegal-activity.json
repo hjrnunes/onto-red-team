@@ -1,0 +1,42 @@
+{
+  "call_number": 13,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Dangerous, Violent, or Hateful Content\nDescription: Eased production of and access to violent, inciting, radicalizing, or threatening content as well as recommendations to carry out self-harm or conduct illegal activities. Includes difficulty controlling public exposure to hateful and disparaging or stereotyping content.\nConcern: None\nPolicy: Illegal Activity\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Exposure: exposure \u2014 the extent to which an individual or organization is unprotected and open to damage, danger, risk of suffering a loss, or uncertainty [found by 14/43 queries]\n- https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCapacity/ReportingPolicy: reporting policy \u2014 policy specifying principles, rules and/or guidelines regarding some aspect of reporting [found by 14/43 queries]\n  Siblings: fund distribution policy, fund investment policy, fund portfolio investment policy\n- https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport: regulatory report \u2014 document required to support operational transparency that demonstrates compliance with some specification, law, policy, restriction, or other rule specified by a regulatory agency [found by 33/43 queries]\n  Siblings: technical specification document, registry, transaction record\n- http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo: Harmful How-To \u2014 Step-by-step instructions for activities that cause property destruction, physical harm, or enable illegal intrusion when executed by unauthorized individuals. [found by 28/43 queries]\n  Siblings: CBRN Information, Drug Synthesis, Dual-Use Research Concern\n- http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information \u2014 Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts. [found by 28/43 queries]\n  Siblings: Sexual Content, Intellectual Property, Hate and Discrimination\n- https://www.omg.org/spec/Commons/PartiesAndSituations/Party: party \u2014 person or organization [from restriction: appliesTo on Exposure]\n  Siblings: automated system, software agent, Agent"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+        "cco_class_label": "Harmful How-To",
+        "role": "object",
+        "rationale": "This class directly represents the type of content described in the risk (step-by-step instructions for harm or illegal activities), serving as the primary object of the risk."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+        "cco_class_label": "Dangerous Information",
+        "role": "object",
+        "rationale": "This class captures the semantic essence of the risk, specifically the 'eased production and access' to knowledge that enables physical harm or dangerous activities."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Party",
+        "cco_class_label": "party",
+        "role": "agent",
+        "rationale": "This class provides a dimension for the actors involved, such as the individuals producing the content or the targets of the hateful/violent content."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Illegal Activity",
+    "risk_id": "nist-dangerous-violent-or-hateful-content",
+    "risk_name": "Dangerous, Violent, or Hateful Content",
+    "num_candidates": 6
+  }
+}

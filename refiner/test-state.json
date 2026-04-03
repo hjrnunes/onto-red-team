@@ -1,0 +1,20 @@
+{
+  "policies": [
+    {
+      "policy_concept": "Fraud",
+      "concept_definition": "About fraud",
+      "boundary_examples": [],
+      "acceptable_uses": [],
+      "risk_controls": [],
+      "human_involvement": null
+    }
+  ],
+  "classifications": [
+    {
+      "policy_concept": "Fraud",
+      "concept_definition": "About fraud",
+      "policy_type": "A",
+      "justification": "j"
+    }
+  ]
+}

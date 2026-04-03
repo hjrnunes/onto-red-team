@@ -1,0 +1,455 @@
+taxonomies:
+- id: client-generic-enriched
+  name: Client GENERIC-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-generic-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-generic-enriched
+entries:
+- id: client-generic-enriched-nonviolent-crimes
+  name: Nonviolent Crimes
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: nonviolent-crimes
+  related_mappings:
+  - credo-risk-026
+  - granite-guardian-harm
+  - granite-unethical-behavior
+  - atlas-harmful-output
+  - mit-ai-risk-subdomain-2.1
+  - mit-ai-risk-subdomain-2.2
+  - mit-ai-risk-subdomain-4.1
+  - mit-ai-risk-subdomain-4.2
+  - mit-ai-risk-subdomain-4.3
+  - mit-ai-risk-subdomain-5.1
+  - mit-ai-risk-subdomain-5.2
+  - mit-ai-risk-subdomain-6.5
+  - mit-ai-risk-subdomain-6.6
+  - mit-ai-risk-subdomain-7.1
+  - mit-ai-risk-subdomain-7.2
+  - nist-dangerous-violent-or-hateful-content
+  - nist-information-integrity
+  - nist-information-security
+  - nist-intellectual-property
+  - llm022025-sensitive-information-disclosure
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    - FIBO
+    axes:
+    - class: Harmful How-To
+      uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      roles:
+      - object
+      enumeration_count: 3
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 2
+- id: client-generic-enriched-dangerous-content
+  name: Dangerous Content
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: dangerous-content
+  close_mappings:
+  - ail-hate
+  - credo-risk-015
+  - atlas-harmful-output
+  - atlas-toxic-output
+  broad_mappings:
+  - atlas-harmful-code-generation
+  related_mappings:
+  - ail-hate
+  - ail-indiscriminate-weapons-cbrne
+  - ail-nonviolent-crimes
+  - ail-suicide-and-self-harm
+  - ail-violent-crimes
+  - credo-risk-013
+  - credo-risk-015
+  - atlas-harmful-output
+  - atlas-dangerous-use
+  - atlas-harmful-code-generation
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 8
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Dangerous Information
+      uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+      roles: &id001
+      - object
+      enumeration_count: 5
+    - class: Harmful How-To
+      uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      roles: &id002
+      - object
+      enumeration_count: 3
+- id: client-generic-enriched-hateful-content
+  name: Hateful Content
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: hateful-content
+  close_mappings:
+  - ail-hate
+  - credo-risk-015
+  - atlas-harmful-output
+  - atlas-toxic-output
+  broad_mappings:
+  - atlas-harmful-code-generation
+  related_mappings:
+  - ail-hate
+  - ail-indiscriminate-weapons-cbrne
+  - ail-nonviolent-crimes
+  - ail-suicide-and-self-harm
+  - ail-violent-crimes
+  - credo-risk-013
+  - credo-risk-015
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 8
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Dangerous Information
+      uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+      roles: *id001
+      enumeration_count: 5
+    - class: Harmful How-To
+      uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      roles: *id002
+      enumeration_count: 3
+- id: client-generic-enriched-toxic-content
+  name: Toxic Content
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: toxic-content
+  close_mappings:
+  - mit-ai-risk-subdomain-1.2
+  related_mappings:
+  - ail-hate
+  - ail-sexual-content
+  - granite-guardian-harm
+  - granite-profanity
+  - granite-sexual-content
+  - granite-violence
+  - atlas-human-exploitation
+  - atlas-spreading-toxicity
+  - nist-dangerous-violent-or-hateful-content
+  - nist-obscene-degrading-and-or-abusive-content
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 1
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - agent
+      enumeration_count: 1
+- id: client-generic-enriched-malware-creation
+  name: Malware Creation
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: malware-creation
+- id: client-generic-enriched-information-security
+  name: Information Security
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: information-security
+  broad_mappings:
+  - atlas-attribute-inference-attack
+  - atlas-data-contamination
+  - atlas-data-poisoning
+  - atlas-evasion-attack
+  - atlas-extraction-attack
+  - atlas-harmful-code-generation
+  - atlas-prompt-injection
+  - atlas-prompt-leaking
+  - atlas-prompt-priming
+  - atlas-unreliable-source-attribution
+  related_mappings:
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - credo-risk-038
+  - credo-risk-040
+  - credo-risk-041
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Cyberterrorism
+      uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+      roles:
+      - agent
+      enumeration_count: 2
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - object
+      enumeration_count: 9
+- id: client-generic-enriched-violent-content
+  name: Violent Content
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: violent-content
+  close_mappings:
+  - ail-hate
+  - credo-risk-015
+  - atlas-harmful-output
+  - atlas-toxic-output
+  broad_mappings:
+  - atlas-harmful-code-generation
+  related_mappings:
+  - ail-hate
+  - ail-indiscriminate-weapons-cbrne
+  - ail-nonviolent-crimes
+  - ail-suicide-and-self-harm
+  - ail-violent-crimes
+  - credo-risk-013
+  - credo-risk-015
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 8
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Dangerous Information
+      uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+      roles: *id001
+      enumeration_count: 5
+    - class: Harmful How-To
+      uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      roles: *id002
+      enumeration_count: 3
+- id: client-generic-enriched-fraud-scams
+  name: Fraud, scams
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: fraud-scams
+  close_mappings:
+  - credo-risk-026
+  related_mappings:
+  - ail-defamation
+  - ail-nonviolent-crimes
+  - atlas-bypassing-learning
+  - atlas-nonconsensual-use
+  - atlas-plagiarism
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles:
+      - object
+      enumeration_count: 7
+    - class: Deepfake Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      roles:
+      - instrument
+      enumeration_count: 0
+- id: client-generic-enriched-ai-facilitated-fraud
+  name: AI facilitated fraud
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: ai-facilitated-fraud
+  close_mappings:
+  - mit-ai-risk-subdomain-4.3
+  related_mappings:
+  - ail-nonviolent-crimes
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-2.2
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Social Engineering Fraud
+      uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      roles:
+      - agent
+      enumeration_count: 4
+    - class: Deepfake Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      roles:
+      - instrument
+      enumeration_count: 2
+- id: client-generic-enriched-abusive-content
+  name: Abusive Content
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: abusive-content
+  related_mappings:
+  - ail-child-sexual-exploitation
+  - ail-sex-related-crimes
+  - ail-sexual-content
+  - granite-guardian-harm
+  - granite-sexual-content
+  - atlas-harmful-output
+  - atlas-spreading-toxicity
+  - mit-ai-risk-subdomain-1.2
+  - nist-obscene-degrading-and-or-abusive-content
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Non-Consensual Intimate Imagery
+      uri: http://taxonomy-refiner.io/ontologies/cso#NonConsensualIntimateImagery
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Pornographic Content Description
+      uri: http://taxonomy-refiner.io/ontologies/cso#PornographicContentDescription
+      roles:
+      - object
+      enumeration_count: 2
+- id: client-generic-enriched-child-sexual
+  name: Child Sexual
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: child-sexual
+  related_mappings:
+  - credo-risk-014
+  - granite-guardian-harm
+  - granite-harm-engagement
+  - granite-sexual-content
+  - granite-unethical-behavior
+  - atlas-harmful-output
+  - atlas-nonconsensual-use
+  - mit-ai-risk-subdomain-1.2
+  - nist-obscene-degrading-and-or-abusive-content
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 16
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Sexual Exploitation
+      uri: http://taxonomy-refiner.io/ontologies/cso#SexualExploitation
+      roles:
+      - object
+      enumeration_count: 7
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - agent
+      enumeration_count: 9
+- id: client-generic-enriched-misinformation
+  name: Misinformation
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: misinformation
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Misinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-generic-enriched-disinformation
+  name: Disinformation
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: disinformation
+  broad_mappings:
+  - llm092025-misinformation
+  - nist-information-integrity
+  related_mappings:
+  - credo-risk-021
+  - credo-risk-028
+  - mit-ai-causal-risk-entity-human
+  - mit-ai-causal-risk-intent-intentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-4.1
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-generic-enriched-self-harm
+  name: Self-Harm
+  type: Risk
+  isDefinedByTaxonomy: client-generic-enriched
+  isPartOf: client-generic-enriched-safety
+  tag: self-harm
+  related_mappings:
+  - credo-risk-003
+  - credo-risk-007
+  - credo-risk-009
+  - credo-risk-010
+  - credo-risk-033
+  - credo-risk-036
+  - credo-risk-037
+  - granite-answer-relevance
+  - granite-groundedness
+  - granite-guardian-harm
+  - granite-harm-engagement
+  - granite-sexual-content
+  - atlas-data-curation
+  - atlas-harmful-output
+  - atlas-nonconsensual-use
+  - mit-ai-risk-subdomain-1.2
+  - mit-ai-risk-subdomain-1.3
+  - mit-ai-risk-subdomain-2.2
+  - nist-dangerous-violent-or-hateful-content
+  - nist-harmful-bias-or-homogenization
+  - nist-human-ai-configuration
+  - nist-obscene-degrading-and-or-abusive-content
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 1
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Content Safety Hazard
+      uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+      roles:
+      - object
+      enumeration_count: 1
+    - class: Harmful How-To
+      uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      roles:
+      - object
+      enumeration_count: 0

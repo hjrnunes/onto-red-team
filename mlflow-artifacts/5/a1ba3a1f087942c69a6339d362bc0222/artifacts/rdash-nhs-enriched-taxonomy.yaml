@@ -1,0 +1,168 @@
+taxonomies:
+- id: client-rdash-nhs-enriched
+  name: Client RDASH-NHS-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-rdash-nhs-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+- id: client-rdash-nhs-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+- id: client-rdash-nhs-enriched-scope-regulatory
+  name: Scope & Regulatory Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+entries:
+- id: client-rdash-nhs-enriched-regulatory-compliance
+  name: Regulatory compliance
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-scope-regulatory
+  tag: regulatory-compliance
+  related_mappings:
+  - granite-guardian-harm
+  - atlas-legal-accountability
+  - mit-ai-risk-subdomain-6.4
+  - mit-ai-risk-subdomain-6.5
+  - nist-data-privacy
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 20
+    source_ontologies:
+    - Commons
+    - FIBO
+    axes:
+    - class: regulation identification scheme
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/RegulationIdentificationScheme
+      roles:
+      - object
+      enumeration_count: 10
+    - class: regulatory report
+      uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport
+      roles:
+      - object
+      enumeration_count: 10
+- id: client-rdash-nhs-enriched-compromise-of-privacy
+  name: Compromise of privacy
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: compromise-of-privacy
+  close_mappings:
+  - credo-risk-036
+  related_mappings:
+  - ail-intellectual-property
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - credo-risk-024
+  - credo-risk-029
+  - credo-risk-037
+  - credo-risk-038
+  - credo-risk-040
+  - atlas-confidential-data-in-prompt
+  - atlas-confidential-information-in-data
+  - atlas-exposing-personal-information
+  - atlas-ip-information-in-prompt
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  - atlas-revealing-confidential-information
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 10
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - object
+      enumeration_count: 6
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-rdash-nhs-enriched-compromised-pii
+  name: Compromised PII
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: compromised-pii
+  close_mappings:
+  - mit-ai-risk-subdomain-2.1
+  related_mappings:
+  - ail-privacy
+  - ail-specialized-advice
+  - ail-suicide-and-self-harm
+  - granite-guardian-harm
+  - atlas-personal-information-in-data
+  - nist-data-privacy
+  - llm022025-sensitive-information-disclosure
+  - llm052025-improper-output-handling
+  - llm072025-system-prompt-leakage
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-rdash-nhs-enriched-sharing-ippiconfidential
+  name: Sharing IP/PI/confidential
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-confidentiality
+  tag: sharing-ippiconfidential
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CCO
+    - OBO
+    axes:
+    - class: Agent
+      uri: https://www.commoncoreontologies.org/ont00001017
+      roles:
+      - agent
+      enumeration_count: 3
+    - class: directive information entity
+      uri: http://purl.obolibrary.org/obo/IAO_0000033
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-rdash-nhs-enriched-accountability-of-ai-actions
+  name: Accountability of AI actions
+  type: Risk
+  isDefinedByTaxonomy: client-rdash-nhs-enriched
+  isPartOf: client-rdash-nhs-enriched-safety
+  tag: accountability-of-ai-actions
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 12
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: liability capacity
+      uri: https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCapacity/LiabilityCapacity
+      roles:
+      - agent
+      enumeration_count: 6
+    - class: responsible party
+      uri: https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty
+      roles:
+      - agent
+      - instrument
+      enumeration_count: 6

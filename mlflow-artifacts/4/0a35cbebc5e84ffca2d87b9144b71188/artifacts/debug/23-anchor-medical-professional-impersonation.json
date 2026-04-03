@@ -1,0 +1,36 @@
+{
+  "call_number": 23,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Governance failures\nDescription: The AI system may outpace regulatory frameworks and oversight mechanisms, potentially leading to ineffective governance and the inability to manage AI risks appropriately.\nConcern: None\nPolicy: Medical Professional Impersonation\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination: Algorithmic Discrimination \u2014 Systematic bias in automated decision-making systems that disadvantages specific groups based on protected characteristics. [found by 4/9 queries]\n  Siblings: Employment Discrimination, Discriminatory Denial of Service, Housing Discrimination\n- http://taxonomy-refiner.io/ontologies/cso#ProcessDisclosure: Process Disclosure \u2014 Disclosing confidential manufacturing processes, business methods, or operational procedures that constitute trade secrets. [found by 2/9 queries]\n  Siblings: Customer List Disclosure, Formula Disclosure\n- https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport: regulatory report \u2014 document required to support operational transparency that demonstrates compliance with some specification, law, policy, restriction, or other rule specified by a regulatory agency [found by 2/9 queries]\n  Siblings: technical specification document, registry, transaction record\n- https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency: regulatory agency \u2014 public authority or government agency responsible for exercising authority over something in a regulatory or supervisory capacity [found by 2/9 queries]\n  Siblings: registration authority, financial service provider, account provider\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 2/9 queries]\n  Siblings: automated underwriting system, automated system, party\n- https://www.omg.org/spec/Commons/RegulatoryAgencies/Jurisdiction: jurisdiction \u2014 power of a court or regulatory agency to adjudicate cases, issue orders, and interpret and apply the law with respect to some specific geographic area [from restriction: hasJurisdiction on RegulatoryAgency]\n  Siblings: site, assessment boundary, financial industry context"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency",
+        "cco_class_label": "regulatory agency",
+        "role": "agent",
+        "rationale": "The risk involves the AI system outpacing regulatory frameworks, indicating the need for effective governance by regulatory agencies."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/Jurisdiction",
+        "cco_class_label": "jurisdiction",
+        "role": "location",
+        "rationale": "The risk highlights the challenge of AI systems operating across different jurisdictions, which may have varying regulatory frameworks and oversight mechanisms."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Medical Professional Impersonation",
+    "risk_id": "credo-risk-046",
+    "risk_name": "Governance failures",
+    "num_candidates": 6
+  }
+}

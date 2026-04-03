@@ -1,0 +1,642 @@
+model: gemma-2-9b-it-abliterated
+policy_set: swb-enriched.json
+timestamp: '2026-04-02T16:45:25.123019+00:00'
+stages_completed:
+- classify
+- identify_domains
+- map_risks
+- anchor
+- contextualize
+- structure
+events:
+- stage: classify
+  event: type_distribution
+  distribution:
+    B: 2
+    D: 1
+    A: 3
+- stage: identify_domains
+  event: selected_domains
+  domains:
+  - CCO
+  - Commons
+  - D3FEND
+  - CSO
+  - FIBO
+- stage: map_risks
+  event: weak_match
+  risk_id: atlas-personal-information-in-prompt
+  distance: 0.6695946455001831
+- stage: map_risks
+  event: weak_match
+  risk_id: atlas-confidential-data-in-prompt
+  distance: 0.7267210483551025
+- stage: map_risks
+  event: match_count
+  policy_concept: Executive Compensation
+  count: 2
+- stage: map_risks
+  event: weak_match
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  distance: 0.6246829032897949
+- stage: map_risks
+  event: weak_match
+  risk_id: ai-risk-taxonomy-financial
+  distance: 0.7496875524520874
+- stage: map_risks
+  event: match_count
+  policy_concept: Debt Repayment Negotiation
+  count: 2
+- stage: map_risks
+  event: weak_match
+  risk_id: ail-specialized-advice
+  distance: 0.6676015853881836
+- stage: map_risks
+  event: match_count
+  policy_concept: Investment Advice
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Suspicious Activity Reporting
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Fraud
+  count: 2
+- stage: map_risks
+  event: weak_match
+  risk_id: mit-ai-risk-subdomain-4.3
+  distance: 0.6768968105316162
+- stage: map_risks
+  event: match_count
+  policy_concept: Money Laundering
+  count: 1
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-personal-information-in-prompt
+  queries_run: 8
+  raw_total: 80
+  unique_after_dedup: 41
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-personal-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+  hit_count: 5
+  best_distance: 0.3385275602340698
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-personal-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+  hit_count: 5
+  best_distance: 0.3712470531463623
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-personal-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+  hit_count: 5
+  best_distance: 0.42057979106903076
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-personal-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+  hit_count: 4
+  best_distance: 0.3754141330718994
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-personal-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+  hit_count: 4
+  best_distance: 0.38781458139419556
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-confidential-data-in-prompt
+  queries_run: 9
+  raw_total: 90
+  unique_after_dedup: 50
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-confidential-data-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  hit_count: 5
+  best_distance: 0.45892417430877686
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-confidential-data-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+  hit_count: 5
+  best_distance: 0.47045081853866577
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-confidential-data-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+  hit_count: 5
+  best_distance: 0.4792029857635498
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-confidential-data-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+  hit_count: 4
+  best_distance: 0.42628467082977295
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-confidential-data-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+  hit_count: 4
+  best_distance: 0.4406047463417053
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+  method: llm_fallback
+- stage: anchor
+  event: restriction_expansion
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  source_uri: ''
+  candidates_added: 3
+  source_type: restriction
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 8
+  restriction_candidates_added: 3
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerCreditRequirement
+  hit_count: 1
+  best_distance: 0.3995998501777649
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating
+  hit_count: 1
+  best_distance: 0.40750837326049805
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditReport
+  hit_count: 1
+  best_distance: 0.42004674673080444
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditInquiryType
+  hit_count: 1
+  best_distance: 0.42620670795440674
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/CommittedCreditFacility
+  hit_count: 1
+  best_distance: 0.4354386329650879
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerProtectionAgency
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerRight
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRatingAgency
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: role_derivation
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerCreditRequirement
+  method: llm_fallback
+- stage: anchor
+  event: restriction_expansion
+  risk_id: ai-risk-taxonomy-financial
+  source_uri: ''
+  candidates_added: 2
+  source_type: restriction
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-financial
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 7
+  restriction_candidates_added: 2
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financial
+  uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialMarketsRegulation
+  hit_count: 1
+  best_distance: 0.3903490900993347
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financial
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinanceCompany
+  hit_count: 1
+  best_distance: 0.40075957775115967
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financial
+  uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext
+  hit_count: 1
+  best_distance: 0.40794289112091064
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financial
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinancialInstitution
+  hit_count: 1
+  best_distance: 0.4204167127609253
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financial
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialService
+  hit_count: 1
+  best_distance: 0.436123788356781
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financial
+  uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-financial
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialServiceProvider
+  hit_count: 0
+  best_distance: 0.0
+  query_sources:
+  - restriction
+- stage: anchor
+  event: role_derivation
+  uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinanceCompany
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ail-specialized-advice
+  queries_run: 20
+  raw_total: 200
+  unique_after_dedup: 143
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-specialized-advice
+  uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+  hit_count: 5
+  best_distance: 0.4632449746131897
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-specialized-advice
+  uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+  hit_count: 5
+  best_distance: 0.4726067781448364
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-specialized-advice
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  hit_count: 5
+  best_distance: 0.49719345569610596
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-specialized-advice
+  uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+  hit_count: 4
+  best_distance: 0.3385275602340698
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-specialized-advice
+  uri: http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure
+  hit_count: 3
+  best_distance: 0.36389243602752686
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+  method: llm_fallback
+- stage: anchor
+  event: cache_hit
+  risk_id: ai-risk-taxonomy-financial
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-scams
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-scams
+  uri: http://taxonomy-refiner.io/ontologies/cso#InvestmentScam
+  hit_count: 1
+  best_distance: 0.40211808681488037
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-scams
+  uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+  hit_count: 1
+  best_distance: 0.4535507559776306
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-scams
+  uri: http://taxonomy-refiner.io/ontologies/cso#FinancialFraud
+  hit_count: 1
+  best_distance: 0.46697676181793213
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-scams
+  uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+  hit_count: 1
+  best_distance: 0.4777662754058838
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-scams
+  uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+  hit_count: 1
+  best_distance: 0.47826117277145386
+  query_sources:
+  - description
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: credo-risk-026
+  queries_run: 10
+  raw_total: 100
+  unique_after_dedup: 54
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-026
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  hit_count: 8
+  best_distance: 0.43189650774002075
+  query_sources:
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-026
+  uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+  hit_count: 6
+  best_distance: 0.4726067781448364
+  query_sources:
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-026
+  uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+  hit_count: 5
+  best_distance: 0.47962361574172974
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-026
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  hit_count: 5
+  best_distance: 0.5004451274871826
+  query_sources:
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-026
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  hit_count: 4
+  best_distance: 0.4570268988609314
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: mit-ai-risk-subdomain-4.3
+  queries_run: 7
+  raw_total: 70
+  unique_after_dedup: 51
+  kept_after_filter: 5
+  restriction_candidates_added: 0
+- stage: anchor
+  event: multi_query_hit
+  risk_id: mit-ai-risk-subdomain-4.3
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  hit_count: 5
+  best_distance: 0.3079332709312439
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: mit-ai-risk-subdomain-4.3
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakePornography
+  hit_count: 4
+  best_distance: 0.39384686946868896
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: mit-ai-risk-subdomain-4.3
+  uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+  hit_count: 3
+  best_distance: 0.5290217399597168
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: mit-ai-risk-subdomain-4.3
+  uri: https://www.commoncoreontologies.org/ont00000146
+  hit_count: 3
+  best_distance: 0.5746277570724487
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: mit-ai-risk-subdomain-4.3
+  uri: http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard
+  hit_count: 3
+  best_distance: 0.6023806929588318
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  method: llm_fallback
+- stage: anchor
+  event: cache_hit
+  risk_id: ai-risk-taxonomy-scams
+- stage: anchor
+  event: cache_hit
+  risk_id: mit-ai-risk-subdomain-4.3
+- stage: contextualize
+  event: restriction_context_added
+  axis_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating
+  restriction_count: 1
+- stage: contextualize
+  event: restriction_context_added
+  axis_uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerCreditRequirement
+  restriction_count: 2
+- stage: contextualize
+  event: restriction_context_added
+  axis_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinanceCompany
+  restriction_count: 1
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  sibling_count: 2
+- stage: contextualize
+  event: self_reference_filtered
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+- stage: contextualize
+  event: empty_enumerations
+  risk_id: credo-risk-026
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+  sibling_count: 2
+- stage: contextualize
+  event: self_reference_filtered
+  axis_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation

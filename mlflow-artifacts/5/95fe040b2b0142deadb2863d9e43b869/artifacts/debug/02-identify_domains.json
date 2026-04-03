@@ -1,0 +1,20 @@
+{
+  "call_number": 2,
+  "stage": "identify_domains",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying which domain ontologies are relevant for a set of client content policies.\n\nGiven the classified policies, select which domain ontologies should be used for grounding risk concepts. Pick ONLY domains that are directly relevant to the client's industry \u2014 do not select domains just because they might be tangentially useful.\n\nAvailable domain ontologies:\n- FIBO: Financial services \u2014 banking, securities, insurance, loans, regulatory compliance\n- OBO: Healthcare \u2014 diseases, drugs, anatomy, medical procedures, adverse events\n- IOF: Manufacturing \u2014 supply chain, maintenance, industrial processes, engineering\n\nReturn the relevant domain keys ordered by importance.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"properties\": {\n    \"domains\": {\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"title\": \"Domains\",\n      \"type\": \"array\"\n    },\n    \"justification\": {\n      \"title\": \"Justification\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"domains\",\n    \"justification\"\n  ],\n  \"title\": \"_DomainSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Classified policies:\n\n- Clinical Decision-Making and Care Planning (Type C): Prohibition of AI systems being used for making clinical decisions, determining diagnoses or treatment, replacing professional judgment, or generating direct clinical entries/care plans for named patients.\n- Protected Health Information and Data Privacy (Type B): Prohibition of inputting person-identifiable, business-sensitive, or confidential data into public AI tools, including requirements for anonymization and DPIA.\n- Acceptable AI Use Cases (Type C): Guidelines outlining permitted uses for public AI (e.g., drafting, summarization, administration) versus prohibited uses (direct patient care).\n- Research and Clinical Governance (Type C): Requirements for research approval (HRA/Ethics Committee) and adherence to GMC frameworks regarding clinician responsibility.\n- Patient Consent (Type C): Requirement for obtaining full information and explicit consent from patients prior to AI use in consultations or recording."
+    }
+  ],
+  "response": {
+    "domains": [
+      "OBO"
+    ],
+    "justification": "The classified policies are exclusively focused on healthcare-related risks, including clinical decision-making, protected health information (PHI), patient consent, and clinical governance. The OBO ontology, which covers diseases, medical procedures, and adverse events, is the only domain directly relevant to these healthcare-specific contexts."
+  }
+}

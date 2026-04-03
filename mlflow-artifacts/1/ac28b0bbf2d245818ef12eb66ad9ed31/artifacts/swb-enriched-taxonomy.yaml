@@ -1,0 +1,391 @@
+taxonomies:
+- id: client-swb-enriched
+  name: Client SWB-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-swb-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-swb-enriched
+- id: client-swb-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-swb-enriched
+- id: client-swb-enriched-routing
+  name: Routing Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-swb-enriched
+entries:
+- id: client-swb-enriched-confidential-data-in-prompt
+  name: Confidential data in prompt
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-confidentiality
+  tag: confidential-data-in-prompt
+  broad_mappings:
+  - nist-intellectual-property
+  related_mappings:
+  - ail-privacy
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-other
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Exfiltration via AI Inference API - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+      roles:
+      - instrument
+      enumeration_count: 3
+    - class: LLM Data Leakage - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-swb-enriched-personal-information-in-prompt
+  name: Personal information in prompt
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-confidentiality
+  tag: personal-information-in-prompt
+  broad_mappings:
+  - nist-data-privacy
+  related_mappings:
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-ai
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Financial Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Exfiltration via AI Inference API - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+      roles:
+      - instrument
+      enumeration_count: 3
+- id: client-swb-enriched-payday-lending
+  name: Payday lending
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: payday-lending
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 4
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: lender
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/Lender
+      roles:
+      - agent
+      enumeration_count: 2
+    - class: loan
+      uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/Loans/Loan
+      roles:
+      - object
+      enumeration_count: 2
+- id: client-swb-enriched-financing-eligibility
+  name: Financing eligibility
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: financing-eligibility
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: credit rating
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating
+      roles:
+      - object
+      enumeration_count: 3
+    - class: credit report
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditReport
+      roles:
+      - instrument
+      enumeration_count: 0
+- id: client-swb-enriched-financial-advice-risks
+  name: Financial advice risks
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: financial-advice-risks
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 15
+    source_ontologies:
+    - FIBO
+    axes:
+    - class: financial institution
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinancialInstitution
+      roles:
+      - agent
+      enumeration_count: 6
+    - class: financial service
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialService
+      roles:
+      - object
+      enumeration_count: 9
+- id: client-swb-enriched-intentional-financial-goals
+  name: Intentional financial goals
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: intentional-financial-goals
+  related_mappings:
+  - atlas-attribute-inference-attack
+  - atlas-bypassing-learning
+  - atlas-dangerous-use
+  - atlas-data-poisoning
+  - atlas-evasion-attack
+  - atlas-extraction-attack
+  - atlas-jailbreaking
+  - atlas-membership-inference-attack
+  - atlas-nonconsensual-use
+  - atlas-prompt-injection
+  - atlas-prompt-leaking
+  - atlas-prompt-priming
+  - atlas-spreading-disinformation
+  - atlas-spreading-toxicity
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 12
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: LLM Prompt Crafting - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0065
+      roles:
+      - instrument
+      enumeration_count: 10
+    - class: Deepfake Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      roles:
+      - object
+      enumeration_count: 2
+- id: client-swb-enriched-gambling-financial-risks
+  name: Gambling financial risks
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: gambling-financial-risks
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - D3FEND
+    - FIBO
+    axes:
+    - class: Financial Harm - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.000
+      roles:
+      - object
+      enumeration_count: 2
+    - class: financial exposure
+      uri: https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialExposure
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-swb-enriched-fraud-scams-manipulation
+  name: Fraud, scams, manipulation
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: fraud-scams-manipulation
+  close_mappings:
+  - mit-ai-risk-subdomain-4.3
+  - credo-risk-026
+  related_mappings:
+  - ail-nonviolent-crimes
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-2.2
+  - ail-defamation
+  - atlas-bypassing-learning
+  - atlas-nonconsensual-use
+  - atlas-plagiarism
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Evade AI Model - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015
+      roles: &id001
+      - instrument
+      enumeration_count: 4
+    - class: Artificial Intelligence
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T1588.007
+      roles: &id002
+      - instrument
+      enumeration_count: 3
+- id: client-swb-enriched-scams
+  name: Scams
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: scams
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 10
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles: &id003
+      - object
+      enumeration_count: 6
+    - class: Social Engineering Fraud
+      uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      roles: &id004
+      - instrument
+      enumeration_count: 4
+- id: client-swb-enriched-phishingcatfishing
+  name: Phishing/catfishing
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-routing
+  tag: phishingcatfishing
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles:
+      - object
+      enumeration_count: 7
+    - class: Phishing
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T1566
+      roles:
+      - agent
+      enumeration_count: 4
+- id: client-swb-enriched-ai-facilitated-fraud
+  name: AI-facilitated fraud
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: ai-facilitated-fraud
+  close_mappings:
+  - mit-ai-risk-subdomain-4.3
+  related_mappings:
+  - ail-nonviolent-crimes
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-2.2
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Evade AI Model - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015
+      roles: *id001
+      enumeration_count: 4
+    - class: Artificial Intelligence
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T1588.007
+      roles: *id002
+      enumeration_count: 3
+- id: client-swb-enriched-scams-fraudulent-activities
+  name: Scams, fraudulent activities
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: scams-fraudulent-activities
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 10
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Fraud and Deception
+      uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+      roles: *id003
+      enumeration_count: 6
+    - class: Social Engineering Fraud
+      uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      roles: *id004
+      enumeration_count: 4
+- id: client-swb-enriched-financial-crimes
+  name: Financial crimes
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: financial-crimes
+  related_mappings:
+  - credo-risk-026
+  - granite-guardian-harm
+  - granite-unethical-behavior
+  - atlas-harmful-output
+  - mit-ai-risk-subdomain-2.1
+  - mit-ai-risk-subdomain-2.2
+  - mit-ai-risk-subdomain-4.1
+  - mit-ai-risk-subdomain-4.2
+  - mit-ai-risk-subdomain-4.3
+  - mit-ai-risk-subdomain-5.1
+  - mit-ai-risk-subdomain-5.2
+  - mit-ai-risk-subdomain-6.5
+  - mit-ai-risk-subdomain-6.6
+  - mit-ai-risk-subdomain-7.1
+  - mit-ai-risk-subdomain-7.2
+  - nist-dangerous-violent-or-hateful-content
+  - nist-information-integrity
+  - nist-information-security
+  - nist-intellectual-property
+  - llm022025-sensitive-information-disclosure
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 8
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: External Harms - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Artificial Intelligence
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T1588.007
+      roles:
+      - instrument
+      enumeration_count: 4
+- id: client-swb-enriched-illegal-activities
+  name: Illegal activities
+  type: Risk
+  isDefinedByTaxonomy: client-swb-enriched
+  isPartOf: client-swb-enriched-safety
+  tag: illegal-activities
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 2
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Drug Administration Methods
+      uri: http://taxonomy-refiner.io/ontologies/cso#DrugAdministrationMethods
+      roles:
+      - instrument
+      enumeration_count: 2

@@ -1,0 +1,64 @@
+{
+  "call_number": 1,
+  "stage": "classify",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are classifying client content policies for an LLM deployment.\n\nClassify each policy into exactly one type:\n- A (Safety): Harmful content, violence, illegal activity, hate speech, self-harm, etc.\n- B (Confidentiality): Protecting sensitive, proprietary, or personal information\n- C (Scope/Regulatory): Regulatory compliance, scope limitations, sanctions, jurisdiction\n- D (Routing): Redirecting certain queries to humans or other systems\n\nFor each policy, return the policy_concept, concept_definition, policy_type, and a brief justification."
+    },
+    {
+      "role": "user",
+      "content": "Classify these policies:\n\n1. Illegal Activity: Prompts that seek to elicit advice or strategies to carry out illegal activity\n2. Hate Speech: Prompts that attempt to generate insulting, bullying, harmful or discriminatory content towards a particular group of people or individual\n3. Security & Malware: Prompts that seek to create content to assist with exploiting computer systems' weaknesses, gain unauthorized access or create & distribute malware\n4. Violence: Prompts that attempt to create content related to inflicting physical harm onto others\n5. Fraud: Prompts that seek to gain advice and strategies to commit fraud\n6. Sexually Explicit: Prompts that seek to generate content that is sexually explicit including pornographic content, prostitution, sexual abuse and child exploitation\n7. Misinformation: Prompts that aim to create misleading content or gain advice & strategies on the creation or promotion of misinformation\n8. Self Harm: Prompts that seek advice, strategies and examples of how to inflict harm upon oneself"
+    }
+  ],
+  "response": [
+    {
+      "policy_concept": "Illegal Activity",
+      "concept_definition": "Prompts that seek to elicit advice or strategies to carry out illegal activity",
+      "policy_type": "A",
+      "justification": "Relates to the promotion of illegal acts and criminal behavior."
+    },
+    {
+      "policy_concept": "Hate Speech",
+      "concept_definition": "Prompts that attempt to generate insulting, bullying, harmful or discriminatory content towards a particular group of people or individual",
+      "policy_type": "A",
+      "justification": "Involves harmful, discriminatory, and hateful content directed at groups or individuals."
+    },
+    {
+      "policy_concept": "Security & Malware",
+      "concept_definition": "Prompts that seek to create content to assist with exploiting computer systems' weaknesses, gain unauthorized access or create & distribute malware",
+      "policy_type": "A",
+      "justification": "Concerns cyberattacks and malicious activities that cause harm to digital infrastructure."
+    },
+    {
+      "policy_concept": "Violence",
+      "concept_definition": "Prompts that attempt to create content related to inflicting physical harm onto others",
+      "policy_type": "A",
+      "justification": "Directly involves the promotion of physical harm and violent acts."
+    },
+    {
+      "policy_concept": "Fraud",
+      "concept_definition": "Prompts that seek to gain advice and strategies to commit fraud",
+      "policy_type": "A",
+      "justification": "Relates to deceptive and illegal activities intended to cause harm or theft."
+    },
+    {
+      "policy_concept": "Sexually Explicit",
+      "concept_definition": "Prompts that seek to generate content that is sexually explicit including pornographic content, prostitution, sexual abuse and child exploitation",
+      "policy_type": "A",
+      "justification": "Involves highly harmful, exploitative, and inappropriate sexual content."
+    },
+    {
+      "policy_concept": "Misinformation",
+      "concept_definition": "Prompts that aim to create misleading content or gain advice & strategies on the creation or promotion of misinformation",
+      "policy_type": "A",
+      "justification": "Relates to the generation of deceptive content that can cause societal harm."
+    },
+    {
+      "policy_concept": "Self Harm",
+      "concept_definition": "Prompts that seek advice, strategies and examples of how to inflict harm upon oneself",
+      "policy_type": "A",
+      "justification": "Directly involves content promoting self-inflicted physical injury or suicide."
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "call_number": 1,
+  "stage": "classify",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are classifying client content policies for an LLM deployment.\n\nClassify each policy into exactly one type:\n- A (Safety): Harmful content, violence, illegal activity, hate speech, self-harm, etc.\n- B (Confidentiality): Protecting sensitive, proprietary, or personal information\n- C (Scope/Regulatory): Regulatory compliance, scope limitations, sanctions, jurisdiction\n- D (Routing): Redirecting certain queries to humans or other systems\n\nFor each policy, return the policy_concept, concept_definition, policy_type, and a brief justification.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"PolicyClassification\": {\n      \"properties\": {\n        \"policy_concept\": {\n          \"title\": \"Policy Concept\",\n          \"type\": \"string\"\n        },\n        \"concept_definition\": {\n          \"title\": \"Concept Definition\",\n          \"type\": \"string\"\n        },\n        \"policy_type\": {\n          \"enum\": [\n            \"A\",\n            \"B\",\n            \"C\",\n            \"D\"\n          ],\n          \"title\": \"Policy Type\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"policy_concept\",\n        \"concept_definition\",\n        \"policy_type\",\n        \"justification\"\n      ],\n      \"title\": \"PolicyClassification\",\n      \"type\": \"object\"\n    }\n  },\n  \"description\": \"Correct segmentation of `PolicyClassification` tasks\",\n  \"properties\": {\n    \"tasks\": {\n      \"description\": \"Correctly segmented list of `PolicyClassification` tasks\",\n      \"items\": {\n        \"$ref\": \"#/$defs/PolicyClassification\"\n      },\n      \"title\": \"Tasks\",\n      \"type\": \"array\"\n    }\n  },\n  \"title\": \"IterablePolicyClassification\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Classify these policies:\n\n1. Clinical Diagnosis & Treatment: AI systems must not be used for making clinical decisions, determining diagnoses, or treatment plans. Clinicians remain personally accountable for all decisions regarding patient care, and AI outputs require validation before use.\n2. Protected Health Information: No person-identifiable data may be input to public AI tools. No business-sensitive or confidential data processing is allowed. Combined details of a local area, a rare disease, and a very young age may enable a patient to be identified, requiring careful anonymisation assessment.\n3. Medical Professional Impersonation: AI systems must not be used for generating clinical entries directly into patient records or replacing professional judgment. The final responsibility for diagnosis, treatment, and patient care rests with the clinician, and over-reliance on AI without oversight may compromise patient safety."
+    }
+  ],
+  "response": [
+    {
+      "policy_concept": "Clinical Diagnosis & Treatment",
+      "concept_definition": "AI systems must not be used for making clinical decisions, determining diagnoses, or treatment plans. Clinicians remain personally accountable for all decisions regarding patient care, and AI outputs require validation before use.",
+      "policy_type": "C",
+      "justification": "This policy pertains to regulatory compliance and scope limitations, ensuring that AI systems do not overstep their role in clinical settings and that clinicians maintain accountability."
+    },
+    {
+      "policy_concept": "Protected Health Information",
+      "concept_definition": "No person-identifiable data may be input to public AI tools. No business-sensitive or confidential data processing is allowed. Combined details of a local area, a rare disease, and a very young age may enable a patient to be identified, requiring careful anonymisation assessment.",
+      "policy_type": "B",
+      "justification": "This policy focuses on protecting sensitive, proprietary, or personal information, emphasizing the importance of confidentiality and data protection."
+    },
+    {
+      "policy_concept": "Medical Professional Impersonation",
+      "concept_definition": "AI systems must not be used for generating clinical entries directly into patient records or replacing professional judgment. The final responsibility for diagnosis, treatment, and patient care rests with the clinician, and over-reliance on AI without oversight may compromise patient safety.",
+      "policy_type": "C",
+      "justification": "This policy addresses scope limitations and regulatory compliance, ensuring that AI systems do not replace professional judgment and that clinicians maintain responsibility for patient care."
+    }
+  ]
+}

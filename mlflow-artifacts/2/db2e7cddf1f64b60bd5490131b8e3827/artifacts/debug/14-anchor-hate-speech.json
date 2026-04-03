@@ -1,0 +1,42 @@
+{
+  "call_number": 14,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Toxic content\nDescription: The AI system may generate or respond with hateful content, such as racist, sexist, or otherwise offensive material.\nConcern: None\nPolicy: Hate Speech\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/Law: law \u2014 rule recognized by some community as regulating the behavior of its members and that it may enforce through the imposition of penalties [found by 9/15 queries]\n- https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Exposure: exposure \u2014 the extent to which an individual or organization is unprotected and open to damage, danger, risk of suffering a loss, or uncertainty [found by 5/15 queries]\n- https://www.omg.org/spec/Commons/Documents/Notice: notice \u2014 announcement, communication, intimation, or advance warning of something, usually, but not necessarily, to allow preparations to be made [found by 9/15 queries]\n  Siblings: indication of interest, publication, reference document\n- https://www.commoncoreontologies.org/ont00001147: Act of Violence \u2014 A Planned Act of causing harm to oneself or to another through the use of physical or verbal force. [found by 7/15 queries]\n  Siblings: Act of Measuring, Act of Military Force, Act of Prediction\n- http://taxonomy-refiner.io/ontologies/cso#PornographicContentDescription: Pornographic Content Description \u2014 Descriptions or generation of explicit sexual material intended for sexual arousal, mimicking pornographic media formats. [found by 7/15 queries]\n  Siblings: Clinical Sexual Description, Explicit Sexual Description, Reproductive Health Boundary\n- https://www.omg.org/spec/Commons/PartiesAndSituations/Party: party \u2014 person or organization [from restriction: appliesTo on Exposure]\n  Siblings: automated system, software agent, Agent"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00001147",
+        "cco_class_label": "Act of Violence",
+        "role": "object",
+        "rationale": "Toxic content often manifests as verbal violence or hate speech. This class captures the nature of the harmful content being generated (the 'what')."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#PornographicContentDescription",
+        "cco_class_label": "Pornographic Content Description",
+        "role": "object",
+        "rationale": "Toxic content includes offensive or explicit material. This class provides a specific dimension of harmful content types that can be used to vary the toxicity of the prompt/response."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Party",
+        "cco_class_label": "party",
+        "role": "agent",
+        "rationale": "Toxic content is often directed at specific persons or organizations (the 'who'). This class allows for variation in the target or the entity involved in the toxic interaction."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Hate Speech",
+    "risk_id": "credo-risk-013",
+    "risk_name": "Toxic content",
+    "num_candidates": 6
+  }
+}

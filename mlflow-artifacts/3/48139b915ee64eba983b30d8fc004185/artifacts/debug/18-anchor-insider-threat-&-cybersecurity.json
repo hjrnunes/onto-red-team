@@ -1,0 +1,36 @@
+{
+  "call_number": 18,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Compromised confidential information\nDescription: The AI system, including its supporting compute infrastructure, may serve as an attack vector for intrusion into cyber-physical or cloud environments, or enable exfiltration of secrets.\nConcern: None\nPolicy: Insider Threat & Cybersecurity\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/ListedSecurityIdentifier: listed security identifier \u2014 security identifier issued in the public domain and referred to in listings and other relevant publications [found by 8/9 queries]\n  Siblings: international securities identification number, National Securities Identifying Number, proprietary security identifier\n- https://www.omg.org/spec/Commons/Identifiers/IdentificationScheme: identification scheme \u2014 system for minting identifiers for things that specifies constraints on the structure of the identifier [found by 6/9 queries]\n  Siblings: code set, indexing scheme, classification scheme\n- http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard: Content Safety Hazard \u2014 Root class for content safety harm categories relevant to adversarial prompt generation against LLM deployments. [found by 5/9 queries]\n- http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information \u2014 Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts. [found by 5/9 queries]\n  Siblings: Sexual Content, Intellectual Property, Hate and Discrimination\n- https://www.commoncoreontologies.org/ont00000548: Vulnerability \u2014 A Disrupting Disposition the realization of which would disrupt a process that the bearer of the Disrupting Disposition has an interest in. [found by 5/9 queries]\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesListings/ListedSecurity: listed security \u2014 registered security listed on at least one exchange [from restriction: identifies on ListedSecurityIdentifier]\n  Siblings: preferred, restricted voting, redeemable extendable, cumulative participating, registered share, preferred, voting, exchangeable, cumulative participating, registered share, preferred, restricted voting, redeemable extendable, adjustable income, registered share\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityRegistry: security registry \u2014 registry used to manage security identifiers and related information [from restriction: isRegisteredIn on ListedSecurityIdentifier]\n  Siblings: transaction record, entity legal form registry, share register\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentificationScheme: security identification scheme \u2014 formal definition of the structure and application of a particular set of securities identifiers [from restriction: isDefinedIn on ListedSecurityIdentifier]"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+        "cco_class_label": "Content Safety Hazard",
+        "role": "object",
+        "rationale": "The compromised confidential information can be related to content safety hazards, as the exfiltration of secrets can lead to various forms of harmful content being exposed."
+      },
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00000548",
+        "cco_class_label": "Vulnerability",
+        "role": "agent",
+        "rationale": "The AI system itself can be seen as the agent that, if compromised, allows for the intrusion or exfiltration of confidential information, making it a vulnerability."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Insider Threat & Cybersecurity",
+    "risk_id": "credo-risk-038",
+    "risk_name": "Compromised confidential information",
+    "num_candidates": 8
+  }
+}

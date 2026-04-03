@@ -513,3 +513,120 @@ def test_emit_cli_missing_policies(tmp_path):
         "--policies", str(tmp_path / "nonexistent.json"),
     ])
     assert result.exit_code != 0
+
+
+# --- Quick-win fixes (gen3 assessment) ---
+
+from refiner.emit import _strip_framework_suffix, _fuzzy_match_policy
+from refiner.models import Policy
+
+
+def test_strip_framework_suffix_atlas():
+    assert _strip_framework_suffix("Spamming AI System with Chaff Data - ATLAS") == "Spamming AI System with Chaff Data"
+
+
+def test_strip_framework_suffix_attack_ics():
+    assert _strip_framework_suffix("Rootkit - ATTACK ICS") == "Rootkit"
+
+
+def test_strip_framework_suffix_attack_mobile():
+    assert _strip_framework_suffix("Masquerading - ATTACK Mobile") == "Masquerading"
+
+
+def test_strip_framework_suffix_attack():
+    assert _strip_framework_suffix("Spearphishing Attachment - ATTACK") == "Spearphishing Attachment"
+
+
+def test_strip_framework_suffix_sparta():
+    assert _strip_framework_suffix("Jamming - SPARTA") == "Jamming"
+
+
+def test_strip_framework_suffix_no_suffix():
+    assert _strip_framework_suffix("Credit Card Fraud") == "Credit Card Fraud"
+
+
+def test_strip_framework_suffix_in_prompt():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://d3fend.mitre.org/ontologies/d3fend.owl#T1234",
+            cco_class_label="Offensive Technique - ATLAS",
+            roles=["instrument"],
+            sampled_uri="http://d3fend.mitre.org/ontologies/d3fend.owl#T5678",
+            sampled_label="Extract AI Model - ATLAS",
+            source_ontology="D3FEND",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("X", "Y", "Z", axes)
+    user = messages[1]["content"]
+    assert "Extract AI Model" in user
+    assert " - ATLAS" not in user
+
+
+def test_fuzzy_match_policy_suffix_added():
+    policy_map = {
+        "Clinical Diagnosis & Treatment": Policy(
+            policy_concept="Clinical Diagnosis & Treatment",
+            concept_definition="About clinical decisions",
+        ),
+    }
+    result = _fuzzy_match_policy("Clinical Diagnosis & Treatment Restriction", policy_map)
+    assert result is not None
+    assert result.policy_concept == "Clinical Diagnosis & Treatment"
+
+
+def test_fuzzy_match_policy_suffix_handling():
+    policy_map = {
+        "Protected Health Information": Policy(
+            policy_concept="Protected Health Information",
+            concept_definition="About PHI",
+        ),
+    }
+    result = _fuzzy_match_policy("Protected Health Information Handling", policy_map)
+    assert result is not None
+    assert result.policy_concept == "Protected Health Information"
+
+
+def test_fuzzy_match_policy_no_match():
+    policy_map = {
+        "Fraud": Policy(policy_concept="Fraud", concept_definition="About fraud"),
+    }
+    result = _fuzzy_match_policy("Clinical Diagnosis", policy_map)
+    assert result is None
+
+
+def test_fuzzy_match_policy_case_insensitive():
+    policy_map = {
+        "Protected Health Information": Policy(
+            policy_concept="Protected Health Information",
+            concept_definition="About PHI",
+        ),
+    }
+    result = _fuzzy_match_policy("protected health information handling", policy_map)
+    assert result is not None
+
+
+def test_sample_axes_caps_at_combinatorial_space():
+    """When space is smaller than n, return at most space samples."""
+    profile = DomainContextProfile(
+        risk_id="r1", risk_name="R", policy_concept="P",
+        axes=[
+            DomainContextAxis(
+                cco_class_uri="http://example.org/A",
+                cco_class_label="A",
+                roles=["agent"],
+                enumerations=[_enum("high"), _enum("medium")],
+            ),
+            DomainContextAxis(
+                cco_class_uri="http://example.org/B",
+                cco_class_label="B",
+                roles=["object"],
+                enumerations=[_enum("high")],
+            ),
+        ],
+    )
+    # Space is 2 * 1 = 2, requesting 100 should return at most 2
+    import random
+    random.seed(42)
+    samples = sample_axes(profile, n=100)
+    assert len(samples) <= 2

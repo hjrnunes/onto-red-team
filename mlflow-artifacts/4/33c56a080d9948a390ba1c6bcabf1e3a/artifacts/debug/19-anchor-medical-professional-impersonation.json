@@ -1,0 +1,36 @@
+{
+  "call_number": 19,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: AI pursuing own goals\nDescription: The AI system may act in conflict with ethical standards or human goals or values, especially those of its designers or users, potentially using dangerous capabilities such as manipulation, deception, or situational awareness to seek power, self-proliferate, or achieve other misaligned goals.\nConcern: None\nPolicy: Medical Professional Impersonation\n\nCandidate ontology classes:\n- http://purl.obolibrary.org/obo/OAE_0000246: obsolete: behavior AE \u2014 a behavioral AE that results in uncharacteristic behaviors [found by 8/14 queries]\n  Siblings: obsolete: reflexes decreased AE, thrombocythemia AE - OBSOLETE (due to duplication), obsolete: medical device adverse event\n- http://purl.obolibrary.org/obo/OAE_0004801: automatism AE \u2014 This is an AE which refers to a set of brief unconscious behaviors. [found by 6/14 queries]\n  Siblings: somnambulism AE, attention-seeking behaviour AE, somatoform disorder AE\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 10/14 queries]\n  Siblings: automated underwriting system, automated system, party\n- http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo: Harmful How-To \u2014 Step-by-step instructions for activities that cause property destruction, physical harm, or enable illegal intrusion when executed by unauthorized individuals. [found by 9/14 queries]\n  Siblings: CBRN Information, Drug Synthesis, Dual-Use Research Concern\n- https://www.omg.org/spec/Commons/BusinessAuthorizations/Authorization: authorisation \u2014 situation in which a party authorizes someone to act on their behalf or to have specific capabilities under certain conditions for some period of time [found by 9/14 queries]\n  Siblings: trade, ownership control situation, study\n- https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty: authorising party \u2014 party that delegates some role, authority, or control to another party [from restriction: hasAuthorizingParty on Authorization]\n  Siblings: owner, registrar, controlling party\n- https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty: authorised party \u2014 party that has been given the ability to act on behalf of another party or to have specified capabilities under some set of guidelines for some period of time [from restriction: hasAuthorizedParty on Authorization]\n  Siblings: Occupation Role, Contractor Role, service provider"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+        "cco_class_label": "software agent",
+        "role": "agent",
+        "rationale": "The risk centers on an AI acting autonomously and potentially in conflict with human goals. The 'software agent' class captures this notion of an entity with its own goals and the ability to act upon them."
+      },
+      {
+        "cco_class_uri": "http://purl.obolibrary.org/obo/OAE_0004801",
+        "cco_class_label": "automatism AE",
+        "role": "behavior",
+        "rationale": "The AI's actions might be characterized as 'automatisms' -  uncharacteristic behaviors that arise from its internal processes, potentially leading to unintended consequences."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Medical Professional Impersonation",
+    "risk_id": "credo-risk-002",
+    "risk_name": "AI pursuing own goals",
+    "num_candidates": 7
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "call_number": 17,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: AI-generated security weaknesses\nDescription: AI system security vulnerabilities: Implementation weaknesses in AI system architecture and infrastructure\nConcern: None\nPolicy: Insider Threat & Cybersecurity\n\nCandidate ontology classes:\n- http://d3fend.mitre.org/ontologies/d3fend.owl#T0820: Exploitation for Evasion - ATTACK ICS \u2014 Adversaries may exploit a software vulnerability to take advantage of a programming error in a program, service, or within the operating system software or kernel itself to evade detection. Vulnerabilities may exist in software that can be used to disable or circumvent security features. [found by 3/10 queries]\n  Siblings: Rootkit - ATTACK ICS, Spoof Reporting Message - ATTACK ICS, System Binary Proxy Execution - ATTACK ICS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001: AI Software - ATLAS \u2014 Most AI systems rely on a limited set of AI frameworks.\nAn adversary could get access to a large number of AI systems through a comprise of one of their supply chains.\nMany AI projects also rely on other open source implementations of various algorithms.\nThese can also be compromised in a targeted way to get access to specific systems. [found by 3/10 queries]\n  Siblings: Hardware - ATLAS, Data - ATLAS, Container Registry - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024: Exfiltration via AI Inference API - ATLAS \u2014 Adversaries may exfiltrate private information via [AI Model Inference API Access](/techniques/AML.T0040).\nAI Models have been shown leak private information about their training data (e.g.  [Infer Training Data Membership](/techniques/AML.T0024.000), [Invert AI Model](/techniques/AML.T0024.001)).\nThe model itself may also be extracted ([Extract AI Model](/techniques/AML.T0024.002)) for the purposes of [AI Intellectual Property Theft](/techniques/AML.T0048.004).\n\nExfiltration of information relating to private training data raises privacy concerns.\nPrivate training data may include personally identifiable information, or other protected data. [found by 2/10 queries]\n  Siblings: LLM Response Rendering - ATLAS, Exfiltration via AI Agent Tool Invocation - ATLAS, LLM Data Leakage - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0011.000: Unsafe AI Artifacts - ATLAS \u2014 Adversaries may develop unsafe AI artifacts that when executed have a deleterious effect.\nThe adversary can use this technique to establish persistent access to systems.\nThese models may be introduced via a [AI Supply Chain Compromise](/techniques/AML.T0010).\n\nSerialization of models is a popular technique for model storage, transfer, and loading.\nHowever, this format without proper checking presents an opportunity for code execution. [found by 2/10 queries]\n  Siblings: Malicious Package - ATLAS\n- http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057: LLM Data Leakage - ATLAS \u2014 Adversaries may craft prompts that induce the LLM to leak sensitive information.\nThis can include private user data or proprietary information.\nThe leaked information may come from proprietary training data, data sources the LLM is connected to, or information from other users of the LLM. [found by 2/10 queries]\n  Siblings: LLM Response Rendering - ATLAS, Exfiltration via AI Inference API - ATLAS, Exfiltration via AI Agent Tool Invocation - ATLAS"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001",
+        "cco_class_label": "AI Software - ATLAS",
+        "role": "instrument",
+        "rationale": "The risk involves vulnerabilities in the AI system architecture and infrastructure, which are directly related to the AI software used. This class represents the tool/means (instrument) through which the risk is manifested."
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0011.000",
+        "cco_class_label": "Unsafe AI Artifacts - ATLAS",
+        "role": "object",
+        "rationale": "The risk focuses on implementation weaknesses in AI system architecture and infrastructure, which can be represented by unsafe AI artifacts. This class represents what is acted upon (object) in the context of the risk."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Insider Threat & Cybersecurity",
+    "risk_id": "credo-risk-040",
+    "risk_name": "AI-generated security weaknesses",
+    "num_candidates": 5
+  }
+}

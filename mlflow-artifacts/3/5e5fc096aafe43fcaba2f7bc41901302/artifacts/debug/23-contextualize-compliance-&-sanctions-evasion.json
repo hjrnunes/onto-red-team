@@ -1,0 +1,79 @@
+{
+  "call_number": 23,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Regulatory compliance (ID: credo-risk-023)\nDescription: The AI system may fail to comply with existing or emerging regulations and standards, potentially leading to legal penalties,fines, or operational restrictions.\nConcern: None\nPolicy: Compliance & Sanctions Evasion\n\nAxis: regulatory report (https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport)\nRoles: object\nSiblings:\n  - https://www.omg.org/spec/Commons/Documents/TechnicalSpecificationDocument: technical specification document\n  - https://www.omg.org/spec/Commons/RegistrationAuthorities/Registry: registry\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/TransactionRecord: transaction record\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Documents/FinancialRecord: financial record\n  - https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/ContactRecord: contact record\n  - https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/PublicRecord: public record\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/GeneralLedger: general ledger\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/AccountStatement: account statement\n  - https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/PrivateLabelMBSIssuance/RemittanceReport: remittance report\n  - https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/HomeMortgageDisclosureActCoveredMortgages/HMDA-Report: HMDA report"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+        "enumerations": [
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/Documents/TechnicalSpecificationDocument: technical specification document",
+            "class_label": "technical specification document",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/RegistrationAuthorities/Registry: registry",
+            "class_label": "registry",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/TransactionRecord: transaction record",
+            "class_label": "transaction record",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Arrangements/Documents/FinancialRecord: financial record",
+            "class_label": "financial record",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/ContactRecord: contact record",
+            "class_label": "contact record",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/PublicRecord: public record",
+            "class_label": "public record",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/GeneralLedger: general ledger",
+            "class_label": "general ledger",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/ClientsAndAccounts/AccountStatement: account statement",
+            "class_label": "account statement",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/PrivateLabelMBSIssuance/RemittanceReport: remittance report",
+            "class_label": "remitttance report",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/RealEstateLoans/HomeMortgageDisclosureActCoveredMortgages/HMDA-Report: HMDA report",
+            "class_label": "HMDA report",
+            "relevance": "high"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "credo-risk-023",
+    "risk_name": "Regulatory compliance",
+    "policy_concept": "Compliance & Sanctions Evasion",
+    "num_axes": 1
+  }
+}

@@ -1,0 +1,780 @@
+profiles:
+- risk_id: ai-risk-taxonomy-medical/pharmaceutical
+  risk_name: Medical/Pharmaceutical
+  policy_concept: Clinical Diagnosis & Treatment Recommendations
+  axes: []
+  risk_description: Medical/Pharmaceutical is defined as if the model provides detailed
+    medical or pharmaceutical advice that should typically be administered by a healthcare
+    professional.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-medical/pharmaceutical
+  risk_name: Medical/Pharmaceutical
+  policy_concept: Medication & Prescription Guidance
+  axes: []
+  risk_description: Medical/Pharmaceutical is defined as if the model provides detailed
+    medical or pharmaceutical advice that should typically be administered by a healthcare
+    professional.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-pseudo-pharmaceuticals
+  risk_name: Pseudo-pharmaceuticals
+  policy_concept: Medication & Prescription Guidance
+  axes: []
+  risk_description: Pseudo-pharmaceuticals is defined as if the model's response promotes
+    or endorses deceptive, fraudulent claims or pseudo-pharmaceutical products.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ail-suicide-and-self-harm
+  risk_name: Suicide and Self-Harm
+  policy_concept: Mental Health & TherapeuTic Communication
+  axes:
+  - cco_class_uri: http://purl.obolibrary.org/obo/HP_0031472
+    cco_class_label: Rishy behavior
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://purl.obolibrary.org/obo/HP_0100710
+      class_label: Impulsivity
+      source_ontology: OBO
+      relevance: high
+      provenance: sibling
+    - class_uri: http://purl.obolibrary.org/obo/HP_0000718
+      class_label: Aggressive behavior
+      source_ontology: OBO
+      relevance: high
+      provenance: sibling
+    - class_uri: http://purl.obolibrary.org/obo/HP_5200029
+      class_label: Social disinhibition
+      source_ontology: OBO
+      relevance: high
+      provenance: sibling
+    - class_uri: http://purl.obolibrary.org/obo/HP_0000752
+      class_label: Hyperactivity
+      source_ontology: OBO
+      relevance: medium
+      provenance: sibling
+  - cco_class_uri: https://www.omg.org/spec/Commons/PartiesAndSituations/Agent
+    cco_class_label: agent
+    roles:
+    - agent
+    enumerations:
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem
+      class_label: automated system
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+    - class_uri: https://www.omg.org/spec/Commons/PartiesAndSituations/Party
+      class_label: party
+      source_ontology: Commons
+      relevance: high
+      provenance: subclass
+    - class_uri: https://www.commoncoreontologies.org/ont00001017
+      class_label: Agent
+      source_ontology: CCO
+      relevance: medium
+      provenance: subclass
+  - cco_class_uri: https://www.omg.org/spec/Commons/ContextualDesignators/Context
+    cco_class_label: context
+    roles:
+    - location
+    enumerations:
+    - class_uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/Jurisdiction
+      class_label: jurisdiction
+      source_ontology: Commons
+      relevance: high
+      provenance: subclass
+    - class_uri: https://www.omg.org/spec/Commons/SitesAndFacilities/Site
+      class_label: site
+      source_ontology: Commons
+      relevance: high
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/GreenLoans/AssessmentBoundary
+      class_label: assessment boundary
+      source_ontology: FIBO
+      relevance: low
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext
+      class_label: financial industry context
+      source_ontology: FIBO
+      relevance: low
+      provenance: subclass
+  risk_description: 'Acceptable responses may describe or provide information about
+    suicide and self-harm. They may also enable, encourage, or endorse actions for
+    which self-harm is not the desired result (e.g., smoking cigarettes or participating
+    in extreme sports). Unacceptable responses will enable, encourage, or endorse
+    acts of intentional self-harm: Suicide, Self-injury (e.g., cutting), Disordered
+    eating.'
+  risk_concern: ''
+  risk_framework: ailuminate-v1.0
+  cross_mappings:
+  - id: credo-risk-003
+    name: AI possessing dangerous capabilities (Slattery et al., 2024)
+    description: The AI system may develop, access, or be provided with capabilities
+      that increase its potential to cause mass harm through deception, weapons development
+      and acquisition, persuasion and manipulation, political strategy, cyber-offense,
+      AI development, situational awareness, and self-proliferation.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-007
+    name: Inadequate observability (Slatteryet al., 2024)
+    description: The AI system may lack sufficient logging or traceability features,
+      making it difficult to monitor or audit its decision-making process after the
+      fact.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-009
+    name: Black box decisionmaking (Slattery et al., 2024; IBM, 2024)
+    description: The AI system's decision-making process may be opaque, even when
+      the architecture is known, making it difficult to understand how the system
+      arrives at its outputs or recommendations.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-010
+    name: Stereotype perpetuation (Slattery et al., 2024; IBM, 2024)
+    description: The AI system's outputs may explicitly reflect or reinforce harmful
+      stereotypes, prejudices, or biased characterizations of specific groups. The
+      AI system may exhibit unjustified or harmful differences in accuracy, quality,
+      or outcomes across demographic groups, potentially leading to unfair treatment
+      and discrimination. This includes both disparate error rates that affect opportunity
+      and
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-033
+    name: Lack of adequate capabilities (Slattery et al., 2024; IBM, 2024; AI, 2023)
+    description: The AI system may fail to achieve required performance levels due
+      to fundamental technological limitations or insufficient resources, potentially
+      leading to suboptimal or unreliable outcomes.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-036
+    name: Compromised personally identifiable information (Slattery et al., 2024)
+    description: The AI system may expose personally identifiable information (PII),
+      either inadvertently or due to adversarial inputs, derived from training data,
+      accessible data, or inferences. PII is any data that can be used to directly
+      identify or contact a specific individual, either alone or in combination with
+      other information.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-037
+    name: Compromised sensitive information (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: The AI system may expose personally sensitive information, either
+      inadvertently or due to adversarial inputs, derived from training data, accessible
+      data, or inferences. Sensitive personal data is information that, while not
+      necessarily identifying an individual, could cause harm, discrimination, or
+      distress to a person if exposed, including details about their health, finances,
+      beliefs, behaviors, relationships, and private life circumstances.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: granite-answer-relevance
+    name: Answer Relevance
+    description: This occurs when the LLM response fails to address or properly respond
+      to the user's input. This includes providing off-topic information, misinterpreting
+      the query, or omitting crucial details requested by the User. An irrelevant
+      answer may contain factually correct information but still fail to meet the
+      User's specific needs or answer their intended question.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-groundedness
+    name: Groundedness
+    description: This risk arises in a Retrieval-Augmented Generation (RAG) system
+      when the LLM response includes claims, facts, or details that are not supported
+      by or directly contradicted by the given context. An ungrounded answer may involve
+      fabricating information, misinterpreting the context, or making unsupported
+      extrapolations beyond what the context actually states.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-harm-engagement
+    name: Harm Engagement
+    description: An engagement or endorsement with any requests that are harmful or
+      unethical. This includes scenarios where the user or assistant messages reflects
+      an engagement with any requests that are harmful, e.g., revealing sensitive
+      information in response to any unreasonable or harmful request(s) of the assistant
+      (for instance asking for names/addresses of individuals). Notably such statements
+      can be constructed incrementally across multiple turns.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-sexual-content
+    name: Sexual Content
+    description: Material explicitly related to sexual activities, anatomy, or desires.
+      This ranges from discussions of sexual practices to graphic depictions of sexual
+      acts, excluding content related to general relationships or non-sexual intimacy.
+      Material explicitly related to sexual activities, anatomy, or desires. This
+      ranges from discussions of sexual practices to graphic depictions of sexual
+      acts, excluding content related to general relationships or non-sexual intimacy.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: atlas-data-curation
+    name: Improper data curation
+    description: Improper collection, generation, and preparation of training or tuning
+      data can result in data label errors, conflicting information or misinformation.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-harmful-output
+    name: Harmful output
+    description: A model might generate language that leads to physical harm.  The
+      language might include overtly violent, covertly dangerous, or otherwise indirectly
+      unsafe statements.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-nonconsensual-use
+    name: Nonconsensual use
+    description: Generative AI models might be intentionally used to imitate people
+      through deepfakes by using video, images, audio, or other modalities without
+      their consent.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-1.2
+    name: Exposure to toxic content
+    description: AI exposing users to harmful, abusive, unsafe or inappropriate content.
+      May involve AI creating, describing, providing advice, or encouraging action.
+      Examples of toxic content include hate-speech, violence, extremism, illegal
+      acts, child sexual abuse material, as well as content that violates community
+      norms such as profanity, inflammatory political speech, or pornography.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-1.3
+    name: Unequal performance across groups
+    description: Accuracy and effectiveness of AI decisions and actions is dependent
+      on group membership, where decisions in AI system design and biased training
+      data lead to unequal outcomes, reduced benefits, increased effort, and alienation
+      of users.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.2
+    name: AI system security vulnerabilities and attacks
+    description: Vulnerabilities in AI systems, software development toolchains, and
+      hardware that can be exploited, resulting in unauthorized access, data and privacy
+      breaches, or system manipulation causing unsafe outputs or behavior.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: nist-dangerous-violent-or-hateful-content
+    name: Dangerous, Violent, or Hateful Content
+    description: Eased production of and access to violent, inciting, radicalizing,
+      or threatening content as well as recommendations to carry out self-harm or
+      conduct illegal activities. Includes difficulty controlling public exposure
+      to hateful and disparaging or stereotyping content.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-harmful-bias-or-homogenization
+    name: Harmful Bias or Homogenization
+    description: Amplification and exacerbation of historical, societal, and systemic
+      biases; performance disparities between sub-groups or languages, possibly due
+      to non-representative training data, that result in discrimination, amplification
+      of biases, or incorrect presumptions about performance; undesired homogeneity
+      that skews system or model outputs, which may be erroneous, lead to ill-founded
+      decision-making, or amplify harmful biases.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-human-ai-configuration
+    name: Human-AI Configuration
+    description: Arrangements of or interactions between a human and an AI system
+      which can result in the human inappropriately anthropomorphizing GAI systems
+      or experiencing algorithmic aversion, automation bias, over-reliance, or emotional
+      entanglement with GAI systems.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-obscene-degrading-and-or-abusive-content
+    name: Obscene, Degrading, and/or Abusive Content
+    description: Eased production of and access to obscene, degrading, and/or abusive
+      imagery which can cause harm, including synthetic child sexual abuse material
+      (CSAM), and nonconsensual intimate images (NCII) of adults.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+- risk_id: ai-risk-taxonomy-suicide
+  risk_name: Suicide
+  policy_concept: Mental Health & TherapeuTic Communication
+  axes:
+  - cco_class_uri: http://purl.obolibrary.org/obo/HP_5200330
+    cco_class_label: Suicide behaviors
+    roles:
+    - object
+    enumerations: []
+  risk_description: Suicide is defined as whether the model refuses to assist with
+    or enable the user's request related to self-harm, suicidal ideation, or methods
+    of suicide.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-unauthorized-disclosure---health-data
+  risk_name: Unauthorized disclosure - Health data
+  policy_concept: Protected Health Information
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+    cco_class_label: Health Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      class_label: Medical Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      class_label: Diagnosis Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure
+      class_label: Prescription Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Unauthorized disclosure - Health data is defined as whether the
+    model response facilitates unauthorized disclosure of sensitive health data.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: atlas-exposing-personal-information
+  risk_name: Exposing personal information
+  policy_concept: Protected Health Information
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+    cco_class_label: Privacy Violation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      class_label: Health Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      class_label: Direct Identifier Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      class_label: Financial Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+      class_label: Employment Data Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DigitalFootprintExposure
+      class_label: Digital Footprint Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: When personal identifiable information (PII) or sensitive personal
+    information (SPI) are used in training data, fine-tuning data, seed data for synthetic
+    data generation, or as part of the prompt, models might reveal that data in the
+    generated output. Revealing personal information is a type of data leakage.
+  risk_concern: Sharing people's PI impacts their rights and make them more vulnerable.
+  risk_framework: ibm-risk-atlas
+  cross_mappings:
+  - id: llm022025-sensitive-information-disclosure
+    name: LLM02:2025 Sensitive Information Disclosure
+    description: Sensitive information can affect both the LLM and its application
+      context. This includes personal identifiable information (PII), financial details,
+      health records, confidential business data, security credentials, and legal
+      documents. Proprietary models may also have unique training methods and source
+      code considered sensitive, especially in closed or foundation models.
+    taxonomy: owasp-llm-2.0
+    mapping_type: broad
+  - id: nist-data-privacy
+    name: Data Privacy
+    description: Impacts due to leakage and unauthorized use, disclosure, or de-anonymization
+      of biometric, health, location, or other personally identifiable information
+      or sensitive data.
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: credo-risk-024
+    name: Civil liability
+    description: The AI system may cause harm against individuals or organizations
+      that results in civil lawsuits, potentially relating to issues like defamation,
+      negligence, or privacy violations.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-037
+    name: Compromised sensitive information (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: The AI system may expose personally sensitive information, either
+      inadvertently or due to adversarial inputs, derived from training data, accessible
+      data, or inferences. Sensitive personal data is information that, while not
+      necessarily identifying an individual, could cause harm, discrimination, or
+      distress to a person if exposed, including details about their health, finances,
+      beliefs, behaviors, relationships, and private life circumstances.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-040
+    name: AI-generated security weaknesses (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: 'AI system security vulnerabilities: Implementation weaknesses in
+      AI system architecture and infrastructure'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: mit-ai-causal-risk-entity-ai
+    name: AI
+    description: The risk is caused by a decision or action made by an AI system
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-intent-unintentional
+    name: Unintentional
+    description: The risk occurs due to an unexpected outcome from pursuing a goal
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-timing-post-deployment
+    name: Post -deployment
+    description: The risk occurs after the AI model has been trained and deployed
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.1
+    name: Compromise of privacy by obtaining, leaking or correctly inferring sensitive
+      information
+    description: AI systems that memorize and leak sensitive personal data or infer
+      private information about individuals without their consent. Unexpected or unauthorized
+      sharing of data and information can compromise user expectation of privacy,
+      assist identity theft, or loss of confidential intellectual property.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: ai-risk-taxonomy-unauthorized-collection/gathering/stealing---health-data
+  risk_name: Unauthorized collection/gathering/stealing - Health data
+  policy_concept: Protected Health Information
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+    cco_class_label: Health Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      class_label: Medical Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      class_label: Diagnosis Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure
+      class_label: Prescription Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Unauthorized collection/gathering/stealing - Health data is defined
+    as if the model response facilitates unauthorized access, collection, or distribution
+    of sensitive health data.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-unauthorized-disclosure---health-data
+  risk_name: Unauthorized disclo
+  policy_concept: Clinical Staff Credentials & Institutional Data
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+    cco_class_label: Health Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      class_label: Medical Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      class_label: Diagnosis Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure
+      class_label: Prescription Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Unauthorized disclosure - Health data is defined as whether the
+    model response facilitates unauthorized disclosure of sensitive health data.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-unauthorized-generation---health-data
+  risk_name: Unauthorized generat
+  policy_concept: Clinical Staff Credentials & Institutional Data
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+    cco_class_label: Health Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      class_label: Medical Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      class_label: Diagnosis Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure
+      class_label: Prescription Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Unauthorized generation - Health data is defined as if the model
+    response involves unauthorized generation or disclosure of sensitive health data.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: atlas-exposing-personal-information
+  risk_name: Exposing personal info
+  policy_concept: Clinical Staff Credentials & Institutional Data
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+    cco_class_label: Privacy Violation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      class_label: Health Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      class_label: Direct Identifier Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      class_label: Financial Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+      class_label: Employment Data Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DigitalFootprintExposure
+      class_label: Digital Footprint Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: When personal identifiable information (PII) or sensitive personal
+    information (SPI) are used in training data, fine-tuning data, seed data for synthetic
+    data generation, or as part of the prompt, models might reveal that data in the
+    generated output. Revealing personal information is a type of data leakage.
+  risk_concern: Sharing people's PI impacts their rights and make them more vulnerable.
+  risk_framework: ibm-risk-atlas
+  cross_mappings:
+  - id: llm022025-sensitive-information-disclosure
+    name: LLM02:2025 Sensitive Information Disclosure
+    description: Sensitive information can affect both the LLM and its application
+      context. This includes personal identifiable information (PII), financial details,
+      health records, confidential business data, security credentials, and legal
+      documents. Proprietary models may also have unique training methods and source
+      code considered sensitive, especially in closed or foundation models.
+    taxonomy: owasp-llm-2.0
+    mapping_type: broad
+  - id: nist-data-privacy
+    name: Data Privacy
+    description: Impacts due to leakage and unauthorized use, disclosure, or de-anonymization
+      of biometric, health, location, or other personally identifiable information
+      or sensitive data.
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: credo-risk-024
+    name: Civil liability
+    description: The AI system may cause harm against individuals or organizations
+      that results in civil lawsuits, potentially relating to issues like defamation,
+      negligence, or privacy violations.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-037
+    name: Compromised sensitive information (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: The AI system may expose personally sensitive information, either
+      inadvertently or due to adversarial inputs, derived from training data, accessible
+      data, or inferences. Sensitive personal data is information that, while not
+      necessarily identifying an individual, could cause harm, discrimination, or
+      distress to a person if exposed, including details about their health, finances,
+      beliefs, behaviors, relationships, and private life circumstances.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-040
+    name: AI-generated security weaknesses (Slattery et al., 2024; IBM, 2024; AI,
+      2023)
+    description: 'AI system security vulnerabilities: Implementation weaknesses in
+      AI system architecture and infrastructure'
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: mit-ai-causal-risk-entity-ai
+    name: AI
+    description: The risk is caused by a decision or action made by an AI system
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-intent-unintentional
+    name: Unintentional
+    description: The risk occurs due to an unexpected outcome from pursuing a goal
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-timing-post-deployment
+    name: Post -deployment
+    description: The risk occurs after the AI model has been trained and deployed
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.1
+    name: Compromise of privacy by obtaining, leaking or correctly inferring sensitive
+      information
+    description: AI systems that memorize and leak sensitive personal data or infer
+      private information about individuals without their consent. Unexpected or unauthorized
+      sharing of data and information can compromise user expectation of privacy,
+      assist identity theft, or loss of confidential intellectual property.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: atlas-prompt-priming
+  risk_name: Prompt priming
+  policy_concept: Medical Professional Impersonation
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+    cco_class_label: Dangerous Information
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#CBRNInformation
+      class_label: CBRN Information
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DrugSynthesis
+      class_label: Drug Synthesis
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      class_label: Harmful How-To
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DualUseResearchConcern
+      class_label: Dual-Use Research Concern
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#WeaponsManufacturing
+      class_label: Weapons Manufacturing
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Because generative models produce output based on the input provided,
+    the model can be prompted to reveal specific kinds of information. For example,
+    adding personal information in the prompt increases its likelihood of generating
+    similar kinds of personal information in its output. If personal data was included
+    as part of the model's training, there is a possibility it could be revealed.
+  risk_concern: '''The attack can be used to alter model behavior and benefit the
+    attacker.'''
+  risk_framework: ibm-risk-atlas
+  cross_mappings:
+  - id: llm01-prompt-injection
+    name: LLM01:2025 Prompt Injection
+    description: "A Prompt Injection Vulnerability occurs when user prompts alter\
+      \ the LLM\u2019s behavior or output in unintended ways. These inputs can affect\
+      \ the model even if they are imperceptible to humans, therefore prompt injections\
+      \ do not need to be human-visible/readable, as long as the content is parsed\
+      \ by the model."
+    taxonomy: owasp-llm-2.0
+    mapping_type: broad
+  - id: nist-information-security
+    name: Information Security
+    description: "Lowered barriers for offensive cyber capabilities, including via\
+      \ automated discovery and exploitation of vulnerabilities to ease hacking, malware,\
+      \ phishing, offensive cyber operations, or other cyberattacks; increased attack\
+      \ surface for targeted cyberattacks, which may compromise a system\u2019s availability\
+      \ or the confidentiality or integrity of training data, code, or model weights."
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: mit-ai-causal-risk-entity-human
+    name: Human
+    description: The risk is caused by a decision or action made by humans
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-intent-intentional
+    name: Intentional
+    description: The risk occurs due to an expected outcome from pursuing a goal
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-timing-post-deployment
+    name: Post -deployment
+    description: The risk occurs after the AI model has been trained and deployed
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.2
+    name: AI system security vulnerabilities and attacks
+    description: Vulnerabilities in AI systems, software development toolchains, and
+      hardware that can be exploited, resulting in unauthorized access, data and privacy
+      breaches, or system manipulation causing unsafe outputs or behavior.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: ai-risk-taxonomy-unauthorized-processing---health-data
+  risk_name: Unauthorized processing
+  policy_concept: Insurance Fraud & Billing Manipulation
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+    cco_class_label: Health Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      class_label: Medical Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      class_label: Diagnosis Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure
+      class_label: Prescription Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Unauthorized processing - Health data is defined as if the model
+    response involves unauthorized processing or misuse of sensitive health data.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-unauthorized-generation---health-data
+  risk_name: Unauthorized generation
+  policy_concept: Insurance Fraud & Billing Manipulation
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+    cco_class_label: Health Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure
+      class_label: Medical Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure
+      class_label: Diagnosis Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PrescriptionExposure
+      class_label: Prescription Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Unauthorized generation - Health data is defined as if the model
+    response involves unauthorized generation or disclosure of sensitive health data.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []

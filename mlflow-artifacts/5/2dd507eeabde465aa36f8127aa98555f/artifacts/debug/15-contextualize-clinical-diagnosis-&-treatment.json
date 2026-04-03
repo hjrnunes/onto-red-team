@@ -1,0 +1,59 @@
+{
+  "call_number": 15,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Lack of transparency (ID: mit-ai-risk-subdomain-7.4)\nDescription: Challenges in understanding or explaining the decision-making processes of AI systems, which can lead to mistrust, difficulty in enforcing compliance standards or holding relevant actors accountable for harms, and the inability to identify and correct errors.\nConcern: None\nPolicy: Clinical Diagnosis & Treatment\n\nAxis: Impaired task monitoring (http://purl.obolibrary.org/obo/HP_0033071)\nRoles: object\nSiblings:\n  - http://purl.obolibrary.org/obo/HP_0033055: Impaired ability to plan\n  - http://purl.obolibrary.org/obo/HP_0033070: Impaired self monitoring\n  - http://purl.obolibrary.org/obo/HP_0033056: Impaired ability to organize\n  - http://purl.obolibrary.org/obo/HP_0033360: Impaired ability to shift attention\n\nAxis: Artificial Language (https://www.commoncoreontologies.org/ont00000146)\nRoles: object, instrument\nSiblings:\n  - https://www.commoncoreontologies.org/ont00000496: Natural Language"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://purl.obolibrary.org/obo/HP_0033071",
+        "enumerations": [
+          {
+            "class_uri": "http://purl.obolibrary.org/obo/HP_0033055",
+            "class_label": "Impaired ability to plan",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://purl.obolibrary.org/obo/HP_0033070",
+            "class_label": "Impaired self monitoring",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://purl.obolibrary.org/obo/HP_0033056",
+            "class_label": "Impaired ability to organize",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://purl.obolibrary.org/obo/HP_0033360",
+            "class_label": "Impaired ability to shift attention",
+            "relevance": "medium"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00000146",
+        "enumerations": [
+          {
+            "class_uri": "https://www.commoncoreontologies.org/ont00000496",
+            "class_label": "Natural Language",
+            "relevance": "high"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "mit-ai-risk-subdomain-7.4",
+    "risk_name": "Lack of transparency",
+    "policy_concept": "Clinical Diagnosis & Treatment",
+    "num_axes": 2
+  }
+}

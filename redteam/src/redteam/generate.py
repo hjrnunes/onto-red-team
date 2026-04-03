@@ -115,17 +115,6 @@ def main():
     result = flow.generate(dataset, max_concurrency=args.concurrency)
     print(f"Result: {result.shape[0]} rows, {result.shape[1]} columns")
 
-    # Show a sample
-    if len(result) > 0:
-        sample = result.iloc[0]
-        print(f"\n--- Sample (row 0) ---")
-        print(f"Policy: {sample.get('policy_concept', 'N/A')}")
-        print(f"Risk: {sample.get('risk_name', 'N/A')}")
-        prompt = sample.get("prompt", None)
-        if prompt:
-            preview = prompt[:200] + "..." if len(str(prompt)) > 200 else prompt
-            print(f"Generated prompt: {preview}")
-
     # Save output
     output_path = args.output
     if output_path is None:
@@ -136,7 +125,7 @@ def main():
 
     # Drop intermediate columns, keep metadata + generated prompt
     drop_cols = [c for c in result.columns if c in (
-        "raw_response", "extract_response_content", "generation_prompt",
+        "raw_response", "extract_response_content"
     )]
     output_df = result.drop(columns=drop_cols, errors="ignore")
     output_df.to_json(output_path, orient="records", lines=True)

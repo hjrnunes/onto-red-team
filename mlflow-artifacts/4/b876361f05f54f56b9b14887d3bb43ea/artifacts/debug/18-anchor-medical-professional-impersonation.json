@@ -1,0 +1,30 @@
+{
+  "call_number": 18,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Prompt priming\nDescription: Because generative models produce output based on the input provided, the model can be prompted to reveal specific kinds of information. For example, adding personal information in the prompt increases its likelihood of generating similar kinds of personal information in its output. If personal data was included as part of the model's training, there is a possibility it could be revealed.\nConcern: 'The attack can be used to alter model behavior and benefit the attacker.'\nPolicy: Medical Professional Impersonation\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Exposure: exposure \u2014 the extent to which an individual or organization is unprotected and open to damage, danger, risk of suffering a loss, or uncertainty [found by 5/8 queries]\n- http://purl.obolibrary.org/obo/HP_0031472: Risky behavior \u2014 Engaging in dangerous, risky, and potentially self-damaging activities, without considering the consequences, and include physical, health-related, and financial behaviors. It involves a disregard for one's limitations and a denial of personal danger. While consequences may not occur, the risks are high (e.g. driving too fast, unprotected casual sex, or risky investments). [found by 4/8 queries]\n  Siblings: Impulsivity, Aggressive behavior, Social disinhibition\n- https://www.commoncoreontologies.org/ont00002011: Warning Message \u2014 A Message that describes a possible or impending threat. [found by 7/8 queries]\n  Siblings: Notification Message, Email Message\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 7/8 queries]\n  Siblings: automated underwriting system, automated system, party\n- http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information \u2014 Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts. [found by 6/8 queries]\n  Siblings: Sexual Content, Intellectual Property, Hate and Discrimination\n- https://www.omg.org/spec/Commons/PartiesAndSituations/Party: party \u2014 person or organization [from restriction: appliesTo on Exposure]\n  Siblings: automated system, software agent, Agent"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+        "cco_class_label": "Dangerous Information",
+        "role": "object",
+        "rationale": "The risk describes the model revealing 'specific kinds of information,' particularly personal data or knowledge that could be used for harm. The 'Dangerous Information' class best captures this type of sensitive or harmful content being revealed (the object of the attack)."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Medical Professional Impersonation",
+    "risk_id": "atlas-prompt-priming",
+    "risk_name": "Prompt priming",
+    "num_candidates": 6
+  }
+}

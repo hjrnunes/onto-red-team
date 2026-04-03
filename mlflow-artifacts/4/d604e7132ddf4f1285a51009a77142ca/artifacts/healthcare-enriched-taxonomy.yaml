@@ -1,0 +1,336 @@
+taxonomies:
+- id: client-healthcare-enriched
+  name: Client HEALTHCARE-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-healthcare-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+- id: client-healthcare-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+- id: client-healthcare-enriched-routing
+  name: Routing Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+entries:
+- id: client-healthcare-enriched-ai-decision-making-risk
+  name: AI decision-making risk
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-routing
+  tag: ai-decision-making-risk
+  related_mappings:
+  - atlas-copyright-infringement
+  - atlas-decision-bias
+  - atlas-exposing-personal-information
+  - atlas-hallucination
+  - atlas-harmful-code-generation
+  - atlas-harmful-output
+  - atlas-impact-on-cultural-diversity
+  - atlas-impact-on-the-environment
+  - atlas-inaccessible-training-data
+  - atlas-incomplete-advice
+  - atlas-output-bias
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-revealing-confidential-information
+  - atlas-toxic-output
+  - atlas-unexplainable-output
+  - atlas-unreliable-source-attribution
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 4
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Exfiltration via AI Inference API - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+      roles:
+      - instrument
+      enumeration_count: 3
+    - class: Poison AI Model - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0018.000
+      roles:
+      - object
+      enumeration_count: 1
+- id: client-healthcare-enriched-ai-compliance-risk
+  name: AI compliance risk
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-routing
+  tag: ai-compliance-risk
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 4
+    source_ontologies:
+    - CCO
+    - D3FEND
+    axes:
+    - class: Agent
+      uri: https://www.commoncoreontologies.org/ont00001017
+      roles:
+      - agent
+      enumeration_count: 3
+    - class: AI Agent Tools - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0085.001
+      roles:
+      - instrument
+      enumeration_count: 1
+- id: client-healthcare-enriched-medicalpharmaceutical-advice
+  name: Medical/Pharmaceutical advice
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-routing
+  tag: medicalpharmaceutical-advice
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 4
+    source_ontologies:
+    - OBO
+    axes:
+    - class: drug administration
+      uri: http://purl.obolibrary.org/obo/OAE_0000011
+      roles:
+      - object
+      enumeration_count: 1
+    - class: pharmaceutical
+      uri: http://purl.obolibrary.org/obo/CHEBI_52217
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-inadequate-ai-literacy
+  name: Inadequate AI literacy
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: inadequate-ai-literacy
+  related_mappings:
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-3.1
+  - mit-ai-risk-subdomain-7.4
+  - nist-human-ai-configuration
+  - llm062025-excessive-agency
+  - llm092025-misinformation
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: AI Agent Tools - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0085.001
+      roles:
+      - instrument
+      enumeration_count: 1
+    - class: Activation Triggers - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0084.002
+      roles:
+      - temporal
+      enumeration_count: 2
+- id: client-healthcare-enriched-unauthorized-disclosure-health-data
+  name: Unauthorized disclosure - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-disclosure-health-data
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-unauthorized-collection-health-data
+  name: Unauthorized collection - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-collection-health-data
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Physical Environment Access - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0041
+      roles:
+      - location
+      enumeration_count: 3
+- id: client-healthcare-enriched-unauthorized-processing-health-data
+  name: Unauthorized processing - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-processing-health-data
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Exposure of Sensitive Information during Transient Execution
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1420
+      roles:
+      - instrument
+      enumeration_count: 3
+- id: client-healthcare-enriched-confidential-data-in-prompt
+  name: Confidential data in prompt
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: confidential-data-in-prompt
+  broad_mappings:
+  - nist-intellectual-property
+  related_mappings:
+  - ail-privacy
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-other
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 8
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: LLM Data Leakage - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057
+      roles:
+      - object
+      enumeration_count: 5
+    - class: Exfiltration via AI Inference API - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+      roles:
+      - instrument
+      enumeration_count: 3
+- id: client-healthcare-enriched-data-privacy
+  name: Data Privacy
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: data-privacy
+  broad_mappings:
+  - atlas-attribute-inference-attack
+  - atlas-data-privacy-rights
+  - atlas-data-usage-rights
+  - atlas-exposing-personal-information
+  - atlas-ip-information-in-prompt
+  - atlas-legal-accountability
+  - atlas-membership-inference-attack
+  - atlas-model-usage-rights
+  - atlas-nonconsensual-use
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  related_mappings:
+  - ail-intellectual-property
+  - ail-privacy
+  - ail-specialized-advice
+  - credo-risk-023
+  - credo-risk-029
+  - credo-risk-036
+  - credo-risk-037
+  - atlas-harmful-output
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    - D3FEND
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Infer Training Data Membership - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024.000
+      roles:
+      - instrument
+      enumeration_count: 2
+- id: client-healthcare-enriched-ai-deception
+  name: AI deception
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: ai-deception
+  related_mappings:
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-7.2
+  - nist-human-ai-configuration
+  - llm062025-excessive-agency
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 11
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Data from AI Services - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0085
+      roles:
+      - instrument
+      enumeration_count: 2
+    - class: Delay Execution of LLM Instructions - ATLAS
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0094
+      roles:
+      - temporal
+      enumeration_count: 9
+- id: client-healthcare-enriched-fraud-scams-manipulation
+  name: Fraud, scams, manipulation
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: fraud-scams-manipulation
+  close_mappings:
+  - credo-risk-026
+  - mit-ai-risk-subdomain-4.3
+  related_mappings:
+  - ail-defamation
+  - ail-nonviolent-crimes
+  - atlas-bypassing-learning
+  - atlas-nonconsensual-use
+  - atlas-plagiarism
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-2.2
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - D3FEND
+    axes:
+    - class: Generate Deepfakes
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0088
+      roles:
+      - instrument
+      enumeration_count: 2
+    - class: Generative AI
+      uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0016.002
+      roles:
+      - instrument
+      enumeration_count: 1

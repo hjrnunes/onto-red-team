@@ -1,4 +1,5 @@
 import logging
+from typing import Protocol, runtime_checkable
 
 import instructor
 from pydantic import BaseModel
@@ -9,7 +10,7 @@ from refiner.models import (
     VariationAxis,
 )
 from refiner import debug
-from refiner.stages.identify_domains import derive_source_ontology
+from refiner.stages.identify_domains import derive_source_ontology, ALWAYS_INCLUDED
 
 logger = logging.getLogger(__name__)
 
@@ -80,6 +81,191 @@ def derive_roles(class_uri: str, onto_handlers: dict, max_depth: int = 10) -> li
     return None
 
 
+@runtime_checkable
+class SearchMergeStrategy(Protocol):
+    """Protocol for merging per-domain search results into a candidate list."""
+
+    def merge(
+        self,
+        per_domain_candidates: dict[str, list[dict]],
+        selected_domains: list[str],
+        max_candidates: int,
+    ) -> list[dict]: ...
+
+
+class WeightedMergeStrategy:
+    """Domain-selected ontologies get guaranteed quota slots, always-included fill remaining.
+
+    Distance thresholds prevent irrelevant candidates from consuming slots:
+    - DISTANCE_CEILING: raw distance above which candidates are always rejected
+    - ZSCORE_THRESHOLD: z-score above which candidates are rejected (when
+      per-domain normalization is available, i.e. n >= 2 with nonzero std)
+    """
+
+    DISTANCE_CEILING = 0.6
+    ZSCORE_THRESHOLD = 1.0
+
+    def __init__(self, always_included: list[str] | None = None):
+        self._always_included = set(always_included or ALWAYS_INCLUDED)
+
+    @staticmethod
+    def _normalize_distances(candidates: list[dict]) -> None:
+        """Add normalized_distance (z-score) to each candidate. Lower = better match.
+
+        For n < 2 or uniform distances, assigns 0.0 (neutral) — the raw
+        DISTANCE_CEILING handles filtering in those cases.
+        """
+        if len(candidates) < 2:
+            for c in candidates:
+                c["normalized_distance"] = 0.0
+            return
+        distances = [c.get("best_distance", 1.0) for c in candidates]
+        mean = sum(distances) / len(distances)
+        variance = sum((d - mean) ** 2 for d in distances) / len(distances)
+        std = variance ** 0.5
+        if std < 1e-9:
+            for c in candidates:
+                c["normalized_distance"] = 0.0
+            return
+        for c in candidates:
+            c["normalized_distance"] = (c.get("best_distance", 1.0) - mean) / std
+
+    def _passes_threshold(self, c: dict) -> bool:
+        """Check if candidate passes both raw distance ceiling and z-score threshold."""
+        if c.get("best_distance", 1.0) >= self.DISTANCE_CEILING:
+            return False
+        if c.get("normalized_distance", 0.0) >= self.ZSCORE_THRESHOLD:
+            return False
+        return True
+
+    def merge(
+        self,
+        per_domain_candidates: dict[str, list[dict]],
+        selected_domains: list[str],
+        max_candidates: int,
+    ) -> list[dict]:
+        selected_set = set(selected_domains)
+        domain_selected = sorted(selected_set - self._always_included)
+
+        # Normalize distances per domain for fair cross-domain comparison
+        for candidates in per_domain_candidates.values():
+            self._normalize_distances(candidates)
+
+        result: list[dict] = []
+        seen: set[str] = set()
+        remaining = max_candidates
+
+        # Domain-selected ontologies get guaranteed quota (with distance threshold)
+        if domain_selected:
+            quota_per = max(1, max_candidates // (len(domain_selected) + 1))
+            for domain in domain_selected:
+                for c in per_domain_candidates.get(domain, []):
+                    if (c["uri"] not in seen
+                        and remaining > 0
+                        and self._passes_threshold(c)
+                        and len([r for r in result if r.get("domain") == domain]) < quota_per):
+                        result.append(c)
+                        seen.add(c["uri"])
+                        remaining -= 1
+
+        # Always-included domains fill remaining by best normalized distance
+        pool = []
+        for domain in sorted(self._always_included):
+            if domain in selected_set:
+                pool.extend(per_domain_candidates.get(domain, []))
+        pool.sort(key=lambda c: (-c.get("hit_count", 0), c.get("normalized_distance", 0.0)))
+
+        for c in pool:
+            if c["uri"] not in seen and remaining > 0 and self._passes_threshold(c):
+                result.append(c)
+                seen.add(c["uri"])
+                remaining -= 1
+
+        return result
+
+
+class GroupedMergeStrategy:
+    """Equal slots per domain, round-robin distribution."""
+
+    def __init__(self, always_included: list[str] | None = None):
+        self._always_included = set(always_included or ALWAYS_INCLUDED)
+
+    def merge(
+        self,
+        per_domain_candidates: dict[str, list[dict]],
+        selected_domains: list[str],
+        max_candidates: int,
+    ) -> list[dict]:
+        active_domains = [d for d in selected_domains if d in per_domain_candidates]
+        if not active_domains:
+            return []
+
+        per_domain_quota = max(1, max_candidates // len(active_domains))
+        result: list[dict] = []
+        seen: set[str] = set()
+
+        for domain in active_domains:
+            taken = 0
+            for c in per_domain_candidates.get(domain, []):
+                if c["uri"] not in seen and taken < per_domain_quota:
+                    result.append(c)
+                    seen.add(c["uri"])
+                    taken += 1
+
+        return result[:max_candidates]
+
+
+def _search_per_domain(
+    queries: list[tuple[str, str]],
+    onto_handlers: dict,
+    selected_domains: list[str],
+    top_k_per_query: int,
+) -> tuple[dict[str, list[dict]], int, int]:
+    """Run queries against per-domain collections, merge by URI within each domain.
+
+    Returns (per_domain_sorted, raw_total, unique_total).
+    """
+    per_domain: dict[str, dict[str, dict]] = {}
+    raw_total = 0
+
+    for query_text, source_label in queries:
+        domain_results = onto_handlers["search_domains"](
+            query_text, selected_domains, top_k_per_domain=top_k_per_query,
+        )
+        for domain, results in domain_results.items():
+            raw_total += len(results)
+            if domain not in per_domain:
+                per_domain[domain] = {}
+            for r in results:
+                uri = r.get("uri", "")
+                if not uri:
+                    continue
+                if uri not in per_domain[domain]:
+                    per_domain[domain][uri] = {
+                        "uri": uri,
+                        "label": r.get("label", ""),
+                        "hit_count": 0,
+                        "best_distance": float("inf"),
+                        "query_sources": [],
+                        "domain": domain,
+                    }
+                entry = per_domain[domain][uri]
+                entry["hit_count"] += 1
+                dist = r.get("distance", 1.0)
+                if dist < entry["best_distance"]:
+                    entry["best_distance"] = dist
+                if source_label not in entry["query_sources"]:
+                    entry["query_sources"].append(source_label)
+
+    sorted_per_domain = {
+        domain: sorted(uris.values(), key=lambda c: (-c["hit_count"], c["best_distance"]))
+        for domain, uris in per_domain.items()
+    }
+    unique_total = sum(len(v) for v in sorted_per_domain.values())
+
+    return sorted_per_domain, raw_total, unique_total
+
+
 SYSTEM_PROMPT = """\
 You are identifying variation axes for AI risk concepts using ontology classes.
 
@@ -113,6 +299,7 @@ def expand_candidates(
     cross_mapped_descriptions: list[str],
     onto_handlers: dict,
     selected_domains: list[str] | None,
+    merge_strategy: SearchMergeStrategy | None = None,
     top_k_per_query: int = 10,
     max_candidates: int = 5,
 ) -> tuple[list[dict], dict]:
@@ -129,46 +316,67 @@ def expand_candidates(
         if d.strip():
             queries.append((d, "cross_mapping"))
 
-    by_uri: dict[str, dict] = {}
-    raw_total = 0
-    for query_text, source_label in queries:
-        results = onto_handlers["search_classes"](query_text, top_k=top_k_per_query)
-        raw_total += len(results)
-        for r in results:
-            uri = r.get("uri", "")
-            if not uri:
-                continue
-            if uri not in by_uri:
-                by_uri[uri] = {
-                    "uri": uri,
-                    "label": r.get("label", ""),
-                    "hit_count": 0,
-                    "best_distance": float("inf"),
-                    "query_sources": [],
-                }
-            entry = by_uri[uri]
-            entry["hit_count"] += 1
-            dist = r.get("distance", 1.0)
-            if dist < entry["best_distance"]:
-                entry["best_distance"] = dist
-            if source_label not in entry["query_sources"]:
-                entry["query_sources"].append(source_label)
-
-    if selected_domains:
-        filtered = {
-            uri: c for uri, c in by_uri.items()
-            if derive_source_ontology(uri) in selected_domains
+    # Per-domain search path: route queries to domain collections, merge via strategy
+    if merge_strategy and onto_handlers.get("search_domains") and selected_domains:
+        per_domain, raw_total, unique_total = _search_per_domain(
+            queries, onto_handlers, selected_domains, top_k_per_query,
+        )
+        kept = merge_strategy.merge(per_domain, selected_domains, max_candidates)
+        stats = {
+            "queries_run": len(queries),
+            "raw_total": raw_total,
+            "unique_after_dedup": unique_total,
+            "kept_after_filter": len(kept),
+            "search_strategy": type(merge_strategy).__name__,
         }
     else:
-        filtered = by_uri
+        # Legacy path: single collection search + post-filter by domain
+        by_uri: dict[str, dict] = {}
+        raw_total = 0
+        for query_text, source_label in queries:
+            results = onto_handlers["search_classes"](query_text, top_k=top_k_per_query)
+            raw_total += len(results)
+            for r in results:
+                uri = r.get("uri", "")
+                if not uri:
+                    continue
+                if uri not in by_uri:
+                    by_uri[uri] = {
+                        "uri": uri,
+                        "label": r.get("label", ""),
+                        "hit_count": 0,
+                        "best_distance": float("inf"),
+                        "query_sources": [],
+                    }
+                entry = by_uri[uri]
+                entry["hit_count"] += 1
+                dist = r.get("distance", 1.0)
+                if dist < entry["best_distance"]:
+                    entry["best_distance"] = dist
+                if source_label not in entry["query_sources"]:
+                    entry["query_sources"].append(source_label)
 
-    sorted_candidates = sorted(
-        filtered.values(),
-        key=lambda c: (-c["hit_count"], c["best_distance"]),
-    )
-    kept = sorted_candidates[:max_candidates]
+        if selected_domains:
+            filtered = {
+                uri: c for uri, c in by_uri.items()
+                if derive_source_ontology(uri) in selected_domains
+            }
+        else:
+            filtered = by_uri
 
-    # Restriction/equivalence expansion
+        sorted_candidates = sorted(
+            filtered.values(),
+            key=lambda c: (-c["hit_count"], c["best_distance"]),
+        )
+        kept = sorted_candidates[:max_candidates]
+        stats = {
+            "queries_run": len(queries),
+            "raw_total": raw_total,
+            "unique_after_dedup": len(by_uri),
+            "kept_after_filter": len(kept),
+        }
+
+    # Restriction/equivalence expansion (common to both paths)
     restriction_added = 0
     if onto_handlers.get("get_restrictions"):
         restriction_candidates = []
@@ -222,13 +430,8 @@ def expand_candidates(
         kept = kept + restriction_candidates
         restriction_added = len(restriction_candidates)
 
-    stats = {
-        "queries_run": len(queries),
-        "raw_total": raw_total,
-        "unique_after_dedup": len(by_uri),
-        "kept_after_filter": len(kept),
-        "restriction_candidates_added": restriction_added,
-    }
+    stats["restriction_candidates_added"] = restriction_added
+    stats["kept_after_filter"] = len(kept)
 
     return kept, stats
 
@@ -242,6 +445,7 @@ def anchor(
     selected_domains: list[str] | None = None,
     risk_actions: dict[str, list[str]] | None = None,
     related_risks: dict[str, list[dict]] | None = None,
+    merge_strategy: SearchMergeStrategy | None = None,
     report=None,
 ) -> list[RiskVariationAxes]:
     if not risk_mappings:
@@ -284,6 +488,7 @@ def anchor(
                 cross_mapped_descriptions=cross_mapped_descs,
                 onto_handlers=onto_handlers,
                 selected_domains=selected_domains,
+                merge_strategy=merge_strategy,
             )
 
             if report and expansion_stats.get("restriction_candidates_added", 0) > 0:

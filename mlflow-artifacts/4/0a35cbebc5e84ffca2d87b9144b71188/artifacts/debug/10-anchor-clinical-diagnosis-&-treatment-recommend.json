@@ -1,0 +1,36 @@
+{
+  "call_number": 10,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: AI agent compliance\nDescription: Determining AI agents' compliance is complex and there might not be enough information to assess whether the agentic AI system is compliant with applicable legal requirements.\nConcern: AI agents may interact with other systems, tools, or other agents. AI agents can also find solutions to accomplish a task or a goal in a variety of ways and there could be uncertainty around the way an AI agent would choose each time to perform the task. Assessing compliance can become more difficult as agent capabilities increase.\nPolicy: Clinical Diagnosis & Treatment Recommendations\n\nCandidate ontology classes:\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 2/2 queries]\n  Siblings: automated underwriting system, automated system, party\n- https://www.omg.org/spec/Commons/PartiesAndSituations/Agent: agent \u2014 something autonomous that can adapt to and interact with its environment [found by 2/2 queries]\n- https://www.commoncoreontologies.org/ont00001017: Agent \u2014 A Material Entity that bears an Agent Capability. [found by 2/2 queries]\n  Siblings: portion of pathological body substance, Target, physical sign\n- https://www.commoncoreontologies.org/ont00001379: Agent Capability \u2014 A Realizable Entity that inheres in a Material Entity in virtue of that Material Entity's capacity to realize it in some Planned Act. [found by 2/2 queries]\n  Siblings: Strength, Affordance, plan\n- https://www.commoncoreontologies.org/ont00000089: Skill \u2014 An Agent Capability that inheres in a Person to the extent of that Person's capacity to realize it in Intentional Acts of a certain type. [found by 2/2 queries]\n  Siblings: Organization Capability\n- https://www.commoncoreontologies.org/ont00001262: Person \u2014 An Animal that is a member of the species Homo sapiens. [from restriction: ont00001889 on ont00000089]\n- http://purl.obolibrary.org/obo/BFO_0000040: material entity \u2014 An independent continuant that is spatially extended whose identity is independent of that of other entities and can be maintained through time. [from equivalence]\n  Siblings: hydrogensulfite, ornithinium(1+), posterior sector of right lobe of liver"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+        "cco_class_label": "software agent",
+        "role": "agent",
+        "rationale": "The risk involves AI agents, specifically software agents, which are digital entities that perceive their environment and take actions. This class directly represents the agent involved in the compliance risk."
+      },
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00001379",
+        "cco_class_label": "Agent Capability",
+        "role": "instrument",
+        "rationale": "Agent capabilities are the means by which AI agents achieve their goals. Understanding these capabilities is crucial for assessing compliance, as they determine how agents interact with their environment and other systems."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Clinical Diagnosis & Treatment Recommendations",
+    "risk_id": "atlas-ai-agent-compliance-agentic",
+    "risk_name": "AI agent compliance",
+    "num_candidates": 7
+  }
+}

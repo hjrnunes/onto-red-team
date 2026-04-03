@@ -1,0 +1,74 @@
+{
+  "call_number": 27,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Upstream Transparency (ID: credo-risk-047)\nDescription: The AI system's upstream providers or components in the value chain may lack transparency, potentially increasing uncertainty and risk, and making it challenging to assess the system's compliance, performance, or security.\nConcern: None\nPolicy: Supply Chain & Geopolitical Risks\n\nAxis: AI Supply Chain Compromise - ATLAS (http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010)\nRoles: instrument\nSubclasses:\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001: AI Software - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.000: Hardware - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.002: Data - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.004: Container Registry - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.003: Model - ATLAS\n\nAxis: Supply Chain Attacker (http://d3fend.mitre.org/ontologies/d3fend.owl#SupplyChainAttacker)\nRoles: agent\nSiblings:\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#LocalAttacker: Local Attacker\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#RemoteAttacker: Remote Attacker\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#TrustedAttacker: Trusted Attacker"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010",
+        "enumerations": [
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001",
+            "class_label": "AI Software - ATLAS",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.000",
+            "class_label": "Hardware - ATLAS",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.002",
+            "class_label": "Data - ATLAS",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.004",
+            "class_label": "Container Registry - ATLAS",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.003",
+            "class_label": "Model - ATLAS",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#SupplyChainAttacker",
+        "enumerations": [
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#LocalAttacker",
+            "class_label": "Local Attacker",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#RemoteAttacker",
+            "class_label": "Remote Attacker",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#TrustedAttacker",
+            "class_label": "Trusted Attacker",
+            "relevance": "high"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "credo-risk-047",
+    "risk_name": "Upstream Transparency",
+    "policy_concept": "Supply Chain & Geopolitical Risks",
+    "num_axes": 2
+  }
+}

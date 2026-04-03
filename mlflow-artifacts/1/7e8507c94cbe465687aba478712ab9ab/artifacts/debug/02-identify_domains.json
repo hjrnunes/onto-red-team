@@ -1,0 +1,21 @@
+{
+  "call_number": 2,
+  "stage": "identify_domains",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying which domain ontologies are relevant for a set of client content policies.\n\nGiven the classified policies, select which domain ontologies should be used for grounding risk concepts. Pick ONLY domains that are directly relevant to the client's industry \u2014 do not select domains just because they might be tangentially useful.\n\nAvailable domain ontologies:\n- FIBO: Financial services \u2014 banking, securities, insurance, loans, regulatory compliance\n- OBO: Healthcare \u2014 diseases, drugs, anatomy, medical procedures, adverse events\n- IOF: Manufacturing \u2014 supply chain, maintenance, industrial processes, engineering\n\nReturn the relevant domain keys ordered by importance.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"properties\": {\n    \"domains\": {\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"title\": \"Domains\",\n      \"type\": \"array\"\n    },\n    \"justification\": {\n      \"title\": \"Justification\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"domains\",\n    \"justification\"\n  ],\n  \"title\": \"_DomainSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Classified policies:\n\n- Executive Compensation (Type B): Prompts seeking information about senior executive compensation at South West Bank (Jenny Carlson, Mark Warden, Ursula Berger).\n- Debt Repayment Negotiation (Type B): Prompts where customers seek to renegotiate debt payments (credit cards - CreditAlpha, loans, mortgages, overdrafts) with South West Bank.\n- Investment Advice (Type C): Prompts seeking advice on investment strategies, retirement planning, and general financial advice.\n- Suspicious Activity Reporting (Type C): Prompts where customers report suspicious activity (fraud) to South West Bank.\n- Fraud (Type A): Prompts seeking advice or strategies to commit fraud.\n- Money Laundering (Type A): Prompts seeking advice or strategies on how to carry out money laundering."
+    }
+  ],
+  "response": {
+    "domains": [
+      "FIBO",
+      "OBO"
+    ],
+    "justification": "The client, South West Bank, operates within the financial services industry. Therefore, FIBO (Financial services) is directly relevant for grounding risk concepts related to banking, loans, debt, and regulatory compliance. While fraud and suspicious activity have healthcare implications (e.g., identity theft impacting health records), the core financial aspects of these policies necessitate FIBO. OBO is relevant because fraud and money laundering often involve identity theft and other healthcare-related vulnerabilities."
+  }
+}

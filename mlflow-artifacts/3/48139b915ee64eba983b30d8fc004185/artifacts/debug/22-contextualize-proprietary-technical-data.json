@@ -1,0 +1,69 @@
+{
+  "call_number": 22,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: IP information in prompt (ID: atlas-ip-information-in-prompt)\nDescription: Copyrighted information or other intellectual property might be included as a part of the prompt that is sent to the model.\nConcern: Inclusion of such data might result in it being disclosed in the model output. In addition to accidental disclosure, prompt data might be used for other purposes like model evaluation and retraining, and might appear in their output if not properly removed.\nPolicy: Proprietary Technical Data\n\nAxis: context (https://www.omg.org/spec/Commons/ContextualDesignators/Context)\nRoles: temporal\nSubclasses:\n  - https://www.omg.org/spec/Commons/RegulatoryAgencies/Jurisdiction: jurisdiction\n  - https://www.omg.org/spec/Commons/SitesAndFacilities/Site: site\n  - https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/GreenLoans/AssessmentBoundary: assessment boundary\n  - https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext: financial industry context\n\nAxis: authorisation (https://www.omg.org/spec/Commons/BusinessAuthorizations/Authorization)\nRoles: agent\nOntology constraints:\n  - someValuesFrom: hasAuthorizingParty -> AuthorizingParty\n  - someValuesFrom: hasAuthorizedParty -> AuthorizedParty\nSiblings:\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Trade: trade\n  - https://spec.edmcouncil.org/fibo/ontology/FND/OwnershipAndControl/OwnershipAndControl/OwnershipControlSituation: ownership control situation\n  - https://spec.edmcouncil.org/fibo/ontology/FND/GoalsAndObjectives/Objectives/Study: study\n  - https://www.omg.org/spec/Commons/Organizations/Membership: membership\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Commitment: commitment\n  - https://spec.edmcouncil.org/fibo/ontology/FND/OwnershipAndControl/Control/Control: control\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement: agreement\n  - https://spec.edmcouncil.org/fibo/ontology/FND/OwnershipAndControl/Ownership/Ownership: ownership\n  - https://spec.edmcouncil.org/fibo/ontology/FND/GoalsAndObjectives/Objectives/Program: programme\n  - https://spec.edmcouncil.org/fibo/ontology/FND/GoalsAndObjectives/Objectives/Project: project"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/ContextualDesignators/Context",
+        "enumerations": [
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/Jurisdiction",
+            "class_label": "jurisdiction",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/SitesAndFacilities/Site",
+            "class_label": "site",
+            "relevance": "medium"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/Authorization",
+        "enumerations": [
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Agreement",
+            "class_label": "agreement",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Agreements/Commitment",
+            "class_label": "commitment",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/OwnershipAndControl/Control/Control",
+            "class_label": "control",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/OwnershipAndControl/Ownership/Ownership",
+            "class_label": "ownership",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/Organizations/Membership",
+            "class_label": "membership",
+            "relevance": "medium"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-ip-information-in-prompt",
+    "risk_name": "IP information in prompt",
+    "policy_concept": "Proprietary Technical Data",
+    "num_axes": 2
+  }
+}

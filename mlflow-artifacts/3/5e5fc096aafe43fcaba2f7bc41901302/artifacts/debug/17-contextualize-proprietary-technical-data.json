@@ -1,0 +1,139 @@
+{
+  "call_number": 17,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations."
+    },
+    {
+      "role": "user",
+      "content": "Risk: IP information in prompt (ID: atlas-ip-information-in-prompt)\nDescription: Copyrighted information or other intellectual property might be included as a part of the prompt that is sent to the model.\nConcern: Inclusion of such data might result in it being disclosed in the model output. In addition to accidental disclosure, prompt data might be used for other purposes like model evaluation and retraining, and might appear in their output if not properly removed.\nPolicy: Proprietary Technical Data\n\nAxis: context (https://www.omg.org/spec/Commons/ContextualDesignators/Context)\nRoles: location\nSubclasses:\n  - https://www.omg.org/spec/Commons/RegulatoryAgencies/Jurisdiction: jurisdiction\n  - https://www.omg.org/spec/Commons/SitesAndFacilities/Site: site\n  - https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/GreenLoans/AssessmentBoundary: assessment boundary\n  - https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext: financial industry context\n\nAxis: authorising party (https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty)\nRoles: agent\nOntology constraints:\n  - someValuesFrom: isPlayedBy -> LegalPerson\n  - someValuesFrom: authorizesThrough -> Authorization\nSubclasses:\n  - https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency: regulatory agency\n  - https://www.omg.org/spec/Commons/RegistrationAuthorities/RegistrationAuthority: registration authority\n\nAxis: authorised party (https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty)\nRoles: agent, instrument\nOntology constraints:\n  - someValuesFrom: isPlayedBy -> LegalPerson\n  - someValuesFrom: isAuthorizedThrough -> Authorization\nSubclasses:\n  - https://www.omg.org/spec/Commons/BusinessAuthorizations/LegallyDelegatedAuthority: legally delegated authority\n  - https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/Auditor: auditor\n  - https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty: responsible party\n\nAxis: disclosure provision (https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/DisclosureProvision)\nRoles: object\nSiblings:\n  - https://spec.edmcouncil.org/fibo/ontology/SEC/Debt/ExerciseConventions/ExerciseTerms: exercise terms\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TerminationProvision: termination provision\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision: netting provision\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ExtensionProvision: extension provision\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/SettlementTerms: settlement terms\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/RedemptionProvision: redemption provision\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/UseOfProceedsProvision: use of proceeds provision\n  - https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NotificationProvision: notification provision\n  - https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesRestrictions/ContractualRestriction: contractual restriction\n  - https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/DebtTerms: debt terms"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/ContextualDesignators/Context",
+        "enumerations": [
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/Jurisdiction: jurisdiction",
+            "class_label": "jurisdiction",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/SitesAndFacilities/Site: site",
+            "class_label": "site",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/GreenLoans/AssessmentBoundary: assessment boundary",
+            "class_label": "assessment boundary",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialIndustryContext: financial industry context",
+            "class_label": "financial industry context",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty",
+        "enumerations": [
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency: regulatory agency",
+            "class_label": "regulatory agency",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/RegistrationAuthorities/RegistrationAuthority: registration authority",
+            "class_label": "registration authority",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty",
+        "enumerations": [
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/LegallyDelegatedAuthority: legally delegated authority",
+            "class_label": "legally delegated authority",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/BE/OwnershipAndControl/Executives/Auditor: auditor",
+            "class_label": "auditor",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty: responsible party",
+            "class_label": "responsible party",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/DisclosureProvision",
+        "enumerations": [
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Debt/ExerciseConventions/ExerciseTerms: exercise terms",
+            "class_label": "exercise terms",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/TerminationProvision: termination provision",
+            "class_label": "termination provision",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NettingProvision: netting provision",
+            "class_label": "netting provision",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/ExtensionProvision: extension provision",
+            "class_label": "extension provision",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/SettlementTerms: settlement terms",
+            "class_label": "settlement terms",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/RedemptionProvision: redemption provision",
+            "class_label": "redemption provision",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/UseOfProceedsProvision: use of proceeds provision",
+            "class_label": "use of proceeds provision",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/NotificationProvision: notification provision",
+            "class_label": "notification provision",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesRestrictions/ContractualRestriction: contractual restriction",
+            "class_label": "contractual restriction",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/DebtTerms: debt terms",
+            "class_label": "debt terms",
+            "relevance": "high"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-ip-information-in-prompt",
+    "risk_name": "IP information in prompt",
+    "policy_concept": "Proprietary Technical Data",
+    "num_axes": 4
+  }
+}

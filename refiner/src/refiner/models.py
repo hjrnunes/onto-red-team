@@ -75,6 +75,7 @@ class AxisEnumeration(BaseModel):
     class_label: str
     source_ontology: str
     relevance: Literal["high", "medium", "low"]
+    provenance: Literal["subclass", "sibling"] = "subclass"
 
 
 class DomainContextAxis(BaseModel):
@@ -112,12 +113,16 @@ class RunReport:
     timestamp: str
     stages_completed: list[str] = field(default_factory=list)
     events: list[dict] = field(default_factory=list)
+    token_usage: dict | None = None
 
     def to_dict(self) -> dict:
-        return {
+        d = {
             "model": self.model,
             "policy_set": self.policy_set,
             "timestamp": self.timestamp,
             "stages_completed": self.stages_completed,
             "events": self.events,
         }
+        if self.token_usage:
+            d["token_usage"] = self.token_usage
+        return d

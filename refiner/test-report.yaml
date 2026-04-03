@@ -1,0 +1,12 @@
+model: test-model
+policy_set: test.json
+timestamp: '2026-04-03T13:06:35.456472+00:00'
+stages_completed:
+- structure
+events: []
+token_usage:
+  prompt_tokens: 0
+  completion_tokens: 0
+  total_tokens: 0
+  calls: 0
+  per_stage: {}

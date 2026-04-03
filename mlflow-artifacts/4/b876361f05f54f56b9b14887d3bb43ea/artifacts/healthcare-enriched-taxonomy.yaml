@@ -1,0 +1,275 @@
+taxonomies:
+- id: client-healthcare-enriched
+  name: Client HEALTHCARE-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-healthcare-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+- id: client-healthcare-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+entries:
+- id: client-healthcare-enriched-medicalpharmaceutical
+  name: Medical/Pharmaceutical
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: medicalpharmaceutical
+- id: client-healthcare-enriched-pseudo-pharmaceuticals
+  name: Pseudo-pharmaceuticals
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: pseudo-pharmaceuticals
+- id: client-healthcare-enriched-suicide-and-self-harm
+  name: Suicide and Self-Harm
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: suicide-and-self-harm
+  related_mappings:
+  - credo-risk-003
+  - credo-risk-007
+  - credo-risk-009
+  - credo-risk-010
+  - credo-risk-033
+  - credo-risk-036
+  - credo-risk-037
+  - granite-answer-relevance
+  - granite-groundedness
+  - granite-guardian-harm
+  - granite-harm-engagement
+  - granite-sexual-content
+  - atlas-data-curation
+  - atlas-harmful-output
+  - atlas-nonconsensual-use
+  - mit-ai-risk-subdomain-1.2
+  - mit-ai-risk-subdomain-1.3
+  - mit-ai-risk-subdomain-2.2
+  - nist-dangerous-violent-or-hateful-content
+  - nist-harmful-bias-or-homogenization
+  - nist-human-ai-configuration
+  - nist-obscene-degrading-and-or-abusive-content
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 11
+    source_ontologies:
+    - CCO
+    - Commons
+    - FIBO
+    - OBO
+    axes:
+    - class: Rishy behavior
+      uri: http://purl.obolibrary.org/obo/HP_0031472
+      roles:
+      - object
+      enumeration_count: 4
+    - class: agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/Agent
+      roles:
+      - agent
+      enumeration_count: 3
+    - class: context
+      uri: https://www.omg.org/spec/Commons/ContextualDesignators/Context
+      roles:
+      - location
+      enumeration_count: 4
+- id: client-healthcare-enriched-suicide
+  name: Suicide
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: suicide
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 0
+    source_ontologies: []
+    axes:
+    - class: Suicide behaviors
+      uri: http://purl.obolibrary.org/obo/HP_5200330
+      roles:
+      - object
+      enumeration_count: 0
+- id: client-healthcare-enriched-unauthorized-disclosure-health-data
+  name: Unauthorized disclosure - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-disclosure-health-data
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles: &id001
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-exposing-personal-information
+  name: Exposing personal information
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: exposing-personal-information
+  broad_mappings:
+  - llm022025-sensitive-information-disclosure
+  - nist-data-privacy
+  related_mappings:
+  - credo-risk-024
+  - credo-risk-037
+  - credo-risk-040
+  - mit-ai-causal-risk-entity-ai
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles: &id002
+      - object
+      enumeration_count: 5
+- id: client-healthcare-enriched-unauthorized-collectiongatheringstealing-health-data
+  name: Unauthorized collection/gathering/stealing - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-collectiongatheringstealing-health-data
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-unauthorized-disclo
+  name: Unauthorized disclo
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-disclo
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles: *id001
+      enumeration_count: 3
+- id: client-healthcare-enriched-unauthorized-generat
+  name: Unauthorized generat
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-generat
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles: &id003
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-exposing-personal-info
+  name: Exposing personal info
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: exposing-personal-info
+  broad_mappings:
+  - llm022025-sensitive-information-disclosure
+  - nist-data-privacy
+  related_mappings:
+  - credo-risk-024
+  - credo-risk-037
+  - credo-risk-040
+  - mit-ai-causal-risk-entity-ai
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Privacy Violation
+      uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+      roles: *id002
+      enumeration_count: 5
+- id: client-healthcare-enriched-prompt-priming
+  name: Prompt priming
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: prompt-priming
+  broad_mappings:
+  - llm01-prompt-injection
+  - nist-information-security
+  related_mappings:
+  - mit-ai-causal-risk-entity-human
+  - mit-ai-causal-risk-intent-intentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.2
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Dangerous Information
+      uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+      roles:
+      - object
+      enumeration_count: 5
+- id: client-healthcare-enriched-unauthorized-processing
+  name: Unauthorized processing
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: unauthorized-processing
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+- id: client-healthcare-enriched-unauthorized-generation
+  name: Unauthorized generation
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: unauthorized-generation
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles: *id003
+      enumeration_count: 3

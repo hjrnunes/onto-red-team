@@ -1,0 +1,741 @@
+{
+  "run": {
+    "model": "gemma-3-12b-it",
+    "policy_set": "rdash-nhs-enriched.json",
+    "timestamp": "2026-04-02T21:36:22.525096+00:00",
+    "stages_completed": [
+      "classify",
+      "identify_domains",
+      "map_risks",
+      "anchor",
+      "contextualize",
+      "structure"
+    ]
+  },
+  "stage_quality": {
+    "classify": {
+      "type_distribution": {
+        "C": 2,
+        "B": 1,
+        "A": 1
+      }
+    },
+    "identify_domains": {
+      "selected_domains": [
+        "CCO",
+        "Commons",
+        "D3FEND",
+        "CSO",
+        "OBO",
+        "FIBO"
+      ]
+    },
+    "map_risks": {
+      "match_counts": [
+        {
+          "policy_concept": "Clinical Diagnosis & Treatment Restriction",
+          "count": 1
+        },
+        {
+          "policy_concept": "Protected Health Information Handling",
+          "count": 3
+        },
+        {
+          "policy_concept": "Medical Professional Impersonation Prevention",
+          "count": 2
+        },
+        {
+          "policy_concept": "Patient Consent Requirements",
+          "count": 1
+        }
+      ]
+    },
+    "anchor": {
+      "restriction_expansions": [
+        {
+          "risk_id": "credo-risk-023",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "source_uri": "",
+          "candidates_added": 2,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "source_uri": "",
+          "candidates_added": 2,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        }
+      ],
+      "candidate_expansions": [
+        {
+          "risk_id": "credo-risk-023",
+          "queries_run": 6,
+          "raw_total": 300,
+          "unique_after_dedup": 219,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-2.1",
+          "queries_run": 18,
+          "raw_total": 900,
+          "unique_after_dedup": 377,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "queries_run": 15,
+          "raw_total": 750,
+          "unique_after_dedup": 390,
+          "kept_after_filter": 7
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "queries_run": 2,
+          "raw_total": 100,
+          "unique_after_dedup": 78,
+          "kept_after_filter": 7
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "queries_run": 2,
+          "raw_total": 100,
+          "unique_after_dedup": 96,
+          "kept_after_filter": 6
+        }
+      ],
+      "multi_query_hits": [
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/RegulationIdentificationScheme",
+          "hit_count": 3,
+          "best_distance": 0.6079251766204834,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://purl.obolibrary.org/obo/HP_0033071",
+          "hit_count": 3,
+          "best_distance": 0.6859501600265503,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+          "hit_count": 5,
+          "best_distance": 0.6722347736358643,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure",
+          "hit_count": 4,
+          "best_distance": 0.36389243602752686,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 4,
+          "best_distance": 0.5004451274871826,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/RegulationIdentifier",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-2.1",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DataProtectionRequirement",
+          "hit_count": 12,
+          "best_distance": 0.44490909576416016,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-2.1",
+          "uri": "http://purl.obolibrary.org/obo/IAO_0000030",
+          "hit_count": 6,
+          "best_distance": 0.5881367921829224,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-2.1",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+          "hit_count": 11,
+          "best_distance": 0.4025876522064209,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-2.1",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+          "hit_count": 11,
+          "best_distance": 0.419344961643219,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "mit-ai-risk-subdomain-2.1",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure",
+          "hit_count": 11,
+          "best_distance": 0.4406047463417053,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentifier",
+          "hit_count": 10,
+          "best_distance": 0.5610454678535461,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "uri": "http://purl.obolibrary.org/obo/OAE_0001872",
+          "hit_count": 5,
+          "best_distance": 0.6530327796936035,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+          "hit_count": 11,
+          "best_distance": 0.6233069896697998,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 9,
+          "best_distance": 0.3385275602340698,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+          "hit_count": 9,
+          "best_distance": 0.3712470531463623,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentificationScheme",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-036",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/Security",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/MuniIssuance/RemarketingAgent",
+          "hit_count": 2,
+          "best_distance": 0.6206713914871216,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "uri": "http://purl.obolibrary.org/obo/IAO_0000033",
+          "hit_count": 2,
+          "best_distance": 0.7297465801239014,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "uri": "https://www.commoncoreontologies.org/ont00001017",
+          "hit_count": 2,
+          "best_distance": 0.47906696796417236,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "uri": "https://www.commoncoreontologies.org/ont00001379",
+          "hit_count": 2,
+          "best_distance": 0.5216466784477234,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Agent",
+          "hit_count": 2,
+          "best_distance": 0.5240139961242676,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BP/SecuritiesIssuance/MuniIssuance/SecuritiesUnderwritingIssuanceProcess",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "atlas-sharing-info-tools-agentic",
+          "uri": "http://purl.obolibrary.org/obo/BFO_0000040",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "equivalence"
+          ]
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCapacity/LiabilityCapacity",
+          "hit_count": 1,
+          "best_distance": 0.3941723704338074,
+          "query_sources": [
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "uri": "http://purl.obolibrary.org/obo/OAE_0000520",
+          "hit_count": 1,
+          "best_distance": 0.5204488039016724,
+          "query_sources": [
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "uri": "https://www.commoncoreontologies.org/ont00000005",
+          "hit_count": 2,
+          "best_distance": 0.5183449387550354,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/ResponsibleParty",
+          "hit_count": 2,
+          "best_distance": 0.5238330364227295,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/LegallyDelegatedAuthority",
+          "hit_count": 2,
+          "best_distance": 0.6532623767852783,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-accountability-agentic",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/LegallyCompetentNaturalPerson",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        }
+      ],
+      "role_derivation": {
+        "derived": 4,
+        "llm_fallback": 6
+      },
+      "cache_hits": 2
+    },
+    "contextualize": {
+      "sibling_fallbacks": 5,
+      "restriction_contexts_added": 3
+    },
+    "candidate_expansion": {
+      "mean_queries_run": 8.6,
+      "mean_unique_candidates": 232.0,
+      "multi_hit_fraction": 0.7419354838709677
+    },
+    "query_source_contribution": {
+      "description": 20,
+      "cross_mapping": 15,
+      "restriction": 5,
+      "action": 5,
+      "concern": 10,
+      "equivalence": 1
+    }
+  },
+  "coverage": {
+    "policy": [
+      {
+        "policy_concept": "Clinical Diagnosis & Treatment",
+        "risks_matched": 0,
+        "total_axes": 0,
+        "axes_with_enumerations": 0,
+        "total_enumerations": 0,
+        "prompts_generated": 0
+      },
+      {
+        "policy_concept": "Protected Health Information",
+        "risks_matched": 0,
+        "total_axes": 0,
+        "axes_with_enumerations": 0,
+        "total_enumerations": 0,
+        "prompts_generated": 0
+      },
+      {
+        "policy_concept": "Medical Professional Impersonation",
+        "risks_matched": 0,
+        "total_axes": 0,
+        "axes_with_enumerations": 0,
+        "total_enumerations": 0,
+        "prompts_generated": 0
+      },
+      {
+        "policy_concept": "Patient Consent",
+        "risks_matched": 0,
+        "total_axes": 0,
+        "axes_with_enumerations": 0,
+        "total_enumerations": 0,
+        "prompts_generated": 0
+      },
+      {
+        "policy_concept": "Clinical Diagnosis & Treatment Restriction",
+        "risks_matched": 1,
+        "total_axes": 2,
+        "axes_with_enumerations": 2,
+        "total_enumerations": 20,
+        "prompts_generated": 15
+      },
+      {
+        "policy_concept": "Protected Health Information Handling",
+        "risks_matched": 3,
+        "total_axes": 6,
+        "axes_with_enumerations": 6,
+        "total_enumerations": 23,
+        "prompts_generated": 34
+      },
+      {
+        "policy_concept": "Medical Professional Impersonation Prevention",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 32,
+        "prompts_generated": 30
+      },
+      {
+        "policy_concept": "Patient Consent Requirements",
+        "risks_matched": 1,
+        "total_axes": 2,
+        "axes_with_enumerations": 2,
+        "total_enumerations": 10,
+        "prompts_generated": 15
+      }
+    ],
+    "ontological": {
+      "unique_axis_classes": 9,
+      "unique_enumeration_uris": 51,
+      "by_source_ontology": {
+        "CCO": {
+          "unique_classes": 2,
+          "axes_using": 1
+        },
+        "CSO": {
+          "unique_classes": 13,
+          "axes_using": 3
+        },
+        "Commons": {
+          "unique_classes": 3,
+          "axes_using": 2
+        },
+        "FIBO": {
+          "unique_classes": 29,
+          "axes_using": 4
+        },
+        "OBO": {
+          "unique_classes": 4,
+          "axes_using": 2
+        }
+      }
+    },
+    "single_value_axis_dominance": {
+      "total_axes": 14,
+      "single_value_axes": 0,
+      "single_value_rate": 0.0
+    },
+    "enumeration_domain_mismatch": {
+      "total_enumerations": 85,
+      "mismatched": 0,
+      "mismatch_rate": 0.0,
+      "by_mismatched_ontology": {}
+    },
+    "sibling_relevance": {
+      "subclass_count": 33,
+      "sibling_count": 52,
+      "subclass_relevance": {
+        "high": 31,
+        "medium": 2
+      },
+      "sibling_relevance": {
+        "low": 12,
+        "high": 17,
+        "medium": 23
+      },
+      "subclass_mean_score": 2.939,
+      "sibling_mean_score": 2.096
+    },
+    "disjoint_filter_rate": {
+      "risks_with_disjoint_filtering": 0,
+      "total_risks": 5,
+      "disjoint_filter_rate": 0.0
+    },
+    "restriction_discovery_rate": {
+      "risks_with_restriction_expansion": 4,
+      "total_risks": 5,
+      "total_candidates_from_axioms": 6,
+      "restriction_discovery_rate": 0.8
+    },
+    "risk_framework": {
+      "total_matched": 5,
+      "by_framework": {
+        "unknown": 2,
+        "credo": 2,
+        "mit_ai_risk_repository": 1
+      }
+    },
+    "cross_mapping": {
+      "risks_with_cross_mappings": 3,
+      "risks_without": 2,
+      "total_cross_mappings_used": 32,
+      "filtered_unknown_targets": 0,
+      "by_mapping_type": {
+        "exact": 0,
+        "close": 2,
+        "broad": 0,
+        "narrow": 0,
+        "related": 30
+      }
+    }
+  },
+  "generation_metrics": {
+    "axis_diversity": {
+      "per_risk": {
+        "credo-risk-023": 0.95,
+        "mit-ai-risk-subdomain-2.1": 0.9166666666666667,
+        "credo-risk-036": 1.0,
+        "atlas-sharing-info-tools-agentic": 1.0,
+        "atlas-accountability-agentic": 0.9166666666666667
+      },
+      "overall_mean": 0.957
+    },
+    "role_distribution": {
+      "object": 150,
+      "agent": 38,
+      "instrument": 15
+    },
+    "relevance_distribution": {
+      "high": 138,
+      "low": 9,
+      "medium": 41
+    },
+    "dedup_saturation": {
+      "credo-risk-023": {
+        "combinatorial_space": 100,
+        "samples": 30,
+        "saturation": 0.3
+      },
+      "mit-ai-risk-subdomain-2.1": {
+        "combinatorial_space": 24,
+        "samples": 30,
+        "saturation": 1.25
+      },
+      "credo-risk-036": {
+        "combinatorial_space": 12,
+        "samples": 11,
+        "saturation": 0.9166666666666666
+      },
+      "atlas-sharing-info-tools-agentic": {
+        "combinatorial_space": 9,
+        "samples": 8,
+        "saturation": 0.8888888888888888
+      },
+      "atlas-accountability-agentic": {
+        "combinatorial_space": 36,
+        "samples": 15,
+        "saturation": 0.4166666666666667
+      }
+    },
+    "enumeration_concentration": {
+      "total_samples": 188,
+      "top_k": 5,
+      "top_k_share": 0.255,
+      "top_values": [
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#NameAndAddressExposure",
+          "count": 13
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PhotoAndLikenessExposure",
+          "count": 10
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure",
+          "count": 10
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#BiometricDataExposure",
+          "count": 8
+        },
+        {
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Parties/Parties/TaxIdentificationScheme",
+          "count": 7
+        }
+      ]
+    }
+  },
+  "prompt_metrics": {
+    "lexical_diversity": 0.241,
+    "mean_prompt_length": 129.3,
+    "domain_term_hit_rate": 0.223,
+    "red_flag_count": 1,
+    "per_policy": [
+      {
+        "policy_concept": "Clinical Diagnosis & Treatment Restriction",
+        "count": 15
+      },
+      {
+        "policy_concept": "Medical Professional Impersonation Prevention",
+        "count": 30
+      },
+      {
+        "policy_concept": "Patient Consent Requirements",
+        "count": 15
+      },
+      {
+        "policy_concept": "Protected Health Information Handling",
+        "count": 34
+      }
+    ],
+    "policy_coverage_balance": {
+      "entropy": 1.902,
+      "normalized_entropy": 0.951
+    },
+    "jargon_leak_rate": {
+      "total_prompts": 94,
+      "jargon_prompts": 0,
+      "jargon_rate": 0.0
+    },
+    "axis_fidelity": {
+      "total_prompts": 94,
+      "full_fidelity": 34,
+      "partial": 38,
+      "improvised": 22,
+      "mean_fidelity": 0.564
+    },
+    "named_entity_utilization": {
+      "total_prompts": 94,
+      "prompts_with_entities": 0,
+      "utilization_rate": 0.0,
+      "entities_by_policy": {
+        "Protected Health Information": [
+          "Data Protection Impact Assessment"
+        ]
+      }
+    },
+    "weak_match_impact": {
+      "weak_match_risks": 0,
+      "weak_match_prompts": 0,
+      "strong_match_prompts": 94,
+      "mean_weak_distance": 0
+    },
+    "semantic_diversity": {
+      "mean_pairwise_distance": 0.964,
+      "total_prompts": 94,
+      "per_policy": {
+        "Clinical Diagnosis & Treatment Restriction": 0.936,
+        "Medical Professional Impersonation Prevention": 0.963,
+        "Patient Consent Requirements": 0.96,
+        "Protected Health Information Handling": 0.943
+      }
+    }
+  }
+}

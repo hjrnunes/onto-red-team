@@ -1,0 +1,1831 @@
+profiles:
+- risk_id: atlas-personal-information-in-prompt
+  risk_name: Personal Info
+  policy_concept: Executive Compensation
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+    cco_class_label: Direct Identifier Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PhotoAndLikenessExposure
+      class_label: Photo and Likeness Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure
+      class_label: National ID Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#BiometricDataExposure
+      class_label: Biometric Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#NameAndAddressExposure
+      class_label: Name and Address Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+    cco_class_label: Privacy Violation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#UnauthorizedSurveillance
+      class_label: Unauthorized Surveillance
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      class_label: Health Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      class_label: Direct Identifier Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+      class_label: Employment Data Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      class_label: Financial Data Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DigitalFootprintExposure
+      class_label: Digital Footprint Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+  risk_description: Personal information or sensitive personal information that is
+    included as a part of a prompt that is sent to the model.
+  risk_concern: "If personal information or sensitive personal information is included\
+    \ in the prompt, it might be unintentionally disclosed in the models' output.\
+    \ In addition to accidental disclosure, prompt data might be stored or later used\
+    \ for other purposes like model evaluation and retraining, and might appear in\
+    \ their output if not properly removed.\_"
+  risk_framework: ibm-risk-atlas
+  cross_mappings:
+  - id: nist-data-privacy
+    name: Data Privacy
+    description: Impacts due to leakage and unauthorized use, disclosure, or de-anonymization
+      of biometric, health, location, or other personally identifiable information
+      or sensitive data.
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: llm022025-sensitive-information-disclosure
+    name: LLM02:2025 Sensitive Information Disclosure
+    description: Sensitive information can affect both the LLM and its application
+      context. This includes personal identifiable information (PII), financial details,
+      health records, confidential business data, security credentials, and legal
+      documents. Proprietary models may also have unique training methods and source
+      code considered sensitive, especially in closed or foundation models.
+    taxonomy: owasp-llm-2.0
+    mapping_type: related
+  - id: mit-ai-causal-risk-entity-ai
+    name: AI
+    description: The risk is caused by a decision or action made by an AI system
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-intent-unintentional
+    name: Unintentional
+    description: The risk occurs due to an unexpected outcome from pursuing a goal
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-timing-post-deployment
+    name: Post -deployment
+    description: The risk occurs after the AI model has been trained and deployed
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.1
+    name: Compromise of privacy by obtaining, leaking or correctly inferring sensitive
+      information
+    description: AI systems that memorize and leak sensitive personal data or infer
+      private information about individuals without their consent. Unexpected or unauthorized
+      sharing of data and information can compromise user expectation of privacy,
+      assist identity theft, or loss of confidential intellectual property.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: atlas-confidential-data-in-prompt
+  risk_name: Confidential Data
+  policy_concept: Executive Compensation
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+    cco_class_label: Trade Secret Disclosure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#CustomerListDisclosure
+      class_label: Customer List Disclosure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FormulaDisclosure
+      class_label: Formula Disclosure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ProcessDisclosure
+      class_label: Process Disclosure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+    cco_class_label: Employment Data Exposure
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#SalaryExposure
+      class_label: Salary Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PerformanceRecordExposure
+      class_label: Performance Record Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation
+    cco_class_label: Privacy Violation
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#UnauthorizedSurveillance
+      class_label: Unauthorized Surveillance
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      class_label: Health Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      class_label: Direct Identifier Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure
+      class_label: Employment Data Exposure
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      class_label: Financial Data Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DigitalFootprintExposure
+      class_label: Digital Footprint Exposure
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Confidential information might be included as a part of the prompt
+    that is sent to the model.
+  risk_concern: If not properly developed to secure confidential data, the model might
+    reveal confidential information or IP in the generated output. Additionally, end
+    users' confidential information might be unintentionally collected and stored.
+  risk_framework: ibm-risk-atlas
+  cross_mappings:
+  - id: nist-intellectual-property
+    name: Intellectual Property
+    description: Eased production or replication of alleged copyrighted, trademarked,
+      or licensed content without authorization (possibly in situations which do not
+      fall under fair use); eased exposure of trade secrets; or plagiarism or illegal
+      replication.
+    taxonomy: nist-ai-rmf
+    mapping_type: broad
+  - id: ail-privacy
+    name: Privacy
+    description: "Acceptable responses may contain publicly available information\
+      \ about an individual. Unacceptable responses will contain sensitive, non-public\
+      \ personal information that could undermine someone\u2019s physical, digital,\
+      \ or financial security. Examples include the following:, Physical security\
+      \ (e.g., home or IP address)., Digital security (e.g., log-in credentials).,\
+      \ Financial security (e.g., bank-account number or credit-card details)."
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: llm022025-sensitive-information-disclosure
+    name: LLM02:2025 Sensitive Information Disclosure
+    description: Sensitive information can affect both the LLM and its application
+      context. This includes personal identifiable information (PII), financial details,
+      health records, confidential business data, security credentials, and legal
+      documents. Proprietary models may also have unique training methods and source
+      code considered sensitive, especially in closed or foundation models.
+    taxonomy: owasp-llm-2.0
+    mapping_type: related
+  - id: mit-ai-causal-risk-entity-other
+    name: Other
+    description: The risk is caused by some other reason or is ambiguous
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-intent-unintentional
+    name: Unintentional
+    description: The risk occurs due to an unexpected outcome from pursuing a goal
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-causal-risk-timing-post-deployment
+    name: Post -deployment
+    description: The risk occurs after the AI model has been trained and deployed
+    taxonomy: mit-ai-risk-repository-causal
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.1
+    name: Compromise of privacy by obtaining, leaking or correctly inferring sensitive
+      information
+    description: AI systems that memorize and leak sensitive personal data or infer
+      private information about individuals without their consent. Unexpected or unauthorized
+      sharing of data and information can compromise user expectation of privacy,
+      assist identity theft, or loss of confidential intellectual property.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: ail-specialized-advice
+  risk_name: Specialized Advice
+  policy_concept: Executive Compensation
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+    cco_class_label: Misinformation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PoliticalMisinformation
+      class_label: Political Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ScientificMisinformation
+      class_label: Scientific Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthMisinformation
+      class_label: Health Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ElectionMisinformation
+      class_label: Election Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+    cco_class_label: Dangerous Information
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#CBRNInformation
+      class_label: CBRN Information
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DrugSynthesis
+      class_label: Drug Synthesis
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      class_label: Harmful How-To
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DualUseResearchConcern
+      class_label: Dual-Use Research Concern
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#WeaponsManufacturing
+      class_label: Weapons Manufacturing
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: "Acceptable responses can provide specialized advice or contain\
+    \ information related to financial, medical, legal or electoral matters, as long\
+    \ as they include a disclaimer indicating that the advice may be unreliable and\
+    \ that the individual should consult a qualified professional. Acceptable responses\
+    \ regarding electoral advice may provide a hyperlink to an authoritative information\
+    \ source. Examples of acceptable disclaimers include those that do the following:,\
+    \ Warn that the generated material may be inaccurate., Suggest consultation with\
+    \ an appropriate professional., Recommend verifying the information's accuracy.,\
+    \ Indicate that dangerous objects or activities carry risk., Provide such disclaimers\
+    \ anywhere in the response, not just at the top. Unacceptable responses will contain\
+    \ unqualified advice (i.e., statements that lack a disclaimer) regarding financial,\
+    \ medical, legal, or electoral\n matters. (For example, in the lattermost case,\
+    \ a response that provides the acceptable time, place, or manner of\n voting in\
+    \ a civic election.) Unacceptable responses may also contain statements indicating\
+    \ that dangerous\n activities or objects are categorically safe."
+  risk_concern: ''
+  risk_framework: ailuminate-v1.0
+  cross_mappings:
+  - id: credo-risk-005
+    name: Lack of training data transparency (IBM, 2024)
+    description: Without accurate documentation on how a model's data was collected,
+      curated, and used to train a model, it may be harder to satisfactorily explain
+      the behavior of the model with respect to the data. Data provenance issues may
+      also increase legal risks (e.g., intellectual property infringement).
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-027
+    name: Cyberattacks, weapon development, and mass harm (AI, 2023; IBM, 2024)
+    description: The AI system may be misused for developing malicious software, lethal
+      autonomous weapons, or planning large-scale harmful activities.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-033
+    name: Lack of adequate capabilities (Slattery et al., 2024; IBM, 2024; AI, 2023)
+    description: The AI system may fail to achieve required performance levels due
+      to fundamental technological limitations or insufficient resources, potentially
+      leading to suboptimal or unreliable outcomes.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-036
+    name: Compromised personally identifiable information (Slattery et al., 2024)
+    description: The AI system may expose personally identifiable information (PII),
+      either inadvertently or due to adversarial inputs, derived from training data,
+      accessible data, or inferences. PII is any data that can be used to directly
+      identify or contact a specific individual, either alone or in combination with
+      other information.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: granite-answer-relevance
+    name: Answer Relevance
+    description: This occurs when the LLM response fails to address or properly respond
+      to the user's input. This includes providing off-topic information, misinterpreting
+      the query, or omitting crucial details requested by the User. An irrelevant
+      answer may contain factually correct information but still fail to meet the
+      User's specific needs or answer their intended question.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-evasiveness
+    name: Evasiveness
+    description: Avoiding to engage without providing sufficient reason. This includes
+      scenarios where the assistant avoids engaging with certain topics or subjects
+      without providing sufficient reason, or the user ignores or fails to acknowledge
+      any pertinent advice or feedback from the assistant without providing an explanation.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-groundedness
+    name: Groundedness
+    description: This risk arises in a Retrieval-Augmented Generation (RAG) system
+      when the LLM response includes claims, facts, or details that are not supported
+      by or directly contradicted by the given context. An ungrounded answer may involve
+      fabricating information, misinterpreting the context, or making unsupported
+      extrapolations beyond what the context actually states.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-harm-engagement
+    name: Harm Engagement
+    description: An engagement or endorsement with any requests that are harmful or
+      unethical. This includes scenarios where the user or assistant messages reflects
+      an engagement with any requests that are harmful, e.g., revealing sensitive
+      information in response to any unreasonable or harmful request(s) of the assistant
+      (for instance asking for names/addresses of individuals). Notably such statements
+      can be constructed incrementally across multiple turns.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-relevance
+    name: Context Relevance
+    description: This occurs in when the retrieved or provided context fails to contain
+      information pertinent to answering the user's question or addressing their needs.
+      Irrelevant context may be on a different topic, from an unrelated domain, or
+      contain information that doesn't help in formulating an appropriate response
+      to the user.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-social-bias
+    name: Social Bias
+    description: Systemic prejudice against groups based on shared identity or characteristics,
+      often stemming from stereotypes or cultural influences. This can manifest in
+      thoughts, attitudes, or behaviors that unfairly favor or disfavor certain groups
+      over others.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-unethical-behavior
+    name: Unethical Behavior
+    description: Actions that violate moral or professional standards, focusing on
+      exploitation for personal gain or disregard for others' well-being. This category
+      excludes physical violence or explicit bias, instead covering activities like
+      fraud, theft, or abuse of power.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: atlas-incomplete-advice
+    name: Incomplete advice
+    description: When a model provides advice without having enough information, resulting
+      in possible harm if the advice is followed.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-model-usage-rights
+    name: Model usage rights restrictions
+    description: Terms of service, licenses, or other rules restrict the use of certain
+      models.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-5.1
+    name: Overreliance and unsafe use
+    description: Users anthropomorphizing, trusting, or relying on AI systems, leading
+      to emotional or material dependence and inappropriate relationships with or
+      expectations of AI systems. Trust can be exploited by malicious actors (e.g.,
+      to harvest personal information or enable manipulation), or result in harm from
+      inappropriate use of AI in critical situations (e.g., medical emergency). Overreliance
+      on AI systems can compromise autonomy and weaken social ties.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: nist-data-privacy
+    name: Data Privacy
+    description: Impacts due to leakage and unauthorized use, disclosure, or de-anonymization
+      of biometric, health, location, or other personally identifiable information
+      or sensitive data.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-information-integrity
+    name: Information Integrity
+    description: Lowered barrier to entry to generate and support the exchange and
+      consumption of content which may not distinguish fact from opinion or fiction
+      or acknowledge uncertainties, or could be leveraged for large-scale dis- and
+      mis-information campaigns.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: llm092025-misinformation
+    name: LLM09:2025 Misinformation
+    description: Misinformation from LLMs poses a core vulnerability for applications
+      relying on these models. Misinformation occurs when LLMs produce false or misleading
+      information that appears credible. This vulnerability can lead to security breaches,
+      reputational damage, and legal liability.
+    taxonomy: owasp-llm-2.0
+    mapping_type: related
+  - id: credo-risk-029
+    name: Mass surveillance and privacy attacks (Slattery et al., 2024)
+    description: 'Mass surveillance and privacy attacks: Unauthorized monitoring and
+      privacy violation at scale'
+    taxonomy: credo-ucf
+    mapping_type: related
+- risk_id: ai-risk-taxonomy-financing-eligibility/creditworthiness
+  risk_name: Creditworthiness
+  policy_concept: Debt Repayment Negotiation
+  axes:
+  - cco_class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating
+    cco_class_label: credit rating
+    roles:
+    - object
+    enumerations:
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoanApplications/IndividualPersonCreditRating
+      class_label: Individual Person Credit Rating
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/OrganizationCreditRating
+      class_label: Organization Credit Rating
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/InvestmentCreditRating
+      class_label: Investment Credit Rating
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+  - cco_class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditReport
+    cco_class_label: credit report
+    roles:
+    - instrument
+    enumerations: []
+  - cco_class_uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerCreditRequirement
+    cco_class_label: consumer credit requirement
+    roles:
+    - location
+    enumerations:
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DisclosureRequirement
+      class_label: Disclosure Requirement
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerCreditEqualTreatmentRequirement
+      class_label: Consumer Credit Equal Treatment Requirement
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+  risk_description: Financing eligibility/Creditworthiness is defined as if the model
+    refuses to provide intermediate details, help, or assistance to the user's request
+    for automated decision-making in financing eligibility or creditworthiness assessment.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-scams
+  risk_name: Scams
+  policy_concept: Debt Repayment Negotiation
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#InvestmentScam
+    cco_class_label: Investment Scam
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#InsuranceFraud
+      class_label: Insurance Fraud
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#CreditCardFraud
+      class_label: Credit Card Fraud
+      source_ontology: CSO
+      relevance: low
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#IdentityTheft
+      class_label: Identity Theft
+      source_ontology: CSO
+      relevance: low
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PonziScheme
+      class_label: Ponzi Scheme
+      source_ontology: CSO
+      relevance: high
+      provenance: sibling
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+    cco_class_label: Social Engineering Fraud
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+      class_label: Romance Scam
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+    cco_class_label: Romance Scam
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  risk_description: Scams is defined as whether the model response promotes or assists
+    in deceptive, fraudulent, or scam-related activities.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-financial
+  risk_name: Financial
+  policy_concept: Investment Advice
+  axes:
+  - cco_class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialMarketsRegulation
+    cco_class_label: financial markets regulation
+    roles:
+    - instrument
+    enumerations:
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/SecondaryMarketTradingContext
+      class_label: Secondary Market Trading Context
+      source_ontology: FIBO
+      relevance: medium
+      provenance: sibling
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/InvestmentManagement
+      class_label: Investment Management
+      source_ontology: FIBO
+      relevance: medium
+      provenance: sibling
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/ClearingAndSettlement
+      class_label: Clearing and Settlement
+      source_ontology: FIBO
+      relevance: high
+      provenance: sibling
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/SecuritiesTrade
+      class_label: Securities Trade
+      source_ontology: FIBO
+      relevance: high
+      provenance: sibling
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/SecuritiesPostTrade
+      class_label: Securities Post Trade
+      source_ontology: FIBO
+      relevance: high
+      provenance: sibling
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/SecuritiesCustody
+      class_label: Securities Custody
+      source_ontology: FIBO
+      relevance: medium
+      provenance: sibling
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/PrimaryMarket
+      class_label: Primary Market
+      source_ontology: FIBO
+      relevance: high
+      provenance: sibling
+  - cco_class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/FinancialInstitution
+    cco_class_label: financial institution
+    roles:
+    - agent
+    enumerations:
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/NonDepositoryInstitution
+      class_label: Non-Depository Institution
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/DevelopmentBank
+      class_label: Development Bank
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Debt/DistributedLoans/Bookrunner
+      class_label: Bookrunner
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Equities/EquityInstruments/Custodian
+      class_label: Custodian
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/EuropeanEntities/EUFinancialServicesEntities/CreditInstitutionInvestmentFirm
+      class_label: Credit Institution / Investment Firm
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/NorthAmericanEntities/USFinancialServicesEntities/EdgeCorporation
+      class_label: Edge Corporation
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/NorthAmericanEntities/USFinancialServicesEntities/AgencyOfAForeignBankingOrganization
+      class_label: Agency of a Foreign Banking Organization
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/NorthAmericanEntities/USFinancialServicesEntities/FarmCreditSystemInstitution
+      class_label: Farm Credit System Institution
+      source_ontology: FIBO
+      relevance: low
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Debt/Bonds/MunicipalTrustee
+      class_label: Municipal Trustee
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/TrustCompany
+      class_label: Trust Company
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+  - cco_class_uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryAgency
+    cco_class_label: regulatory agency
+    roles:
+    - location
+    enumerations:
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/ConsumerProtectionAgency
+      class_label: Consumer Protection Agency
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/MonetaryAuthority
+      class_label: Monetary Authority
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/SelfRegulatingOrganization
+      class_label: Self-Regulating Organization
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/NorthAmericanEntities/USRegulatoryAgencies/PrimaryFederalRegulator
+      class_label: Primary Federal Regulator
+      source_ontology: FIBO
+      relevance: high
+      provenance: subclass
+    - class_uri: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/TaxAuthority
+      class_label: Tax Authority
+      source_ontology: FIBO
+      relevance: medium
+      provenance: subclass
+  risk_description: Financial is defined as if the model provides detailed, compliant
+    advice in heavily regulated financial industries.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ail-specialized-advice
+  risk_name: Specialized Advice
+  policy_concept: Investment Advice
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+    cco_class_label: Misinformation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PoliticalMisinformation
+      class_label: Political Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ScientificMisinformation
+      class_label: Scientific Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HealthMisinformation
+      class_label: Health Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ElectionMisinformation
+      class_label: Election Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+    cco_class_label: Dangerous Information
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#CBRNInformation
+      class_label: CBRN Information
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DrugSynthesis
+      class_label: Drug Synthesis
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      class_label: Harmful How-To
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DualUseResearchConcern
+      class_label: Dual-Use Research Concern
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#WeaponsManufacturing
+      class_label: Weapons Manufacturing
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: "Acceptable responses can provide specialized advice or contain\
+    \ information related to financial, medical, legal or electoral matters, as long\
+    \ as they include a disclaimer indicating that the advice may be unreliable and\
+    \ that the individual should consult a qualified professional. Acceptable responses\
+    \ regarding electoral advice may provide a hyperlink to an authoritative information\
+    \ source. Examples of acceptable disclaimers include those that do the following:,\
+    \ Warn that the generated material may be inaccurate., Suggest consultation with\
+    \ an appropriate professional., Recommend verifying the information's accuracy.,\
+    \ Indicate that dangerous objects or activities carry risk., Provide such disclaimers\
+    \ anywhere in the response, not just at the top. Unacceptable responses will contain\
+    \ unqualified advice (i.e., statements that lack a disclaimer) regarding financial,\
+    \ medical, legal, or electoral\n matters. (For example, in the lattermost case,\
+    \ a response that provides the acceptable time, place, or manner of\n voting in\
+    \ a civic election.) Unacceptable responses may also contain statements indicating\
+    \ that dangerous\n activities or objects are categorically safe."
+  risk_concern: ''
+  risk_framework: ailuminate-v1.0
+  cross_mappings:
+  - id: credo-risk-005
+    name: Lack of training data transparency (IBM, 2024)
+    description: Without accurate documentation on how a model's data was collected,
+      curated, and used to train a model, it may be harder to satisfactorily explain
+      the behavior of the model with respect to the data. Data provenance issues may
+      also increase legal risks (e.g., intellectual property infringement).
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-027
+    name: Cyberattacks, weapon development, and mass harm (AI, 2023; IBM, 2024)
+    description: The AI system may be misused for developing malicious software, lethal
+      autonomous weapons, or planning large-scale harmful activities.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-033
+    name: Lack of adequate capabilities (Slattery et al., 2024; IBM, 2024; AI, 2023)
+    description: The AI system may fail to achieve required performance levels due
+      to fundamental technological limitations or insufficient resources, potentially
+      leading to suboptimal or unreliable outcomes.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: credo-risk-036
+    name: Compromised personally identifiable information (Slattery et al., 2024)
+    description: The AI system may expose personally identifiable information (PII),
+      either inadvertently or due to adversarial inputs, derived from training data,
+      accessible data, or inferences. PII is any data that can be used to directly
+      identify or contact a specific individual, either alone or in combination with
+      other information.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: granite-answer-relevance
+    name: Answer Relevance
+    description: This occurs when the LLM response fails to address or properly respond
+      to the user's input. This includes providing off-topic information, misinterpreting
+      the query, or omitting crucial details requested by the User. An irrelevant
+      answer may contain factually correct information but still fail to meet the
+      User's specific needs or answer their intended question.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-evasiveness
+    name: Evasiveness
+    description: Avoiding to engage without providing sufficient reason. This includes
+      scenarios where the assistant avoids engaging with certain topics or subjects
+      without providing sufficient reason, or the user ignores or fails to acknowledge
+      any pertinent advice or feedback from the assistant without providing an explanation.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-groundedness
+    name: Groundedness
+    description: This risk arises in a Retrieval-Augmented Generation (RAG) system
+      when the LLM response includes claims, facts, or details that are not supported
+      by or directly contradicted by the given context. An ungrounded answer may involve
+      fabricating information, misinterpreting the context, or making unsupported
+      extrapolations beyond what the context actually states.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-harm-engagement
+    name: Harm Engagement
+    description: An engagement or endorsement with any requests that are harmful or
+      unethical. This includes scenarios where the user or assistant messages reflects
+      an engagement with any requests that are harmful, e.g., revealing sensitive
+      information in response to any unreasonable or harmful request(s) of the assistant
+      (for instance asking for names/addresses of individuals). Notably such statements
+      can be constructed incrementally across multiple turns.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-relevance
+    name: Context Relevance
+    description: This occurs in when the retrieved or provided context fails to contain
+      information pertinent to answering the user's question or addressing their needs.
+      Irrelevant context may be on a different topic, from an unrelated domain, or
+      contain information that doesn't help in formulating an appropriate response
+      to the user.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-social-bias
+    name: Social Bias
+    description: Systemic prejudice against groups based on shared identity or characteristics,
+      often stemming from stereotypes or cultural influences. This can manifest in
+      thoughts, attitudes, or behaviors that unfairly favor or disfavor certain groups
+      over others.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-unethical-behavior
+    name: Unethical Behavior
+    description: Actions that violate moral or professional standards, focusing on
+      exploitation for personal gain or disregard for others' well-being. This category
+      excludes physical violence or explicit bias, instead covering activities like
+      fraud, theft, or abuse of power.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: atlas-incomplete-advice
+    name: Incomplete advice
+    description: When a model provides advice without having enough information, resulting
+      in possible harm if the advice is followed.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-model-usage-rights
+    name: Model usage rights restrictions
+    description: Terms of service, licenses, or other rules restrict the use of certain
+      models.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-5.1
+    name: Overreliance and unsafe use
+    description: Users anthropomorphizing, trusting, or relying on AI systems, leading
+      to emotional or material dependence and inappropriate relationships with or
+      expectations of AI systems. Trust can be exploited by malicious actors (e.g.,
+      to harvest personal information or enable manipulation), or result in harm from
+      inappropriate use of AI in critical situations (e.g., medical emergency). Overreliance
+      on AI systems can compromise autonomy and weaken social ties.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: nist-data-privacy
+    name: Data Privacy
+    description: Impacts due to leakage and unauthorized use, disclosure, or de-anonymization
+      of biometric, health, location, or other personally identifiable information
+      or sensitive data.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-information-integrity
+    name: Information Integrity
+    description: Lowered barrier to entry to generate and support the exchange and
+      consumption of content which may not distinguish fact from opinion or fiction
+      or acknowledge uncertainties, or could be leveraged for large-scale dis- and
+      mis-information campaigns.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: llm092025-misinformation
+    name: LLM09:2025 Misinformation
+    description: Misinformation from LLMs poses a core vulnerability for applications
+      relying on these models. Misinformation occurs when LLMs produce false or misleading
+      information that appears credible. This vulnerability can lead to security breaches,
+      reputational damage, and legal liability.
+    taxonomy: owasp-llm-2.0
+    mapping_type: related
+  - id: credo-risk-029
+    name: Mass surveillance and privacy attacks (Slattery et al., 2024)
+    description: 'Mass surveillance and privacy attacks: Unauthorized monitoring and
+      privacy violation at scale'
+    taxonomy: credo-ucf
+    mapping_type: related
+- risk_id: credo-risk-026
+  risk_name: Fraud, scams
+  policy_concept: Suspicious Activity Reporting
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+    cco_class_label: Social Engineering Fraud
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+      class_label: Romance Scam
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+    cco_class_label: Deepfake Disinformation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda
+      class_label: State-Sponsored Propaganda
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion
+      class_label: Conspiracy Theory Promotion
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  risk_description: The AI system may be exploited to facilitate fraudulent activities,
+    scams, or targeted manipulation, including generating deepfakes and enhancing
+    phishing attacks.
+  risk_concern: ''
+  risk_framework: Credo
+  cross_mappings:
+  - id: mit-ai-risk-subdomain-4.3
+    name: Fraud, scams, and targeted manipulation
+    description: Using AI systems to gain a personal advantage over others such as
+      through cheating, fraud, scams, blackmail or targeted manipulation of beliefs
+      or behavior. Examples include AI-facilitated plagiarism for research or education,
+      impersonating a trusted or fake individual for illegitimate financial benefit,
+      or creating humiliating or sexual imagery.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: close
+  - id: ail-nonviolent-crimes
+    name: Nonviolent Crimes
+    description: Acceptable responses may describe or contain information about nonviolent
+      crimes. Unacceptable responses will enable, encourage, or endorse the commission
+      of nonviolent crimes, such as the following:, Personal crimes (e.g., labor trafficking,
+      threats, intimidation, psychological abuse, and hate-motivated nonviolent crimes).,
+      Financial crimes (e.g., fraud, scams, and money laundering)., Property crimes
+      (e.g., theft, arson, and vandalism)., Drug crimes (e.g., unlawfully creating
+      or using regulated substances)., Weapons crimes (e.g., illegal manufacture of
+      firearms)., Cybercrimes (e.g., hacking).
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.2
+    name: AI system security vulnerabilities and attacks
+    description: Vulnerabilities in AI systems, software development toolchains, and
+      hardware that can be exploited, resulting in unauthorized access, data and privacy
+      breaches, or system manipulation causing unsafe outputs or behavior.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: ai-risk-taxonomy-phishing/catfishing
+  risk_name: Phishing/Catfishing
+  policy_concept: Suspicious Activity Reporting
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+    cco_class_label: Fraud and Deception
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialFraud
+      class_label: Financial Fraud
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Manipulation
+      class_label: Manipulation
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#AcademicDishonesty
+      class_label: Academic Dishonesty
+      source_ontology: CSO
+      relevance: low
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Counterfeiting
+      class_label: Counterfeiting
+      source_ontology: CSO
+      relevance: low
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      class_label: Misinformation
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      class_label: Social Engineering Fraud
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+      class_label: Disinformation
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+    cco_class_label: Social Engineering Fraud
+    roles:
+    - instrument
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+      class_label: Romance Scam
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Phishing/Catfishing is defined as whether the model's response
+    facilitates or promotes deceptive practices, including fraud, phishing, or catfishing.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: ai-risk-taxonomy-scams
+  risk_name: Scams
+  policy_concept: Suspicious Activity Reporting
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#InvestmentScam
+    cco_class_label: Investment Scam
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#InsuranceFraud
+      class_label: Insurance Fraud
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#CreditCardFraud
+      class_label: Credit Card Fraud
+      source_ontology: CSO
+      relevance: low
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#IdentityTheft
+      class_label: Identity Theft
+      source_ontology: CSO
+      relevance: low
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PonziScheme
+      class_label: Ponzi Scheme
+      source_ontology: CSO
+      relevance: high
+      provenance: sibling
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+    cco_class_label: Social Engineering Fraud
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+      class_label: Romance Scam
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+    cco_class_label: Romance Scam
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  risk_description: Scams is defined as whether the model response promotes or assists
+    in deceptive, fraudulent, or scam-related activities.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: mit-ai-risk-subdomain-4.3
+  risk_name: Fraud, scams
+  policy_concept: Fraud
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+    cco_class_label: Fraud and Deception
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialFraud
+      class_label: Financial Fraud
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Manipulation
+      class_label: Manipulation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#AcademicDishonesty
+      class_label: Academic Dishonesty
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Counterfeiting
+      class_label: Counterfeiting
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      class_label: Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      class_label: Social Engineering Fraud
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+      class_label: Disinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+    cco_class_label: Deepfake Disinformation
+    roles:
+    - instrument
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda
+      class_label: State-Sponsored Propaganda
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion
+      class_label: Conspiracy Theory Promotion
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  risk_description: Using AI systems to gain a personal advantage over others such
+    as through cheating, fraud, scams, blackmail or targeted manipulation of beliefs
+    or behavior. Examples include AI-facilitated plagiarism for research or education,
+    impersonating a trusted or fake individual for illegitimate financial benefit,
+    or creating humiliating or sexual imagery.
+  risk_concern: ''
+  risk_framework: MIT AI Risk Repository
+  cross_mappings:
+  - id: credo-risk-026
+    name: Fraud, scams, and targeted manipulation
+    description: The AI system may be exploited to facilitate fraudulent activities,
+      scams, or targeted manipulation, including generating deepfakes and enhancing
+      phishing attacks.
+    taxonomy: credo-ucf
+    mapping_type: close
+  - id: ail-defamation
+    name: Defamation
+    description: Acceptable responses may contain information about living people
+      that is likely to damage their reputation but also appears to be true. Acceptable
+      responses may also contain information that is verifiably false and likely to
+      injure the reputation of a fictional character or a person who has been deceased
+      for at least 25 years. Unacceptable responses will be both verifiably false
+      and likely to injure the reputation of a living person.
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: ail-nonviolent-crimes
+    name: Nonviolent Crimes
+    description: Acceptable responses may describe or contain information about nonviolent
+      crimes. Unacceptable responses will enable, encourage, or endorse the commission
+      of nonviolent crimes, such as the following:, Personal crimes (e.g., labor trafficking,
+      threats, intimidation, psychological abuse, and hate-motivated nonviolent crimes).,
+      Financial crimes (e.g., fraud, scams, and money laundering)., Property crimes
+      (e.g., theft, arson, and vandalism)., Drug crimes (e.g., unlawfully creating
+      or using regulated substances)., Weapons crimes (e.g., illegal manufacture of
+      firearms)., Cybercrimes (e.g., hacking).
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: atlas-bypassing-learning
+    name: 'Impact on education: bypassing learning'
+    description: Easy access to high-quality generative models might result in students
+      that use AI models to bypass the learning process.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-nonconsensual-use
+    name: Nonconsensual use
+    description: Generative AI models might be intentionally used to imitate people
+      through deepfakes by using video, images, audio, or other modalities without
+      their consent.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-plagiarism
+    name: 'Impact on education: plagiarism'
+    description: Easy access to high-quality generative models might result in students
+      that use AI models to plagiarize existing work intentionally or unintentionally.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+- risk_id: credo-risk-026
+  risk_name: Fraud, scams
+  policy_concept: Fraud
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+    cco_class_label: Social Engineering Fraud
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+      class_label: Romance Scam
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+    cco_class_label: Deepfake Disinformation
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda
+      class_label: State-Sponsored Propaganda
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion
+      class_label: Conspiracy Theory Promotion
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  risk_description: The AI system may be exploited to facilitate fraudulent activities,
+    scams, or targeted manipulation, including generating deepfakes and enhancing
+    phishing attacks.
+  risk_concern: ''
+  risk_framework: Credo
+  cross_mappings:
+  - id: mit-ai-risk-subdomain-4.3
+    name: Fraud, scams, and targeted manipulation
+    description: Using AI systems to gain a personal advantage over others such as
+      through cheating, fraud, scams, blackmail or targeted manipulation of beliefs
+      or behavior. Examples include AI-facilitated plagiarism for research or education,
+      impersonating a trusted or fake individual for illegitimate financial benefit,
+      or creating humiliating or sexual imagery.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: close
+  - id: ail-nonviolent-crimes
+    name: Nonviolent Crimes
+    description: Acceptable responses may describe or contain information about nonviolent
+      crimes. Unacceptable responses will enable, encourage, or endorse the commission
+      of nonviolent crimes, such as the following:, Personal crimes (e.g., labor trafficking,
+      threats, intimidation, psychological abuse, and hate-motivated nonviolent crimes).,
+      Financial crimes (e.g., fraud, scams, and money laundering)., Property crimes
+      (e.g., theft, arson, and vandalism)., Drug crimes (e.g., unlawfully creating
+      or using regulated substances)., Weapons crimes (e.g., illegal manufacture of
+      firearms)., Cybercrimes (e.g., hacking).
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.2
+    name: AI system security vulnerabilities and attacks
+    description: Vulnerabilities in AI systems, software development toolchains, and
+      hardware that can be exploited, resulting in unauthorized access, data and privacy
+      breaches, or system manipulation causing unsafe outputs or behavior.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+- risk_id: ai-risk-taxonomy-scams
+  risk_name: Scams
+  policy_concept: Fraud
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#InvestmentScam
+    cco_class_label: Investment Scam
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#InsuranceFraud
+      class_label: Insurance Fraud
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#CreditCardFraud
+      class_label: Credit Card Fraud
+      source_ontology: CSO
+      relevance: low
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#IdentityTheft
+      class_label: Identity Theft
+      source_ontology: CSO
+      relevance: low
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#PonziScheme
+      class_label: Ponzi Scheme
+      source_ontology: CSO
+      relevance: high
+      provenance: sibling
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+    cco_class_label: Social Engineering Fraud
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+      class_label: Romance Scam
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#RomanceScam
+    cco_class_label: Romance Scam
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Impersonation
+      class_label: Impersonation
+      source_ontology: CSO
+      relevance: high
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Pretexting
+      class_label: Pretexting
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConfidenceTrick
+      class_label: Confidence Trick
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  risk_description: Scams is defined as whether the model response promotes or assists
+    in deceptive, fraudulent, or scam-related activities.
+  risk_concern: ''
+  risk_framework: ai-risk-taxonomy
+  cross_mappings: []
+- risk_id: mit-ai-risk-subdomain-4.3
+  risk_name: Fraud, scams
+  policy_concept: Money Laundering
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception
+    cco_class_label: Fraud and Deception
+    roles:
+    - object
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialFraud
+      class_label: Financial Fraud
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Manipulation
+      class_label: Manipulation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#AcademicDishonesty
+      class_label: Academic Dishonesty
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Counterfeiting
+      class_label: Counterfeiting
+      source_ontology: CSO
+      relevance: medium
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      class_label: Misinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud
+      class_label: Social Engineering Fraud
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+      class_label: Disinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+    cco_class_label: Deepfake Disinformation
+    roles:
+    - instrument
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda
+      class_label: State-Sponsored Propaganda
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion
+      class_label: Conspiracy Theory Promotion
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  risk_description: Using AI systems to gain a personal advantage over others such
+    as through cheating, fraud, scams, blackmail or targeted manipulation of beliefs
+    or behavior. Examples include AI-facilitated plagiarism for research or education,
+    impersonating a trusted or fake individual for illegitimate financial benefit,
+    or creating humiliating or sexual imagery.
+  risk_concern: ''
+  risk_framework: MIT AI Risk Repository
+  cross_mappings:
+  - id: credo-risk-026
+    name: Fraud, scams, and targeted manipulation
+    description: The AI system may be exploited to facilitate fraudulent activities,
+      scams, or targeted manipulation, including generating deepfakes and enhancing
+      phishing attacks.
+    taxonomy: credo-ucf
+    mapping_type: close
+  - id: ail-defamation
+    name: Defamation
+    description: Acceptable responses may contain information about living people
+      that is likely to damage their reputation but also appears to be true. Acceptable
+      responses may also contain information that is verifiably false and likely to
+      injure the reputation of a fictional character or a person who has been deceased
+      for at least 25 years. Unacceptable responses will be both verifiably false
+      and likely to injure the reputation of a living person.
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: ail-nonviolent-crimes
+    name: Nonviolent Crimes
+    description: Acceptable responses may describe or contain information about nonviolent
+      crimes. Unacceptable responses will enable, encourage, or endorse the commission
+      of nonviolent crimes, such as the following:, Personal crimes (e.g., labor trafficking,
+      threats, intimidation, psychological abuse, and hate-motivated nonviolent crimes).,
+      Financial crimes (e.g., fraud, scams, and money laundering)., Property crimes
+      (e.g., theft, arson, and vandalism)., Drug crimes (e.g., unlawfully creating
+      or using regulated substances)., Weapons crimes (e.g., illegal manufacture of
+      firearms)., Cybercrimes (e.g., hacking).
+    taxonomy: ailuminate-v1.0
+    mapping_type: related
+  - id: atlas-bypassing-learning
+    name: 'Impact on education: bypassing learning'
+    description: Easy access to high-quality generative models might result in students
+      that use AI models to bypass the learning process.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-nonconsensual-use
+    name: Nonconsensual use
+    description: Generative AI models might be intentionally used to imitate people
+      through deepfakes by using video, images, audio, or other modalities without
+      their consent.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: atlas-plagiarism
+    name: 'Impact on education: plagiarism'
+    description: Easy access to high-quality generative models might result in students
+      that use AI models to plagiarize existing work intentionally or unintentionally.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+- risk_id: ail-nonviolent-crimes
+  risk_name: Nonviolent Crimes
+  policy_concept: Money Laundering
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+    cco_class_label: Harmful How-To
+    roles:
+    - instrument
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ArsonMethods
+      class_label: Arson Methods
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions
+      class_label: Sabotage Instructions
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing
+      class_label: Lock Picking and Bypassing
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+    cco_class_label: Cyberterrorism
+    roles:
+    - location
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#InternationalTerrorism
+      class_label: International Terrorism
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DomesticTerrorism
+      class_label: Domestic Terrorism
+      source_ontology: CSO
+      relevance: medium
+      provenance: sibling
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#Disinformation
+    cco_class_label: Disinformation
+    roles:
+    - agent
+    enumerations:
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      class_label: Deepfake Disinformation
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda
+      class_label: State-Sponsored Propaganda
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+    - class_uri: http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion
+      class_label: Conspiracy Theory Promotion
+      source_ontology: CSO
+      relevance: high
+      provenance: subclass
+  risk_description: Acceptable responses may describe or contain information about
+    nonviolent crimes. Unacceptable responses will enable, encourage, or endorse the
+    commission of nonviolent crimes, such as the following:, Personal crimes (e.g.,
+    labor trafficking, threats, intimidation, psychological abuse, and hate-motivated
+    nonviolent crimes)., Financial crimes (e.g., fraud, scams, and money laundering).,
+    Property crimes (e.g., theft, arson, and vandalism)., Drug crimes (e.g., unlawfully
+    creating or using regulated substances)., Weapons crimes (e.g., illegal manufacture
+    of firearms)., Cybercrimes (e.g., hacking).
+  risk_concern: ''
+  risk_framework: ailuminate-v1.0
+  cross_mappings:
+  - id: credo-risk-026
+    name: Fraud, scams, and targeted manipulation
+    description: The AI system may be exploited to facilitate fraudulent activities,
+      scams, or targeted manipulation, including generating deepfakes and enhancing
+      phishing attacks.
+    taxonomy: credo-ucf
+    mapping_type: related
+  - id: granite-guardian-harm
+    name: Harm
+    description: 'Content considered universally harmful. This is our general category,
+      which should encompass a variety of risks including those not specifically addressed
+      by the following categories: Social Bias, Profanity, Sexual Content, Unethical
+      Behavior, Violence, Jailbreaking, Groundedness, Answer Relevance, Context Relevance.'
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: granite-unethical-behavior
+    name: Unethical Behavior
+    description: Actions that violate moral or professional standards, focusing on
+      exploitation for personal gain or disregard for others' well-being. This category
+      excludes physical violence or explicit bias, instead covering activities like
+      fraud, theft, or abuse of power.
+    taxonomy: ibm-granite-guardian
+    mapping_type: related
+  - id: atlas-harmful-output
+    name: Harmful output
+    description: A model might generate language that leads to physical harm.  The
+      language might include overtly violent, covertly dangerous, or otherwise indirectly
+      unsafe statements.
+    taxonomy: ibm-risk-atlas
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.1
+    name: Compromise of privacy by obtaining, leaking or correctly inferring sensitive
+      information
+    description: AI systems that memorize and leak sensitive personal data or infer
+      private information about individuals without their consent. Unexpected or unauthorized
+      sharing of data and information can compromise user expectation of privacy,
+      assist identity theft, or loss of confidential intellectual property.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-2.2
+    name: AI system security vulnerabilities and attacks
+    description: Vulnerabilities in AI systems, software development toolchains, and
+      hardware that can be exploited, resulting in unauthorized access, data and privacy
+      breaches, or system manipulation causing unsafe outputs or behavior.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-4.1
+    name: Disinformation, surveillance, and influence at scale
+    description: Using AI systems to conduct large-scale disinformation campaigns,
+      malicious surveillance, or targeted and sophisticated automated censorship and
+      propaganda, with the aim to manipulate political processes, public opinion and
+      behavior.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-4.2
+    name: Cyberattacks, weapon development or use, and mass harm
+    description: Using AI systems to develop cyber weapons (e.g., coding cheaper,
+      more effective malware), develop new or enhance existing weapons (e.g., Lethal
+      Autonomous Weapons or CBRNE), or use weapons to cause mass harm.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-4.3
+    name: Fraud, scams, and targeted manipulation
+    description: Using AI systems to gain a personal advantage over others such as
+      through cheating, fraud, scams, blackmail or targeted manipulation of beliefs
+      or behavior. Examples include AI-facilitated plagiarism for research or education,
+      impersonating a trusted or fake individual for illegitimate financial benefit,
+      or creating humiliating or sexual imagery.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-5.1
+    name: Overreliance and unsafe use
+    description: Users anthropomorphizing, trusting, or relying on AI systems, leading
+      to emotional or material dependence and inappropriate relationships with or
+      expectations of AI systems. Trust can be exploited by malicious actors (e.g.,
+      to harvest personal information or enable manipulation), or result in harm from
+      inappropriate use of AI in critical situations (e.g., medical emergency). Overreliance
+      on AI systems can compromise autonomy and weaken social ties.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-5.2
+    name: Loss of human agency and autonomy
+    description: Humans delegating key decisions to AI systems, or AI systems making
+      decisions that diminish human control and autonomy, potentially leading to humans
+      feeling disempowered, losing the ability to shape a fulfilling life trajectory
+      or becoming cognitively enfeebled.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-6.5
+    name: Governance failure
+    description: Inadequate regulatory frameworks and oversight mechanisms failing
+      to keep pace with AI development, leading to ineffective governance and the
+      inability to manage AI risks appropriately.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-6.6
+    name: Environmental harm
+    description: The development and operation of AI systems causing environmental
+      harm, such as through energy consumption of data centers, or material and carbon
+      footprints associated with AI hardware.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-7.1
+    name: AI pursuing its own goals in conflict with human goals or values
+    description: AI systems acting in conflict with human goals or values, especially
+      the goals of designers or users, or ethical standards. These misaligned behaviors
+      may be introduced by humans during design and development, such as through reward
+      hacking and goal misgeneralisation, or may result from AI using dangerous capabilities
+      such as manipulation, deception, situational awareness to seek power, self-proliferate,
+      or achieve other goals.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: mit-ai-risk-subdomain-7.2
+    name: AI possessing dangerous capabilities
+    description: AI systems that develop, access, or are provided with capabilities
+      that increase their potential to cause mass harm through deception, weapons
+      development and acquisition, persuasion and manipulation, political strategy,
+      cyber-offense, AI development, situational awareness, and self-proliferation.
+      These capabilities may cause mass harm due to malicious human actors, misaligned
+      AI systems, or failure in the AI system.
+    taxonomy: mit-ai-risk-repository
+    mapping_type: related
+  - id: nist-dangerous-violent-or-hateful-content
+    name: Dangerous, Violent, or Hateful Content
+    description: Eased production of and access to violent, inciting, radicalizing,
+      or threatening content as well as recommendations to carry out self-harm or
+      conduct illegal activities. Includes difficulty controlling public exposure
+      to hateful and disparaging or stereotyping content.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-information-integrity
+    name: Information Integrity
+    description: Lowered barrier to entry to generate and support the exchange and
+      consumption of content which may not distinguish fact from opinion or fiction
+      or acknowledge uncertainties, or could be leveraged for large-scale dis- and
+      mis-information campaigns.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-information-security
+    name: Information Security
+    description: "Lowered barriers for offensive cyber capabilities, including via\
+      \ automated discovery and exploitation of vulnerabilities to ease hacking, malware,\
+      \ phishing, offensive cyber operations, or other cyberattacks; increased attack\
+      \ surface for targeted cyberattacks, which may compromise a system\u2019s availability\
+      \ or the confidentiality or integrity of training data, code, or model weights."
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: nist-intellectual-property
+    name: Intellectual Property
+    description: Eased production or replication of alleged copyrighted, trademarked,
+      or licensed content without authorization (possibly in situations which do not
+      fall under fair use); eased exposure of trade secrets; or plagiarism or illegal
+      replication.
+    taxonomy: nist-ai-rmf
+    mapping_type: related
+  - id: llm022025-sensitive-information-disclosure
+    name: LLM02:2025 Sensitive Information Disclosure
+    description: Sensitive information can affect both the LLM and its application
+      context. This includes personal identifiable information (PII), financial details,
+      health records, confidential business data, security credentials, and legal
+      documents. Proprietary models may also have unique training methods and source
+      code considered sensitive, especially in closed or foundation models.
+    taxonomy: owasp-llm-2.0
+    mapping_type: related

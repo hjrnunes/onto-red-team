@@ -35,6 +35,7 @@ def mock_onto_handlers():
     """Mock ontoquery ontology handlers dict."""
     return {
         "search_classes": MagicMock(return_value=[]),
+        "search_domains": MagicMock(return_value={}),
         "get_class_definition": MagicMock(return_value=None),
         "get_subclasses": MagicMock(return_value=[]),
         "get_superclasses": MagicMock(return_value=[]),

@@ -1,0 +1,967 @@
+{
+  "run": {
+    "model": "gemma-4-e4b-it",
+    "policy_set": "aramco-enriched.json",
+    "timestamp": "2026-04-02T23:21:23.618960+00:00",
+    "stages_completed": [
+      "classify",
+      "identify_domains",
+      "map_risks",
+      "anchor",
+      "contextualize",
+      "structure"
+    ]
+  },
+  "stage_quality": {
+    "classify": {
+      "type_distribution": {
+        "B": 1,
+        "A": 3,
+        "C": 1
+      }
+    },
+    "identify_domains": {
+      "selected_domains": [
+        "CCO",
+        "Commons",
+        "D3FEND",
+        "CSO",
+        "FIBO",
+        "IOF"
+      ]
+    },
+    "map_risks": {
+      "weak_matches": [
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "distance": 0.6093345284461975
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "distance": 0.6346601843833923
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "distance": 0.6382250189781189
+        },
+        {
+          "risk_id": "llm092025-misinformation",
+          "distance": 0.6087890863418579
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "distance": 0.6167491674423218
+        }
+      ],
+      "match_counts": [
+        {
+          "policy_concept": "Proprietary Technical Data",
+          "count": 2
+        },
+        {
+          "policy_concept": "Operational Security & Critical Infrastructure",
+          "count": 2
+        },
+        {
+          "policy_concept": "Supply Chain & Geopolitical Risks",
+          "count": 1
+        },
+        {
+          "policy_concept": "Insider Threat & Cybersecurity",
+          "count": 1
+        },
+        {
+          "policy_concept": "Compliance & Sanctions Evasion",
+          "count": 3
+        }
+      ]
+    },
+    "anchor": {
+      "restriction_expansions": [
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "source_uri": "",
+          "candidates_added": 3,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "nist-information-security",
+          "source_uri": "",
+          "candidates_added": 2,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        }
+      ],
+      "candidate_expansions": [
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "queries_run": 9,
+          "raw_total": 360,
+          "unique_after_dedup": 212,
+          "kept_after_filter": 8
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "queries_run": 20,
+          "raw_total": 800,
+          "unique_after_dedup": 298,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "queries_run": 1,
+          "raw_total": 40,
+          "unique_after_dedup": 40,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "queries_run": 1,
+          "raw_total": 40,
+          "unique_after_dedup": 40,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "llm092025-misinformation",
+          "queries_run": 9,
+          "raw_total": 360,
+          "unique_after_dedup": 193,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "nist-information-security",
+          "queries_run": 67,
+          "raw_total": 2680,
+          "unique_after_dedup": 684,
+          "kept_after_filter": 7
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "queries_run": 6,
+          "raw_total": 240,
+          "unique_after_dedup": 168,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "queries_run": 1,
+          "raw_total": 40,
+          "unique_after_dedup": 40,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "queries_run": 3,
+          "raw_total": 120,
+          "unique_after_dedup": 88,
+          "kept_after_filter": 5
+        }
+      ],
+      "multi_query_hits": [
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/DisclosureProvision",
+          "hit_count": 5,
+          "best_distance": 0.5254794359207153,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/Documents/Notice",
+          "hit_count": 7,
+          "best_distance": 0.6123008728027344,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/ContextualIdentifiers/ContextualIdentificationScheme",
+          "hit_count": 6,
+          "best_distance": 0.6866527795791626,
+          "query_sources": [
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/Authorization",
+          "hit_count": 5,
+          "best_distance": 0.6673622131347656,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+          "hit_count": 5,
+          "best_distance": 0.6722347736358643,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/ContextualDesignators/Context",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/InformationRight",
+          "hit_count": 12,
+          "best_distance": 0.5205087661743164,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+          "hit_count": 13,
+          "best_distance": 0.6069546937942505,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "https://www.omg.org/spec/Commons/ContextualIdentifiers/ContextualIdentificationScheme",
+          "hit_count": 13,
+          "best_distance": 0.6189953684806824,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure",
+          "hit_count": 12,
+          "best_distance": 0.4406047463417053,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "https://www.omg.org/spec/Commons/Documents/Notice",
+          "hit_count": 12,
+          "best_distance": 0.5907090902328491,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "https://www.omg.org/spec/Commons/ContextualDesignators/Context",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Exposure",
+          "hit_count": 1,
+          "best_distance": 0.6217948198318481,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.commoncoreontologies.org/ont00000548",
+          "hit_count": 1,
+          "best_distance": 0.5030117034912109,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.commoncoreontologies.org/ont00002011",
+          "hit_count": 1,
+          "best_distance": 0.5382369756698608,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism",
+          "hit_count": 1,
+          "best_distance": 0.5761828422546387,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.commoncoreontologies.org/ont00000997",
+          "hit_count": 1,
+          "best_distance": 0.5940040946006775,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Party",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/GoalsAndObjectives/Objectives/Approach",
+          "hit_count": 1,
+          "best_distance": 0.6107406616210938,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.commoncoreontologies.org/ont00001257",
+          "hit_count": 1,
+          "best_distance": 0.49088048934936523,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.omg.org/spec/Commons/SitesAndFacilities/Facility",
+          "hit_count": 1,
+          "best_distance": 0.4911266565322876,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.commoncoreontologies.org/ont00001052",
+          "hit_count": 1,
+          "best_distance": 0.5081648826599121,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.commoncoreontologies.org/ont00000277",
+          "hit_count": 1,
+          "best_distance": 0.51130211353302,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "llm092025-misinformation",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem",
+          "hit_count": 5,
+          "best_distance": 0.6318619251251221,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm092025-misinformation",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthMisinformation",
+          "hit_count": 8,
+          "best_distance": 0.4626505970954895,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm092025-misinformation",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Misinformation",
+          "hit_count": 7,
+          "best_distance": 0.3645815849304199,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm092025-misinformation",
+          "uri": "https://www.omg.org/spec/Commons/Documents/Notice",
+          "hit_count": 7,
+          "best_distance": 0.6637747287750244,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm092025-misinformation",
+          "uri": "https://www.omg.org/spec/Commons/ContextualDesignators/Context",
+          "hit_count": 7,
+          "best_distance": 0.672203540802002,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentifier",
+          "hit_count": 21,
+          "best_distance": 0.5346765518188477,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+          "hit_count": 46,
+          "best_distance": 0.5060462951660156,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+          "hit_count": 41,
+          "best_distance": 0.6523497104644775,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "https://www.omg.org/spec/Commons/Documents/TechnicalSpecificationDocument",
+          "hit_count": 39,
+          "best_distance": 0.5609886646270752,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+          "hit_count": 36,
+          "best_distance": 0.4569283127784729,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentificationScheme",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/Security",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/RegulationIdentificationScheme",
+          "hit_count": 3,
+          "best_distance": 0.6079251766204834,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport",
+          "hit_count": 5,
+          "best_distance": 0.6722347736358643,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#NationalIDExposure",
+          "hit_count": 4,
+          "best_distance": 0.36389243602752686,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 4,
+          "best_distance": 0.5004451274871826,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination",
+          "hit_count": 4,
+          "best_distance": 0.5377485156059265,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/RegulatoryAgencies/RegulationIdentifier",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Exposure",
+          "hit_count": 1,
+          "best_distance": 0.5443527698516846,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+          "hit_count": 1,
+          "best_distance": 0.5087563991546631,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure",
+          "hit_count": 1,
+          "best_distance": 0.5286865234375,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 1,
+          "best_distance": 0.5352091193199158,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "https://www.commoncoreontologies.org/ont00000548",
+          "hit_count": 1,
+          "best_distance": 0.540141224861145,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Party",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/Underlier",
+          "hit_count": 3,
+          "best_distance": 0.6107431054115295,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+          "hit_count": 3,
+          "best_distance": 0.5854935050010681,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ProcessDisclosure",
+          "hit_count": 3,
+          "best_distance": 0.6107549667358398,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+          "hit_count": 3,
+          "best_distance": 0.6579378247261047,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 2,
+          "best_distance": 0.4269663095474243,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        }
+      ],
+      "role_derivation": {
+        "derived": 9,
+        "llm_fallback": 7
+      }
+    },
+    "contextualize": {
+      "restriction_contexts_added": 2,
+      "sibling_fallbacks": 8,
+      "empty_enumerations": 10,
+      "self_references_filtered": 3
+    },
+    "candidate_expansion": {
+      "mean_queries_run": 13.0,
+      "mean_unique_candidates": 195.88888888888889,
+      "multi_hit_fraction": 0.5555555555555556
+    },
+    "query_source_contribution": {
+      "description": 38,
+      "concern": 4,
+      "cross_mapping": 30,
+      "restriction": 9,
+      "action": 5
+    }
+  },
+  "coverage": {
+    "policy": [
+      {
+        "policy_concept": "Proprietary Technical Data",
+        "risks_matched": 2,
+        "total_axes": 5,
+        "axes_with_enumerations": 0,
+        "total_enumerations": 0,
+        "prompts_generated": 0
+      },
+      {
+        "policy_concept": "Operational Security & Critical Infrastructure",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 8,
+        "prompts_generated": 7
+      },
+      {
+        "policy_concept": "Supply Chain & Geopolitical Risks",
+        "risks_matched": 1,
+        "total_axes": 1,
+        "axes_with_enumerations": 1,
+        "total_enumerations": 4,
+        "prompts_generated": 4
+      },
+      {
+        "policy_concept": "Insider Threat & Cybersecurity",
+        "risks_matched": 1,
+        "total_axes": 3,
+        "axes_with_enumerations": 0,
+        "total_enumerations": 0,
+        "prompts_generated": 0
+      },
+      {
+        "policy_concept": "Compliance & Sanctions Evasion",
+        "risks_matched": 3,
+        "total_axes": 3,
+        "axes_with_enumerations": 1,
+        "total_enumerations": 5,
+        "prompts_generated": 5
+      }
+    ],
+    "ontological": {
+      "unique_axis_classes": 15,
+      "unique_enumeration_uris": 17,
+      "by_source_ontology": {
+        "CCO": {
+          "unique_classes": 6,
+          "axes_using": 3
+        },
+        "CSO": {
+          "unique_classes": 11,
+          "axes_using": 3
+        }
+      }
+    },
+    "single_value_axis_dominance": {
+      "total_axes": 16,
+      "single_value_axes": 11,
+      "single_value_rate": 0.688
+    },
+    "enumeration_domain_mismatch": {
+      "total_enumerations": 17,
+      "mismatched": 0,
+      "mismatch_rate": 0.0,
+      "by_mismatched_ontology": {}
+    },
+    "sibling_relevance": {
+      "subclass_count": 10,
+      "sibling_count": 7,
+      "subclass_relevance": {
+        "high": 9,
+        "medium": 1
+      },
+      "sibling_relevance": {
+        "medium": 6,
+        "high": 1
+      },
+      "subclass_mean_score": 2.9,
+      "sibling_mean_score": 2.143
+    },
+    "disjoint_filter_rate": {
+      "risks_with_disjoint_filtering": 0,
+      "total_risks": 9,
+      "disjoint_filter_rate": 0.0
+    },
+    "restriction_discovery_rate": {
+      "risks_with_restriction_expansion": 6,
+      "total_risks": 9,
+      "total_candidates_from_axioms": 9,
+      "restriction_discovery_rate": 0.667
+    },
+    "risk_framework": {
+      "total_matched": 9,
+      "by_framework": {
+        "unknown": 7,
+        "credo": 2
+      }
+    },
+    "cross_mapping": {
+      "risks_with_cross_mappings": 6,
+      "risks_without": 3,
+      "total_cross_mappings_used": 56,
+      "filtered_unknown_targets": 0,
+      "by_mapping_type": {
+        "exact": 0,
+        "close": 1,
+        "broad": 16,
+        "narrow": 0,
+        "related": 39
+      }
+    }
+  },
+  "generation_metrics": {
+    "axis_diversity": {
+      "per_risk": {
+        "ai-risk-taxonomy-network-disruption": 1.0,
+        "ai-risk-taxonomy-nuclear-facilities": 1.0,
+        "llm092025-misinformation": 1.0,
+        "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests": 1.0
+      },
+      "overall_mean": 1.0
+    },
+    "role_distribution": {
+      "object": 17,
+      "instrument": 8,
+      "location": 3
+    },
+    "relevance_distribution": {
+      "medium": 11,
+      "high": 13
+    },
+    "dedup_saturation": {
+      "ai-risk-taxonomy-network-disruption": {
+        "combinatorial_space": 4,
+        "samples": 4,
+        "saturation": 1.0
+      },
+      "ai-risk-taxonomy-nuclear-facilities": {
+        "combinatorial_space": 3,
+        "samples": 3,
+        "saturation": 1.0
+      },
+      "llm092025-misinformation": {
+        "combinatorial_space": 4,
+        "samples": 4,
+        "saturation": 1.0
+      },
+      "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests": {
+        "combinatorial_space": 5,
+        "samples": 5,
+        "saturation": 1.0
+      }
+    },
+    "enumeration_concentration": {
+      "total_samples": 24,
+      "top_k": 5,
+      "top_k_share": 0.5,
+      "top_values": [
+        {
+          "uri": "https://www.commoncoreontologies.org/ont00000548",
+          "count": 4
+        },
+        {
+          "uri": "https://www.commoncoreontologies.org/ont00002012",
+          "count": 2
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#InternationalTerrorism",
+          "count": 2
+        },
+        {
+          "uri": "https://www.commoncoreontologies.org/ont00002013",
+          "count": 2
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DomesticTerrorism",
+          "count": 2
+        }
+      ]
+    }
+  },
+  "prompt_metrics": {
+    "lexical_diversity": 0.473,
+    "mean_prompt_length": 78.7,
+    "domain_term_hit_rate": 0.208,
+    "red_flag_count": 1,
+    "per_policy": [
+      {
+        "policy_concept": "Compliance & Sanctions Evasion",
+        "count": 5
+      },
+      {
+        "policy_concept": "Operational Security & Critical Infrastructure",
+        "count": 7
+      },
+      {
+        "policy_concept": "Supply Chain & Geopolitical Risks",
+        "count": 4
+      }
+    ],
+    "policy_coverage_balance": {
+      "entropy": 1.546,
+      "normalized_entropy": 0.976
+    },
+    "jargon_leak_rate": {
+      "total_prompts": 16,
+      "jargon_prompts": 0,
+      "jargon_rate": 0.0
+    },
+    "axis_fidelity": {
+      "total_prompts": 16,
+      "full_fidelity": 3,
+      "partial": 3,
+      "improvised": 10,
+      "mean_fidelity": 0.292
+    },
+    "named_entity_utilization": {
+      "total_prompts": 16,
+      "prompts_with_entities": 0,
+      "utilization_rate": 0.0,
+      "entities_by_policy": {}
+    },
+    "weak_match_impact": {
+      "weak_match_risks": 5,
+      "weak_match_prompts": 16,
+      "strong_match_prompts": 0,
+      "mean_weak_distance": 0.622
+    },
+    "semantic_diversity": {
+      "mean_pairwise_distance": 0.955,
+      "total_prompts": 16,
+      "per_policy": {
+        "Compliance & Sanctions Evasion": 0.92,
+        "Operational Security & Critical Infrastructure": 0.94,
+        "Supply Chain & Geopolitical Risks": 0.863
+      }
+    }
+  }
+}

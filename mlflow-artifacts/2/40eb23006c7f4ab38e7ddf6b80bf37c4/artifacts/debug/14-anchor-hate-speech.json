@@ -1,0 +1,42 @@
+{
+  "call_number": 14,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Toxic content\nDescription: The AI system may generate or respond with hateful content, such as racist, sexist, or otherwise offensive material.\nConcern: None\nPolicy: Hate Speech\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FND/Law/LegalCore/Law: law \u2014 rule recognized by some community as regulating the behavior of its members and that it may enforce through the imposition of penalties [found by 9/15 queries]\n- https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/Exposure: exposure \u2014 the extent to which an individual or organization is unprotected and open to damage, danger, risk of suffering a loss, or uncertainty [found by 5/15 queries]\n- https://www.omg.org/spec/Commons/Documents/Notice: notice \u2014 announcement, communication, intimation, or advance warning of something, usually, but not necessarily, to allow preparations to be made [found by 9/15 queries]\n  Siblings: indication of interest, publication, reference document\n- https://www.commoncoreontologies.org/ont00001147: Act of Violence \u2014 A Planned Act of causing harm to oneself or to another through the use of physical or verbal force. [found by 7/15 queries]\n  Siblings: Act of Measuring, Act of Military Force, Act of Prediction\n- http://taxonomy-refiner.io/ontologies/cso#PornographicContentDescription: Pornographic Content Description \u2014 Descriptions or generation of explicit sexual material intended for sexual arousal, mimicking pornographic media formats. [found by 7/15 queries]\n  Siblings: Clinical Sexual Description, Explicit Sexual Description, Reproductive Health Boundary\n- https://www.omg.org/spec/Commons/PartiesAndSituations/Party: party \u2014 person or organization [from restriction: appliesTo on Exposure]\n  Siblings: automated system, software agent, Agent"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00001147",
+        "cco_class_label": "Act of Violence",
+        "role": "object",
+        "rationale": "Toxic content often manifests as verbal violence or hate speech, making the nature of the 'act' (verbal force/harm) a primary dimension for variation."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#PornographicContentDescription",
+        "cco_class_label": "Pornographic Content Description",
+        "role": "object",
+        "rationale": "This class represents a specific type of offensive/explicit content that falls under the umbrella of toxic material, providing a dimension for content type variation."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Party",
+        "cco_class_label": "party",
+        "role": "agent",
+        "rationale": "Toxic content can be directed at specific parties (individuals or organizations), making the target/subject of the hate speech a key variation axis."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Hate Speech",
+    "risk_id": "credo-risk-013",
+    "risk_name": "Toxic content",
+    "num_candidates": 6
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "call_number": 4,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimRiskMatch\": {\n      \"properties\": {\n        \"risk_index\": {\n          \"title\": \"Risk Index\",\n          \"type\": \"integer\"\n        },\n        \"risk_name\": {\n          \"title\": \"Risk Name\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"primary\",\n            \"supporting\",\n            \"tangential\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"risk_index\",\n        \"risk_name\",\n        \"relevance\",\n        \"justification\"\n      ],\n      \"title\": \"_SlimRiskMatch\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"matched_risks\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimRiskMatch\"\n      },\n      \"title\": \"Matched Risks\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"matched_risks\"\n  ],\n  \"title\": \"_RiskSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Policy: Protected Health Information\nDefinition: No person-identifiable data may be input to public AI tools. No business-sensitive or confidential data processing. Combined details of a local area, a rare disease and a very young age may enable a patient to be identified \u2014 careful anonymisation assessment required.\nPolicy Type: B\n\nCandidate risks:\n- 1: Compromise of privacy by obtaining, leaking or correctly inferring sensitive information \u2014 AI systems that memorize and leak sensitive personal data or infer private information about individuals without their consent. Unexpected or unauthorized sharing of data and information can compromise user expectation of privacy, assist identity theft, or loss of confidential intellectual property.\n  Cross-mappings: credo-risk-036[close], ail-intellectual-property[related], ail-nonviolent-crimes[related]\n- 2: Compromised personally identifiable information (Slattery et al., 2024) \u2014 The AI system may expose personally identifiable information (PII), either inadvertently or due to adversarial inputs, derived from training data, accessible data, or inferences. PII is any data that can be used to directly identify or contact a specific individual, either alone or in combination with other information.\n  Cross-mappings: mit-ai-risk-subdomain-2.1[close], ail-privacy[related], ail-specialized-advice[related]\n- 3: Personal information in data \u2014 Inclusion or presence of personal identifiable information (PII) and sensitive personal information (SPI)\u202fin the data used for training or fine tuning the model might result in unwanted disclosure of that information. (Concern: If not properly developed to protect sensitive data, the model might expose personal information in the generated output.\u00a0 Additionally, personal, or sensitive data must be reviewed and handled in accordance with privacy laws and regulations.)\n  Cross-mappings: nist-data-privacy[broad], ail-privacy[related], llm022025-sensitive-information-disclosure[related]\n- 4: Data usage rights restrictions \u2014 Terms of service, license compliance, or other IP issues may restrict the ability to use certain data for building models. (Concern: Laws and regulations concerning the use of data to train AI are unsettled and can vary from country to country, which creates challenges in the development of models.)\n  Cross-mappings: llm032025-supply-chain[broad], nist-data-privacy[broad], nist-value-chain-and-component-integration[broad]\n- 5: Non-disclosure \u2014 Content might not be clearly disclosed as AI generated. (Concern: Users must be notified when they are interacting with an AI system. Not disclosing the AI-authored content can result in a lack of transparency.)\n  Cross-mappings: nist-human-ai-configuration[broad], mit-ai-causal-risk-entity-human[related], mit-ai-causal-risk-intent-other[related]"
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 2,
+        "risk_name": "Compromised personally identifiable information",
+        "relevance": "primary",
+        "justification": "Directly addresses the concern of exposing personally identifiable information."
+      },
+      {
+        "risk_index": 3,
+        "risk_name": "Personal information in data",
+        "relevance": "supporting",
+        "justification": "Covers the risk of exposing personal information in the model's output."
+      },
+      {
+        "risk_index": 1,
+        "risk_name": "Compromise of privacy",
+        "relevance": "supporting",
+        "justification": "Includes the risk of inferring private information about individuals."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Protected Health Information",
+    "policy_type": "B",
+    "num_candidates": 5
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "call_number": 19,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: AI-generated security weaknesses\nDescription: AI system security vulnerabilities: Implementation weaknesses in AI system architecture and infrastructure\nConcern: None\nPolicy: Insider Threat & Cybersecurity\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentifier: security identifier \u2014 any publicly available identifier that is used to identify a security [found by 8/10 queries]\n  Siblings: unique product identifier, unique swap identifier, universal loan identifier\n- http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard: Content Safety Hazard \u2014 Root class for content safety harm categories relevant to adversarial prompt generation against LLM deployments. [found by 7/10 queries]\n- http://taxonomy-refiner.io/ontologies/cso#DangerousInformation: Dangerous Information \u2014 Knowledge or instructions that enable serious physical harm, weapons production, or dangerous activities when acquired or executed by untrained individuals outside regulated contexts. [found by 7/10 queries]\n  Siblings: Sexual Content, Intellectual Property, Hate and Discrimination\n- https://www.commoncoreontologies.org/ont00000548: Vulnerability \u2014 A Disrupting Disposition the realization of which would disrupt a process that the bearer of the Disrupting Disposition has an interest in. [found by 7/10 queries]\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 7/10 queries]\n  Siblings: automated underwriting system, automated system, party\n- https://spec.edmcouncil.org/fibo/ontology/SEC/Securities/SecuritiesIdentification/SecurityIdentificationScheme: security identification scheme \u2014 formal definition of the structure and application of a particular set of securities identifiers [from restriction: isDefinedIn on SecurityIdentifier]\n- https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/Security: security \u2014 financial instrument that can be bought or sold [from restriction: identifies on SecurityIdentifier]\n  Siblings: spot contract, debt instrument, over-the-counter instrument"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00000548",
+        "cco_class_label": "Vulnerability",
+        "role": "object",
+        "rationale": "The risk specifically mentions 'security vulnerabilities' and 'implementation weaknesses,' which directly relate to the concept of a vulnerability in the context of AI systems."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+        "cco_class_label": "Content Safety Hazard",
+        "role": "agent",
+        "rationale": "The risk involves AI-generated content that could introduce security weaknesses, making 'Content Safety Hazard' relevant as it pertains to the potential harmful content generated by AI systems."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Insider Threat & Cybersecurity",
+    "risk_id": "credo-risk-040",
+    "risk_name": "AI-generated security weaknesses",
+    "num_candidates": 7
+  }
+}

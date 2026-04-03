@@ -1,0 +1,1137 @@
+{
+  "run": {
+    "model": "phi-4",
+    "policy_set": "aramco-enriched.json",
+    "timestamp": "2026-04-02T17:03:43.873860+00:00",
+    "stages_completed": [
+      "classify",
+      "identify_domains",
+      "map_risks",
+      "anchor",
+      "contextualize",
+      "structure"
+    ]
+  },
+  "stage_quality": {
+    "classify": {
+      "type_distribution": {
+        "B": 1,
+        "A": 3,
+        "C": 1
+      }
+    },
+    "identify_domains": {
+      "selected_domains": [
+        "CCO",
+        "Commons",
+        "D3FEND",
+        "CSO",
+        "IOF"
+      ]
+    },
+    "map_risks": {
+      "weak_matches": [
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "distance": 0.6174532175064087
+        },
+        {
+          "risk_id": "granite-unethical-behavior",
+          "distance": 0.624335765838623
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "distance": 0.6346955299377441
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "distance": 0.6491841673851013
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "distance": 0.6065491437911987
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-energy/electrical-grids",
+          "distance": 0.6368143558502197
+        }
+      ],
+      "match_counts": [
+        {
+          "policy_concept": "Proprietary Technical Data",
+          "count": 3
+        },
+        {
+          "policy_concept": "Operational Security & Critical Infrastructure",
+          "count": 3
+        },
+        {
+          "policy_concept": "Supply Chain & Geopolitical Risks",
+          "count": 3
+        },
+        {
+          "policy_concept": "Insider Threat & Cybersecurity",
+          "count": 3
+        },
+        {
+          "policy_concept": "Compliance & Sanctions Evasion",
+          "count": 2
+        }
+      ]
+    },
+    "anchor": {
+      "candidate_expansions": [
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "atlas-extraction-attack",
+          "queries_run": 7,
+          "raw_total": 70,
+          "unique_after_dedup": 42,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "queries_run": 20,
+          "raw_total": 200,
+          "unique_after_dedup": 100,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "queries_run": 6,
+          "raw_total": 60,
+          "unique_after_dedup": 51,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "granite-unethical-behavior",
+          "queries_run": 8,
+          "raw_total": 80,
+          "unique_after_dedup": 54,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "queries_run": 2,
+          "raw_total": 20,
+          "unique_after_dedup": 14,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "queries_run": 3,
+          "raw_total": 30,
+          "unique_after_dedup": 27,
+          "kept_after_filter": 6
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "nist-information-security",
+          "queries_run": 67,
+          "raw_total": 670,
+          "unique_after_dedup": 329,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 1
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-energy/electrical-grids",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        }
+      ],
+      "multi_query_hits": [
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.3931668996810913,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty",
+          "hit_count": 1,
+          "best_distance": 0.4523963928222656,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ProcessDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.5519213080406189,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#CustomerListDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.5581780672073364,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FormulaDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.5805385112762451,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "atlas-extraction-attack",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 5,
+          "best_distance": 0.5487304925918579,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-extraction-attack",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism",
+          "hit_count": 3,
+          "best_distance": 0.45966029167175293,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-extraction-attack",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 3,
+          "best_distance": 0.4979596734046936,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-extraction-attack",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing",
+          "hit_count": 3,
+          "best_distance": 0.5731422305107117,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-extraction-attack",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SabotageInstructions",
+          "hit_count": 3,
+          "best_distance": 0.5870343446731567,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure",
+          "hit_count": 10,
+          "best_distance": 0.4406047463417053,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure",
+          "hit_count": 9,
+          "best_distance": 0.4043664336204529,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+          "hit_count": 9,
+          "best_distance": 0.419344961643219,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 9,
+          "best_distance": 0.4412113428115845,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm022025-sensitive-information-disclosure",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+          "hit_count": 7,
+          "best_distance": 0.42628467082977295,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.commoncoreontologies.org/ont00000548",
+          "hit_count": 1,
+          "best_distance": 0.5030117034912109,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.commoncoreontologies.org/ont00002011",
+          "hit_count": 1,
+          "best_distance": 0.5382369756698608,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism",
+          "hit_count": 1,
+          "best_distance": 0.5761828422546387,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.commoncoreontologies.org/ont00000997",
+          "hit_count": 1,
+          "best_distance": 0.5940040946006775,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "https://www.commoncoreontologies.org/ont00001271",
+          "hit_count": 1,
+          "best_distance": 0.5958373546600342,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "uri": "https://www.commoncoreontologies.org/ont00000781",
+          "hit_count": 1,
+          "best_distance": 0.5501959323883057,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "uri": "https://www.commoncoreontologies.org/ont00000453",
+          "hit_count": 1,
+          "best_distance": 0.5698734521865845,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "uri": "https://www.commoncoreontologies.org/ont00000553",
+          "hit_count": 1,
+          "best_distance": 0.5814944505691528,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#CoerciveControl",
+          "hit_count": 1,
+          "best_distance": 0.5939846038818359,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "uri": "https://www.commoncoreontologies.org/ont00001999",
+          "hit_count": 1,
+          "best_distance": 0.5960832834243774,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "uri": "https://www.commoncoreontologies.org/ont00001324",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "equivalence"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination",
+          "hit_count": 3,
+          "best_distance": 0.5377485156059265,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure",
+          "hit_count": 2,
+          "best_distance": 0.3712470531463623,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 2,
+          "best_distance": 0.4726067781448364,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+          "hit_count": 2,
+          "best_distance": 0.6300811767578125,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 1,
+          "best_distance": 0.3385275602340698,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-unethical-behavior",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ThreatsOfViolence",
+          "hit_count": 4,
+          "best_distance": 0.37718528509140015,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-unethical-behavior",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 4,
+          "best_distance": 0.4514739513397217,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-unethical-behavior",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#SexualExploitation",
+          "hit_count": 3,
+          "best_distance": 0.3874751329421997,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-unethical-behavior",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Intimidation",
+          "hit_count": 3,
+          "best_distance": 0.4047044515609741,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-unethical-behavior",
+          "uri": "https://www.commoncoreontologies.org/ont00001147",
+          "hit_count": 3,
+          "best_distance": 0.46049654483795166,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+          "hit_count": 2,
+          "best_distance": 0.5379619598388672,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "uri": "https://www.commoncoreontologies.org/ont00001017",
+          "hit_count": 2,
+          "best_distance": 0.5638723373413086,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+          "hit_count": 2,
+          "best_distance": 0.5780174136161804,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/Agent",
+          "hit_count": 2,
+          "best_distance": 0.5854082107543945,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+          "hit_count": 2,
+          "best_distance": 0.5929437875747681,
+          "query_sources": [
+            "description",
+            "concern"
+          ]
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "uri": "https://www.commoncoreontologies.org/ont00001379",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 1,
+          "best_distance": 0.4269663095474243,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.5854935050010681,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination",
+          "hit_count": 1,
+          "best_distance": 0.5997949242591858,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ProcessDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.6107549667358398,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "https://www.commoncoreontologies.org/ont00000627",
+          "hit_count": 1,
+          "best_distance": 0.6501960158348083,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "https://www.commoncoreontologies.org/ont00001141",
+          "hit_count": 0,
+          "best_distance": 0.0,
+          "query_sources": [
+            "restriction"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing",
+          "hit_count": 1,
+          "best_distance": 0.5433355569839478,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#UnauthorizedSurveillance",
+          "hit_count": 1,
+          "best_distance": 0.5497863292694092,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+          "hit_count": 1,
+          "best_distance": 0.584178626537323,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.5997074842453003,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty",
+          "hit_count": 1,
+          "best_distance": 0.6124175786972046,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 20,
+          "best_distance": 0.4502360224723816,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+          "hit_count": 15,
+          "best_distance": 0.4569283127784729,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism",
+          "hit_count": 14,
+          "best_distance": 0.45966029167175293,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+          "hit_count": 9,
+          "best_distance": 0.5214378833770752,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing",
+          "hit_count": 9,
+          "best_distance": 0.5634977221488953,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "uri": "https://www.commoncoreontologies.org/ont00000700",
+          "hit_count": 1,
+          "best_distance": 0.5601003170013428,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-energy/electrical-grids",
+          "uri": "https://www.commoncoreontologies.org/ont00000503",
+          "hit_count": 1,
+          "best_distance": 0.5283530950546265,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-energy/electrical-grids",
+          "uri": "https://www.commoncoreontologies.org/ont00001049",
+          "hit_count": 1,
+          "best_distance": 0.5407185554504395,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-energy/electrical-grids",
+          "uri": "https://www.commoncoreontologies.org/ont00000882",
+          "hit_count": 1,
+          "best_distance": 0.5428541898727417,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-energy/electrical-grids",
+          "uri": "https://www.commoncoreontologies.org/ont00001076",
+          "hit_count": 1,
+          "best_distance": 0.5638214349746704,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-energy/electrical-grids",
+          "uri": "https://www.commoncoreontologies.org/ont00000330",
+          "hit_count": 1,
+          "best_distance": 0.5705339908599854,
+          "query_sources": [
+            "description"
+          ]
+        }
+      ],
+      "role_derivation": {
+        "derived": 10,
+        "llm_fallback": 21
+      },
+      "restriction_expansions": [
+        {
+          "risk_id": "ai-risk-taxonomy-control-override-(safety/privacy-filters)",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "atlas-external-resources-attack-agentic",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "source_uri": "",
+          "candidates_added": 1,
+          "source_type": "restriction"
+        }
+      ],
+      "cache_hits": 1
+    },
+    "contextualize": {
+      "sibling_fallbacks": 16,
+      "self_references_filtered": 4,
+      "empty_enumerations": 1,
+      "restriction_contexts_added": 2
+    },
+    "candidate_expansion": {
+      "mean_queries_run": 9.153846153846153,
+      "mean_unique_candidates": 52.07692307692308,
+      "multi_hit_fraction": 0.453125
+    },
+    "query_source_contribution": {
+      "description": 49,
+      "concern": 6,
+      "cross_mapping": 28,
+      "equivalence": 1,
+      "restriction": 2,
+      "action": 5
+    }
+  },
+  "coverage": {
+    "policy": [
+      {
+        "policy_concept": "Proprietary Technical Data",
+        "risks_matched": 3,
+        "total_axes": 8,
+        "axes_with_enumerations": 8,
+        "total_enumerations": 26,
+        "prompts_generated": 40
+      },
+      {
+        "policy_concept": "Operational Security & Critical Infrastructure",
+        "risks_matched": 3,
+        "total_axes": 8,
+        "axes_with_enumerations": 7,
+        "total_enumerations": 16,
+        "prompts_generated": 20
+      },
+      {
+        "policy_concept": "Supply Chain & Geopolitical Risks",
+        "risks_matched": 3,
+        "total_axes": 7,
+        "axes_with_enumerations": 7,
+        "total_enumerations": 19,
+        "prompts_generated": 28
+      },
+      {
+        "policy_concept": "Insider Threat & Cybersecurity",
+        "risks_matched": 3,
+        "total_axes": 5,
+        "axes_with_enumerations": 5,
+        "total_enumerations": 16,
+        "prompts_generated": 22
+      },
+      {
+        "policy_concept": "Compliance & Sanctions Evasion",
+        "risks_matched": 2,
+        "total_axes": 5,
+        "axes_with_enumerations": 5,
+        "total_enumerations": 22,
+        "prompts_generated": 27
+      }
+    ],
+    "ontological": {
+      "unique_axis_classes": 24,
+      "unique_enumeration_uris": 62,
+      "by_source_ontology": {
+        "CCO": {
+          "unique_classes": 24,
+          "axes_using": 9
+        },
+        "CSO": {
+          "unique_classes": 37,
+          "axes_using": 13
+        },
+        "Commons": {
+          "unique_classes": 1,
+          "axes_using": 1
+        }
+      }
+    },
+    "single_value_axis_dominance": {
+      "total_axes": 33,
+      "single_value_axes": 4,
+      "single_value_rate": 0.121
+    },
+    "enumeration_domain_mismatch": {
+      "total_enumerations": 99,
+      "mismatched": 0,
+      "mismatch_rate": 0.0,
+      "by_mismatched_ontology": {}
+    },
+    "sibling_relevance": {
+      "subclass_count": 62,
+      "sibling_count": 37,
+      "subclass_relevance": {
+        "high": 58,
+        "medium": 4
+      },
+      "sibling_relevance": {
+        "high": 9,
+        "medium": 22,
+        "low": 6
+      },
+      "subclass_mean_score": 2.935,
+      "sibling_mean_score": 2.081
+    },
+    "disjoint_filter_rate": {
+      "risks_with_disjoint_filtering": 0,
+      "total_risks": 13,
+      "disjoint_filter_rate": 0.0
+    },
+    "restriction_discovery_rate": {
+      "risks_with_restriction_expansion": 3,
+      "total_risks": 13,
+      "total_candidates_from_axioms": 3,
+      "restriction_discovery_rate": 0.231
+    },
+    "risk_framework": {
+      "total_matched": 13,
+      "by_framework": {
+        "unknown": 11,
+        "credo": 2
+      }
+    },
+    "cross_mapping": {
+      "risks_with_cross_mappings": 6,
+      "risks_without": 7,
+      "total_cross_mappings_used": 53,
+      "filtered_unknown_targets": 0,
+      "by_mapping_type": {
+        "exact": 0,
+        "close": 1,
+        "broad": 15,
+        "narrow": 0,
+        "related": 37
+      }
+    }
+  },
+  "generation_metrics": {
+    "axis_diversity": {
+      "per_risk": {
+        "ai-risk-taxonomy-ip-rights/-trade-secrets": 1.0,
+        "atlas-extraction-attack": 1.0,
+        "llm022025-sensitive-information-disclosure": 1.0,
+        "ai-risk-taxonomy-network-disruption": 1.0,
+        "ai-risk-taxonomy-control-override-(safety/privacy-filters)": 1.0,
+        "credo-risk-023": 1.0,
+        "granite-unethical-behavior": 1.0,
+        "atlas-external-resources-attack-agentic": 1.0,
+        "credo-risk-047": 1.0,
+        "ai-risk-taxonomy-unauthorized-network-entry": 1.0,
+        "nist-information-security": 1.0,
+        "ai-risk-taxonomy-network-intrusion": 1.0,
+        "ai-risk-taxonomy-energy/electrical-grids": 1.0
+      },
+      "overall_mean": 1.0
+    },
+    "role_distribution": {
+      "object": 238,
+      "agent": 60,
+      "instrument": 114
+    },
+    "relevance_distribution": {
+      "high": 232,
+      "medium": 83,
+      "low": 23
+    },
+    "dedup_saturation": {
+      "ai-risk-taxonomy-ip-rights/-trade-secrets": {
+        "combinatorial_space": 24,
+        "samples": 15,
+        "saturation": 0.625
+      },
+      "atlas-extraction-attack": {
+        "combinatorial_space": 10,
+        "samples": 10,
+        "saturation": 1.0
+      },
+      "llm022025-sensitive-information-disclosure": {
+        "combinatorial_space": 36,
+        "samples": 15,
+        "saturation": 0.4166666666666667
+      },
+      "ai-risk-taxonomy-network-disruption": {
+        "combinatorial_space": 2,
+        "samples": 2,
+        "saturation": 1.0
+      },
+      "ai-risk-taxonomy-control-override-(safety/privacy-filters)": {
+        "combinatorial_space": 6,
+        "samples": 6,
+        "saturation": 1.0
+      },
+      "credo-risk-023": {
+        "combinatorial_space": 12,
+        "samples": 24,
+        "saturation": 2.0
+      },
+      "granite-unethical-behavior": {
+        "combinatorial_space": 10,
+        "samples": 10,
+        "saturation": 1.0
+      },
+      "atlas-external-resources-attack-agentic": {
+        "combinatorial_space": 3,
+        "samples": 3,
+        "saturation": 1.0
+      },
+      "credo-risk-047": {
+        "combinatorial_space": 18,
+        "samples": 15,
+        "saturation": 0.8333333333333334
+      },
+      "ai-risk-taxonomy-unauthorized-network-entry": {
+        "combinatorial_space": 10,
+        "samples": 10,
+        "saturation": 1.0
+      },
+      "nist-information-security": {
+        "combinatorial_space": 10,
+        "samples": 10,
+        "saturation": 1.0
+      },
+      "ai-risk-taxonomy-network-intrusion": {
+        "combinatorial_space": 2,
+        "samples": 2,
+        "saturation": 1.0
+      },
+      "ai-risk-taxonomy-energy/electrical-grids": {
+        "combinatorial_space": 96,
+        "samples": 15,
+        "saturation": 0.15625
+      }
+    },
+    "enumeration_concentration": {
+      "total_samples": 338,
+      "top_k": 5,
+      "top_k_share": 0.254,
+      "top_values": [
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#CustomerListDisclosure",
+          "count": 27
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#FormulaDisclosure",
+          "count": 23
+        },
+        {
+          "uri": "https://www.commoncoreontologies.org/ont00000846",
+          "count": 14
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#DomesticTerrorism",
+          "count": 11
+        },
+        {
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#InternationalTerrorism",
+          "count": 11
+        }
+      ]
+    }
+  },
+  "prompt_metrics": {
+    "lexical_diversity": 0.16,
+    "mean_prompt_length": 77.2,
+    "domain_term_hit_rate": 0.464,
+    "red_flag_count": 5,
+    "per_policy": [
+      {
+        "policy_concept": "Compliance & Sanctions Evasion",
+        "count": 27
+      },
+      {
+        "policy_concept": "Insider Threat & Cybersecurity",
+        "count": 22
+      },
+      {
+        "policy_concept": "Operational Security & Critical Infrastructure",
+        "count": 20
+      },
+      {
+        "policy_concept": "Proprietary Technical Data",
+        "count": 40
+      },
+      {
+        "policy_concept": "Supply Chain & Geopolitical Risks",
+        "count": 28
+      }
+    ],
+    "policy_coverage_balance": {
+      "entropy": 2.278,
+      "normalized_entropy": 0.981
+    },
+    "jargon_leak_rate": {
+      "total_prompts": 137,
+      "jargon_prompts": 4,
+      "jargon_rate": 0.029
+    },
+    "axis_fidelity": {
+      "total_prompts": 137,
+      "full_fidelity": 96,
+      "partial": 33,
+      "improvised": 8,
+      "mean_fidelity": 0.827
+    },
+    "named_entity_utilization": {
+      "total_prompts": 137,
+      "prompts_with_entities": 0,
+      "utilization_rate": 0.0,
+      "entities_by_policy": {}
+    },
+    "weak_match_impact": {
+      "weak_match_risks": 6,
+      "weak_match_prompts": 82,
+      "strong_match_prompts": 55,
+      "mean_weak_distance": 0.628
+    },
+    "semantic_diversity": {
+      "mean_pairwise_distance": 0.954,
+      "total_prompts": 137,
+      "per_policy": {
+        "Compliance & Sanctions Evasion": 0.901,
+        "Insider Threat & Cybersecurity": 0.925,
+        "Operational Security & Critical Infrastructure": 0.933,
+        "Proprietary Technical Data": 0.937,
+        "Supply Chain & Geopolitical Risks": 0.92
+      }
+    }
+  }
+}

@@ -18,6 +18,18 @@ logger = logging.getLogger(__name__)
 
 RELEVANCE_WEIGHTS = {"high": 3, "medium": 2, "low": 1}
 
+_FRAMEWORK_SUFFIXES = [
+    " - ATLAS", " - ATTACK ICS", " - ATTACK Mobile", " - ATTACK", " - SPARTA",
+]
+
+
+def _strip_framework_suffix(label: str) -> str:
+    """Remove D3FEND/ATT&CK/ATLAS framework identifiers from class labels."""
+    for suffix in _FRAMEWORK_SUFFIXES:
+        if label.endswith(suffix):
+            return label[: -len(suffix)]
+    return label
+
 
 def relevance_weights(enumerations: list[AxisEnumeration]) -> list[float]:
     raw = [RELEVANCE_WEIGHTS[e.relevance] for e in enumerations]
@@ -34,12 +46,18 @@ def sample_axes(
     if not usable_axes:
         return []
 
+    # Cap at combinatorial space to avoid wasting generation budget on duplicates
+    space = 1
+    for axis in usable_axes:
+        space *= len(axis.enumerations)
+    effective_n = min(n, space)
+
     weights_per_axis = [relevance_weights(a.enumerations) for a in usable_axes]
 
     seen: set[tuple[str, ...]] = set()
     results: list[list[SampledAxis]] = []
 
-    for _ in range(n * 3):  # oversample to account for dedup
+    for _ in range(effective_n * 3):  # oversample to account for dedup
         sample = []
         for axis, weights in zip(usable_axes, weights_per_axis):
             chosen = random.choices(axis.enumerations, weights=weights, k=1)[0]
@@ -57,7 +75,7 @@ def sample_axes(
         if key not in seen:
             seen.add(key)
             results.append(sample)
-            if len(results) >= n:
+            if len(results) >= effective_n:
                 break
 
     return results
@@ -90,7 +108,8 @@ def build_prompt(
     # Build scenario lines from sampled axes
     if sampled_axes:
         axis_lines = "\n".join(
-            f"- {'/'.join(sa.roles)}: a {sa.sampled_label} (a type of {sa.cco_class_label})"
+            f"- {'/'.join(sa.roles)}: a {_strip_framework_suffix(sa.sampled_label)} "
+            f"(a type of {_strip_framework_suffix(sa.cco_class_label)})"
             for sa in sampled_axes
         )
         scenario_block = f"The scenario involves:\n{axis_lines}"
@@ -159,6 +178,18 @@ def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyDocument | None]
     return {p.policy_concept: p for p in doc.policies}, doc
 
 
+def _fuzzy_match_policy(
+    concept: str, policy_map: dict[str, Policy],
+) -> Policy | None:
+    """Fall back to substring matching when exact lookup fails."""
+    concept_lower = concept.lower()
+    for key, policy in policy_map.items():
+        key_lower = key.lower()
+        if key_lower in concept_lower or concept_lower in key_lower:
+            return policy
+    return None
+
+
 def _discover_domain_context(output_dir: Path) -> Path:
     matches = list(output_dir.glob("*-domain-context.yaml"))
     if len(matches) == 0:
@@ -188,11 +219,18 @@ def emit(
     for profile in profiles:
         policy = policy_map.get(profile.policy_concept)
         if policy is None:
-            logger.warning(
-                "Skipping risk %s — policy_concept '%s' not found in policies",
-                profile.risk_id, profile.policy_concept,
-            )
-            continue
+            policy = _fuzzy_match_policy(profile.policy_concept, policy_map)
+            if policy is not None:
+                logger.info(
+                    "Fuzzy-matched policy_concept '%s' to '%s'",
+                    profile.policy_concept, policy.policy_concept,
+                )
+            else:
+                logger.warning(
+                    "Skipping risk %s — policy_concept '%s' not found in policies",
+                    profile.risk_id, profile.policy_concept,
+                )
+                continue
         samples = sample_axes(profile, n=samples_per_risk)
         if not samples:
             logger.warning("Skipping risk %s — no usable axes", profile.risk_id)

@@ -1,0 +1,36 @@
+{
+  "call_number": 11,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Opaque system architecture\nDescription: The AI system's internal structure and decision-making process may not be understandable or accessible to stakeholders, including developers, auditors, or end-users.\nConcern: None\nPolicy: Clinical Decision-Making\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination: Algorithmic Discrimination \u2014 Systematic bias in automated decision-making systems that disadvantages specific groups based on protected characteristics. [found by 3/5 queries]\n  Siblings: Employment Discrimination, Discriminatory Denial of Service, Housing Discrimination\n- https://www.commoncoreontologies.org/ont00000146: Artificial Language \u2014 A Language that is developed through conscious planning and premeditation, rather than one that was developed through use and repetition. [found by 3/5 queries]\n  Siblings: Natural Language\n- https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent: software agent \u2014 digital entity that perceives its environment and takes actions that maximize its chance of successfully achieving its goals [found by 3/5 queries]\n  Siblings: automated underwriting system, automated system, party\n- http://purl.obolibrary.org/obo/HP_0033071: Impaired task monitoring \u2014 Impaired ability to keep track of one's problem-solving success or failure, and to identify and correct mistakes during performance of a goal. [found by 2/5 queries]\n  Siblings: Impaired ability to plan, Impaired self monitoring, Impaired ability to organize\n- http://purl.obolibrary.org/obo/OAE_0004801: automatism AE \u2014 This is an AE which refers to a set of brief unconscious behaviors. [found by 2/5 queries]\n  Siblings: somnambulism AE, attention-seeking behaviour AE, somatoform disorder AE"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "https://www.commoncoreontologies.org/ont00000146",
+        "cco_class_label": "Artificial Language",
+        "role": "instrument",
+        "rationale": "The AI system's internal structure and decision-making process may be described or documented in an artificial language, making it opaque to stakeholders."
+      },
+      {
+        "cco_class_uri": "https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent",
+        "cco_class_label": "software agent",
+        "role": "agent",
+        "rationale": "The AI system (software agent) is the entity whose internal structure and decision-making process may not be understandable or accessible."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Clinical Decision-Making",
+    "risk_id": "credo-risk-008",
+    "risk_name": "Opaque system architecture",
+    "num_candidates": 5
+  }
+}

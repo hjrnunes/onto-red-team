@@ -7,7 +7,7 @@ import typer
 import yaml
 
 from refiner import debug
-from refiner.llm import LLMConfig, create_client
+from refiner.llm import LLMConfig, TokenTracker, create_client
 from refiner.models import Policy, PolicyDocument, RunReport
 from refiner.pipeline import run_pipeline, STAGES
 from refiner.stages.structure import structure
@@ -15,6 +15,22 @@ from refiner.stages.structure import structure
 app = typer.Typer()
 
 INGEST_PASSES = ("context", "policies", "enrichment")
+
+
+def _echo_token_usage(tracker: TokenTracker) -> None:
+    if tracker.calls == 0:
+        return
+    typer.echo(f"Token usage: {tracker.prompt_tokens:,} prompt + {tracker.completion_tokens:,} completion = {tracker.total_tokens:,} total ({tracker.calls} calls)")
+
+
+def _parse_tags(tags: list[str]) -> dict[str, str]:
+    """Parse key=value tag strings into a dict."""
+    result = {}
+    for t in tags:
+        if "=" in t:
+            k, v = t.split("=", 1)
+            result[k] = v
+    return result
 
 
 @app.command()
@@ -55,7 +71,8 @@ def ingest(
         input_format = "markdown"
 
     config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
-    client = create_client(config)
+    tracker = TokenTracker()
+    client = create_client(config, tracker=tracker)
     debug.configure(debug_dir)
 
     report = RunReport(
@@ -79,6 +96,11 @@ def ingest(
     typer.echo(f"  Organization: {result.organization}")
     typer.echo(f"  Domain: {result.domain}")
     typer.echo(f"  Policies: {len(result.policies)}")
+    _echo_token_usage(tracker)
+
+    md_path = debug.render_markdown()
+    if md_path:
+        typer.echo(f"Debug markdown written to {md_path}")
 
 
 def _create_risk_handlers(nexus_base_dir: str, nexus_chroma_dir: Path) -> dict:
@@ -120,9 +142,11 @@ def run(
     nexus_base_dir: str = typer.Option(None, "--nexus-base-dir", envvar="NEXUS_BASE_DIR", help="Path to ai-atlas-nexus repo"),
     ontoquery_chroma_dir: Path = typer.Option(Path(".chroma"), "--ontoquery-chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="Ontoquery ChromaDB directory"),
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR", help="Nexus ChromaDB directory"),
+    search_strategy: str = typer.Option("weighted", "--search-strategy", help="Search merge strategy: weighted (default) or grouped"),
     track: bool = typer.Option(False, "--track", help="Enable MLflow tracking + tracing"),
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
     description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
+    tags: list[str] = typer.Option([], "--tag", help="MLflow tags as key=value (repeatable)"),
 ):
     """Run the refiner pipeline on a policy JSON file."""
     if not policy_json.exists():
@@ -149,7 +173,8 @@ def run(
         raise typer.Exit(1)
 
     config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
-    client = create_client(config)
+    tracker = TokenTracker()
+    client = create_client(config, tracker=tracker)
     debug.configure(debug_dir)
 
     # Create report
@@ -171,9 +196,20 @@ def run(
         risk_handlers = {}
     onto_handlers = _create_onto_handlers(ontoquery_chroma_dir) if needs_onto else {}
 
+    # Create search merge strategy
+    from refiner.stages.anchor import WeightedMergeStrategy, GroupedMergeStrategy
+    strategy_map = {"weighted": WeightedMergeStrategy, "grouped": GroupedMergeStrategy}
+    if search_strategy not in strategy_map:
+        typer.echo(f"Error: --search-strategy must be one of: {', '.join(strategy_map)}", err=True)
+        raise typer.Exit(1)
+    merge_strategy_obj = strategy_map[search_strategy]()
+
     # Run pipeline
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")
-    state = run_pipeline(policies, client, config, risk_handlers, onto_handlers, until=until, report=report)
+    state = run_pipeline(
+        policies, client, config, risk_handlers, onto_handlers,
+        until=until, report=report, merge_strategy=merge_strategy_obj,
+    )
     # TODO: thread doc_context into pipeline stages (e.g. identify_domains domain hint)
     state.doc_context = doc_context
 
@@ -208,6 +244,9 @@ def run(
         })
         if description:
             mlflow.set_tag("description", description)
+        parsed_tags = _parse_tags(tags)
+        if parsed_tags:
+            mlflow.set_tags(parsed_tags)
 
         write_run_id(out, mlflow.active_run().info.run_id)
 
@@ -251,6 +290,7 @@ def run(
                 report=report,
             )
             report.stages_completed.append("structure")
+            report.token_usage = tracker.to_dict()
 
             tax_path = out / f"{client_slug}-taxonomy.yaml"
             tax_path.write_text(yaml.dump(taxonomy, default_flow_style=False, sort_keys=False))
@@ -264,6 +304,7 @@ def run(
             report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
             typer.echo(f"Report written to {report_path}")
         else:
+            report.token_usage = tracker.to_dict()
             # Partial run — dump intermediate state as JSON
             state_path = out / f"{client_slug}-state.json"
             state_data = {
@@ -286,15 +327,26 @@ def run(
                 report_path = out / f"{client_slug}-report.yaml"
                 report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
                 typer.echo(f"Report written to {report_path}")
+        md_path = debug.render_markdown()
+        if md_path:
+            typer.echo(f"Debug markdown written to {md_path}")
     except Exception:
         if mlflow_active:
             import mlflow
             mlflow.end_run(status="FAILED")
         raise
     else:
+        _echo_token_usage(tracker)
         if mlflow_active:
             import mlflow
             from refiner.tracking import _collect_artifacts
+            if tracker.calls > 0:
+                mlflow.log_metrics({
+                    "tokens.prompt": tracker.prompt_tokens,
+                    "tokens.completion": tracker.completion_tokens,
+                    "tokens.total": tracker.total_tokens,
+                    "tokens.calls": tracker.calls,
+                })
             files, dirs = _collect_artifacts(out)
             for f in files:
                 mlflow.log_artifact(str(f))
@@ -343,6 +395,7 @@ def evaluate(
     track: bool = typer.Option(False, "--track", help="Log evaluation to MLflow"),
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
     description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
+    tags: list[str] = typer.Option([], "--tag", help="MLflow tags as key=value (repeatable)"),
 ):
     """Evaluate pipeline outputs with metrics and optional judge scoring."""
     if not output_dir.is_dir():
@@ -432,6 +485,7 @@ def evaluate(
         run_id = log_run_to_mlflow(
             evaluation, output_dir, tracking_uri,
             description=description, run_id=existing_run_id,
+            extra_tags=_parse_tags(tags),
         )
         if not existing_run_id:
             write_run_id(output_dir, run_id)
@@ -443,6 +497,7 @@ def track(
     output_dir: Path = typer.Argument(..., help="Directory with evaluation outputs to track"),
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
     description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
+    tags: list[str] = typer.Option([], "--tag", help="MLflow tags as key=value (repeatable)"),
 ):
     """Retroactively log an existing evaluation to MLflow."""
     if not output_dir.is_dir():
@@ -471,6 +526,7 @@ def track(
     run_id = log_run_to_mlflow(
         evaluation, output_dir, tracking_uri,
         description=description, run_id=existing_run_id,
+        extra_tags=_parse_tags(tags),
     )
     if not existing_run_id:
         write_run_id(output_dir, run_id)

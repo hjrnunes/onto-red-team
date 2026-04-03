@@ -1,0 +1,1176 @@
+{
+  "run": {
+    "model": "phi-4",
+    "policy_set": "aramco-enriched.json",
+    "timestamp": "2026-04-02T14:56:48.111776+00:00",
+    "stages_completed": [
+      "classify",
+      "identify_domains",
+      "map_risks",
+      "anchor",
+      "contextualize",
+      "structure"
+    ]
+  },
+  "stage_quality": {
+    "classify": {
+      "type_distribution": {
+        "B": 1,
+        "A": 3,
+        "C": 1
+      }
+    },
+    "identify_domains": {
+      "selected_domains": [
+        "CCO",
+        "Commons",
+        "D3FEND",
+        "CSO",
+        "IOF"
+      ]
+    },
+    "map_risks": {
+      "match_counts": [
+        {
+          "policy_concept": "Proprietary Technical Data",
+          "count": 2
+        },
+        {
+          "policy_concept": "Operational Security & Critical Infrastructure",
+          "count": 3
+        },
+        {
+          "policy_concept": "Supply Chain & Geopolitical Risks",
+          "count": 3
+        },
+        {
+          "policy_concept": "Insider Threat & Cybersecurity",
+          "count": 3
+        },
+        {
+          "policy_concept": "Compliance & Sanctions Evasion",
+          "count": 3
+        }
+      ],
+      "weak_matches": [
+        {
+          "risk_id": "credo-risk-047",
+          "distance": 0.6340782642364502
+        },
+        {
+          "risk_id": "llm032025-supply-chain",
+          "distance": 0.638918936252594
+        },
+        {
+          "risk_id": "credo-risk-049",
+          "distance": 0.6374873518943787
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "distance": 0.6273545026779175
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "distance": 0.6484367251396179
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "distance": 0.6554153561592102
+        }
+      ]
+    },
+    "anchor": {
+      "candidate_expansions": [
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "queries_run": 9,
+          "raw_total": 90,
+          "unique_after_dedup": 68,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "granite-jailbreak",
+          "queries_run": 4,
+          "raw_total": 40,
+          "unique_after_dedup": 37,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "atlas-direct-instructions-attack",
+          "queries_run": 4,
+          "raw_total": 40,
+          "unique_after_dedup": 23,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "queries_run": 3,
+          "raw_total": 30,
+          "unique_after_dedup": 27,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "llm032025-supply-chain",
+          "queries_run": 13,
+          "raw_total": 130,
+          "unique_after_dedup": 86,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-049",
+          "queries_run": 5,
+          "raw_total": 50,
+          "unique_after_dedup": 33,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "nist-information-security",
+          "queries_run": 67,
+          "raw_total": 670,
+          "unique_after_dedup": 384,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "queries_run": 6,
+          "raw_total": 60,
+          "unique_after_dedup": 47,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "queries_run": 1,
+          "raw_total": 10,
+          "unique_after_dedup": 10,
+          "kept_after_filter": 5
+        }
+      ],
+      "multi_query_hits": [
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024",
+          "hit_count": 3,
+          "best_distance": 0.33695560693740845,
+          "query_sources": [
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1230",
+          "hit_count": 3,
+          "best_distance": 0.40533751249313354,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213",
+          "hit_count": 2,
+          "best_distance": 0.3222414255142212,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure",
+          "hit_count": 2,
+          "best_distance": 0.3385275602340698,
+          "query_sources": [
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-ip-information-in-prompt",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057",
+          "hit_count": 2,
+          "best_distance": 0.36190980672836304,
+          "query_sources": [
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+          "hit_count": 1,
+          "best_distance": 0.3931668996810913,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty",
+          "hit_count": 1,
+          "best_distance": 0.4523963928222656,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-402",
+          "hit_count": 1,
+          "best_distance": 0.5383176803588867,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024",
+          "hit_count": 1,
+          "best_distance": 0.5429973602294922,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-ip-rights/-trade-secrets",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-291",
+          "hit_count": 1,
+          "best_distance": 0.5467719435691833,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#IMP-0002",
+          "hit_count": 1,
+          "best_distance": 0.4304988384246826,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkConnectionEvent",
+          "hit_count": 1,
+          "best_distance": 0.434701144695282,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkConnectionResetEvent",
+          "hit_count": 1,
+          "best_distance": 0.46138787269592285,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkConnectionFailEvent",
+          "hit_count": 1,
+          "best_distance": 0.4862580895423889,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-disruption",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkVulnerabilityAssessment",
+          "hit_count": 1,
+          "best_distance": 0.49575304985046387,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "granite-jailbreak",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0069.002",
+          "hit_count": 2,
+          "best_distance": 0.37795233726501465,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-jailbreak",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0065",
+          "hit_count": 2,
+          "best_distance": 0.38139134645462036,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-jailbreak",
+          "uri": "http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard",
+          "hit_count": 2,
+          "best_distance": 0.4663832187652588,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-jailbreak",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015",
+          "hit_count": 1,
+          "best_distance": 0.33188992738723755,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "granite-jailbreak",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.002",
+          "hit_count": 1,
+          "best_distance": 0.35152870416641235,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-direct-instructions-attack",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0051",
+          "hit_count": 4,
+          "best_distance": 0.37665408849716187,
+          "query_sources": [
+            "description",
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-direct-instructions-attack",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0051.002",
+          "hit_count": 3,
+          "best_distance": 0.38122665882110596,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-direct-instructions-attack",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#T0863",
+          "hit_count": 3,
+          "best_distance": 0.4549058675765991,
+          "query_sources": [
+            "concern",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-direct-instructions-attack",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0056",
+          "hit_count": 3,
+          "best_distance": 0.4962767958641052,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "atlas-direct-instructions-attack",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1427",
+          "hit_count": 3,
+          "best_distance": 0.509230375289917,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010",
+          "hit_count": 2,
+          "best_distance": 0.4067835211753845,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0011.000",
+          "hit_count": 2,
+          "best_distance": 0.4345065951347351,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0085",
+          "hit_count": 2,
+          "best_distance": 0.4737502932548523,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#SupplyChainAttacker",
+          "hit_count": 1,
+          "best_distance": 0.38290053606033325,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-047",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057",
+          "hit_count": 1,
+          "best_distance": 0.3907952904701233,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm032025-supply-chain",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0000",
+          "hit_count": 6,
+          "best_distance": 0.39089882373809814,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm032025-supply-chain",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#EX-0012.13",
+          "hit_count": 5,
+          "best_distance": 0.42339956760406494,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm032025-supply-chain",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.002",
+          "hit_count": 5,
+          "best_distance": 0.46214479207992554,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm032025-supply-chain",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047",
+          "hit_count": 4,
+          "best_distance": 0.36366748809814453,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "llm032025-supply-chain",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024",
+          "hit_count": 4,
+          "best_distance": 0.44669657945632935,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-049",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.000",
+          "hit_count": 4,
+          "best_distance": 0.437136709690094,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-049",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001",
+          "hit_count": 4,
+          "best_distance": 0.45510613918304443,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-049",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047",
+          "hit_count": 4,
+          "best_distance": 0.4893898367881775,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-049",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0029",
+          "hit_count": 3,
+          "best_distance": 0.42708277702331543,
+          "query_sources": [
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-049",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0017",
+          "hit_count": 3,
+          "best_distance": 0.4588133692741394,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#InitialAccessTechnique",
+          "hit_count": 1,
+          "best_distance": 0.4344499111175537,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#Detect",
+          "hit_count": 1,
+          "best_distance": 0.46648818254470825,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#ConnectionAttemptAnalysis",
+          "hit_count": 1,
+          "best_distance": 0.4748029112815857,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#T1410",
+          "hit_count": 1,
+          "best_distance": 0.4756167531013489,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-unauthorized-network-entry",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkTrafficAnalysis",
+          "hit_count": 1,
+          "best_distance": 0.48855382204055786,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#T0820",
+          "hit_count": 11,
+          "best_distance": 0.3933430314064026,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015",
+          "hit_count": 8,
+          "best_distance": 0.33188992738723755,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0001",
+          "hit_count": 7,
+          "best_distance": 0.3756621479988098,
+          "query_sources": [
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0007",
+          "hit_count": 7,
+          "best_distance": 0.41671478748321533,
+          "query_sources": [
+            "description",
+            "action",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "nist-information-security",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0011",
+          "hit_count": 7,
+          "best_distance": 0.46602439880371094,
+          "query_sources": [
+            "action"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#Model",
+          "hit_count": 1,
+          "best_distance": 0.41952723264694214,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#Detect",
+          "hit_count": 1,
+          "best_distance": 0.443875789642334,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#IntrusionPreventionSystem",
+          "hit_count": 1,
+          "best_distance": 0.45704734325408936,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#T0884",
+          "hit_count": 1,
+          "best_distance": 0.46552276611328125,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-network-intrusion",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#IntrusionDetectionSystem",
+          "hit_count": 1,
+          "best_distance": 0.46853530406951904,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.000",
+          "hit_count": 3,
+          "best_distance": 0.437136709690094,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001",
+          "hit_count": 3,
+          "best_distance": 0.45510613918304443,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0015",
+          "hit_count": 3,
+          "best_distance": 0.4744833707809448,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047",
+          "hit_count": 3,
+          "best_distance": 0.4951794743537903,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "credo-risk-023",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0029",
+          "hit_count": 3,
+          "best_distance": 0.5008739233016968,
+          "query_sources": [
+            "description",
+            "cross_mapping"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#T1565",
+          "hit_count": 1,
+          "best_distance": 0.41705358028411865,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0011",
+          "hit_count": 1,
+          "best_distance": 0.43655866384506226,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213",
+          "hit_count": 1,
+          "best_distance": 0.44645369052886963,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048",
+          "hit_count": 1,
+          "best_distance": 0.45428794622421265,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests",
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-200",
+          "hit_count": 1,
+          "best_distance": 0.457095742225647,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.commoncoreontologies.org/ont00001257",
+          "hit_count": 1,
+          "best_distance": 0.49088048934936523,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.omg.org/spec/Commons/SitesAndFacilities/Facility",
+          "hit_count": 1,
+          "best_distance": 0.4911266565322876,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.commoncoreontologies.org/ont00001052",
+          "hit_count": 1,
+          "best_distance": 0.5081648826599121,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.commoncoreontologies.org/ont00000277",
+          "hit_count": 1,
+          "best_distance": 0.51130211353302,
+          "query_sources": [
+            "description"
+          ]
+        },
+        {
+          "risk_id": "ai-risk-taxonomy-nuclear-facilities",
+          "uri": "https://www.commoncoreontologies.org/ont00000030",
+          "hit_count": 1,
+          "best_distance": 0.5123108625411987,
+          "query_sources": [
+            "description"
+          ]
+        }
+      ],
+      "role_derivation": {
+        "derived": 2,
+        "llm_fallback": 31
+      }
+    },
+    "contextualize": {
+      "sibling_fallbacks": 24,
+      "self_references_filtered": 1,
+      "empty_enumerations": 1
+    },
+    "candidate_expansion": {
+      "mean_queries_run": 8.357142857142858,
+      "mean_unique_candidates": 54.642857142857146,
+      "multi_hit_fraction": 0.5142857142857142
+    },
+    "query_source_contribution": {
+      "concern": 5,
+      "cross_mapping": 39,
+      "description": 52,
+      "action": 5
+    }
+  },
+  "coverage": {
+    "policy": [
+      {
+        "policy_concept": "Proprietary Technical Data",
+        "risks_matched": 2,
+        "total_axes": 4,
+        "axes_with_enumerations": 4,
+        "total_enumerations": 14,
+        "prompts_generated": 21
+      },
+      {
+        "policy_concept": "Operational Security & Critical Infrastructure",
+        "risks_matched": 3,
+        "total_axes": 8,
+        "axes_with_enumerations": 8,
+        "total_enumerations": 42,
+        "prompts_generated": 45
+      },
+      {
+        "policy_concept": "Supply Chain & Geopolitical Risks",
+        "risks_matched": 3,
+        "total_axes": 7,
+        "axes_with_enumerations": 7,
+        "total_enumerations": 40,
+        "prompts_generated": 43
+      },
+      {
+        "policy_concept": "Insider Threat & Cybersecurity",
+        "risks_matched": 3,
+        "total_axes": 7,
+        "axes_with_enumerations": 6,
+        "total_enumerations": 52,
+        "prompts_generated": 36
+      },
+      {
+        "policy_concept": "Compliance & Sanctions Evasion",
+        "risks_matched": 3,
+        "total_axes": 7,
+        "axes_with_enumerations": 7,
+        "total_enumerations": 29,
+        "prompts_generated": 41
+      }
+    ],
+    "ontological": {
+      "unique_axis_classes": 31,
+      "unique_enumeration_uris": 136,
+      "by_source_ontology": {
+        "CCO": {
+          "unique_classes": 11,
+          "axes_using": 2
+        },
+        "CSO": {
+          "unique_classes": 7,
+          "axes_using": 2
+        },
+        "D3FEND": {
+          "unique_classes": 118,
+          "axes_using": 26
+        }
+      }
+    },
+    "single_value_axis_dominance": {
+      "total_axes": 33,
+      "single_value_axes": 1,
+      "single_value_rate": 0.03
+    },
+    "enumeration_domain_mismatch": {
+      "total_enumerations": 177,
+      "mismatched": 0,
+      "mismatch_rate": 0.0,
+      "by_mismatched_ontology": {}
+    },
+    "sibling_relevance": {
+      "subclass_count": 41,
+      "sibling_count": 136,
+      "subclass_relevance": {
+        "high": 28,
+        "medium": 12,
+        "low": 1
+      },
+      "sibling_relevance": {
+        "low": 42,
+        "medium": 68,
+        "high": 26
+      },
+      "subclass_mean_score": 2.659,
+      "sibling_mean_score": 1.882
+    },
+    "risk_framework": {
+      "total_matched": 14,
+      "by_framework": {
+        "unknown": 11,
+        "credo": 3
+      }
+    },
+    "cross_mapping": {
+      "risks_with_cross_mappings": 8,
+      "risks_without": 6,
+      "total_cross_mappings_used": 50,
+      "filtered_unknown_targets": 0,
+      "by_mapping_type": {
+        "exact": 0,
+        "close": 0,
+        "broad": 21,
+        "narrow": 1,
+        "related": 28
+      }
+    }
+  },
+  "generation_metrics": {
+    "axis_diversity": {
+      "per_risk": {
+        "atlas-ip-information-in-prompt": 1.0,
+        "ai-risk-taxonomy-ip-rights/-trade-secrets": 1.0,
+        "ai-risk-taxonomy-network-disruption": 1.0,
+        "granite-jailbreak": 0.8333333333333334,
+        "atlas-direct-instructions-attack": 1.0,
+        "credo-risk-047": 1.0,
+        "llm032025-supply-chain": 0.8666666666666667,
+        "credo-risk-049": 1.0,
+        "ai-risk-taxonomy-unauthorized-network-entry": 0.8,
+        "nist-information-security": 0.8333333333333334,
+        "ai-risk-taxonomy-network-intrusion": 1.0,
+        "credo-risk-023": 1.0,
+        "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests": 0.8888888888888888,
+        "ai-risk-taxonomy-nuclear-facilities": 1.0
+      },
+      "overall_mean": 0.944
+    },
+    "role_distribution": {
+      "object": 178,
+      "instrument": 168,
+      "location": 15,
+      "agent": 95,
+      "temporal": 15
+    },
+    "relevance_distribution": {
+      "medium": 192,
+      "high": 189,
+      "low": 60
+    },
+    "dedup_saturation": {
+      "atlas-ip-information-in-prompt": {
+        "combinatorial_space": 10,
+        "samples": 9,
+        "saturation": 0.9
+      },
+      "ai-risk-taxonomy-ip-rights/-trade-secrets": {
+        "combinatorial_space": 12,
+        "samples": 12,
+        "saturation": 1.0
+      },
+      "ai-risk-taxonomy-network-disruption": {
+        "combinatorial_space": 30,
+        "samples": 15,
+        "saturation": 0.5
+      },
+      "granite-jailbreak": {
+        "combinatorial_space": 200,
+        "samples": 15,
+        "saturation": 0.075
+      },
+      "atlas-direct-instructions-attack": {
+        "combinatorial_space": 24,
+        "samples": 15,
+        "saturation": 0.625
+      },
+      "credo-risk-047": {
+        "combinatorial_space": 15,
+        "samples": 14,
+        "saturation": 0.9333333333333333
+      },
+      "llm032025-supply-chain": {
+        "combinatorial_space": 400,
+        "samples": 15,
+        "saturation": 0.0375
+      },
+      "credo-risk-049": {
+        "combinatorial_space": 16,
+        "samples": 14,
+        "saturation": 0.875
+      },
+      "ai-risk-taxonomy-unauthorized-network-entry": {
+        "combinatorial_space": 100,
+        "samples": 15,
+        "saturation": 0.15
+      },
+      "nist-information-security": {
+        "combinatorial_space": 600,
+        "samples": 15,
+        "saturation": 0.025
+      },
+      "ai-risk-taxonomy-network-intrusion": {
+        "combinatorial_space": 6,
+        "samples": 6,
+        "saturation": 1.0
+      },
+      "credo-risk-023": {
+        "combinatorial_space": 12,
+        "samples": 11,
+        "saturation": 0.9166666666666666
+      },
+      "ai-risk-taxonomy-involvement-in-data-adversarially-adversely-affects-national-security-or-public-interests": {
+        "combinatorial_space": 45,
+        "samples": 15,
+        "saturation": 0.3333333333333333
+      },
+      "ai-risk-taxonomy-nuclear-facilities": {
+        "combinatorial_space": 24,
+        "samples": 15,
+        "saturation": 0.625
+      }
+    },
+    "enumeration_concentration": {
+      "total_samples": 441,
+      "top_k": 5,
+      "top_k_share": 0.163,
+      "top_values": [
+        {
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.003",
+          "count": 19
+        },
+        {
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0051.001",
+          "count": 14
+        },
+        {
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001",
+          "count": 14
+        },
+        {
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.002",
+          "count": 13
+        },
+        {
+          "uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.004",
+          "count": 12
+        }
+      ]
+    }
+  },
+  "prompt_metrics": {
+    "lexical_diversity": 0.14,
+    "mean_prompt_length": 77.8,
+    "domain_term_hit_rate": 0.261,
+    "red_flag_count": 3,
+    "per_policy": [
+      {
+        "policy_concept": "Compliance & Sanctions Evasion",
+        "count": 41
+      },
+      {
+        "policy_concept": "Insider Threat & Cybersecurity",
+        "count": 36
+      },
+      {
+        "policy_concept": "Operational Security & Critical Infrastructure",
+        "count": 45
+      },
+      {
+        "policy_concept": "Proprietary Technical Data",
+        "count": 21
+      },
+      {
+        "policy_concept": "Supply Chain & Geopolitical Risks",
+        "count": 43
+      }
+    ],
+    "policy_coverage_balance": {
+      "entropy": 2.279,
+      "normalized_entropy": 0.981
+    },
+    "jargon_leak_rate": {
+      "total_prompts": 186,
+      "jargon_prompts": 0,
+      "jargon_rate": 0.0
+    },
+    "axis_fidelity": {
+      "total_prompts": 186,
+      "full_fidelity": 146,
+      "partial": 29,
+      "improvised": 11,
+      "mean_fidelity": 0.865
+    },
+    "named_entity_utilization": {
+      "total_prompts": 186,
+      "prompts_with_entities": 0,
+      "utilization_rate": 0.0,
+      "entities_by_policy": {}
+    },
+    "weak_match_impact": {
+      "weak_match_risks": 6,
+      "weak_match_prompts": 84,
+      "strong_match_prompts": 102,
+      "mean_weak_distance": 0.64
+    },
+    "semantic_diversity": {
+      "mean_pairwise_distance": 0.955,
+      "total_prompts": 186,
+      "per_policy": {
+        "Compliance & Sanctions Evasion": 0.917,
+        "Insider Threat & Cybersecurity": 0.926,
+        "Operational Security & Critical Infrastructure": 0.937,
+        "Proprietary Technical Data": 0.941,
+        "Supply Chain & Geopolitical Risks": 0.922
+      }
+    }
+  }
+}

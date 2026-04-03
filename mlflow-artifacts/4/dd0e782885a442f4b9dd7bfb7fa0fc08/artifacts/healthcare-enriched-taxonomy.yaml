@@ -1,0 +1,351 @@
+taxonomies:
+- id: client-healthcare-enriched
+  name: Client HEALTHCARE-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-healthcare-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+- id: client-healthcare-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+- id: client-healthcare-enriched-routing
+  name: Routing Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-healthcare-enriched
+entries:
+- id: client-healthcare-enriched-ai-decision-risk
+  name: AI decision risk
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-routing
+  tag: ai-decision-risk
+  related_mappings:
+  - atlas-copyright-infringement
+  - atlas-decision-bias
+  - atlas-exposing-personal-information
+  - atlas-hallucination
+  - atlas-harmful-code-generation
+  - atlas-harmful-output
+  - atlas-impact-on-cultural-diversity
+  - atlas-impact-on-the-environment
+  - atlas-inaccessible-training-data
+  - atlas-incomplete-advice
+  - atlas-output-bias
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-revealing-confidential-information
+  - atlas-toxic-output
+  - atlas-unexplainable-output
+  - atlas-unreliable-source-attribution
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - FIBO
+    - OBO
+    axes:
+    - class: prediction
+      uri: http://purl.obolibrary.org/obo/OBI_0302910
+      roles:
+      - object
+      enumeration_count: 1
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 2
+- id: client-healthcare-enriched-ai-literacy-and-communication
+  name: AI literacy and communication
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-routing
+  tag: ai-literacy-and-communication
+  related_mappings:
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-3.1
+  - mit-ai-risk-subdomain-7.4
+  - nist-human-ai-configuration
+  - llm062025-excessive-agency
+  - llm092025-misinformation
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - CCO
+    - Commons
+    - FIBO
+    axes:
+    - class: Skill
+      uri: https://www.commoncoreontologies.org/ont00000089
+      roles: &id001
+      - agent
+      enumeration_count: 1
+    - class: Agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/Agent
+      roles: &id002
+      - agent
+      enumeration_count: 2
+- id: client-healthcare-enriched-medicalpharmaceutical-advice
+  name: Medical/Pharmaceutical Advice
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-routing
+  tag: medicalpharmaceutical-advice
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - OBO
+    axes:
+    - class: pharmaceutical
+      uri: http://purl.obolibrary.org/obo/CHEBI_52217
+      roles:
+      - object
+      enumeration_count: 3
+    - class: Hospital
+      uri: https://www.commoncoreontologies.org/ont00001098
+      roles:
+      - location
+      enumeration_count: 0
+- id: client-healthcare-enriched-inadequate-ai-literacy
+  name: Inadequate AI literacy
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: inadequate-ai-literacy
+  related_mappings:
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-3.1
+  - mit-ai-risk-subdomain-7.4
+  - nist-human-ai-configuration
+  - llm062025-excessive-agency
+  - llm092025-misinformation
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - CCO
+    - Commons
+    - FIBO
+    axes:
+    - class: Skill
+      uri: https://www.commoncoreontologies.org/ont00000089
+      roles: *id001
+      enumeration_count: 1
+    - class: Agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/Agent
+      roles: *id002
+      enumeration_count: 2
+- id: client-healthcare-enriched-unauthorized-disclosure-health-data
+  name: Unauthorized disclosure - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-disclosure-health-data
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    - OBO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: clinical data item
+      uri: http://purl.obolibrary.org/obo/OGMS_0000123
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-healthcare-enriched-unauthorized-collectiongatheringstealing-health-data
+  name: Unauthorized collection/gathering/stealing - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-collectiongatheringstealing-health-data
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 6
+    source_ontologies:
+    - CSO
+    - Commons
+    - FIBO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: party
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/Party
+      roles:
+      - agent
+      enumeration_count: 3
+- id: client-healthcare-enriched-unauthorized-processing-health-data
+  name: Unauthorized processing - Health data
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: unauthorized-processing-health-data
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 7
+    source_ontologies:
+    - CSO
+    - OBO
+    axes:
+    - class: Health Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+      roles:
+      - object
+      enumeration_count: 3
+    - class: clinical data item
+      uri: http://purl.obolibrary.org/obo/OGMS_0000123
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-healthcare-enriched-confidential-data-in-prompt
+  name: Confidential data in prompt
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: confidential-data-in-prompt
+  broad_mappings:
+  - nist-intellectual-property
+  related_mappings:
+  - ail-privacy
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-other
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 3
+    source_ontologies:
+    - Commons
+    - FIBO
+    axes:
+    - class: Data Protection Requirement
+      uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DataProtectionRequirement
+      roles:
+      - object
+      enumeration_count: 1
+    - class: Context
+      uri: https://www.omg.org/spec/Commons/ContextualDesignators/Context
+      roles:
+      - location
+      enumeration_count: 2
+- id: client-healthcare-enriched-data-privacy
+  name: Data Privacy
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-confidentiality
+  tag: data-privacy
+  broad_mappings:
+  - atlas-attribute-inference-attack
+  - atlas-data-privacy-rights
+  - atlas-data-usage-rights
+  - atlas-exposing-personal-information
+  - atlas-ip-information-in-prompt
+  - atlas-legal-accountability
+  - atlas-membership-inference-attack
+  - atlas-model-usage-rights
+  - atlas-nonconsensual-use
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  related_mappings:
+  - ail-intellectual-property
+  - ail-privacy
+  - ail-specialized-advice
+  - credo-risk-023
+  - credo-risk-029
+  - credo-risk-036
+  - credo-risk-037
+  - atlas-harmful-output
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    - FIBO
+    axes:
+    - class: Direct Identifier Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure
+      roles:
+      - object
+      enumeration_count: 4
+    - class: Data Protection Requirement
+      uri: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansGeneral/LoansRegulatory/DataProtectionRequirement
+      roles:
+      - instrument
+      enumeration_count: 1
+- id: client-healthcare-enriched-ai-deception
+  name: AI deception
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: ai-deception
+  related_mappings:
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-7.2
+  - nist-human-ai-configuration
+  - llm062025-excessive-agency
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 5
+    source_ontologies:
+    - CCO
+    - Commons
+    - FIBO
+    axes:
+    - class: automated system
+      uri: https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem
+      roles:
+      - agent
+      enumeration_count: 2
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 3
+- id: client-healthcare-enriched-fraud-scams-manipulation
+  name: Fraud, scams, manipulation
+  type: Risk
+  isDefinedByTaxonomy: client-healthcare-enriched
+  isPartOf: client-healthcare-enriched-safety
+  tag: fraud-scams-manipulation
+  close_mappings:
+  - credo-risk-026
+  - mit-ai-risk-subdomain-4.3
+  related_mappings:
+  - ail-defamation
+  - ail-nonviolent-crimes
+  - atlas-bypassing-learning
+  - atlas-nonconsensual-use
+  - atlas-plagiarism
+  - granite-guardian-harm
+  - mit-ai-risk-subdomain-2.2
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 4
+    source_ontologies:
+    - CSO
+    - FIBO
+    axes:
+    - class: Deepfake Disinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation
+      roles:
+      - instrument
+      enumeration_count: 2
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 2

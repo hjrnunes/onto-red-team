@@ -1,0 +1,144 @@
+{
+  "call_number": 34,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Dangerous Content (ID: nist-dangerous-violent-or-hateful-content)\nDescription: Eased production of and access to violent, inciting, radicalizing, or threatening content as well as recommendations to carry out self-harm or conduct illegal activities. Includes difficulty controlling public exposure to hateful and disparaging or stereotyping content.\nConcern: None\nPolicy: Illegal Activity\n\nAxis: Dangerous Information (http://taxonomy-refiner.io/ontologies/cso#DangerousInformation)\nRoles: object\nSubclasses:\n  - http://taxonomy-refiner.io/ontologies/cso#CBRNInformation: CBRN Information\n  - http://taxonomy-refiner.io/ontologies/cso#DrugSynthesis: Drug Synthesis\n  - http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo: Harmful How-To\n  - http://taxonomy-refiner.io/ontologies/cso#DualUseResearchConcern: Dual-Use Research Concern\n  - http://taxonomy-refiner.io/ontologies/cso#WeaponsManufacturing: Weapons Manufacturing\n\nAxis: External Harms - ATLAS (http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048)\nRoles: agent\nSubclasses:\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.003: User Harm - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.001: Reputational Harm - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.000: Financial Harm - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.004: AI Intellectual Property Theft - ATLAS\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.002: Societal Harm - ATLAS\n\nAxis: Poison AI/ML Training for Evasion - SPARTA (http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.12)\nRoles: instrument\nSiblings:\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.03: Command Receiver On/Off Mode - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.07: Cryptographic Modes - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.02: Rejected Command Counter - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.04: Command Receivers Received Signal Strength - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.05: Command Receiver Lock Modes - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.10: GPS Ephemeris - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.06: Telemetry Downlink Modes - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.09: System Clock for Evasion - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.08: Received Commands - SPARTA\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.11: Watchdog Timer (WDT) for Evasion - SPARTA"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DangerousInformation",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#CBRNInformation",
+            "class_label": "CBRN Information",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#DrugSynthesis",
+            "class_label": "Drug Synthesis",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo",
+            "class_label": "Harmful How-To",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#DualUseResearchConcern",
+            "class_label": "Dual-Use Research Concern",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#WeaponsManufacturing",
+            "class_label": "Weapons Manufacturing",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048",
+        "enumerations": [
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.003",
+            "class_label": "User Harm - ATLAS",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.001",
+            "class_label": "Reputational Harm - ATLAS",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.000",
+            "class_label": "Financial Harm - ATLAS",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.004",
+            "class_label": "AI Intellectual Property Theft - ATLAS",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.002",
+            "class_label": "Societal Harm - ATLAS",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.12",
+        "enumerations": [
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.12",
+            "class_label": "Poison AI/ML Training for Evasion - SPARTA",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.03",
+            "class_label": "Command Receiver On/Off Mode - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.07",
+            "class_label": "Cryptographic Modes - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.02",
+            "class_label": "Rejected Command Counter - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.04",
+            "class_label": "Command Receivers Received Signal Strength - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.05",
+            "class_label": "Command Receiver Lock Modes - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.10",
+            "class_label": "GPS Ephemeris - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.06",
+            "class_label": "Telemetry Downlink Modes - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.09",
+            "class_label": "System Clock for Evasion - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.08",
+            "class_label": "Received Commands - SPARTA",
+            "relevance": "low"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#DE-0003.11",
+            "class_label": "Watchdog Timer (WDT) for Evasion - SPARTA",
+            "relevance": "low"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "nist-dangerous-violent-or-hateful-content",
+    "risk_name": "Dangerous Content",
+    "policy_concept": "Illegal Activity",
+    "num_axes": 3
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "call_number": 12,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: LLM09:2025 Misinformation\nDescription: Misinformation from LLMs poses a core vulnerability for applications relying on these models. Misinformation occurs when LLMs produce false or misleading information that appears credible. This vulnerability can lead to security breaches, reputational damage, and legal liability.\nConcern: None\nPolicy: Supply Chain & Geopolitical Risks\n\nCandidate ontology classes:\n- https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/Agents/AutomatedSystem: automated system \u2014 system that reduces or eliminates the need for human involvement in order to complete a task [found by 5/9 queries]\n  Siblings: party, software agent, Agent\n- http://taxonomy-refiner.io/ontologies/cso#HealthMisinformation: Health Misinformation \u2014 Inaccurate medical or health-related claims that may lead individuals to make harmful decisions about their care, treatment, or public health measures. [found by 8/9 queries]\n  Siblings: Political Misinformation, Scientific Misinformation, Election Misinformation\n- http://taxonomy-refiner.io/ontologies/cso#Misinformation: Misinformation \u2014 False or inaccurate information shared without malicious intent to deceive, often due to misunderstanding, carelessness, or lack of fact-checking. [found by 7/9 queries]\n  Siblings: Financial Fraud, Manipulation, Academic Dishonesty\n- https://www.omg.org/spec/Commons/Documents/Notice: notice \u2014 announcement, communication, intimation, or advance warning of something, usually, but not necessarily, to allow preparations to be made [found by 7/9 queries]\n  Siblings: indication of interest, publication, reference document\n- https://www.omg.org/spec/Commons/ContextualDesignators/Context: context \u2014 situation or frame of reference in which something applies, exists, happens, or is used and that helps to illustrate or explain it [found by 7/9 queries]"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#Misinformation",
+        "cco_class_label": "Misinformation",
+        "role": "object",
+        "rationale": "The risk is explicitly about 'Misinformation' (false or misleading information). This class directly represents the core 'what' that is being produced by the LLMs."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Supply Chain & Geopolitical Risks",
+    "risk_id": "llm092025-misinformation",
+    "risk_name": "LLM09:2025 Misinformation",
+    "num_candidates": 5
+  }
+}

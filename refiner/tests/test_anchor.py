@@ -1,4 +1,5 @@
 import logging
+from unittest.mock import MagicMock
 from refiner.models import (
     PolicyRiskMapping,
     RiskMatch,
@@ -793,3 +794,314 @@ def test_expand_candidates_no_restriction_when_handler_absent():
         selected_domains=None,
     )
     assert stats.get("restriction_candidates_added", 0) == 0
+
+
+# SearchMergeStrategy Protocol and implementations
+
+
+from refiner.stages.anchor import (
+    SearchMergeStrategy,
+    WeightedMergeStrategy,
+    GroupedMergeStrategy,
+    _search_per_domain,
+)
+
+
+def _make_domain_candidates():
+    """Helper: per-domain candidates for merge strategy tests."""
+    return {
+        "FIBO": [
+            {"uri": "http://fibo/A", "label": "FIBO A", "hit_count": 2, "best_distance": 0.1, "domain": "FIBO", "query_sources": ["description"]},
+            {"uri": "http://fibo/B", "label": "FIBO B", "hit_count": 1, "best_distance": 0.3, "domain": "FIBO", "query_sources": ["concern"]},
+        ],
+        "CSO": [
+            {"uri": "http://cso/X", "label": "CSO X", "hit_count": 3, "best_distance": 0.05, "domain": "CSO", "query_sources": ["description", "concern"]},
+            {"uri": "http://cso/Y", "label": "CSO Y", "hit_count": 1, "best_distance": 0.2, "domain": "CSO", "query_sources": ["description"]},
+            {"uri": "http://cso/Z", "label": "CSO Z", "hit_count": 1, "best_distance": 0.4, "domain": "CSO", "query_sources": ["concern"]},
+        ],
+        "CCO": [
+            {"uri": "http://cco/P", "label": "CCO P", "hit_count": 1, "best_distance": 0.15, "domain": "CCO", "query_sources": ["description"]},
+        ],
+    }
+
+
+def test_weighted_merge_guarantees_domain_selected_slots():
+    """Domain-selected ontologies (e.g. FIBO) get guaranteed slots."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "Commons", "D3FEND", "CSO"])
+    per_domain = _make_domain_candidates()
+    selected = ["CCO", "Commons", "D3FEND", "CSO", "FIBO"]
+
+    result = strategy.merge(per_domain, selected, max_candidates=5)
+    uris = [c["uri"] for c in result]
+
+    # FIBO must be represented
+    assert any("fibo" in u for u in uris)
+    assert len(result) <= 5
+
+
+def test_weighted_merge_fills_with_always_included():
+    """Remaining slots filled by always-included domains sorted by distance."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = _make_domain_candidates()
+    selected = ["CCO", "CSO", "FIBO"]
+
+    result = strategy.merge(per_domain, selected, max_candidates=5)
+    uris = [c["uri"] for c in result]
+
+    # CSO X has best distance (0.05) among always-included — should be present
+    assert "http://cso/X" in uris
+    assert len(result) <= 5
+
+
+def test_weighted_merge_no_domain_selected():
+    """When no LLM-selected domains, all slots go to always-included by distance."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = _make_domain_candidates()
+    selected = ["CCO", "CSO"]
+
+    result = strategy.merge(per_domain, selected, max_candidates=3)
+    # All from always-included, sorted by hit_count then distance
+    assert len(result) == 3
+    assert result[0]["uri"] == "http://cso/X"  # hit_count 3, distance 0.05
+
+
+def test_weighted_merge_deduplicates():
+    """Same URI from different domains is not duplicated."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = {
+        "FIBO": [{"uri": "http://shared/A", "label": "A", "hit_count": 1, "best_distance": 0.1, "domain": "FIBO", "query_sources": []}],
+        "CSO": [{"uri": "http://shared/A", "label": "A", "hit_count": 1, "best_distance": 0.2, "domain": "CSO", "query_sources": []}],
+    }
+    result = strategy.merge(per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert uris.count("http://shared/A") == 1
+
+
+def test_grouped_merge_equal_distribution():
+    """Each domain gets roughly equal slots."""
+    strategy = GroupedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = _make_domain_candidates()
+    selected = ["CCO", "CSO", "FIBO"]
+
+    result = strategy.merge(per_domain, selected, max_candidates=6)
+    # 6 / 3 domains = 2 per domain
+    domains_in_result = [c["domain"] for c in result]
+    assert domains_in_result.count("FIBO") <= 2
+    assert domains_in_result.count("CSO") <= 2
+    assert domains_in_result.count("CCO") <= 2
+    assert len(result) <= 6
+
+
+def test_grouped_merge_caps_at_max():
+    """Total results never exceed max_candidates."""
+    strategy = GroupedMergeStrategy()
+    per_domain = _make_domain_candidates()
+    selected = ["CCO", "CSO", "FIBO"]
+
+    result = strategy.merge(per_domain, selected, max_candidates=3)
+    assert len(result) <= 3
+
+
+def test_grouped_merge_skips_empty_domains():
+    """Domains with no candidates are skipped without error."""
+    strategy = GroupedMergeStrategy()
+    per_domain = {"FIBO": _make_domain_candidates()["FIBO"]}
+    selected = ["CCO", "CSO", "FIBO"]
+
+    result = strategy.merge(per_domain, selected, max_candidates=5)
+    assert all(c["domain"] == "FIBO" for c in result)
+
+
+def test_strategy_protocol_compliance():
+    """Both strategy implementations satisfy the Protocol."""
+    assert isinstance(WeightedMergeStrategy(), SearchMergeStrategy)
+    assert isinstance(GroupedMergeStrategy(), SearchMergeStrategy)
+
+
+# Per-domain search integration in expand_candidates
+
+
+def test_expand_candidates_with_weighted_strategy(mock_onto_handlers):
+    """expand_candidates uses strategy when search_domains is available."""
+    mock_onto_handlers["search_domains"] = MagicMock(return_value={
+        "CSO": [
+            {"uri": "http://cso/X", "label": "CSO X", "distance": 0.1},
+        ],
+        "CCO": [
+            {"uri": "http://cco/A", "label": "CCO A", "distance": 0.2},
+        ],
+    })
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+
+    candidates, stats = expand_candidates(
+        description="fraud risk",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=["CCO", "CSO"],
+        merge_strategy=strategy,
+    )
+    assert stats["search_strategy"] == "WeightedMergeStrategy"
+    assert len(candidates) >= 1
+    mock_onto_handlers["search_domains"].assert_called()
+
+
+def test_expand_candidates_falls_back_without_search_domains(mock_onto_handlers):
+    """Without search_domains handler, expand_candidates uses legacy path."""
+    # search_domains not in handlers — should use search_classes
+    mock_onto_handlers["search_classes"].return_value = [
+        {"uri": "http://example.org/A", "label": "A", "distance": 0.2},
+    ]
+    strategy = WeightedMergeStrategy()
+
+    candidates, stats = expand_candidates(
+        description="fraud risk",
+        concern="",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=None,
+        merge_strategy=strategy,
+    )
+    assert "search_strategy" not in stats
+    mock_onto_handlers["search_classes"].assert_called()
+
+
+def test_expand_candidates_per_domain_multi_query(mock_onto_handlers):
+    """Multiple queries accumulate hit_count per URI within each domain."""
+    call_count = [0]
+
+    def mock_search_domains(query, domains, top_k_per_domain=10):
+        call_count[0] += 1
+        if call_count[0] == 1:
+            return {"CSO": [{"uri": "http://cso/X", "label": "X", "distance": 0.2}]}
+        return {"CSO": [{"uri": "http://cso/X", "label": "X", "distance": 0.1}]}
+
+    mock_onto_handlers["search_domains"] = mock_search_domains
+    strategy = WeightedMergeStrategy(always_included=["CSO"])
+
+    candidates, stats = expand_candidates(
+        description="fraud",
+        concern="loss",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=["CSO"],
+        merge_strategy=strategy,
+    )
+    assert stats["queries_run"] == 2
+    x = next(c for c in candidates if c["uri"] == "http://cso/X")
+    assert x["hit_count"] == 2
+    assert x["best_distance"] == 0.1
+
+
+# Distance normalization and threshold tests
+
+
+def test_normalize_distances_zscore():
+    """Z-score normalization produces correct values for n >= 2."""
+    candidates = [
+        {"uri": "a", "best_distance": 0.1},
+        {"uri": "b", "best_distance": 0.3},
+        {"uri": "c", "best_distance": 0.8},
+    ]
+    WeightedMergeStrategy._normalize_distances(candidates)
+    # All should have normalized_distance
+    assert all("normalized_distance" in c for c in candidates)
+    # Best distance should have negative z-score
+    assert candidates[0]["normalized_distance"] < 0
+    # Worst distance should have positive z-score
+    assert candidates[2]["normalized_distance"] > 0
+
+
+def test_normalize_distances_single_candidate():
+    """Single candidate gets neutral z-score (0.0)."""
+    candidates = [{"uri": "a", "best_distance": 0.5}]
+    WeightedMergeStrategy._normalize_distances(candidates)
+    assert candidates[0]["normalized_distance"] == 0.0
+
+
+def test_normalize_distances_uniform():
+    """All-identical distances get neutral z-scores."""
+    candidates = [
+        {"uri": "a", "best_distance": 0.3},
+        {"uri": "b", "best_distance": 0.3},
+    ]
+    WeightedMergeStrategy._normalize_distances(candidates)
+    assert all(c["normalized_distance"] == 0.0 for c in candidates)
+
+
+def test_weighted_merge_filters_poor_distance_candidate():
+    """Single FIBO candidate with distance above ceiling is filtered from quota."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = {
+        "FIBO": [
+            {"uri": "http://fibo/bad", "label": "Bad", "hit_count": 1, "best_distance": 0.7,
+             "domain": "FIBO", "query_sources": []},
+        ],
+        "CSO": [
+            {"uri": "http://cso/X", "label": "Good", "hit_count": 2, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://fibo/bad" not in uris
+    assert "http://cso/X" in uris
+
+
+def test_weighted_merge_keeps_good_single_candidate():
+    """Single FIBO candidate with good distance passes into quota."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = {
+        "FIBO": [
+            {"uri": "http://fibo/good", "label": "Good", "hit_count": 1, "best_distance": 0.35,
+             "domain": "FIBO", "query_sources": []},
+        ],
+        "CSO": [
+            {"uri": "http://cso/X", "label": "X", "hit_count": 1, "best_distance": 0.2,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(per_domain, ["CCO", "CSO", "FIBO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://fibo/good" in uris
+
+
+def test_weighted_merge_filters_domain_outlier_by_zscore():
+    """Within-domain outlier filtered by z-score even if below raw ceiling."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/good", "label": "Good", "hit_count": 1, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/ok", "label": "OK", "hit_count": 1, "best_distance": 0.15,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/outlier", "label": "Outlier", "hit_count": 1, "best_distance": 0.55,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://cso/good" in uris
+    assert "http://cso/ok" in uris
+    # 0.55 is below raw ceiling (0.6) but z-score is well above 1.0
+    assert "http://cso/outlier" not in uris
+
+
+def test_weighted_merge_pool_filters_by_threshold():
+    """Always-included pool also respects distance threshold."""
+    strategy = WeightedMergeStrategy(always_included=["CCO", "CSO"])
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/good", "label": "Good", "hit_count": 1, "best_distance": 0.2,
+             "domain": "CSO", "query_sources": []},
+            {"uri": "http://cso/bad", "label": "Bad", "hit_count": 1, "best_distance": 0.75,
+             "domain": "CSO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(per_domain, ["CSO"], max_candidates=5)
+    uris = [c["uri"] for c in result]
+    assert "http://cso/good" in uris
+    assert "http://cso/bad" not in uris

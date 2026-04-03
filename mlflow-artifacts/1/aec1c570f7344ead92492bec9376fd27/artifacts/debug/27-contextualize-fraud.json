@@ -1,0 +1,79 @@
+{
+  "call_number": 27,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Fraud, scams (ID: mit-ai-risk-subdomain-4.3)\nDescription: Using AI systems to gain a personal advantage over others such as through cheating, fraud, scams, blackmail or targeted manipulation of beliefs or behavior. Examples include AI-facilitated plagiarism for research or education, impersonating a trusted or fake individual for illegitimate financial benefit, or creating humiliating or sexual imagery.\nConcern: None\nPolicy: Fraud\n\nAxis: Fraud and Deception (http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception)\nRoles: object\nSubclasses:\n  - http://taxonomy-refiner.io/ontologies/cso#FinancialFraud: Financial Fraud\n  - http://taxonomy-refiner.io/ontologies/cso#Manipulation: Manipulation\n  - http://taxonomy-refiner.io/ontologies/cso#AcademicDishonesty: Academic Dishonesty\n  - http://taxonomy-refiner.io/ontologies/cso#Counterfeiting: Counterfeiting\n  - http://taxonomy-refiner.io/ontologies/cso#Misinformation: Misinformation\n  - http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud: Social Engineering Fraud\n  - http://taxonomy-refiner.io/ontologies/cso#Disinformation: Disinformation\n\nAxis: Deepfake Disinformation (http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation)\nRoles: instrument\nSiblings:\n  - http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda: State-Sponsored Propaganda\n  - http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion: Conspiracy Theory Promotion"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialFraud",
+            "class_label": "Financial Fraud",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#Manipulation",
+            "class_label": "Manipulation",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#AcademicDishonesty",
+            "class_label": "Academic Dishonesty",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#Counterfeiting",
+            "class_label": "Counterfeiting",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#Misinformation",
+            "class_label": "Misinformation",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud",
+            "class_label": "Social Engineering Fraud",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#Disinformation",
+            "class_label": "Disinformation",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation",
+        "enumerations": [
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#StateSponsoredPropaganda",
+            "class_label": "State-Sponsored Propaganda",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://taxonomy-refiner.io/ontologies/cso#ConspiracyTheoryPromotion",
+            "class_label": "Conspiracy Theory Promotion",
+            "relevance": "medium"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "mit-ai-risk-subdomain-4.3",
+    "risk_name": "Fraud, scams",
+    "policy_concept": "Fraud",
+    "num_axes": 2
+  }
+}

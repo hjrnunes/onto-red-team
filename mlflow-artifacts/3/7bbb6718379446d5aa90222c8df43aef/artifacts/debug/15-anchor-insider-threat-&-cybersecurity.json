@@ -1,0 +1,36 @@
+{
+  "call_number": 15,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimAxis\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"cco_class_label\": {\n          \"title\": \"Cco Class Label\",\n          \"type\": \"string\"\n        },\n        \"role\": {\n          \"title\": \"Role\",\n          \"type\": \"string\"\n        },\n        \"rationale\": {\n          \"title\": \"Rationale\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"cco_class_label\",\n        \"role\",\n        \"rationale\"\n      ],\n      \"title\": \"_SlimAxis\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimAxis\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_AnchorResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: Compromised confidential information\nDescription: The AI system, including its supporting compute infrastructure, may serve as an attack vector for intrusion into cyber-physical or cloud environments, or enable exfiltration of secrets.\nConcern: None\nPolicy: Insider Threat & Cybersecurity\n\nCandidate ontology classes:\n- http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure: Trade Secret Disclosure \u2014 Unauthorized revelation of confidential business information such as formulas, processes, customer lists, or proprietary methods that provide competitive advantage. [found by 4/9 queries]\n  Siblings: Plagiarism, Trademark Violation, Copyright Infringement\n- http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure: Employment Data Exposure \u2014 Unauthorized disclosure of employment information including compensation, performance evaluations, or workplace records that individuals expect to remain confidential. [found by 4/9 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure\n- http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure: Financial Data Exposure \u2014 Disclosure of personal financial information including account numbers, credit scores, or transaction histories without authorization. [found by 4/9 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure\n- http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure: Health Data Exposure \u2014 Unauthorized disclosure of protected health information including medical records, diagnoses, treatments, or prescription histories. [found by 4/9 queries]\n  Siblings: Unauthorized Surveillance, Direct Identifier Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard: Content Safety Hazard \u2014 Root class for content safety harm categories relevant to adversarial prompt generation against LLM deployments. [found by 4/9 queries]"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure",
+        "cco_class_label": "Trade Secret Disclosure",
+        "role": "object",
+        "rationale": "This class directly addresses the risk of confidential information (trade secrets) being compromised, aligning with the risk description."
+      },
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure",
+        "cco_class_label": "Financial Data Exposure",
+        "role": "object",
+        "rationale": "The risk mentions exfiltration of secrets, which could include financial data. This class captures that aspect."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Insider Threat & Cybersecurity",
+    "risk_id": "credo-risk-038",
+    "risk_name": "Compromised confidential information",
+    "num_candidates": 5
+  }
+}

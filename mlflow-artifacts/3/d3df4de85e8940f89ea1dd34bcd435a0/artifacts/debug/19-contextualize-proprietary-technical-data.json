@@ -1,0 +1,94 @@
+{
+  "call_number": 19,
+  "stage": "contextualize",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are generating domain context profiles for AI risk variation axes.\n\nFor each variation axis (an ontology class), you are given candidate classes that form the enumeration space \u2014 the specific values that can be substituted when generating diverse prompts.\n\nCandidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.\n\nFilter out irrelevant candidates and annotate each remaining one with:\n- relevance: \"high\" (directly relevant), \"medium\" (potentially relevant), \"low\" (edge case)\n\nReturn one entry per axis using the axis URI as a key, with the filtered enumerations.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_AxisResponse\": {\n      \"properties\": {\n        \"cco_class_uri\": {\n          \"title\": \"Cco Class Uri\",\n          \"type\": \"string\"\n        },\n        \"enumerations\": {\n          \"items\": {\n            \"$ref\": \"#/$defs/_EnumResponse\"\n          },\n          \"title\": \"Enumerations\",\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [\n        \"cco_class_uri\",\n        \"enumerations\"\n      ],\n      \"title\": \"_AxisResponse\",\n      \"type\": \"object\"\n    },\n    \"_EnumResponse\": {\n      \"properties\": {\n        \"class_uri\": {\n          \"title\": \"Class Uri\",\n          \"type\": \"string\"\n        },\n        \"class_label\": {\n          \"title\": \"Class Label\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"high\",\n            \"medium\",\n            \"low\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"class_uri\",\n        \"class_label\",\n        \"relevance\"\n      ],\n      \"title\": \"_EnumResponse\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"axes\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_AxisResponse\"\n      },\n      \"title\": \"Axes\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"axes\"\n  ],\n  \"title\": \"_ContextResponse\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Risk: IP information in prompt (ID: atlas-ip-information-in-prompt)\nDescription: Copyrighted information or other intellectual property might be included as a part of the prompt that is sent to the model.\nConcern: Inclusion of such data might result in it being disclosed in the model output. In addition to accidental disclosure, prompt data might be used for other purposes like model evaluation and retraining, and might appear in their output if not properly removed.\nPolicy: Proprietary Technical Data\n\nAxis: Exposure of Sensitive Information Through Metadata (http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1230)\nRoles: object\nSubclasses:\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-202: Exposure of Sensitive Information Through Data Queries\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-612: Improper Authorization of Index Containing Sensitive Information\n\nAxis: Exposure of Sensitive Information Due to Incompatible Policies (http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213)\nRoles: agent\nSiblings:\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-359: Exposure of Private Personal Information to an Unauthorized Actor\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1273: Device Unlock Credential Sharing\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1258: Exposure of Sensitive System Information Due to Uncleared Debug Information\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-538: Insertion of Sensitive Information into Externally-Accessible File or Directory\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-203: Observable Discrepancy\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-497: Exposure of Sensitive System Information to an Unauthorized Control Sphere\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1431: Driving Intermediate Cryptographic State/Results to Hardware Module Outputs\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-209: Generation of Error Message Containing Sensitive Information\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-201: Insertion of Sensitive Information Into Sent Data\n  - http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1295: Debug Messages Revealing Unnecessary Information"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1230",
+        "enumerations": [
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-202",
+            "class_label": "Exposure of Sensitive Information Through Data Queries",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-612",
+            "class_label": "Improper Authorization of Index Containing Sensitive Information",
+            "relevance": "high"
+          }
+        ]
+      },
+      {
+        "cco_class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213",
+        "enumerations": [
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-359",
+            "class_label": "Exposure of Private Personal Information to an Unauthorized Actor",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1273",
+            "class_label": "Device Unlock Credential Sharing",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1258",
+            "class_label": "Exposure of Sensitive System Information Due to Uncleared Debug Information",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-538",
+            "class_label": "Insertion of Sensitive Information into Externally-Accessible File or Directory",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-203",
+            "class_label": "Observable Discrepancy",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-497",
+            "class_label": "Exposure of Sensitive System Information to an Unauthorized Control Sphere",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1431",
+            "class_label": "Driving Intermediate Cryptographic State/Results to Hardware Module Outputs",
+            "relevance": "medium"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-209",
+            "class_label": "Generation of Error Message Containing Sensitive Information",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-201",
+            "class_label": "Insertion of Sensitive Information Into Sent Data",
+            "relevance": "high"
+          },
+          {
+            "class_uri": "http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1295",
+            "class_label": "Debug Messages Revealing Unnecessary Information",
+            "relevance": "high"
+          }
+        ]
+      }
+    ]
+  },
+  "context": {
+    "risk_id": "atlas-ip-information-in-prompt",
+    "risk_name": "IP information in prompt",
+    "policy_concept": "Proprietary Technical Data",
+    "num_axes": 2
+  }
+}

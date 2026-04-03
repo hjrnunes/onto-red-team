@@ -1,0 +1,735 @@
+model: gemma-3-12b-it
+policy_set: aramco-enriched.json
+timestamp: '2026-04-02T13:27:30.256229+00:00'
+stages_completed:
+- classify
+- identify_domains
+- map_risks
+- anchor
+- contextualize
+- structure
+events:
+- stage: classify
+  event: type_distribution
+  distribution:
+    B: 4
+    C: 1
+- stage: identify_domains
+  event: selected_domains
+  domains:
+  - CCO
+  - Commons
+  - D3FEND
+  - CSO
+  - IOF
+  - FIBO
+- stage: map_risks
+  event: weak_match
+  risk_id: atlas-ip-information-in-prompt
+  distance: 0.6051768064498901
+- stage: map_risks
+  event: weak_match
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  distance: 0.6209696531295776
+- stage: map_risks
+  event: match_count
+  policy_concept: Proprietary Technical Data
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Operational Security & Critical Infrastructure
+  count: 2
+- stage: map_risks
+  event: weak_match
+  risk_id: llm032025-supply-chain
+  distance: 0.6293923854827881
+- stage: map_risks
+  event: weak_match
+  risk_id: atlas-external-resources-attack-agentic
+  distance: 0.6325067281723022
+- stage: map_risks
+  event: match_count
+  policy_concept: Supply Chain & Geopolitical Risks
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Insider Threat & Cybersecurity
+  count: 2
+- stage: map_risks
+  event: match_count
+  policy_concept: Compliance & Sanctions Evasion
+  count: 3
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-ip-information-in-prompt
+  queries_run: 9
+  raw_total: 90
+  unique_after_dedup: 68
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+  hit_count: 3
+  best_distance: 0.33695560693740845
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Funds/CollectiveInvestmentVehicles/RiskLevel
+  hit_count: 3
+  best_distance: 0.34649956226348877
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1230
+  hit_count: 3
+  best_distance: 0.40533751249313354
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213
+  hit_count: 2
+  best_distance: 0.3222414255142212
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-ip-information-in-prompt
+  uri: http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure
+  hit_count: 2
+  best_distance: 0.3385275602340698
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-1230
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  hit_count: 1
+  best_distance: 0.3931668996810913
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty
+  hit_count: 1
+  best_distance: 0.4523963928222656
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-402
+  hit_count: 1
+  best_distance: 0.5383176803588867
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+  hit_count: 1
+  best_distance: 0.5429973602294922
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-ip-rights/-trade-secrets
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-291
+  hit_count: 1
+  best_distance: 0.5467719435691833
+  query_sources:
+  - description
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ai-risk-taxonomy-network-disruption
+  queries_run: 1
+  raw_total: 10
+  unique_after_dedup: 10
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#IMP-0002
+  hit_count: 1
+  best_distance: 0.4304988384246826
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkConnectionEvent
+  hit_count: 1
+  best_distance: 0.434701144695282
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkConnectionResetEvent
+  hit_count: 1
+  best_distance: 0.46138787269592285
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkConnectionFailEvent
+  hit_count: 1
+  best_distance: 0.4862580895423889
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ai-risk-taxonomy-network-disruption
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkVulnerabilityAssessment
+  hit_count: 1
+  best_distance: 0.49575304985046387
+  query_sources:
+  - description
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#IMP-0002
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#NetworkConnectionEvent
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-harmful-code-generation
+  queries_run: 10
+  raw_total: 100
+  unique_after_dedup: 77
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T0820
+  hit_count: 4
+  best_distance: 0.30202263593673706
+  query_sources:
+  - description
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  hit_count: 3
+  best_distance: 0.37750935554504395
+  query_sources:
+  - concern
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0018.000
+  hit_count: 3
+  best_distance: 0.3942248225212097
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: https://spec.edmcouncil.org/fibo/ontology/SEC/Funds/CollectiveInvestmentVehicles/RiskLevel
+  hit_count: 3
+  best_distance: 0.4166424870491028
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-harmful-code-generation
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  hit_count: 2
+  best_distance: 0.33810096979141235
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T0820
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: llm032025-supply-chain
+  queries_run: 13
+  raw_total: 130
+  unique_after_dedup: 86
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0000
+  hit_count: 6
+  best_distance: 0.39089882373809814
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#EX-0012.13
+  hit_count: 5
+  best_distance: 0.42339956760406494
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.002
+  hit_count: 5
+  best_distance: 0.46214479207992554
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047
+  hit_count: 4
+  best_distance: 0.36366748809814453
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: llm032025-supply-chain
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+  hit_count: 4
+  best_distance: 0.44669657945632935
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.002
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: atlas-external-resources-attack-agentic
+  queries_run: 2
+  raw_total: 20
+  unique_after_dedup: 17
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0084.002
+  hit_count: 2
+  best_distance: 0.33164864778518677
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0015
+  hit_count: 2
+  best_distance: 0.34481728076934814
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0029
+  hit_count: 2
+  best_distance: 0.3635460138320923
+  query_sources:
+  - description
+  - concern
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#Attacker
+  hit_count: 1
+  best_distance: 0.3409457206726074
+  query_sources:
+  - description
+- stage: anchor
+  event: multi_query_hit
+  risk_id: atlas-external-resources-attack-agentic
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T0820
+  hit_count: 1
+  best_distance: 0.358715295791626
+  query_sources:
+  - description
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#Attacker
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0084.002
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: nist-information-security
+  queries_run: 67
+  raw_total: 670
+  unique_after_dedup: 384
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T0820
+  hit_count: 11
+  best_distance: 0.3933430314064026
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015
+  hit_count: 8
+  best_distance: 0.33188992738723755
+  query_sources:
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0001
+  hit_count: 7
+  best_distance: 0.3756621479988098
+  query_sources:
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0007
+  hit_count: 7
+  best_distance: 0.41671478748321533
+  query_sources:
+  - description
+  - action
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: nist-information-security
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0011
+  hit_count: 7
+  best_distance: 0.46602439880371094
+  query_sources:
+  - action
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0001
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: credo-risk-038
+  queries_run: 9
+  raw_total: 90
+  unique_after_dedup: 74
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T0820
+  hit_count: 3
+  best_distance: 0.30202263593673706
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057
+  hit_count: 3
+  best_distance: 0.3328084349632263
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213
+  hit_count: 2
+  best_distance: 0.3222414255142212
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+  hit_count: 2
+  best_distance: 0.33695560693740845
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-038
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024.000
+  hit_count: 2
+  best_distance: 0.3703206181526184
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0024
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: granite-unethical-behavior
+  queries_run: 8
+  raw_total: 80
+  unique_after_dedup: 57
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: granite-unethical-behavior
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.002
+  hit_count: 4
+  best_distance: 0.35152870416641235
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: granite-unethical-behavior
+  uri: http://taxonomy-refiner.io/ontologies/cso#ThreatsOfViolence
+  hit_count: 4
+  best_distance: 0.37718528509140015
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: granite-unethical-behavior
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048
+  hit_count: 3
+  best_distance: 0.4496479034423828
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: granite-unethical-behavior
+  uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+  hit_count: 3
+  best_distance: 0.4514739513397217
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: granite-unethical-behavior
+  uri: http://taxonomy-refiner.io/ontologies/cso#DeathThreat
+  hit_count: 3
+  best_distance: 0.47721779346466064
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.002
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: credo-risk-023
+  queries_run: 6
+  raw_total: 60
+  unique_after_dedup: 47
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-023
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.000
+  hit_count: 3
+  best_distance: 0.437136709690094
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-023
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001
+  hit_count: 3
+  best_distance: 0.45510613918304443
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-023
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.TA0015
+  hit_count: 3
+  best_distance: 0.4744833707809448
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-023
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047
+  hit_count: 3
+  best_distance: 0.4951794743537903
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: credo-risk-023
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0029
+  hit_count: 3
+  best_distance: 0.5008739233016968
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0029
+  method: llm_fallback
+- stage: anchor
+  event: candidate_expansion
+  risk_id: ail-nonviolent-crimes
+  queries_run: 21
+  raw_total: 210
+  unique_after_dedup: 122
+  kept_after_filter: 5
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0084.002
+  hit_count: 7
+  best_distance: 0.4051004648208618
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T1588.007
+  hit_count: 6
+  best_distance: 0.378254234790802
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001
+  hit_count: 6
+  best_distance: 0.39040935039520264
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0029
+  hit_count: 6
+  best_distance: 0.42445051670074463
+  query_sources:
+  - cross_mapping
+- stage: anchor
+  event: multi_query_hit
+  risk_id: ail-nonviolent-crimes
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048
+  hit_count: 6
+  best_distance: 0.42837876081466675
+  query_sources:
+  - description
+  - cross_mapping
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048
+  method: llm_fallback
+- stage: anchor
+  event: role_derivation
+  uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001
+  method: llm_fallback
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#CWE-213
+  sibling_count: 10
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#IMP-0002
+  sibling_count: 5
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#T0820
+  sibling_count: 6
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.002
+  sibling_count: 4
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0084.002
+  sibling_count: 2
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0001
+  sibling_count: 7
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0015
+  sibling_count: 10
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0057
+  sibling_count: 5
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048.002
+  sibling_count: 4
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0047
+  sibling_count: 3
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0029
+  sibling_count: 6
+- stage: contextualize
+  event: sibling_fallback
+  axis_uri: http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0010.001
+  sibling_count: 4

@@ -1,0 +1,271 @@
+taxonomies:
+- id: client-aramco-enriched
+  name: Client ARAMCO-ENRICHED Policy Taxonomy
+  type: RiskTaxonomy
+groups:
+- id: client-aramco-enriched-safety
+  name: Safety Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-aramco-enriched
+- id: client-aramco-enriched-confidentiality
+  name: Confidentiality Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-aramco-enriched
+- id: client-aramco-enriched-scope-regulatory
+  name: Scope & Regulatory Policies
+  type: RiskGroup
+  isDefinedByTaxonomy: client-aramco-enriched
+entries:
+- id: client-aramco-enriched-ip-information-in-prompt
+  name: IP information in prompt
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-confidentiality
+  tag: ip-information-in-prompt
+  broad_mappings:
+  - nist-data-privacy
+  related_mappings:
+  - ail-intellectual-property
+  - llm022025-sensitive-information-disclosure
+  - mit-ai-causal-risk-entity-other
+  - mit-ai-causal-risk-intent-unintentional
+  - mit-ai-causal-risk-timing-post-deployment
+  - mit-ai-risk-subdomain-2.1
+  domain_context_summary:
+    axis_count: 4
+    enumeration_count: 0
+    source_ontologies: []
+    axes:
+    - class: context
+      uri: https://www.omg.org/spec/Commons/ContextualDesignators/Context
+      roles:
+      - location
+      enumeration_count: 0
+    - class: authorising party
+      uri: https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizingParty
+      roles:
+      - agent
+      enumeration_count: 0
+    - class: authorised party
+      uri: https://www.omg.org/spec/Commons/BusinessAuthorizations/AuthorizedParty
+      roles:
+      - agent
+      - instrument
+      enumeration_count: 0
+    - class: disclosure provision
+      uri: https://spec.edmcouncil.org/fibo/ontology/FND/Agreements/Contracts/DisclosureProvision
+      roles:
+      - object
+      enumeration_count: 0
+- id: client-aramco-enriched-llm022025-sensitive-information-disclosure
+  name: LLM02:2025 Sensitive Information Disclosure
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-confidentiality
+  tag: llm022025-sensitive-information-disclosure
+  close_mappings:
+  - credo-risk-037
+  broad_mappings:
+  - atlas-exposing-personal-information
+  - atlas-prompt-leaking
+  - atlas-revealing-confidential-information
+  related_mappings:
+  - ail-defamation
+  - ail-intellectual-property
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - ail-violent-crimes
+  - atlas-attribute-inference-attack
+  - atlas-confidential-data-in-prompt
+  - atlas-confidential-information-in-data
+  - atlas-ip-information-in-prompt
+  - atlas-membership-inference-attack
+  - atlas-personal-information-in-data
+  - atlas-personal-information-in-prompt
+  - atlas-reidentification
+  - credo-risk-036
+  - credo-risk-038
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 0
+    source_ontologies: []
+    axes:
+    - class: Financial Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      roles:
+      - object
+      enumeration_count: 0
+- id: client-aramco-enriched-network-disruption
+  name: Network disruption
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-safety
+  tag: network-disruption
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 5
+    source_ontologies:
+    - CCO
+    - CSO
+    axes:
+    - class: Warning Message
+      uri: https://www.commoncoreontologies.org/ont00002011
+      roles:
+      - object
+      - instrument
+      enumeration_count: 2
+    - class: Disrupting Disposition
+      uri: https://www.commoncoreontologies.org/ont00000997
+      roles:
+      - instrument
+      enumeration_count: 1
+    - class: Cyberterrorism
+      uri: http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism
+      roles:
+      - object
+      enumeration_count: 2
+- id: client-aramco-enriched-nuclear-facilities
+  name: Nuclear facilities
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-safety
+  tag: nuclear-facilities
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 3
+    source_ontologies:
+    - CCO
+    axes:
+    - class: Nuclear Storage Depot
+      uri: https://www.commoncoreontologies.org/ont00001257
+      roles:
+      - location
+      enumeration_count: 3
+- id: client-aramco-enriched-llm092025-misinformation
+  name: LLM09:2025 Misinformation
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-safety
+  tag: llm092025-misinformation
+  broad_mappings:
+  - atlas-incomplete-advice
+  - atlas-spreading-disinformation
+  related_mappings:
+  - ail-defamation
+  - ail-specialized-advice
+  - atlas-hallucination
+  - atlas-harmful-code-generation
+  - credo-risk-017
+  - credo-risk-021
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 4
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Misinformation
+      uri: http://taxonomy-refiner.io/ontologies/cso#Misinformation
+      roles:
+      - object
+      enumeration_count: 4
+- id: client-aramco-enriched-offensive-cyber-capabilities
+  name: Offensive cyber capabilities
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-safety
+  tag: offensive-cyber-capabilities
+  broad_mappings:
+  - atlas-attribute-inference-attack
+  - atlas-data-contamination
+  - atlas-data-poisoning
+  - atlas-evasion-attack
+  - atlas-extraction-attack
+  - atlas-harmful-code-generation
+  - atlas-prompt-injection
+  - atlas-prompt-leaking
+  - atlas-prompt-priming
+  - atlas-unreliable-source-attribution
+  related_mappings:
+  - ail-nonviolent-crimes
+  - ail-privacy
+  - credo-risk-038
+  - credo-risk-040
+  - credo-risk-041
+  domain_context_summary:
+    axis_count: 3
+    enumeration_count: 0
+    source_ontologies: []
+    axes:
+    - class: Harmful How-To
+      uri: http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo
+      roles:
+      - instrument
+      enumeration_count: 0
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 0
+    - class: technical specification document
+      uri: https://www.omg.org/spec/Commons/Documents/TechnicalSpecificationDocument
+      roles:
+      - object
+      enumeration_count: 0
+- id: client-aramco-enriched-regulatory-compliance
+  name: Regulatory compliance
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-scope-regulatory
+  tag: regulatory-compliance
+  related_mappings:
+  - granite-guardian-harm
+  - atlas-legal-accountability
+  - mit-ai-risk-subdomain-6.4
+  - mit-ai-risk-subdomain-6.5
+  - nist-data-privacy
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 0
+    source_ontologies: []
+    axes:
+    - class: regulatory report
+      uri: https://www.omg.org/spec/Commons/RegulatoryAgencies/RegulatoryReport
+      roles:
+      - object
+      enumeration_count: 0
+- id: client-aramco-enriched-national-securitypublic-interests
+  name: National security/public interests
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-scope-regulatory
+  tag: national-securitypublic-interests
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 5
+    source_ontologies:
+    - CSO
+    axes:
+    - class: Dangerous Information
+      uri: http://taxonomy-refiner.io/ontologies/cso#DangerousInformation
+      roles:
+      - object
+      enumeration_count: 5
+- id: client-aramco-enriched-insufficient-upstream-transparency
+  name: Insufficient upstream transparency
+  type: Risk
+  isDefinedByTaxonomy: client-aramco-enriched
+  isPartOf: client-aramco-enriched-scope-regulatory
+  tag: insufficient-upstream-transparency
+  related_mappings:
+  - nist-value-chain-and-component-integration
+  - llm032025-supply-chain
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 0
+    source_ontologies: []
+    axes:
+    - class: software agent
+      uri: https://www.omg.org/spec/Commons/PartiesAndSituations/SoftwareAgent
+      roles:
+      - agent
+      enumeration_count: 0

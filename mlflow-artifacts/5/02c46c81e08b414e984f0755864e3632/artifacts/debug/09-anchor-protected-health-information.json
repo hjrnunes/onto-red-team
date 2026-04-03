@@ -1,0 +1,30 @@
+{
+  "call_number": 9,
+  "stage": "anchor",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying variation axes for AI risk concepts using ontology classes.\n\nA variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:\n- agent: Who performs or is affected by the action\n- object: What is acted upon\n- instrument: What tool/means is used\n- location: Where it occurs\n- temporal: When it occurs\n\nGiven a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.\n\nReturn 2-3 axes max."
+    },
+    {
+      "role": "user",
+      "content": "Risk: Compromise of privacy by obtaining\nDescription: AI systems that memorize and leak sensitive personal data or infer private information about individuals without their consent. Unexpected or unauthorized sharing of data and information can compromise user expectation of privacy, assist identity theft, or loss of confidential intellectual property.\nConcern: None\nPolicy: Protected Health Information\n\nCandidate ontology classes:\n- http://purl.obolibrary.org/obo/IAO_0000030: information content entity \u2014 A generically dependent continuant that is about some thing. [found by 6/18 queries]\n  Siblings: Information Content Entity, normal value\n- http://purl.obolibrary.org/obo/IAO_0000027: data item \u2014 a data item is an information content entity that is intended to be a truthful statement about something (modulo, e.g., measurement precision or other systematic errors) and is constructed/acquired by a method which reliably tends to produce (approximately) truthful statements. [found by 6/18 queries]\n  Siblings: DIPS question, directive information entity, patient symptom report\n- http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation: Privacy Violation \u2014 Unauthorized collection, disclosure, or use of personal information that compromises individual privacy, exposes sensitive data, or enables identity theft or discrimination. [found by 11/18 queries]\n  Siblings: Dangerous Information, Sexual Content, Intellectual Property\n- http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure: Direct Identifier Exposure \u2014 Disclosure of information that directly identifies individuals, such as names, addresses, government identifiers, or biometric data. [found by 11/18 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Employment Data Exposure\n- http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure: Financial Data Exposure \u2014 Disclosure of personal financial information including account numbers, credit scores, or transaction histories without authorization. [found by 11/18 queries]\n  Siblings: Unauthorized Surveillance, Health Data Exposure, Direct Identifier Exposure"
+    }
+  ],
+  "response": {
+    "axes": [
+      {
+        "cco_class_uri": "http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation",
+        "cco_class_label": "Privacy Violation",
+        "role": "object",
+        "rationale": "The risk explicitly describes 'Compromise of privacy' and the concern mentions unauthorized sharing of data. The 'Privacy Violation' class directly captures this concept: 'Unauthorized collection, discloasure, or use of personal information that compromises individual privacy...'"
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Protected Health Information",
+    "risk_id": "mit-ai-risk-subdomain-2.1",
+    "risk_name": "Compromise of privacy by obtaining",
+    "num_candidates": 5
+  }
+}

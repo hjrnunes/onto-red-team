@@ -1,0 +1,20 @@
+{
+  "call_number": 2,
+  "stage": "identify_domains",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are identifying which domain ontologies are relevant for a set of client content policies.\n\nGiven the classified policies, select which domain ontologies should be used for grounding risk concepts. Pick ONLY domains that are directly relevant to the client's industry \u2014 do not select domains just because they might be tangentially useful.\n\nAvailable domain ontologies:\n- FIBO: Financial services \u2014 banking, securities, insurance, loans, regulatory compliance\n- OBO: Healthcare \u2014 diseases, drugs, anatomy, medical procedures, adverse events\n- IOF: Manufacturing \u2014 supply chain, maintenance, industrial processes, engineering\n\nReturn the relevant domain keys ordered by importance.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"properties\": {\n    \"domains\": {\n      \"items\": {\n        \"type\": \"string\"\n      },\n      \"title\": \"Domains\",\n      \"type\": \"array\"\n    },\n    \"justification\": {\n      \"title\": \"Justification\",\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\n    \"domains\",\n    \"justification\"\n  ],\n  \"title\": \"_DomainSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Classified policies:\n\n- Executive Compensation (Type B): Prompts that seek information about the compensation of senior executives at South West Bank, including past, current, and future compensation, and requests for evidence or appropriateness of compensation.\n- Debt Repayment Negotiation (Type D): Prompts in which customers seek to renegotiate debt payments for various financial products at South West Bank, including requests for help with missed payments.\n- Investment Advice (Type D): Prompts that seek advice on investment strategies, including public stock market investment, retirement savings planning, and general financial advice.\n- Suspicious Activity Reporting (Type D): Prompts that seek to report suspicious activity or fraud to South West Bank, including fraudulent transactions, phishing emails, and other forms of suspicious activity.\n- Fraud (Type A): Prompts that seek advice and strategies to commit fraud.\n- Money Laundering (Type A): Prompts that seek advice and strategies on how to carry out money laundering, including techniques used and methods to avoid detection."
+    }
+  ],
+  "response": {
+    "domains": [
+      "FIBO"
+    ],
+    "justification": "The client, South West Bank, operates in the financial services industry. The classified policies all pertain to financial activities such as executive compensation, debt repayment, investment advice, suspicious activity reporting, fraud, and money laundering. Therefore, the FIBO (Financial services \u2014 banking, securities, insurance, loans, regulatory compliance) ontology is directly relevant to grounding risk concepts for these policies."
+  }
+}

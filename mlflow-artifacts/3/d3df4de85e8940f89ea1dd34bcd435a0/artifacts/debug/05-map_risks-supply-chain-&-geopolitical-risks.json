@@ -1,0 +1,35 @@
+{
+  "call_number": 5,
+  "stage": "map_risks",
+  "messages": [
+    {
+      "role": "system",
+      "content": "You are mapping client content policies to known AI risk entries from a knowledge graph.\n\nGiven a policy definition and a numbered list of candidate risks, select the most relevant risks (1-3) by their number and classify their relevance:\n- primary: Directly addresses the policy concern\n- supporting: Related but not the primary match\n- tangential: Loosely related\n\nOnly include risks that genuinely match the policy \u2014 it is better to return 1 strong match than 3 weak ones.\n\nIMPORTANT: Use the candidate NUMBER (not the ID) for risk_index. Keep risk_name values SHORT (max 5 words). Keep justifications to one sentence.\n\n\n        As a genius expert, your task is to understand the content and provide\n        the parsed objects in json that match the following json_schema:\n\n\n        {\n  \"$defs\": {\n    \"_SlimRiskMatch\": {\n      \"properties\": {\n        \"risk_index\": {\n          \"title\": \"Risk Index\",\n          \"type\": \"integer\"\n        },\n        \"risk_name\": {\n          \"title\": \"Risk Name\",\n          \"type\": \"string\"\n        },\n        \"relevance\": {\n          \"enum\": [\n            \"primary\",\n            \"supporting\",\n            \"tangential\"\n          ],\n          \"title\": \"Relevance\",\n          \"type\": \"string\"\n        },\n        \"justification\": {\n          \"title\": \"Justification\",\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"risk_index\",\n        \"risk_name\",\n        \"relevance\",\n        \"justification\"\n      ],\n      \"title\": \"_SlimRiskMatch\",\n      \"type\": \"object\"\n    }\n  },\n  \"properties\": {\n    \"matched_risks\": {\n      \"items\": {\n        \"$ref\": \"#/$defs/_SlimRiskMatch\"\n      },\n      \"title\": \"Matched Risks\",\n      \"type\": \"array\"\n    }\n  },\n  \"required\": [\n    \"matched_risks\"\n  ],\n  \"title\": \"_RiskSelection\",\n  \"type\": \"object\"\n}\n\n        Make sure to return an instance of the JSON, not the schema itself\n"
+    },
+    {
+      "role": "user",
+      "content": "Policy: Supply Chain & Geopolitical Risks\nDefinition: Prompts seeking unethical strategies to disrupt Aramco's logistics, supply chain, and export strategies, with the aim of disrupting global energy security.\nPolicy Type: B\n\nCandidate risks:\n- 1: Lack of AI agent transparency \u2014 Lack of AI agent transparency is due to insufficient documentation of the AI agent design, development, evaluation process, absence of insights into the inner workings of the AI agent, and interaction with other agents/tools/resources. (Concern: Transparency is important for AI ethics and guiding appropriate use of AI agents. Insufficient documentation might make it more difficult to govern AI agent usage, evaluate risks, to modify, or reuse the agents.  Additionally, transparency regarding how the agent's risks were determined, evaluated, and mitigated play a role in identifying an agent's suitability and evaluating its trustworthiness. The lack of standardized requirements might limit disclosure as organizations protect trade secrets and try to limit others from copying their agents.)\n- 2: LLM03:2025 Supply Chain \u2014 LLM supply chains are susceptible to various vulnerabilities, which can affect the integrity of training data, models, and deployment platforms. These risks can result in biased outputs, security breaches, or system failures. While traditional software vulnerabilities focus on issues like code flaws and dependencies, in ML the risks also extend to third-party pre-trained models and data.\n  Cross-mappings: atlas-data-acquisition[broad], atlas-data-contamination[broad], atlas-data-curation[broad]\n- 3: Attack on AI agents' external resources \u2014 Attackers intentionally create vulnerabilities or exploit existing vulnerabilities in external resources (tools/database/applications/services/other agents) that AI agents rely on to execute their intended actions or to achieve their goals. (Concern: Compromised external resources could impact the AI agent's performance in different ways, such as manipulating AI agents to pursue a different goal, manipulating AI agents to execute undesired actions, capturing and relaying interactions between AI agents to malicious actors, and getting AI agents to share personal or confidential information.)\n- 4: Insufficient upstream transparency (AI, 2023) \u2014 The AI system's upstream providers or components in the value chain may lack transparency, potentially increasing uncertainty and risk, and making it challenging to assess the system's compliance, performance, or security.\n  Cross-mappings: nist-value-chain-and-component-integration[related], llm032025-supply-chain[related]\n- 5: LLM09:2025 Misinformation \u2014 Misinformation from LLMs poses a core vulnerability for applications relying on these models. Misinformation occurs when LLMs produce false or misleading information that appears credible. This vulnerability can lead to security breaches, reputational damage, and legal liability.\n  Cross-mappings: atlas-incomplete-advice[broad], atlas-spreading-disinformation[broad], ail-defamation[related]"
+    }
+  ],
+  "response": {
+    "matched_risks": [
+      {
+        "risk_index": 2,
+        "risk_name": "LLM03:2025 Supply Chain",
+        "relevance": "primary",
+        "justification": "The policy directly concerns disruption of Aramco's supply chain, and this risk highlights vulnerabilities within LLM supply chains, directly aligning with the policy's focus."
+      },
+      {
+        "risk_index": 3,
+        "risk_name": "Attack on AI agents",
+        "relevance": "supporting",
+        "justification": "Disrupting logistics and export strategies could involve attacks on external resources used by AI agents, making this a relevant supporting risk."
+      }
+    ]
+  },
+  "context": {
+    "policy_concept": "Supply Chain & Geopolitical Risks",
+    "policy_type": "B",
+    "num_candidates": 5
+  }
+}
