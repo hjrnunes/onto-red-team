@@ -15,6 +15,7 @@ from run_battery import (
     build_evaluate_cmd,
     run_model,
     format_summary_table,
+    parse_args,
 )
 
 
@@ -310,3 +311,31 @@ def test_format_summary_table_single():
     results = {"m1": {"p1": "OK"}}
     table = format_summary_table(results, ["p1"])
     assert "OK" in table
+
+
+def test_parse_args_minimal():
+    args = parse_args(["my-run"])
+    assert args.run_name == "my-run"
+    assert args.policies is None
+    assert args.models is None
+    assert not args.skip_ingest
+    assert not args.dry_run
+
+
+def test_parse_args_full():
+    args = parse_args([
+        "v1", "--config", "custom.yaml",
+        "--policy", "swb", "--policy", "generic",
+        "--model", "phi-4",
+        "--skip-ingest", "--skip-generate",
+        "--tags", "exp1", "--tags", "exp2",
+        "--dry-run",
+    ])
+    assert args.run_name == "v1"
+    assert args.config == "custom.yaml"
+    assert args.policies == ["swb", "generic"]
+    assert args.models == ["phi-4"]
+    assert args.skip_ingest
+    assert args.skip_generate
+    assert args.tags == ["exp1", "exp2"]
+    assert args.dry_run

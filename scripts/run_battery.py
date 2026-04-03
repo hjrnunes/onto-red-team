@@ -6,11 +6,13 @@
 
 from __future__ import annotations
 
+import argparse
 import os
 import shutil
 import subprocess
 import sys
 import tempfile
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import yaml
@@ -292,3 +294,95 @@ def format_summary_table(results: dict[str, dict[str, str]], policies: list[str]
             cells.append(status.rjust(width))
         lines.append(f"{policy.ljust(policy_col)}  {'  '.join(cells)}")
     return "\n".join(lines)
+
+
+def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    p = argparse.ArgumentParser(description="Run pipeline battery across policies × models")
+    p.add_argument("run_name", help="Name suffix for this battery run")
+    p.add_argument("--config", default="battery.yaml", help="Config file (default: battery.yaml)")
+    p.add_argument("--policy", action="append", dest="policies", help="Run only this policy (repeatable)")
+    p.add_argument("--model", action="append", dest="models", help="Run only this model (repeatable)")
+    p.add_argument("--skip-ingest", action="store_true", help="Skip the ingest stage")
+    p.add_argument("--skip-refine", action="store_true", help="Skip the refine stage")
+    p.add_argument("--skip-generate", action="store_true", help="Skip generate + evaluate stages")
+    p.add_argument("--tags", action="append", default=[], help="Run tags (repeatable)")
+    p.add_argument("--dry-run", action="store_true", help="Print commands without executing")
+    return p.parse_args(argv)
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = parse_args(argv)
+    config_path = Path(args.config).resolve()
+    cfg = load_config(config_path)
+    repo_root = config_path.parent
+
+    os.environ["MLFLOW_TRACKING_INSECURE_TLS"] = "true"
+    api_key = os.environ.get("REFINER_API_KEY", "")
+
+    policies = args.policies or cfg["policies"]
+    model_filter = args.models
+    models = cfg["models"]
+    if model_filter:
+        unknown = set(model_filter) - set(models)
+        if unknown:
+            print(f"Error: unknown model(s): {', '.join(unknown)}", file=sys.stderr)
+            return 1
+        models = {m: models[m] for m in model_filter}
+
+    unknown_policies = set(policies) - set(cfg["policies"])
+    if unknown_policies:
+        print(f"Warning: policies not in config: {', '.join(unknown_policies)}", file=sys.stderr)
+
+    cfg["runs_dir"].mkdir(parents=True, exist_ok=True)
+
+    all_results: dict[str, dict[str, str]] = {}
+
+    def _worker(model_name: str, model_url: str) -> tuple[str, dict[str, str]]:
+        run_name = f"{model_name}-{args.run_name}"
+        log_path = cfg["runs_dir"] / f"{run_name}.log"
+        print(f"=== Starting {model_name} (log: {log_path}) ===")
+        results = run_model(
+            model_name=model_name,
+            model_url=model_url,
+            run_name=run_name,
+            policies=policies,
+            cfg=cfg,
+            api_key=api_key,
+            tags=args.tags,
+            skip_ingest=args.skip_ingest,
+            skip_refine=args.skip_refine,
+            skip_generate=args.skip_generate,
+            dry_run=args.dry_run,
+            repo_root=repo_root,
+            log_path=log_path,
+        )
+        return model_name, results
+
+    with ThreadPoolExecutor(max_workers=len(models)) as pool:
+        futures = {pool.submit(_worker, name, url): name for name, url in models.items()}
+        for future in as_completed(futures):
+            model_name = futures[future]
+            try:
+                name, results = future.result()
+                all_results[name] = results
+                failed = any(v == "FAIL" for v in results.values())
+                status = "FAILED" if failed else "done"
+                print(f"=== {name} {status} ===")
+            except Exception as e:
+                print(f"=== {model_name} FAILED: {e} ===")
+                all_results[model_name] = {p: "FAIL" for p in policies}
+
+    print()
+    print(format_summary_table(all_results, policies))
+    print()
+
+    any_failed = any(v == "FAIL" for r in all_results.values() for v in r.values())
+    if any_failed:
+        print("Some runs failed.")
+        return 1
+    print("All runs complete.")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
