@@ -3,7 +3,15 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from run_battery import load_config, resolve_policy_file
+from run_battery import (
+    load_config,
+    resolve_policy_file,
+    build_ingest_cmd,
+    build_refine_cmd,
+    build_emit_cmd,
+    build_generate_cmd,
+    build_evaluate_cmd,
+)
 
 
 def test_load_config_resolves_relative_paths(tmp_path):
@@ -92,3 +100,103 @@ def test_resolve_missing_policy_raises(tmp_path):
         assert False, "Should have raised"
     except FileNotFoundError:
         pass
+
+
+def test_build_ingest_cmd():
+    cmd, cwd = build_ingest_cmd(
+        policy_file=Path("/p/swb.json"),
+        run_dir=Path("/runs/swb-phi4-v1"),
+        policy="swb",
+        model_name="phi-4",
+        model_url="http://localhost/v1",
+        api_key="secret",
+    )
+    assert cwd == "refiner"
+    assert cmd[:4] == ["uv", "run", "refiner", "ingest"]
+    assert "/p/swb.json" in cmd
+    assert "--output" in cmd
+    assert "--api-key" in cmd
+    assert "secret" in cmd
+
+
+def test_build_refine_cmd():
+    cmd, cwd = build_refine_cmd(
+        input_file=Path("/runs/swb-phi4-v1/swb-enriched.json"),
+        run_dir=Path("/runs/swb-phi4-v1"),
+        model_name="phi-4",
+        model_url="http://localhost/v1",
+        api_key="secret",
+        nexus_base_dir=Path("/nexus"),
+        onto_chroma=Path("/tmp/onto"),
+        nexus_chroma=Path("/tmp/nexus"),
+        tracking_uri="https://mlflow.example.com",
+        tags=["exp1", "exp2"],
+    )
+    assert cwd == "refiner"
+    assert cmd[:4] == ["uv", "run", "refiner", "run"]
+    assert "--track" in cmd
+    assert cmd[cmd.index("--tag") + 1] == "exp1"
+    tag_indices = [i for i, x in enumerate(cmd) if x == "--tag"]
+    assert len(tag_indices) == 2
+
+
+def test_build_refine_cmd_no_tags():
+    cmd, _ = build_refine_cmd(
+        input_file=Path("/in.json"),
+        run_dir=Path("/runs/x"),
+        model_name="m",
+        model_url="http://u",
+        api_key="k",
+        nexus_base_dir=Path("/n"),
+        onto_chroma=Path("/o"),
+        nexus_chroma=Path("/c"),
+        tracking_uri="https://t",
+        tags=[],
+    )
+    assert "--tag" not in cmd
+
+
+def test_build_emit_cmd():
+    cmd, cwd = build_emit_cmd(
+        run_dir=Path("/runs/swb-phi4-v1"),
+        policy_file=Path("/p/swb.json"),
+        samples_per_risk=15,
+    )
+    assert cwd == "refiner"
+    assert "15" in cmd
+
+
+def test_build_generate_cmd_with_key():
+    cmd, cwd = build_generate_cmd(
+        run_dir=Path("/runs/swb-phi4-v1"),
+        model_name="phi-4",
+        model_url="http://localhost/v1",
+        api_key="secret",
+    )
+    assert cwd == "redteam"
+    assert "--api-key" in cmd
+    assert "secret" in cmd
+    assert "hosted_vllm/phi-4" in cmd
+
+
+def test_build_generate_cmd_no_key():
+    cmd, _ = build_generate_cmd(
+        run_dir=Path("/runs/swb-phi4-v1"),
+        model_name="phi-4",
+        model_url="http://localhost/v1",
+        api_key="",
+    )
+    assert "--api-key" not in cmd
+
+
+def test_build_evaluate_cmd():
+    cmd, cwd = build_evaluate_cmd(
+        run_dir=Path("/runs/swb-phi4-v1"),
+        policy_file=Path("/p/swb.json"),
+        tracking_uri="https://mlflow.example.com",
+        tags=["exp1"],
+    )
+    assert cwd == "refiner"
+    assert "--adversarial" in cmd
+    assert "--track" in cmd
+    assert cmd[cmd.index("--tag") + 1] == "exp1"
