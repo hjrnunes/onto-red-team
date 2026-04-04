@@ -59,8 +59,12 @@ class PolicyRiskMapping(BaseModel):
 class VariationAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
-    roles: list[str]
+    bfo_category: str = ""
+    vocabulary_concept: str = ""
+    vocabulary_label: str = ""
     rationale: str
+    # Kept for backward compatibility with emit stage
+    roles: list[str] = []
 
 
 class RiskVariationAxes(BaseModel):
@@ -75,14 +79,17 @@ class AxisEnumeration(BaseModel):
     class_label: str
     source_ontology: str
     relevance: Literal["high", "medium", "low"]
-    provenance: Literal["subclass", "sibling"] = "subclass"
+    provenance: str = "generated"  # "generated", "subclass", "sibling"
 
 
 class DomainContextAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
-    roles: list[str]
+    bfo_category: str = ""
+    vocabulary_context: dict = {}
     enumerations: list[AxisEnumeration]
+    # Kept for backward compatibility with emit stage
+    roles: list[str] = []
 
 
 class DomainContextProfile(BaseModel):
@@ -99,11 +106,13 @@ class DomainContextProfile(BaseModel):
 class SampledAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
-    roles: list[str]
+    bfo_category: str = ""
     sampled_uri: str
     sampled_label: str
     source_ontology: str
     relevance: Literal["high", "medium", "low"]
+    # Kept for backward compatibility with emit stage
+    roles: list[str] = []
 
 
 @dataclass
