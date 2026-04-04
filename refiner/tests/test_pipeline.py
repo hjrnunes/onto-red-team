@@ -80,7 +80,6 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             selected_domains=domains_result,
             risk_actions=map_result[4],
             related_risks=map_result[3],
-            merge_strategy=None,
             nexus_handlers=mock_risk_handlers,
             layer1_mappings=None,
             layer2_mappings=None,
@@ -145,7 +144,6 @@ def test_pipeline_until_identify_domains(mock_client, mock_config, mock_risk_han
 
 def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     """When domain-specific ontologies selected, build_generic_safety_uris is called."""
-    from refiner.stages.anchor import WeightedMergeStrategy
     policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
     classify_result = [
         PolicyClassification(
@@ -155,7 +153,6 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
     ]
     # FIBO is domain-specific (not in ALWAYS_INCLUDED)
     domains_result = ["CCO", "Commons", "D3FEND", "CSO", "FIBO"]
-    strategy = WeightedMergeStrategy()
 
     fake_descendants = [
         {"uri": "http://cso#Weapons", "label": "Weapons", "depth": 1},
@@ -170,7 +167,7 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
 
         run_pipeline(
             policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers,
-            until="identify_domains", merge_strategy=strategy,
+            until="identify_domains",
         )
 
         # build_generic_safety_uris should be called with onto_handlers
@@ -179,7 +176,6 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
 
 def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     """When only always-included domains selected, build_generic_safety_uris is not called."""
-    from refiner.stages.anchor import WeightedMergeStrategy
     policies = [Policy(policy_concept="Safety", concept_definition="About safety")]
     classify_result = [
         PolicyClassification(
@@ -189,7 +185,6 @@ def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_conf
     ]
     # Only always-included domains — no domain-specific selection
     domains_result = ["CCO", "Commons", "D3FEND", "CSO"]
-    strategy = WeightedMergeStrategy()
 
     with patch("refiner.pipeline.classify", return_value=classify_result), \
          patch("refiner.pipeline.identify_domains", return_value=domains_result), \
@@ -198,7 +193,7 @@ def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_conf
 
         run_pipeline(
             policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers,
-            until="identify_domains", merge_strategy=strategy,
+            until="identify_domains",
         )
 
         # build_generic_safety_uris should NOT be called (no domain-specific domains)

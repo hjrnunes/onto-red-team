@@ -49,7 +49,6 @@ def run_pipeline(
     onto_handlers: dict,
     until: str | None = None,
     report: RunReport | None = None,
-    merge_strategy=None,
     layer1_mappings=None,
     layer2_mappings=None,
 ) -> PipelineState:
@@ -94,7 +93,6 @@ def run_pipeline(
         selected_domains=state.selected_domains,
         risk_actions=state.risk_actions,
         related_risks=state.related_risks,
-        merge_strategy=merge_strategy,
         nexus_handlers=risk_handlers,
         layer1_mappings=layer1_mappings,
         layer2_mappings=layer2_mappings,
