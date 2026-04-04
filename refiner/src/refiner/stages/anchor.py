@@ -19,13 +19,37 @@ logger = logging.getLogger(__name__)
 # (they produce vague, jargon-laden scenarios like "generically dependent continuant").
 _BFO_URI_PREFIX = "http://purl.obolibrary.org/obo/BFO_"
 
+# LKIF normative deontic-status classes describe permissibility categories
+# (allowed/disallowed/obliged), not domain concepts that can ground adversarial
+# scenarios. When sampled, they leak raw taxonomy labels into prompts.
+# Legal instrument classes (Statute, Directive, Code, Contract) are kept.
+_LKIF_PREFIX = "http://www.estrellaproject.org/lkif-core/"
+_LKIF_NORMATIVE_URIS: set[str] = {
+                                     # Deontic status meta-labels — describe permissibility, not domain concepts
+                                     f"{_LKIF_PREFIX}norm.owl#{name}"
+                                     for name in (
+        "Disallowed", "Disallowed_Intention", "Strictly_Disallowed",
+        "Allowed", "Allowed_And_Disallowed", "Strictly_Allowed",
+        "Observation_of_Violation", "Belief_In_Violation", "Obliged",
+    )
+                                 } | {
+                                     # Upper-ontology primitives — too abstract to ground scenarios
+                                     f"{_LKIF_PREFIX}expression.owl#Intention",
+                                     f"{_LKIF_PREFIX}expression.owl#Belief",
+                                     f"{_LKIF_PREFIX}action.owl#Agent",
+                                     f"{_LKIF_PREFIX}process.owl#Mental_Process",
+                                 }
+
 
 def _is_excluded_uri(uri: str, generic_safety_uris: set[str]) -> bool:
     """Check if a URI should be excluded from candidate pools.
 
-    Excludes BFO upper-ontology classes (always) and generic safety URIs (when set).
+    Excludes BFO upper-ontology classes (always), LKIF normative deontic-status
+    classes (always), and generic safety URIs (when set).
     """
     if uri.startswith(_BFO_URI_PREFIX):
+        return True
+    if uri in _LKIF_NORMATIVE_URIS:
         return True
     if generic_safety_uris and uri in generic_safety_uris:
         return True
@@ -37,22 +61,22 @@ def _is_excluded_uri(uri: str, generic_safety_uris: set[str]) -> bool:
 # falling back to broader categories.
 _CATEGORY_ROLES: dict[str, list[str]] = {
     # CCO categories (more specific — checked first)
-    "https://www.commoncoreontologies.org/ont00001017": ["agent"],               # Agent
+    "https://www.commoncoreontologies.org/ont00001017": ["agent"],  # Agent
     "https://www.commoncoreontologies.org/ont00000995": ["object", "instrument"],  # Material Artifact
-    "https://www.commoncoreontologies.org/ont00000005": ["object"],               # Act (process)
+    "https://www.commoncoreontologies.org/ont00000005": ["object"],  # Act (process)
     "https://www.commoncoreontologies.org/ont00000958": ["object", "instrument"],  # Information Content Entity
-    "https://www.commoncoreontologies.org/ont00000192": ["location"],             # Facility (not bridged — Material Artifact, not spatial)
+    "https://www.commoncoreontologies.org/ont00000192": ["location"],  # Facility (not bridged — Material Artifact, not spatial)
     # BFO categories (broader fallback)
-    "http://purl.obolibrary.org/obo/BFO_0000040": ["agent", "object"],   # material entity
-    "http://purl.obolibrary.org/obo/BFO_0000015": ["object"],            # process
-    "http://purl.obolibrary.org/obo/BFO_0000023": ["agent"],             # role (bearer acts)
-    "http://purl.obolibrary.org/obo/BFO_0000016": ["instrument"],        # disposition
-    "http://purl.obolibrary.org/obo/BFO_0000031": ["object"],            # generically dependent continuant
-    "http://purl.obolibrary.org/obo/BFO_0000019": ["object"],            # quality
-    "http://purl.obolibrary.org/obo/BFO_0000029": ["location"],          # site
-    "http://purl.obolibrary.org/obo/BFO_0000006": ["location"],          # spatial region
-    "http://purl.obolibrary.org/obo/BFO_0000141": ["location"],          # immaterial entity
-    "http://purl.obolibrary.org/obo/BFO_0000008": ["temporal"],          # temporal region
+    "http://purl.obolibrary.org/obo/BFO_0000040": ["agent", "object"],  # material entity
+    "http://purl.obolibrary.org/obo/BFO_0000015": ["object"],  # process
+    "http://purl.obolibrary.org/obo/BFO_0000023": ["agent"],  # role (bearer acts)
+    "http://purl.obolibrary.org/obo/BFO_0000016": ["instrument"],  # disposition
+    "http://purl.obolibrary.org/obo/BFO_0000031": ["object"],  # generically dependent continuant
+    "http://purl.obolibrary.org/obo/BFO_0000019": ["object"],  # quality
+    "http://purl.obolibrary.org/obo/BFO_0000029": ["location"],  # site
+    "http://purl.obolibrary.org/obo/BFO_0000006": ["location"],  # spatial region
+    "http://purl.obolibrary.org/obo/BFO_0000141": ["location"],  # immaterial entity
+    "http://purl.obolibrary.org/obo/BFO_0000008": ["temporal"],  # temporal region
     # Commons categories (reached via FIBO superclass chains)
     "https://www.omg.org/spec/Commons/PartiesAndSituations/Agent": ["agent"],
     "https://www.omg.org/spec/Commons/PartiesAndSituations/Party": ["agent"],
@@ -104,12 +128,12 @@ class SearchMergeStrategy(Protocol):
     """Protocol for merging per-domain search results into a candidate list."""
 
     def merge(
-        self,
-        per_domain_candidates: dict[str, list[dict]],
-        selected_domains: list[str],
-        max_candidates: int,
-        risk_context: dict,
-        generic_safety_uris: set[str],
+            self,
+            per_domain_candidates: dict[str, list[dict]],
+            selected_domains: list[str],
+            max_candidates: int,
+            risk_context: dict,
+            generic_safety_uris: set[str],
     ) -> list[dict]: ...
 
 
@@ -165,12 +189,12 @@ class WeightedMergeStrategy:
         return True
 
     def merge(
-        self,
-        per_domain_candidates: dict[str, list[dict]],
-        selected_domains: list[str],
-        max_candidates: int,
-        risk_context: dict,
-        generic_safety_uris: set[str],
+            self,
+            per_domain_candidates: dict[str, list[dict]],
+            selected_domains: list[str],
+            max_candidates: int,
+            risk_context: dict,
+            generic_safety_uris: set[str],
     ) -> list[dict]:
         selected_set = set(selected_domains)
         domain_selected = sorted(selected_set - self._always_included)
@@ -189,9 +213,9 @@ class WeightedMergeStrategy:
             for domain in domain_selected:
                 for c in per_domain_candidates.get(domain, []):
                     if (c["uri"] not in seen
-                        and remaining > 0
-                        and self._passes_threshold(c, generic_safety_uris)
-                        and len([r for r in result if r.get("domain") == domain]) < quota_per):
+                            and remaining > 0
+                            and self._passes_threshold(c, generic_safety_uris)
+                            and len([r for r in result if r.get("domain") == domain]) < quota_per):
                         result.append(c)
                         seen.add(c["uri"])
                         remaining -= 1
@@ -219,12 +243,12 @@ class GroupedMergeStrategy:
         self._always_included = set(always_included or ALWAYS_INCLUDED)
 
     def merge(
-        self,
-        per_domain_candidates: dict[str, list[dict]],
-        selected_domains: list[str],
-        max_candidates: int,
-        risk_context: dict,
-        generic_safety_uris: set[str],
+            self,
+            per_domain_candidates: dict[str, list[dict]],
+            selected_domains: list[str],
+            max_candidates: int,
+            risk_context: dict,
+            generic_safety_uris: set[str],
     ) -> list[dict]:
         active_domains = [d for d in selected_domains if d in per_domain_candidates]
         if not active_domains:
@@ -255,6 +279,8 @@ You are selecting ontology classes relevant to an AI risk.
 
 Given a risk (with description, concern, and policy context) and a numbered list of candidate ontology classes with definitions, select the classes most relevant to this specific risk. Return their indices.
 
+Each candidate is tagged with a role — agent (who acts), object (what is affected), or instrument (method/tool used). Select a diverse set covering at least two different roles IF and WHEN possible. Selecting multiple classes with the same role produces repetitive scenarios, but single-role scenarios may be plausible/desirable.
+
 Select up to {max_candidates} classes. Prefer classes that directly relate to the risk over tangentially related ones."""
 
 # Human-readable domain descriptors for LLM merge prompts.
@@ -266,6 +292,7 @@ _DOMAIN_DISPLAY: dict[str, str] = {
     "FIBO": "financial industry",
     "OBO": "biomedical/social",
     "IOF": "industrial",
+    "LKIF": "legal/regulatory",
 }
 
 
@@ -300,12 +327,12 @@ class LLMMergeStrategy:
         self._onto_handlers = onto_handlers
 
     def merge(
-        self,
-        per_domain_candidates: dict[str, list[dict]],
-        selected_domains: list[str],
-        max_candidates: int,
-        risk_context: dict,
-        generic_safety_uris: set[str],
+            self,
+            per_domain_candidates: dict[str, list[dict]],
+            _selected_domains: list[str],
+            max_candidates: int,
+            risk_context: dict,
+            generic_safety_uris: set[str],
     ) -> list[dict]:
         # Pre-filter: distance ceiling + BFO/safety URI exclusion
         pool: list[dict] = []
@@ -322,20 +349,25 @@ class LLMMergeStrategy:
         if not pool:
             return []
 
-        # Enrich pool with definitions if onto_handlers available
+        # Enrich pool with definitions and roles if onto_handlers available
         get_defn = (self._onto_handlers or {}).get("get_class_definition")
         if get_defn:
             for c in pool:
                 if "definition" not in c:
                     defn = get_defn(c.get("uri", ""))
                     c["definition"] = defn.get("definition", "") if defn else ""
+        if self._onto_handlers and "get_superclasses" in self._onto_handlers:
+            for c in pool:
+                if "roles" not in c:
+                    c["roles"] = derive_roles(c.get("uri", ""), self._onto_handlers) or ["object"]
 
         # Build numbered candidate list for LLM
         lines = []
         for idx, c in enumerate(pool):
             domain_display = _DOMAIN_DISPLAY.get(c.get("domain", ""), c.get("domain", ""))
+            role_tag = "/".join(c.get("roles", ["object"]))
             definition = _truncate_definition(c.get("definition", ""))
-            line = f"{idx}. {c.get('label', '')} [{domain_display}]"
+            line = f"{idx}. {c.get('label', '')} [{domain_display}, {role_tag}]"
             if definition:
                 line += f" — {definition}"
             lines.append(line)
@@ -403,11 +435,309 @@ def build_generic_safety_uris(onto_handlers: dict) -> set[str]:
     return uris
 
 
-def _search_per_domain(
-    queries: list[tuple[str, str]],
+# --- BFO category labels (lightweight replacement for _CATEGORY_ROLES) ---
+
+_BFO_CATEGORIES: dict[str, str] = {
+    "http://purl.obolibrary.org/obo/BFO_0000040": "MaterialEntity",
+    "http://purl.obolibrary.org/obo/BFO_0000015": "Process",
+    "http://purl.obolibrary.org/obo/BFO_0000031": "GenericallyDependentContinuant",
+    "http://purl.obolibrary.org/obo/BFO_0000020": "Quality",
+    "http://purl.obolibrary.org/obo/BFO_0000023": "Role",
+    "http://purl.obolibrary.org/obo/BFO_0000016": "Disposition",
+    "http://purl.obolibrary.org/obo/BFO_0000017": "RealizableEntity",
+    "http://purl.obolibrary.org/obo/BFO_0000029": "Site",
+    "http://purl.obolibrary.org/obo/BFO_0000006": "SpatialRegion",
+    "http://purl.obolibrary.org/obo/BFO_0000141": "ImmaterialEntity",
+    "http://purl.obolibrary.org/obo/BFO_0000008": "TemporalRegion",
+    "http://purl.obolibrary.org/obo/BFO_0000019": "Quality",
+    # CCO shortcuts
+    "https://www.commoncoreontologies.org/ont00000958": "InformationContentEntity",
+    "https://www.commoncoreontologies.org/ont00001017": "Agent",
+    "https://www.commoncoreontologies.org/ont00000995": "MaterialArtifact",
+    "https://www.commoncoreontologies.org/ont00000192": "Facility",
+    "https://www.commoncoreontologies.org/ont00000005": "Act",
+}
+
+
+def derive_bfo_category(class_uri: str, onto_handlers: dict, max_depth: int = 10) -> str:
+    """Walk superclass chain to find BFO/CCO category name. Returns '' if not found."""
+    visited = set()
+    current = class_uri
+    for _ in range(max_depth):
+        if current in _BFO_CATEGORIES:
+            return _BFO_CATEGORIES[current]
+        if current in visited:
+            break
+        visited.add(current)
+        supers = onto_handlers["get_superclasses"](current)
+        named = [s for s in supers if s.get("uri") and s["uri"] not in visited]
+        if not named:
+            break
+        current = named[0]["uri"]
+    return ""
+
+
+def navigate_from_seeds(
+    seed_mappings: list[dict],
     onto_handlers: dict,
-    selected_domains: list[str],
-    top_k_per_query: int,
+    selected_domains: list[str] | None,
+    generic_safety_uris: set[str] | None = None,
+) -> list[dict]:
+    """Structural navigation from SSSOM seed URIs. Returns candidate dicts."""
+    candidates = []
+    safety = generic_safety_uris or set()
+
+    for mapping in seed_mappings:
+        seed_uri = mapping["object_id"]
+        predicate = mapping["predicate_id"]
+        confidence = mapping.get("effective_confidence", mapping.get("confidence", 0.5))
+        vocab_concept = mapping.get("vocabulary_concept")
+        vocab_label = mapping.get("vocabulary_label")
+
+        if predicate == "skos:broadMatch":
+            discovered = onto_handlers["get_subclasses"](seed_uri, depth=2)
+            for cls in discovered:
+                uri = cls["uri"]
+                if _is_excluded_uri(uri, safety):
+                    continue
+                if selected_domains:
+                    domain = derive_source_ontology(uri)
+                    if domain and domain not in selected_domains:
+                        continue
+                candidates.append({
+                    "uri": uri,
+                    "label": cls.get("label", ""),
+                    "source": "structural",
+                    "path": [seed_uri, uri],
+                    "seed_uri": seed_uri,
+                    "effective_confidence": confidence,
+                    "predicate": predicate,
+                    "vocabulary_concept": vocab_concept,
+                    "vocabulary_label": vocab_label,
+                })
+
+        elif predicate == "skos:relatedMatch":
+            # Seed itself is a candidate
+            defn = onto_handlers["get_class_definition"](seed_uri)
+            if defn:
+                candidates.append({
+                    "uri": seed_uri,
+                    "label": defn.get("label", mapping.get("object_label", "")),
+                    "source": "structural",
+                    "path": [seed_uri],
+                    "seed_uri": seed_uri,
+                    "effective_confidence": confidence,
+                    "predicate": predicate,
+                    "vocabulary_concept": vocab_concept,
+                    "vocabulary_label": vocab_label,
+                })
+            # Navigate restrictions
+            if onto_handlers.get("get_restrictions"):
+                for r in onto_handlers["get_restrictions"](seed_uri):
+                    filler = r.get("filler", "")
+                    if not filler or _is_excluded_uri(filler, safety):
+                        continue
+                    filler_defn = onto_handlers["get_class_definition"](filler)
+                    if filler_defn:
+                        candidates.append({
+                            "uri": filler,
+                            "label": filler_defn.get("label", ""),
+                            "source": "structural",
+                            "path": [seed_uri, filler],
+                            "seed_uri": seed_uri,
+                            "effective_confidence": confidence * 0.9,
+                            "predicate": predicate,
+                            "vocabulary_concept": vocab_concept,
+                            "vocabulary_label": vocab_label,
+                            "restriction_property": r.get("property", ""),
+                        })
+            # Navigate siblings
+            for s in onto_handlers["get_siblings"](seed_uri):
+                s_uri = s["uri"]
+                if _is_excluded_uri(s_uri, safety):
+                    continue
+                if selected_domains:
+                    domain = derive_source_ontology(s_uri)
+                    if domain and domain not in selected_domains:
+                        continue
+                candidates.append({
+                    "uri": s_uri,
+                    "label": s.get("label", ""),
+                    "source": "structural",
+                    "path": [seed_uri, s_uri],
+                    "seed_uri": seed_uri,
+                    "effective_confidence": confidence * 0.8,
+                    "predicate": predicate,
+                    "vocabulary_concept": vocab_concept,
+                    "vocabulary_label": vocab_label,
+                })
+
+        elif predicate in ("skos:exactMatch", "skos:closeMatch"):
+            defn = onto_handlers["get_class_definition"](seed_uri)
+            if defn:
+                candidates.append({
+                    "uri": seed_uri,
+                    "label": defn.get("label", mapping.get("object_label", "")),
+                    "source": "structural",
+                    "path": [seed_uri],
+                    "seed_uri": seed_uri,
+                    "effective_confidence": confidence,
+                    "predicate": predicate,
+                    "vocabulary_concept": vocab_concept,
+                    "vocabulary_label": vocab_label,
+                })
+            if predicate == "skos:closeMatch":
+                for sub in onto_handlers["get_subclasses"](seed_uri, depth=1):
+                    candidates.append({
+                        "uri": sub["uri"],
+                        "label": sub.get("label", ""),
+                        "source": "structural",
+                        "path": [seed_uri, sub["uri"]],
+                        "seed_uri": seed_uri,
+                        "effective_confidence": confidence * 0.9,
+                        "predicate": predicate,
+                        "vocabulary_concept": vocab_concept,
+                        "vocabulary_label": vocab_label,
+                    })
+
+    # Deduplicate by URI, keep highest confidence
+    seen: dict[str, dict] = {}
+    for c in candidates:
+        uri = c["uri"]
+        if uri not in seen or c["effective_confidence"] > seen[uri]["effective_confidence"]:
+            seen[uri] = c
+    return list(seen.values())
+
+
+def constrained_search(
+    risk_description: str,
+    seed_mappings: list[dict],
+    onto_handlers: dict,
+    selected_domains: list[str] | None,
+    top_k: int = 8,
+) -> list[dict]:
+    """ChromaDB search scoped to domains containing seed URIs."""
+    if not onto_handlers.get("search_domains") or not selected_domains:
+        return []
+
+    seed_domains = set()
+    for m in seed_mappings:
+        domain = derive_source_ontology(m["object_id"])
+        if domain:
+            seed_domains.add(domain)
+    search_domains = list(seed_domains & set(selected_domains))
+    if not search_domains:
+        return []
+
+    raw = onto_handlers["search_domains"](risk_description, search_domains, top_k_per_domain=top_k)
+    results = []
+    for domain, hits in raw.items():
+        if not isinstance(hits, list):
+            continue
+        for hit in hits:
+            results.append({
+                "uri": hit["uri"],
+                "label": hit.get("label", ""),
+                "source": "search",
+                "best_distance": hit.get("distance", 1.0),
+                "domain": domain,
+                "vocabulary_concept": None,
+                "vocabulary_label": None,
+            })
+    return results
+
+
+def check_structural_connection(
+    candidate_uri: str,
+    seed_uris: list[str],
+    onto_handlers: dict,
+    max_hops: int = 3,
+) -> dict:
+    """Check if candidate shares a common ancestor with any seed URI."""
+    def _walk(uri, depth):
+        ancestors = set()
+        visited = set()
+        frontier = [uri]
+        for _ in range(depth):
+            next_frontier = []
+            for u in frontier:
+                if u in visited:
+                    continue
+                visited.add(u)
+                supers = onto_handlers["get_superclasses"](u)
+                for s in supers:
+                    s_uri = s["uri"]
+                    ancestors.add(s_uri)
+                    next_frontier.append(s_uri)
+            frontier = next_frontier
+        return ancestors
+
+    cand_ancestors = _walk(candidate_uri, max_hops)
+    cand_ancestors.add(candidate_uri)
+    for seed_uri in seed_uris:
+        seed_ancestors = _walk(seed_uri, max_hops)
+        seed_ancestors.add(seed_uri)
+        common = cand_ancestors & seed_ancestors
+        if common:
+            return {"connected": True, "common_ancestor": next(iter(common))}
+    return {"connected": False}
+
+
+def merge_tiered(
+    structural: list[dict],
+    search_connected: list[dict],
+    search_only: list[dict],
+    max_total: int = 12,
+) -> list[dict]:
+    """Three-tier merge with vocabulary diversity check."""
+    result = []
+    seen = set()
+
+    # Tier 1: structural, sorted by effective confidence then path length
+    for c in sorted(structural, key=lambda c: (-c.get("effective_confidence", 0), len(c.get("path", [])))):
+        if c["uri"] not in seen and len(result) < 8:
+            result.append(c)
+            seen.add(c["uri"])
+
+    # Tier 2: search-connected, sorted by distance
+    for c in sorted(search_connected, key=lambda c: c.get("best_distance", 1.0)):
+        if c["uri"] not in seen and len(result) < 10:
+            result.append(c)
+            seen.add(c["uri"])
+
+    # Tier 3: search-only, sorted by distance
+    for c in sorted(search_only, key=lambda c: c.get("best_distance", 1.0)):
+        if c["uri"] not in seen and len(result) < max_total:
+            result.append(c)
+            seen.add(c["uri"])
+
+    # Vocabulary diversity check
+    vocab_categories = {
+        c.get("vocabulary_concept", "").split(":")[0]
+        for c in result if c.get("vocabulary_concept")
+    }
+    if len(vocab_categories) < 2:
+        all_remaining = [
+            c for pool in [structural, search_connected, search_only]
+            for c in pool if c["uri"] not in seen and c.get("vocabulary_concept")
+        ]
+        for c in all_remaining:
+            cat = c["vocabulary_concept"].split(":")[0]
+            if cat not in vocab_categories:
+                result.append(c)
+                seen.add(c["uri"])
+                vocab_categories.add(cat)
+                if len(vocab_categories) >= 2:
+                    break
+
+    return result
+
+
+def _search_per_domain(
+        queries: list[tuple[str, str]],
+        onto_handlers: dict,
+        selected_domains: list[str],
+        top_k_per_query: int,
 ) -> tuple[dict[str, list[dict]], int, int]:
     """Run queries against per-domain collections, merge by URI within each domain.
 
@@ -483,17 +813,17 @@ class _AnchorResponse(BaseModel):
 
 
 def expand_candidates(
-    description: str,
-    concern: str,
-    action_descriptions: list[str],
-    cross_mapped_descriptions: list[str],
-    onto_handlers: dict,
-    selected_domains: list[str] | None,
-    merge_strategy: SearchMergeStrategy | None = None,
-    top_k_per_query: int = 10,
-    max_candidates: int = 5,
-    policy_concept: str = "",
-    generic_safety_uris: set[str] | None = None,
+        description: str,
+        concern: str,
+        action_descriptions: list[str],
+        cross_mapped_descriptions: list[str],
+        onto_handlers: dict,
+        selected_domains: list[str] | None,
+        merge_strategy: SearchMergeStrategy | None = None,
+        top_k_per_query: int = 10,
+        max_candidates: int = 5,
+        policy_concept: str = "",
+        generic_safety_uris: set[str] | None = None,
 ) -> tuple[list[dict], dict]:
     """Run multiple ontology searches, merge by URI, annotate with hit count."""
     queries: list[tuple[str, str]] = []
@@ -641,17 +971,17 @@ def expand_candidates(
 
 
 def anchor(
-    risk_mappings: list[PolicyRiskMapping],
-    risk_details: dict[str, dict],
-    client: instructor.Instructor,
-    config: LLMConfig,
-    onto_handlers: dict,
-    selected_domains: list[str] | None = None,
-    risk_actions: dict[str, list[str]] | None = None,
-    related_risks: dict[str, list[dict]] | None = None,
-    merge_strategy: SearchMergeStrategy | None = None,
-    report=None,
-    generic_safety_uris: set[str] | None = None,
+        risk_mappings: list[PolicyRiskMapping],
+        risk_details: dict[str, dict],
+        client: instructor.Instructor,
+        config: LLMConfig,
+        onto_handlers: dict,
+        selected_domains: list[str] | None = None,
+        risk_actions: dict[str, list[str]] | None = None,
+        related_risks: dict[str, list[dict]] | None = None,
+        merge_strategy: SearchMergeStrategy | None = None,
+        report=None,
+        generic_safety_uris: set[str] | None = None,
 ) -> list[RiskVariationAxes]:
     if not risk_mappings:
         return []
@@ -776,11 +1106,11 @@ def anchor(
                 class_lines.append("\n".join(lines))
 
             user_content = (
-                f"Risk: {rm.risk_name}\n"
-                f"Description: {description}\n"
-                f"Concern: {concern}\n"
-                f"Policy: {mapping.policy_concept}\n\n"
-                f"Candidate classes:\n\n" + "\n\n".join(class_lines)
+                    f"Risk: {rm.risk_name}\n"
+                    f"Description: {description}\n"
+                    f"Concern: {concern}\n"
+                    f"Policy: {mapping.policy_concept}\n\n"
+                    f"Candidate classes:\n\n" + "\n\n".join(class_lines)
             )
 
             messages = [
