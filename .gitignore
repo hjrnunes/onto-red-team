@@ -16,3 +16,4 @@ ontologies/obo/*.owl
 ontologies/dron-base.owl
 mlflow-artifacts/
 .DS_Store
+.idea/
