@@ -27,6 +27,7 @@ def mock_risk_handlers():
         "list_risk_groups": MagicMock(return_value=[]),
         "explore_risk": MagicMock(return_value=None),
         "gap_analysis": MagicMock(return_value={}),
+        "get_risk_group": MagicMock(return_value=None),
     }
 
 

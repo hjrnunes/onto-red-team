@@ -196,23 +196,28 @@ def run(
         risk_handlers = {}
     onto_handlers = _create_onto_handlers(ontoquery_chroma_dir) if needs_onto else {}
 
-    # Create search merge strategy
-    from refiner.stages.anchor import WeightedMergeStrategy, GroupedMergeStrategy, LLMMergeStrategy
-    strategy_map = {
-        "weighted": lambda: WeightedMergeStrategy(),
-        "grouped": lambda: GroupedMergeStrategy(),
-        "llm": lambda: LLMMergeStrategy(client, config, onto_handlers=onto_handlers),
-    }
-    if search_strategy not in strategy_map:
-        typer.echo(f"Error: --search-strategy must be one of: {', '.join(strategy_map)}", err=True)
-        raise typer.Exit(1)
-    merge_strategy_obj = strategy_map[search_strategy]()
+    # Load SSSOM seed mappings
+    layer1_mappings = None
+    layer2_mappings = None
+    data_dir = Path(__file__).parent.parent.parent / "data"
+    layer1_path = data_dir / "risk-to-vocabulary.sssom.tsv"
+    layer2_path = data_dir / "vocabulary-to-ontology.sssom.tsv"
+    if layer1_path.exists() and layer2_path.exists():
+        from refiner.ontology_seeds import SSSOMIndex
+        layer1_mappings = SSSOMIndex.from_tsv(layer1_path)
+        layer2_mappings = SSSOMIndex.from_tsv(layer2_path)
+        typer.echo(f"Loaded SSSOM seeds: {len(layer1_mappings.mappings)} layer-1, {len(layer2_mappings.mappings)} layer-2 mappings")
+
+    if search_strategy != "llm":
+        typer.echo(f"Warning: --search-strategy is deprecated (SSSOM seeds used instead)", err=True)
 
     # Run pipeline
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")
     state = run_pipeline(
         policies, client, config, risk_handlers, onto_handlers,
-        until=until, report=report, merge_strategy=merge_strategy_obj,
+        until=until, report=report,
+        layer1_mappings=layer1_mappings,
+        layer2_mappings=layer2_mappings,
     )
     # TODO: thread doc_context into pipeline stages (e.g. identify_domains domain hint)
     state.doc_context = doc_context

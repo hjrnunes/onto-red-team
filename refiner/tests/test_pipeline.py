@@ -81,6 +81,9 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             risk_actions=map_result[4],
             related_risks=map_result[3],
             merge_strategy=None,
+            nexus_handlers=mock_risk_handlers,
+            layer1_mappings=None,
+            layer2_mappings=None,
             report=report,
             generic_safety_uris=fake_uris,
         )
@@ -89,6 +92,8 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             selected_domains=domains_result,
             risk_details=map_result[1],
             report=report,
+            policies=policies,
+            vocabulary_contexts={},
         )
 
 
