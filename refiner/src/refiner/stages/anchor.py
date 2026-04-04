@@ -447,12 +447,14 @@ def anchor(
         layer2_mappings=None,
         report=None,
         generic_safety_uris: set[str] | None = None,
-) -> list[RiskVariationAxes]:
+) -> tuple[list[RiskVariationAxes], dict[str, dict]]:
+    """Returns (variation_axes, vocabulary_contexts_by_risk_id)."""
     if not risk_mappings:
-        return []
+        return [], {}
 
     results: list[RiskVariationAxes] = []
     axes_cache: dict[str, list[VariationAxis]] = {}  # risk_id -> cached axes
+    vocab_cache: dict[str, dict] = {}  # risk_id -> vocabulary context
 
     for mapping in risk_mappings:
         for rm in mapping.matched_risks:
@@ -482,6 +484,7 @@ def anchor(
                 layer1_mappings=layer1_mappings,
                 layer2_mappings=layer2_mappings,
             )
+            vocab_cache[rm.risk_id] = vocabulary_context
 
             # Structural candidates from seeds
             structural = navigate_from_seeds(
@@ -632,4 +635,4 @@ def anchor(
                 axes=valid_axes,
             ))
 
-    return results
+    return results, vocab_cache

@@ -109,7 +109,7 @@ def test_anchor_uses_sssom_seeds(
     mock_client.chat.completions.create.return_value = _AnchorResponse(axes=[
         _SlimAxis(class_id="C1", class_label="Facial Print", rationale="relevant")
     ])
-    result = anchor(
+    result, vocab_contexts = anchor(
         risk_mappings=[sample_mapping],
         risk_details=sample_risk_details,
         client=mock_client,
@@ -121,6 +121,7 @@ def test_anchor_uses_sssom_seeds(
     )
     assert len(result) == 1
     assert len(result[0].axes) >= 1
+    assert "atlas-biometric-exposure" in vocab_contexts
 
 
 def test_anchor_caches_by_risk_id(
@@ -140,7 +141,7 @@ def test_anchor_caches_by_risk_id(
         matched_risks=[RiskMatch(risk_id="atlas-biometric-exposure", risk_name="Bio",
                                  relevance="primary", justification="test")],
     )
-    result = anchor(
+    result, vocab_contexts = anchor(
         risk_mappings=[mapping1, mapping2],
         risk_details=sample_risk_details,
         client=mock_client,

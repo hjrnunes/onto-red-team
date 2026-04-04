@@ -88,7 +88,7 @@ def run_pipeline(
     if until == "map_risks":
         return state
 
-    state.variation_axes = anchor(
+    state.variation_axes, state.vocabulary_contexts = anchor(
         state.risk_mappings, state.risk_details, client, config, onto_handlers,
         selected_domains=state.selected_domains,
         risk_actions=state.risk_actions,
