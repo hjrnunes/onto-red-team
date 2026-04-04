@@ -108,3 +108,21 @@ def test_gap_analysis(tools):
     assert "gaps" in result
     assert "coverage_pct" in result
     assert isinstance(result["coverage_pct"], float)
+
+
+def test_get_risk_group_returns_group_for_risk(tools):
+    result = tools["get_risk_group"]("atlas-prompt-injection")
+    assert result is not None
+    assert result["id"] == "ibm-risk-atlas-robustness"
+    assert result["name"] == "Robustness"
+
+
+def test_get_risk_group_returns_none_for_unknown(tools):
+    result = tools["get_risk_group"]("nonexistent-risk")
+    assert result is None
+
+
+def test_get_risk_group_works_with_tag(tools):
+    result = tools["get_risk_group"]("prompt-injection")
+    assert result is not None
+    assert result["id"] == "ibm-risk-atlas-robustness"
