@@ -142,7 +142,7 @@ def run(
     nexus_base_dir: str = typer.Option(None, "--nexus-base-dir", envvar="NEXUS_BASE_DIR", help="Path to ai-atlas-nexus repo"),
     ontoquery_chroma_dir: Path = typer.Option(Path(".chroma"), "--ontoquery-chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="Ontoquery ChromaDB directory"),
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR", help="Nexus ChromaDB directory"),
-    search_strategy: str = typer.Option("weighted", "--search-strategy", help="Search merge strategy: weighted (default) or grouped"),
+    search_strategy: str = typer.Option("llm", "--search-strategy", help="Search merge strategy: llm (default), weighted, or grouped"),
     track: bool = typer.Option(False, "--track", help="Enable MLflow tracking + tracing"),
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
     description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
@@ -201,7 +201,7 @@ def run(
     strategy_map = {
         "weighted": lambda: WeightedMergeStrategy(),
         "grouped": lambda: GroupedMergeStrategy(),
-        "llm": lambda: LLMMergeStrategy(client, config),
+        "llm": lambda: LLMMergeStrategy(client, config, onto_handlers=onto_handlers),
     }
     if search_strategy not in strategy_map:
         typer.echo(f"Error: --search-strategy must be one of: {', '.join(strategy_map)}", err=True)

@@ -31,7 +31,9 @@
 - **Domain filtering:** `identify_domains` selects ontologies; `anchor` filters search results by URI namespace. CCO,
   Commons, D3FEND, CSO are always-included; FIBO/OBO/IOF are selectable.
 - **Per-domain search:** Per-domain ChromaDB collections prevent CSO (plain English) from crowding out OBO/D3FEND
-  (technical). Merge strategies (weighted/grouped) control candidate distribution.
+  (technical). Merge strategies (weighted/grouped) control candidate distribution. Dual threshold
+  (raw distance ceiling + z-score) rejects poor candidates. CSO DangerousInformation branch (18
+  physical harm classes) auto-filtered in domain-specific runs via `build_generic_safety_uris()`.
 - **Sibling fallback:** `contextualize` falls back to `get_siblings()` when leaf node. Each `AxisEnumeration` carries
   `provenance` field (`"subclass"` or `"sibling"`).
 - **Programmatic retrieval:** Python calls `create_tool_handlers()` dicts from ontoquery + nexus-mcp (no MCP transport).

@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>__REPORT_TITLE__</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    .line-clamp-3 {
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    /* Tooltip */
+    .tip { position: relative; cursor: help; border-bottom: 1px dotted #9ca3af; }
+    .tip::after {
+      content: attr(data-tip);
+      position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+      background: #1f2937; color: #f9fafb; font-size: 12px; font-weight: 400; line-height: 1.4;
+      padding: 6px 10px; border-radius: 6px; white-space: normal; width: max-content; max-width: 320px;
+      pointer-events: none; opacity: 0; transition: opacity 0.15s; z-index: 50;
+      text-transform: none; letter-spacing: normal;
+    }
+    .tip:hover::after { opacity: 1; }
+    .tip-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%; background: #e5e7eb; color: #6b7280;
+      font-size: 10px; font-weight: 700; font-style: normal; line-height: 1;
+      margin-left: 4px; flex-shrink: 0; cursor: help; vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="app()" x-cloak>
+
+  <!-- ═══════════════ HEADER + TAB NAV ═══════════════ -->
+  <header class="bg-gray-900 text-white shadow-lg sticky top-0 z-40">
+    <div class="max-w-screen-xl mx-auto px-6 pt-4 pb-0">
+      <div class="flex items-center justify-between">
+        <div>
+          <h1 class="text-2xl font-bold tracking-tight">__REPORT_TITLE__</h1>
+          <p class="text-gray-400 text-sm mt-0.5">
+            <span x-text="data.run?.policy_set || policy?.organization || ''"></span>
+            <template x-if="data.run?.model">
+              <span> &mdash; <span x-text="data.run.model"></span></span>
+            </template>
+            <template x-if="data.run?.timestamp">
+              <span> &mdash; <span x-text="data.run.timestamp"></span></span>
+            </template>
+          </p>
+        </div>
+        <div x-show="tab === 'explorer'" class="text-right" x-transition>
+          <span class="text-3xl font-mono font-bold text-indigo-400" x-text="filteredRecords.length"></span>
+          <span class="text-gray-400 text-sm ml-1">/ <span x-text="totalRecords"></span> records</span>
+          <div class="text-xs text-gray-500 mt-0.5">
+            <span x-text="filteredWithPrompts"></span> with prompts
+          </div>
+        </div>
+      </div>
+      <!-- Tab bar -->
+      <nav class="flex gap-1 mt-3 overflow-x-auto">
+        <template x-for="t in tabs" :key="t.id">
+          <button @click="tab = t.id"
+            class="px-4 py-2.5 text-sm font-medium rounded-t-lg transition-colors whitespace-nowrap"
+            :class="tab === t.id
+              ? 'bg-gray-100 text-gray-900'
+              : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800'">
+            <span x-text="t.label"></span>
+          </button>
+        </template>
+      </nav>
+    </div>
+  </header>
+
+
+  <!-- ═══════════════ TAB: EVALUATION ═══════════════ -->
+  <div x-show="tab === 'evaluation'">
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+      <!-- Empty state -->
+      <template x-if="!data.run">
+        <div class="text-center py-16 text-gray-400">
+          <p class="text-lg">No evaluation data available.</p>
+          <p class="text-sm mt-1">Run the evaluate stage to generate metrics.</p>
+        </div>
+      </template>
+
+      <!-- Run Info -->
+      <section x-show="data.run" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Run Info</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <span class="text-gray-400">Model</span>
+            <p class="font-medium text-gray-800" x-text="data.run?.model || '?'"></p>
+          </div>
+          <div>
+            <span class="text-gray-400">Policy Set</span>
+            <p class="font-medium text-gray-800" x-text="data.run?.policy_set || '?'"></p>
+          </div>
+          <div>
+            <span class="text-gray-400">Timestamp</span>
+            <p class="font-medium text-gray-800" x-text="data.run?.timestamp || '?'"></p>
+          </div>
+          <div>
+            <span class="text-gray-400">Stages</span>
+            <p class="font-medium text-gray-800" x-text="(data.run?.stages_completed || []).join(' \u2192 ')"></p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Stage Quality -->
+      <section x-show="data.stage_quality" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="Diagnostic events emitted during each pipeline stage.">Stage Quality</span>
+          <span class="tip-icon tip" data-tip="Diagnostic events emitted during each pipeline stage.">i</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <template x-for="[stage, info] in Object.entries(data.stage_quality || {})" :key="stage">
+            <div class="border border-gray-200 rounded-lg p-4">
+              <h3 class="text-sm font-semibold text-gray-700 mb-2" x-text="stage"></h3>
+              <dl class="space-y-1 text-sm">
+                <template x-if="info.type_distribution">
+                  <div>
+                    <dt class="text-gray-400 text-xs uppercase"><span class="tip" data-tip="Policy classification: A=Safety, B=Confidentiality, C=Scope, D=Routing.">Type Distribution</span></dt>
+                    <dd class="flex gap-2 mt-1">
+                      <template x-for="[t, c] in Object.entries(info.type_distribution)" :key="t">
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
+                          :class="{'bg-blue-100 text-blue-800': t==='A', 'bg-green-100 text-green-800': t==='B', 'bg-yellow-100 text-yellow-800': t==='C', 'bg-purple-100 text-purple-800': t==='D'}">
+                          <span x-text="t"></span>: <span x-text="c" class="ml-1"></span>
+                        </span>
+                      </template>
+                    </dd>
+                  </div>
+                </template>
+                <template x-if="info.selected_domains">
+                  <div>
+                    <dt class="text-gray-400 text-xs uppercase"><span class="tip" data-tip="Domain ontologies selected as relevant.">Selected Domains</span></dt>
+                    <dd class="flex flex-wrap gap-1 mt-1">
+                      <template x-for="d in info.selected_domains" :key="d">
+                        <span class="px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800" x-text="d"></span>
+                      </template>
+                    </dd>
+                  </div>
+                </template>
+                <template x-if="info.invalid_domain_keys">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Domain keys that don't match any known ontology.">Invalid domain keys</span></dt>
+                    <dd class="font-mono text-red-600" x-text="info.invalid_domain_keys"></dd>
+                  </div>
+                </template>
+                <template x-if="info.weak_matches?.length">
+                  <div>
+                    <dt class="text-gray-400 text-xs uppercase"><span class="tip" data-tip="Risks matched with distance > 0.4.">Weak Matches</span></dt>
+                    <dd class="mt-1 space-y-1">
+                      <template x-for="wm in info.weak_matches" :key="wm.risk_id">
+                        <div class="flex justify-between text-xs bg-amber-50 rounded px-2 py-1">
+                          <span class="font-mono" x-text="wm.risk_id"></span>
+                          <span class="text-amber-700" x-text="'d=' + wm.distance.toFixed(3)"></span>
+                        </div>
+                      </template>
+                    </dd>
+                  </div>
+                </template>
+                <template x-if="info.invalid_risk_indices">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="LLM returned out-of-range risk indices.">Invalid risk indices</span></dt>
+                    <dd class="font-mono text-red-600" x-text="info.invalid_risk_indices"></dd>
+                  </div>
+                </template>
+                <template x-if="info.match_counts?.length">
+                  <div>
+                    <dt class="text-gray-400 text-xs uppercase"><span class="tip" data-tip="Risks matched per policy concept.">Match Counts</span></dt>
+                    <dd class="mt-1 space-y-1">
+                      <template x-for="mc in info.match_counts" :key="mc.policy_concept">
+                        <div class="flex justify-between text-xs bg-gray-50 rounded px-2 py-1">
+                          <span x-text="mc.policy_concept"></span>
+                          <span class="font-mono font-semibold" x-text="mc.count"></span>
+                        </div>
+                      </template>
+                    </dd>
+                  </div>
+                </template>
+                <template x-if="info.domain_filtered">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Ontology results filtered by domain relevance.">Domain filtered</span></dt>
+                    <dd>
+                      <span class="text-red-600 font-mono" x-text="info.domain_filtered.total_filtered"></span>
+                      <span class="text-gray-400 mx-1">filtered /</span>
+                      <span class="text-green-600 font-mono" x-text="info.domain_filtered.total_kept"></span>
+                      <span class="text-gray-400 ml-1">kept</span>
+                    </dd>
+                  </div>
+                </template>
+                <template x-if="info.cache_hits">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Reused variation axes from prior LLM calls.">Cache hits</span></dt>
+                    <dd class="font-mono text-green-600" x-text="info.cache_hits"></dd>
+                  </div>
+                </template>
+                <template x-if="info.empty_axes">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Risks with zero variation axes.">Empty axes</span></dt>
+                    <dd class="font-mono text-amber-600" x-text="info.empty_axes"></dd>
+                  </div>
+                </template>
+                <template x-if="info.role_derivation">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="How semantic roles were assigned: derived from BFO/CCO chain vs LLM.">Role derivation</span></dt>
+                    <dd>
+                      <span class="text-green-600 font-mono" x-text="info.role_derivation.derived"></span>
+                      <span class="text-gray-400 mx-1">derived /</span>
+                      <span class="text-amber-600 font-mono" x-text="info.role_derivation.llm_fallback"></span>
+                      <span class="text-gray-400 ml-1">LLM</span>
+                    </dd>
+                  </div>
+                </template>
+                <template x-if="info.sibling_fallbacks">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Axes using sibling classes (leaf node fallback).">Sibling fallbacks</span></dt>
+                    <dd class="font-mono text-amber-600" x-text="info.sibling_fallbacks"></dd>
+                  </div>
+                </template>
+                <template x-if="info.empty_enumerations">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Axes with no subclass or sibling results.">Empty enumerations</span></dt>
+                    <dd class="font-mono text-amber-600" x-text="info.empty_enumerations"></dd>
+                  </div>
+                </template>
+                <template x-if="info.self_references_filtered">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Self-referential enumerations removed.">Self-refs filtered</span></dt>
+                    <dd class="font-mono" x-text="info.self_references_filtered"></dd>
+                  </div>
+                </template>
+                <template x-if="info.cross_mappings_filtered">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Cross-mapping targets not found in search results.">Cross-mappings filtered</span></dt>
+                    <dd class="font-mono text-amber-600" x-text="info.cross_mappings_filtered"></dd>
+                  </div>
+                </template>
+              </dl>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- Coverage -->
+      <section x-show="data.coverage" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="How broadly the pipeline covered input policies, risk frameworks, and ontology classes.">Coverage</span>
+          <span class="tip-icon tip" data-tip="How broadly the pipeline covered input policies, risk frameworks, and ontology classes.">i</span>
+        </h2>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+          <!-- Risk Framework -->
+          <div x-show="data.coverage?.risk_framework" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Unique risks matched and which frameworks they came from.">Risk Framework Coverage</span>
+              <span class="tip-icon tip" data-tip="Unique risks matched and which frameworks they came from.">i</span>
+            </h3>
+            <p class="text-2xl font-bold text-indigo-600 mb-2" x-text="data.coverage?.risk_framework?.total_matched || 0"></p>
+            <p class="text-xs text-gray-400 mb-3">total risks matched</p>
+            <div class="space-y-1">
+              <template x-for="[fw, count] in Object.entries(data.coverage?.risk_framework?.by_framework || {})" :key="fw">
+                <div class="flex justify-between text-sm">
+                  <span class="text-gray-600" x-text="fw"></span>
+                  <span class="font-mono font-semibold" x-text="count"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Cross Mapping -->
+          <div x-show="data.coverage?.cross_mapping" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Ground-truth cross-framework mappings from the knowledge graph.">Cross-Mapping Coverage</span>
+              <span class="tip-icon tip" data-tip="Ground-truth cross-framework mappings from the knowledge graph.">i</span>
+            </h3>
+            <div class="flex gap-6 mb-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-green-600" x-text="data.coverage?.cross_mapping?.risks_with_cross_mappings || 0"></p>
+                <p class="text-xs text-gray-400">with mappings</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-gray-400" x-text="data.coverage?.cross_mapping?.risks_without || 0"></p>
+                <p class="text-xs text-gray-400">without</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-indigo-600" x-text="data.coverage?.cross_mapping?.total_cross_mappings_used || 0"></p>
+                <p class="text-xs text-gray-400">total used</p>
+              </div>
+            </div>
+            <template x-if="data.coverage?.cross_mapping?.filtered_unknown_targets">
+              <p class="text-xs text-amber-600 mb-2">
+                <span x-text="data.coverage.cross_mapping.filtered_unknown_targets"></span> unknown targets filtered
+              </p>
+            </template>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="[mt, count] in Object.entries(data.coverage?.cross_mapping?.by_mapping_type || {})" :key="mt">
+                <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-gray-200"
+                  :class="count > 0 ? 'bg-indigo-50 text-indigo-800' : 'bg-gray-50 text-gray-400'">
+                  <span x-text="mt"></span>: <span class="font-mono font-semibold" x-text="count"></span>
+                </span>
+              </template>
+            </div>
+          </div>
+
+          <!-- Ontological Coverage -->
+          <div x-show="data.coverage?.ontological" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Distinct ontology classes used as axes and enumerations.">Ontological Coverage</span>
+              <span class="tip-icon tip" data-tip="Distinct ontology classes used as axes and enumerations.">i</span>
+            </h3>
+            <div class="flex gap-6 mb-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-indigo-600" x-text="data.coverage?.ontological?.unique_axis_classes || 0"></p>
+                <p class="text-xs text-gray-400">axis classes</p>
+              </div>
+              <div class="text-center">
+                <p class="text-2xl font-bold text-teal-600" x-text="data.coverage?.ontological?.unique_enumeration_uris || 0"></p>
+                <p class="text-xs text-gray-400">enumeration URIs</p>
+              </div>
+            </div>
+            <div class="space-y-1">
+              <template x-for="[ont, info] in Object.entries(data.coverage?.ontological?.by_source_ontology || {})" :key="ont">
+                <div class="flex justify-between text-sm bg-gray-50 rounded px-2 py-1">
+                  <span class="font-medium text-gray-700" x-text="ont"></span>
+                  <span class="text-gray-500">
+                    <span class="font-mono" x-text="info.unique_classes"></span> classes,
+                    <span class="font-mono" x-text="info.axes_using"></span> axes
+                  </span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Policy Coverage -->
+          <div x-show="data.coverage?.policy?.length" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Per-policy breakdown of risks, axes, and enumerations.">Policy Coverage</span>
+              <span class="tip-icon tip" data-tip="Per-policy breakdown of risks, axes, and enumerations.">i</span>
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
+                    <th class="pb-2 pr-3">Policy</th>
+                    <th class="pb-2 pr-3 text-right">Risks</th>
+                    <th class="pb-2 pr-3 text-right">Axes</th>
+                    <th class="pb-2 pr-3 text-right">Enums</th>
+                    <th class="pb-2 text-right" x-show="data.coverage?.policy?.[0]?.prompts_generated !== undefined">Prompts</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="pc in data.coverage?.policy || []" :key="pc.policy_concept">
+                    <tr class="border-b border-gray-100" :class="pc.risks_matched === 0 ? 'bg-red-50' : ''">
+                      <td class="py-1.5 pr-3 font-medium" x-text="pc.policy_concept"></td>
+                      <td class="py-1.5 pr-3 text-right font-mono" :class="pc.risks_matched === 0 ? 'text-red-600 font-bold' : ''" x-text="pc.risks_matched"></td>
+                      <td class="py-1.5 pr-3 text-right font-mono" x-text="pc.total_axes"></td>
+                      <td class="py-1.5 pr-3 text-right font-mono" x-text="pc.total_enumerations"></td>
+                      <td class="py-1.5 text-right font-mono" x-show="pc.prompts_generated !== undefined" x-text="pc.prompts_generated"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Single Value Axis Dominance -->
+          <div x-show="data.coverage?.single_value_axis_dominance" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Axes with 0 or 1 enumeration can't contribute diversity.">Single-Value Axis Dominance</span>
+              <span class="tip-icon tip" data-tip="Axes with &le;1 enumeration can't vary across prompts.">i</span>
+            </h3>
+            <div class="flex gap-6 items-end">
+              <div class="text-center">
+                <p class="text-2xl font-bold" :class="(data.coverage?.single_value_axis_dominance?.single_value_rate || 0) > 0.5 ? 'text-red-600' : 'text-green-600'"
+                  x-text="((data.coverage?.single_value_axis_dominance?.single_value_rate || 0) * 100).toFixed(1) + '%'"></p>
+                <p class="text-xs text-gray-400">single-value rate</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-amber-600" x-text="data.coverage?.single_value_axis_dominance?.single_value_axes || 0"></p>
+                <p class="text-xs text-gray-400">single-value axes</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-gray-600" x-text="data.coverage?.single_value_axis_dominance?.total_axes || 0"></p>
+                <p class="text-xs text-gray-400">total axes</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enumeration Domain Mismatch -->
+          <div x-show="data.coverage?.enumeration_domain_mismatch" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Enumerations from irrelevant ontologies that slipped past domain filtering.">Enumeration Domain Mismatch</span>
+              <span class="tip-icon tip" data-tip="Enumerations from irrelevant ontologies.">i</span>
+            </h3>
+            <div class="flex gap-6 items-end mb-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold" :class="(data.coverage?.enumeration_domain_mismatch?.mismatch_rate || 0) > 0.1 ? 'text-red-600' : 'text-green-600'"
+                  x-text="((data.coverage?.enumeration_domain_mismatch?.mismatch_rate || 0) * 100).toFixed(1) + '%'"></p>
+                <p class="text-xs text-gray-400">mismatch rate</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-amber-600" x-text="data.coverage?.enumeration_domain_mismatch?.mismatched || 0"></p>
+                <p class="text-xs text-gray-400">mismatched</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-gray-600" x-text="data.coverage?.enumeration_domain_mismatch?.total_enumerations || 0"></p>
+                <p class="text-xs text-gray-400">total</p>
+              </div>
+            </div>
+            <div x-show="Object.keys(data.coverage?.enumeration_domain_mismatch?.by_mismatched_ontology || {}).length" class="space-y-1">
+              <template x-for="[ont, count] in Object.entries(data.coverage?.enumeration_domain_mismatch?.by_mismatched_ontology || {})" :key="ont">
+                <div class="flex justify-between text-xs bg-red-50 rounded px-2 py-1">
+                  <span class="font-medium text-red-700" x-text="ont"></span>
+                  <span class="font-mono text-red-600" x-text="count"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Sibling Relevance -->
+          <div x-show="data.coverage?.sibling_relevance && data.coverage?.sibling_relevance?.sibling_count > 0" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Quality comparison between subclass-sourced and sibling-fallback enumerations.">Sibling vs. Subclass Relevance</span>
+              <span class="tip-icon tip" data-tip="Subclass vs sibling relevance quality comparison.">i</span>
+            </h3>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="bg-green-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-500 uppercase mb-1">Subclass</p>
+                <p class="text-xl font-bold text-green-700" x-text="data.coverage?.sibling_relevance?.subclass_mean_score || 0"></p>
+                <p class="text-xs text-gray-400">mean score (<span class="font-mono" x-text="data.coverage?.sibling_relevance?.subclass_count || 0"></span> enums)</p>
+                <div class="flex justify-center gap-2 mt-2">
+                  <template x-for="[rel, count] in Object.entries(data.coverage?.sibling_relevance?.subclass_relevance || {})" :key="rel">
+                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px]"
+                      :class="{'bg-green-100 text-green-800': rel==='high', 'bg-yellow-100 text-yellow-800': rel==='medium', 'bg-red-100 text-red-800': rel==='low'}">
+                      <span x-text="rel"></span> <span class="font-mono" x-text="count"></span>
+                    </span>
+                  </template>
+                </div>
+              </div>
+              <div class="bg-amber-50 rounded-lg p-3 text-center">
+                <p class="text-xs text-gray-500 uppercase mb-1">Sibling</p>
+                <p class="text-xl font-bold text-amber-700" x-text="data.coverage?.sibling_relevance?.sibling_mean_score || 0"></p>
+                <p class="text-xs text-gray-400">mean score (<span class="font-mono" x-text="data.coverage?.sibling_relevance?.sibling_count || 0"></span> enums)</p>
+                <div class="flex justify-center gap-2 mt-2">
+                  <template x-for="[rel, count] in Object.entries(data.coverage?.sibling_relevance?.sibling_relevance || {})" :key="rel">
+                    <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px]"
+                      :class="{'bg-green-100 text-green-800': rel==='high', 'bg-yellow-100 text-yellow-800': rel==='medium', 'bg-red-100 text-red-800': rel==='low'}">
+                      <span x-text="rel"></span> <span class="font-mono" x-text="count"></span>
+                    </span>
+                  </template>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Generation Metrics -->
+      <section x-show="data.generation_metrics" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="Sampling diversity, role/relevance distributions, and combinatorial space coverage.">Generation Metrics</span>
+          <span class="tip-icon tip" data-tip="Sampling diversity, role/relevance distributions, and combinatorial space coverage.">i</span>
+        </h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+          <!-- Axis Diversity -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Mean ratio of sampled to available values per axis.">Axis Diversity</span>
+              <span class="tip-icon tip" data-tip="1.0 = full coverage of available values.">i</span>
+            </h3>
+            <p class="text-2xl font-bold text-indigo-600 mb-2" x-text="data.generation_metrics?.axis_diversity?.overall_mean || 0"></p>
+            <p class="text-xs text-gray-400 mb-3">overall mean (sampled / available)</p>
+            <div class="space-y-1 max-h-48 overflow-y-auto">
+              <template x-for="[rid, val] in Object.entries(data.generation_metrics?.axis_diversity?.per_risk || {})" :key="rid">
+                <div class="flex justify-between text-xs bg-gray-50 rounded px-2 py-1">
+                  <span class="font-mono truncate mr-2" x-text="rid"></span>
+                  <span class="font-semibold" x-text="typeof val === 'number' ? val.toFixed(3) : val"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Role & Relevance Distribution -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">Distributions</h3>
+            <div class="mb-3">
+              <p class="text-xs text-gray-400 uppercase mb-1"><span class="tip" data-tip="Semantic roles: agent, object, instrument, location, temporal.">Role</span></p>
+              <div class="flex flex-wrap gap-2">
+                <template x-for="[role, count] in Object.entries(data.generation_metrics?.role_distribution || {})" :key="role">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs"
+                    :class="roleColor(role)">
+                    <span x-text="role"></span>
+                    <span class="font-mono font-semibold" x-text="count"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+            <div>
+              <p class="text-xs text-gray-400 uppercase mb-1"><span class="tip" data-tip="High-relevance sampled 3x more often.">Relevance</span></p>
+              <div class="flex flex-wrap gap-2">
+                <template x-for="[rel, count] in Object.entries(data.generation_metrics?.relevance_distribution || {})" :key="rel">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs"
+                    :class="{'bg-green-100 text-green-800': rel==='high', 'bg-yellow-100 text-yellow-800': rel==='medium', 'bg-red-100 text-red-800': rel==='low', 'bg-gray-100 text-gray-800': !['high','medium','low'].includes(rel)}">
+                    <span x-text="rel"></span>
+                    <span class="font-mono font-semibold" x-text="count"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enumeration Concentration -->
+          <div x-show="data.generation_metrics?.enumeration_concentration" class="border border-gray-200 rounded-lg p-4 md:col-span-2">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="How concentrated sampling is on a few values. High share = a few ontology classes dominate.">Enumeration Concentration</span>
+              <span class="tip-icon tip" data-tip="High concentration predicts repetitive prompts.">i</span>
+            </h3>
+            <div class="flex gap-6 items-end mb-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold" :class="(data.generation_metrics?.enumeration_concentration?.top_k_share || 0) > 0.5 ? 'text-amber-600' : 'text-green-600'"
+                  x-text="((data.generation_metrics?.enumeration_concentration?.top_k_share || 0) * 100).toFixed(1) + '%'"></p>
+                <p class="text-xs text-gray-400">top-<span x-text="data.generation_metrics?.enumeration_concentration?.top_k || 5"></span> share</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-gray-600" x-text="data.generation_metrics?.enumeration_concentration?.total_samples || 0"></p>
+                <p class="text-xs text-gray-400">total samples</p>
+              </div>
+            </div>
+            <div x-show="(data.generation_metrics?.enumeration_concentration?.top_values || []).length" class="space-y-1">
+              <template x-for="tv in data.generation_metrics?.enumeration_concentration?.top_values || []" :key="tv.uri">
+                <div class="flex justify-between text-xs bg-gray-50 rounded px-2 py-1">
+                  <span class="font-mono truncate mr-2" x-text="tv.uri.split('#').pop() || tv.uri.split('/').pop()"></span>
+                  <span class="font-mono font-semibold" x-text="tv.count"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- Dedup Saturation -->
+          <div x-show="Object.keys(data.generation_metrics?.dedup_saturation || {}).length" class="border border-gray-200 rounded-lg p-4 md:col-span-2">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Samples generated vs combinatorial space. High saturation = diminishing returns.">Dedup Saturation</span>
+              <span class="tip-icon tip" data-tip="Above 80% means most unique combinations are exhausted.">i</span>
+            </h3>
+            <div class="overflow-x-auto">
+              <table class="w-full text-sm">
+                <thead>
+                  <tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
+                    <th class="pb-2 pr-3">Risk</th>
+                    <th class="pb-2 pr-3 text-right">Space</th>
+                    <th class="pb-2 pr-3 text-right">Samples</th>
+                    <th class="pb-2 text-right">Saturation</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <template x-for="[rid, info] in Object.entries(data.generation_metrics?.dedup_saturation || {})" :key="rid">
+                    <tr class="border-b border-gray-100">
+                      <td class="py-1.5 pr-3 font-mono text-xs truncate max-w-xs" x-text="rid"></td>
+                      <td class="py-1.5 pr-3 text-right font-mono" x-text="info.combinatorial_space"></td>
+                      <td class="py-1.5 pr-3 text-right font-mono" x-text="info.samples"></td>
+                      <td class="py-1.5 text-right font-mono" :class="info.saturation > 0.8 ? 'text-amber-600 font-bold' : ''" x-text="(info.saturation * 100).toFixed(1) + '%'"></td>
+                    </tr>
+                  </template>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- Prompt Metrics -->
+      <section x-show="data.prompt_metrics" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="Quality metrics over adversarial prompts: vocabulary diversity, domain grounding, red-flag detection.">Adversarial Prompt Metrics</span>
+          <span class="tip-icon tip" data-tip="Quality metrics over adversarial prompts.">i</span>
+        </h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Type-Token Ratio: unique words / total words.">
+            <p class="text-2xl font-bold text-indigo-600" x-text="data.prompt_metrics?.lexical_diversity || 0"></p>
+            <p class="text-xs text-gray-400">Lexical Diversity (TTR)</p>
+          </div>
+          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Average words per prompt.">
+            <p class="text-2xl font-bold text-indigo-600" x-text="data.prompt_metrics?.mean_prompt_length || 0"></p>
+            <p class="text-xs text-gray-400">Mean Prompt Length</p>
+          </div>
+          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Fraction of sampled domain terms appearing in prompts.">
+            <p class="text-2xl font-bold text-teal-600" x-text="data.prompt_metrics?.domain_term_hit_rate || 0"></p>
+            <p class="text-xs text-gray-400">Domain Term Hit Rate</p>
+          </div>
+          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Prompts with obvious jailbreak patterns.">
+            <p class="text-2xl font-bold" :class="(data.prompt_metrics?.red_flag_count || 0) > 0 ? 'text-red-600' : 'text-green-600'" x-text="data.prompt_metrics?.red_flag_count || 0"></p>
+            <p class="text-xs text-gray-400">Red Flags</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <!-- Policy Coverage Balance -->
+          <div x-show="data.prompt_metrics?.policy_coverage_balance" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Normalized Shannon entropy of prompt distribution. 1.0 = equal prompts per policy.">Policy Coverage Balance</span>
+              <span class="tip-icon tip" data-tip="1.0 = perfectly balanced.">i</span>
+            </h3>
+            <div class="flex gap-6 items-end">
+              <div class="text-center">
+                <p class="text-2xl font-bold" :class="(data.prompt_metrics?.policy_coverage_balance?.normalized_entropy || 0) < 0.5 ? 'text-amber-600' : 'text-green-600'"
+                  x-text="data.prompt_metrics?.policy_coverage_balance?.normalized_entropy || 0"></p>
+                <p class="text-xs text-gray-400">normalized entropy</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-gray-500" x-text="data.prompt_metrics?.policy_coverage_balance?.entropy || 0"></p>
+                <p class="text-xs text-gray-400">raw entropy</p>
+              </div>
+            </div>
+          </div>
+          <!-- Semantic Diversity -->
+          <div x-show="data.prompt_metrics?.semantic_diversity" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="TF-IDF cosine distance between prompts. Higher = more diverse.">Semantic Diversity</span>
+              <span class="tip-icon tip" data-tip="Catches meaning repetition that TTR misses.">i</span>
+            </h3>
+            <div class="flex gap-6 items-end mb-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-indigo-600" x-text="data.prompt_metrics?.semantic_diversity?.mean_pairwise_distance || 0"></p>
+                <p class="text-xs text-gray-400">mean pairwise distance</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-gray-500" x-text="data.prompt_metrics?.semantic_diversity?.total_prompts || 0"></p>
+                <p class="text-xs text-gray-400">prompts</p>
+              </div>
+            </div>
+            <div x-show="Object.keys(data.prompt_metrics?.semantic_diversity?.per_policy || {}).length" class="space-y-1 max-h-32 overflow-y-auto">
+              <template x-for="[pc, dist] in Object.entries(data.prompt_metrics?.semantic_diversity?.per_policy || {})" :key="pc">
+                <div class="flex justify-between text-xs bg-gray-50 rounded px-2 py-1">
+                  <span x-text="pc"></span>
+                  <span class="font-mono font-semibold" x-text="dist"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+          <!-- Jargon Leak Rate -->
+          <div x-show="data.prompt_metrics?.jargon_leak_rate" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Ontology naming patterns leaked into prompts.">Jargon Leak Rate</span>
+              <span class="tip-icon tip" data-tip="CamelCase, 'Act of X' patterns making prompts unrealistic.">i</span>
+            </h3>
+            <div class="flex gap-6 items-end">
+              <div class="text-center">
+                <p class="text-2xl font-bold" :class="(data.prompt_metrics?.jargon_leak_rate?.jargon_rate || 0) > 0.1 ? 'text-red-600' : 'text-green-600'"
+                  x-text="((data.prompt_metrics?.jargon_leak_rate?.jargon_rate || 0) * 100).toFixed(1) + '%'"></p>
+                <p class="text-xs text-gray-400">jargon rate</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-amber-600" x-text="data.prompt_metrics?.jargon_leak_rate?.jargon_prompts || 0"></p>
+                <p class="text-xs text-gray-400">with jargon</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-gray-500" x-text="data.prompt_metrics?.jargon_leak_rate?.total_prompts || 0"></p>
+                <p class="text-xs text-gray-400">total</p>
+              </div>
+            </div>
+          </div>
+          <!-- Axis Fidelity -->
+          <div x-show="data.prompt_metrics?.axis_fidelity" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Whether sampled labels appear in prompts. 'Improvised' = model ignored context.">Axis Fidelity</span>
+              <span class="tip-icon tip" data-tip="Full/partial/improvised fidelity breakdown.">i</span>
+            </h3>
+            <div class="flex gap-4 items-end mb-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-indigo-600" x-text="data.prompt_metrics?.axis_fidelity?.mean_fidelity || 0"></p>
+                <p class="text-xs text-gray-400">mean fidelity</p>
+              </div>
+            </div>
+            <div class="flex gap-3">
+              <div class="text-center px-3 py-2 bg-green-50 rounded-lg flex-1">
+                <p class="text-lg font-bold text-green-700" x-text="data.prompt_metrics?.axis_fidelity?.full_fidelity || 0"></p>
+                <p class="text-[10px] text-gray-400 uppercase">Full</p>
+              </div>
+              <div class="text-center px-3 py-2 bg-yellow-50 rounded-lg flex-1">
+                <p class="text-lg font-bold text-yellow-700" x-text="data.prompt_metrics?.axis_fidelity?.partial || 0"></p>
+                <p class="text-[10px] text-gray-400 uppercase">Partial</p>
+              </div>
+              <div class="text-center px-3 py-2 bg-red-50 rounded-lg flex-1">
+                <p class="text-lg font-bold text-red-700" x-text="data.prompt_metrics?.axis_fidelity?.improvised || 0"></p>
+                <p class="text-[10px] text-gray-400 uppercase">Improvised</p>
+              </div>
+            </div>
+          </div>
+          <!-- Named Entity Utilization -->
+          <div x-show="data.prompt_metrics?.named_entity_utilization" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="How often policy-specific named entities appear in prompts.">Named Entity Utilization</span>
+              <span class="tip-icon tip" data-tip="Higher = model is grounding prompts in client context.">i</span>
+            </h3>
+            <div class="flex gap-6 items-end mb-3">
+              <div class="text-center">
+                <p class="text-2xl font-bold text-teal-600" x-text="((data.prompt_metrics?.named_entity_utilization?.utilization_rate || 0) * 100).toFixed(1) + '%'"></p>
+                <p class="text-xs text-gray-400">utilization rate</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-teal-600" x-text="data.prompt_metrics?.named_entity_utilization?.prompts_with_entities || 0"></p>
+                <p class="text-xs text-gray-400">with entities</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-gray-500" x-text="data.prompt_metrics?.named_entity_utilization?.total_prompts || 0"></p>
+                <p class="text-xs text-gray-400">total</p>
+              </div>
+            </div>
+            <div x-show="Object.keys(data.prompt_metrics?.named_entity_utilization?.entities_by_policy || {}).length" class="space-y-1 max-h-32 overflow-y-auto">
+              <template x-for="[pc, ents] in Object.entries(data.prompt_metrics?.named_entity_utilization?.entities_by_policy || {})" :key="pc">
+                <div class="text-xs bg-gray-50 rounded px-2 py-1">
+                  <span class="font-medium text-gray-700" x-text="pc"></span>:
+                  <span class="text-gray-500" x-text="ents.join(', ')"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+          <!-- Weak Match Impact -->
+          <div x-show="data.prompt_metrics?.weak_match_impact && data.prompt_metrics?.weak_match_impact?.weak_match_risks > 0" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Quality comparison: weak-match vs strong-match risks.">Weak Match Impact</span>
+              <span class="tip-icon tip" data-tip="Weak matches may produce lower quality prompts.">i</span>
+            </h3>
+            <div class="flex gap-4 items-end mb-3">
+              <div class="text-center">
+                <p class="text-lg font-mono text-amber-600" x-text="data.prompt_metrics?.weak_match_impact?.weak_match_risks || 0"></p>
+                <p class="text-xs text-gray-400">weak risks</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-amber-600" x-text="data.prompt_metrics?.weak_match_impact?.weak_match_prompts || 0"></p>
+                <p class="text-xs text-gray-400">weak prompts</p>
+              </div>
+              <div class="text-center">
+                <p class="text-lg font-mono text-green-600" x-text="data.prompt_metrics?.weak_match_impact?.strong_match_prompts || 0"></p>
+                <p class="text-xs text-gray-400">strong prompts</p>
+              </div>
+            </div>
+            <div x-show="data.prompt_metrics?.weak_match_impact?.weak_match_mean_score !== undefined" class="flex gap-4 text-xs">
+              <span class="px-2 py-1 bg-amber-50 rounded">
+                weak judge: <span class="font-mono font-semibold" x-text="data.prompt_metrics?.weak_match_impact?.weak_match_mean_score"></span>
+              </span>
+              <span x-show="data.prompt_metrics?.weak_match_impact?.strong_match_mean_score !== undefined" class="px-2 py-1 bg-green-50 rounded">
+                strong judge: <span class="font-mono font-semibold" x-text="data.prompt_metrics?.weak_match_impact?.strong_match_mean_score"></span>
+              </span>
+            </div>
+          </div>
+          <!-- Per Policy -->
+          <div x-show="data.prompt_metrics?.per_policy?.length" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2"><span class="tip" data-tip="Prompts generated per policy concept.">Per Policy</span></h3>
+            <div class="space-y-1">
+              <template x-for="pp in data.prompt_metrics?.per_policy || []" :key="pp.policy_concept">
+                <div class="flex justify-between text-sm bg-gray-50 rounded px-2 py-1">
+                  <span x-text="pp.policy_concept"></span>
+                  <span class="font-mono font-semibold" x-text="pp.count"></span>
+                </div>
+              </template>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Judge Evaluation -->
+      <section x-show="data.judge_evaluation" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="LLM-as-judge scoring on 4 quality dimensions (1-5 scale).">Judge Evaluation</span>
+          <span class="tip-icon tip" data-tip="LLM-as-judge scoring on 4 quality dimensions.">i</span>
+        </h2>
+        <div class="flex items-center gap-4 mb-4 text-sm text-gray-500">
+          <span>Model: <span class="font-medium text-gray-700" x-text="data.judge_evaluation?.model || '?'"></span></span>
+          <span>Prompts scored: <span class="font-mono font-medium text-gray-700" x-text="data.judge_evaluation?.prompts_scored || 0"></span></span>
+        </div>
+        <div x-show="data.judge_evaluation?.aggregates" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <template x-for="dim in ['subtlety', 'plausibility', 'domain_grounding', 'policy_relevance']" :key="dim">
+            <div class="text-center p-4 bg-gray-50 rounded-lg border border-gray-200">
+              <p class="text-3xl font-bold text-indigo-600" x-text="data.judge_evaluation?.aggregates?.[dim]?.mean?.toFixed(2) || '?'"></p>
+              <p class="text-xs text-gray-400 mt-1" x-text="dim.replace(/_/g, ' ')"></p>
+              <p class="text-[10px] text-gray-300 mt-0.5">
+                med <span x-text="data.judge_evaluation?.aggregates?.[dim]?.median?.toFixed(1) || '?'"></span>
+                &middot; std <span x-text="data.judge_evaluation?.aggregates?.[dim]?.std?.toFixed(2) || '?'"></span>
+              </p>
+            </div>
+          </template>
+        </div>
+        <div x-show="data.judge_evaluation?.by_policy_concept" class="border border-gray-200 rounded-lg p-4">
+          <h3 class="text-sm font-semibold text-gray-700 mb-2"><span class="tip" data-tip="Judge scores by policy concept.">By Policy Concept</span></h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
+                  <th class="pb-2 pr-3">Policy</th>
+                  <th class="pb-2 pr-3 text-right">Subtlety</th>
+                  <th class="pb-2 pr-3 text-right">Plausibility</th>
+                  <th class="pb-2 pr-3 text-right">Grounding</th>
+                  <th class="pb-2 text-right">Relevance</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="[pc, scores] in Object.entries(data.judge_evaluation?.by_policy_concept || {})" :key="pc">
+                  <tr class="border-b border-gray-100">
+                    <td class="py-1.5 pr-3 font-medium" x-text="pc"></td>
+                    <td class="py-1.5 pr-3 text-right font-mono" x-text="scores.subtlety?.mean?.toFixed(2) || '?'"></td>
+                    <td class="py-1.5 pr-3 text-right font-mono" x-text="scores.plausibility?.mean?.toFixed(2) || '?'"></td>
+                    <td class="py-1.5 pr-3 text-right font-mono" x-text="scores.domain_grounding?.mean?.toFixed(2) || '?'"></td>
+                    <td class="py-1.5 text-right font-mono" x-text="scores.policy_relevance?.mean?.toFixed(2) || '?'"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ TAB: DATASET EXPLORER ═══════════════ -->
+  <div x-show="tab === 'explorer'">
+
+    <!-- Empty state -->
+    <template x-if="totalRecords === 0">
+      <div class="text-center py-16 text-gray-400">
+        <p class="text-lg">No adversarial prompt data available.</p>
+        <p class="text-sm mt-1">Run the generate stage to produce prompts.</p>
+      </div>
+    </template>
+
+    <div x-show="totalRecords > 0" class="max-w-screen-xl mx-auto flex gap-0">
+
+      <!-- Sidebar Filters -->
+      <aside class="w-72 shrink-0 bg-white border-r border-gray-200 min-h-[calc(100vh-120px)] p-4 sticky top-[120px] h-[calc(100vh-120px)] overflow-y-auto">
+        <div class="flex items-center justify-between mb-4">
+          <h2 class="font-semibold text-gray-800 text-sm uppercase tracking-wide">Filters</h2>
+          <button @click="clearFilters()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">Clear all</button>
+        </div>
+        <label class="flex items-center gap-2 mb-5 cursor-pointer">
+          <input type="checkbox" x-model="showNullPrompts" class="rounded text-indigo-600" />
+          <span class="text-sm text-gray-700">Show records without prompts</span>
+        </label>
+        <div class="space-y-4">
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Policy Concept</label>
+            <select x-model="filters.policy_concept" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">All</option>
+              <template x-for="v in uniqueValues('policy_concept')" :key="v">
+                <option :value="v" x-text="v"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Risk</label>
+            <select x-model="filters.risk_name" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">All</option>
+              <template x-for="v in uniqueValues('risk_name')" :key="v">
+                <option :value="v" x-text="v"></option>
+              </template>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Search Prompts</label>
+            <input type="text" x-model="searchQuery" placeholder="keyword..." class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+          </div>
+          <div class="border-t border-gray-200 pt-3">
+            <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Quality Metrics</p>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Axis Fidelity</label>
+            <select x-model="filters.fidelity" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">All</option>
+              <option value="full">Full</option>
+              <option value="partial">Partial</option>
+              <option value="improvised">Improvised</option>
+            </select>
+          </div>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" x-model="filters.hideRedFlags" class="rounded text-red-600" />
+            <span class="text-sm text-gray-700">Hide red-flagged</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" x-model="filters.hideJargon" class="rounded text-orange-600" />
+            <span class="text-sm text-gray-700">Hide jargon leaks</span>
+          </label>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Prompt Length</label>
+            <select x-model="filters.promptLength" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">All</option>
+              <option value="short">Short (&lt;50 words)</option>
+              <option value="medium">Medium (50&ndash;150)</option>
+              <option value="long">Long (&gt;150 words)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Relevance Profile</label>
+            <select x-model="filters.relevance" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Any</option>
+              <option value="mostly_high">Mostly High</option>
+              <option value="mostly_low">Mostly Low</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Min Roles</label>
+            <select x-model="filters.minRoles" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">Any</option>
+              <option value="2">2+</option>
+              <option value="3">3+</option>
+              <option value="4">4+</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Source Ontology</label>
+            <select x-model="filters.sourceOntology" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">All</option>
+              <template x-for="v in allSourceOntologies" :key="v">
+                <option :value="v" x-text="v"></option>
+              </template>
+            </select>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Main Grid -->
+      <main class="flex-1 p-6">
+        <!-- Quality summary bar -->
+        <div class="mb-4 flex flex-wrap gap-3 text-xs">
+          <span class="px-2 py-1 rounded bg-green-100 text-green-800"><span class="font-semibold" x-text="qualitySummary.full"></span> full</span>
+          <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800"><span class="font-semibold" x-text="qualitySummary.partial"></span> partial</span>
+          <span class="px-2 py-1 rounded bg-red-100 text-red-800"><span class="font-semibold" x-text="qualitySummary.improvised"></span> improvised</span>
+          <span x-show="qualitySummary.redFlags > 0" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200"><span class="font-semibold" x-text="qualitySummary.redFlags"></span> red flags</span>
+          <span x-show="qualitySummary.jargon > 0" class="px-2 py-1 rounded bg-orange-50 text-orange-600 border border-orange-200"><span class="font-semibold" x-text="qualitySummary.jargon"></span> jargon leaks</span>
+          <span class="px-2 py-1 rounded bg-gray-200 text-gray-700">avg <span class="font-semibold" x-text="qualitySummary.avgLength"></span> words</span>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <template x-for="(record, idx) in filteredRecords" :key="idx">
+            <div @click="openModal(record)" class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 cursor-pointer transition-all duration-150 hover:shadow-md hover:-translate-y-0.5" :class="record.prompt ? '' : 'opacity-50'">
+              <div class="flex items-start justify-between gap-2 mb-2">
+                <div class="flex flex-wrap gap-1.5 items-center">
+                  <span class="text-[10px] font-mono text-gray-400 leading-none" x-text="'#' + record._index"></span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="record.policy_concept"></span>
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800" x-text="record.risk_name"></span>
+                </div>
+                <div class="flex items-center gap-1 shrink-0">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold" :class="fidelityBadge(record._metrics.fidelityClass).cls" x-text="fidelityBadge(record._metrics.fidelityClass).label"></span>
+                  <span x-show="record._metrics.hasRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">&#x26A0;</span>
+                  <span x-show="record._metrics.hasJargon" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700">&#x2699;</span>
+                </div>
+              </div>
+              <p class="text-sm text-gray-800 line-clamp-3 leading-relaxed" :class="record.prompt ? '' : 'italic text-gray-400'" x-text="record.prompt || 'No prompt generated'"></p>
+              <div class="mt-3 flex items-end justify-between gap-2">
+                <div class="flex flex-wrap gap-1 text-xs min-w-0">
+                  <template x-for="ax in (record.sampled_axes || [])" :key="ax.sampled_uri">
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
+                      <span class="text-gray-400 mr-1" x-text="ax.roles ? ax.roles[0] : (ax.role || '')"></span>
+                      <span x-text="ax.sampled_label"></span>
+                    </span>
+                  </template>
+                </div>
+                <span class="text-[10px] text-gray-400 shrink-0" x-text="record._metrics.wordCount + 'w'"></span>
+              </div>
+            </div>
+          </template>
+          <div x-show="filteredRecords.length === 0" class="col-span-3 text-center py-16 text-gray-400">
+            <p class="text-lg">No records match your filters.</p>
+            <button @click="clearFilters()" class="mt-3 text-indigo-600 hover:underline text-sm">Clear filters</button>
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ TAB: DOMAIN CONTEXT ═══════════════ -->
+  <div x-show="tab === 'domain_context'">
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+      <template x-if="!(domainContext.profiles || []).length">
+        <div class="text-center py-16 text-gray-400">
+          <p class="text-lg">No domain context data available.</p>
+          <p class="text-sm mt-1">Run the refine stage to generate domain context.</p>
+        </div>
+      </template>
+
+      <!-- Filter -->
+      <div x-show="(domainContext.profiles || []).length" class="flex items-center gap-4">
+        <label class="text-xs font-semibold text-gray-500 uppercase">Filter by policy</label>
+        <select x-model="dcFilter" class="text-sm border border-gray-300 rounded-md px-3 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          <option value="">All policies</option>
+          <template x-for="pc in dcPolicyConcepts" :key="pc">
+            <option :value="pc" x-text="pc"></option>
+          </template>
+        </select>
+        <span class="text-sm text-gray-400"><span class="font-semibold text-gray-600" x-text="filteredProfiles.length"></span> profiles</span>
+      </div>
+
+      <!-- Profiles -->
+      <template x-for="(profile, pi) in filteredProfiles" :key="pi">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" x-data="{ open: false }">
+          <!-- Profile header -->
+          <div @click="open = !open" class="px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-start justify-between gap-4">
+            <div class="flex-1 min-w-0">
+              <div class="flex flex-wrap items-center gap-2 mb-1">
+                <h3 class="text-sm font-semibold text-gray-800" x-text="profile.risk_name"></h3>
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="profile.policy_concept"></span>
+                <span x-show="profile.risk_framework" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800" x-text="profile.risk_framework"></span>
+              </div>
+              <p class="text-xs font-mono text-gray-400" x-text="profile.risk_id"></p>
+              <p x-show="profile.risk_description" class="text-sm text-gray-600 mt-1 line-clamp-3" x-text="profile.risk_description"></p>
+            </div>
+            <div class="flex items-center gap-3 shrink-0">
+              <div class="text-right text-xs text-gray-400">
+                <span class="font-semibold text-gray-600" x-text="(profile.axes || []).length"></span> axes &middot;
+                <span class="font-semibold text-gray-600" x-text="(profile.axes || []).reduce((s, a) => s + (a.enumerations || []).length, 0)"></span> enums
+              </div>
+              <span class="text-gray-400 text-xs transition-transform" :class="open ? 'rotate-90' : ''">&#x25B6;</span>
+            </div>
+          </div>
+
+          <!-- Profile body -->
+          <div x-show="open" x-collapse>
+            <div class="border-t border-gray-200 px-5 py-4 space-y-4">
+
+              <!-- Risk description (full) -->
+              <div x-show="profile.risk_description">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description</p>
+                <p class="text-sm text-gray-800 leading-relaxed" x-text="profile.risk_description"></p>
+              </div>
+              <div x-show="profile.risk_concern">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Concern</p>
+                <p class="text-sm text-gray-800 leading-relaxed" x-text="profile.risk_concern"></p>
+              </div>
+
+              <!-- Axes -->
+              <div>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Variation Axes</p>
+                <div class="space-y-3">
+                  <template x-for="(axis, ai) in (profile.axes || [])" :key="ai">
+                    <div class="rounded-lg border border-gray-200 overflow-hidden">
+                      <div class="bg-gray-50 px-3 py-2 flex items-center gap-2 border-b border-gray-200">
+                        <template x-for="r in (axis.roles || [])" :key="r">
+                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold" :class="roleColor(r)" x-text="r"></span>
+                        </template>
+                        <span class="text-sm font-medium text-gray-800" x-text="axis.cco_class_label"></span>
+                        <span class="text-xs text-gray-400 truncate" x-text="axis.cco_class_uri"></span>
+                      </div>
+                      <div class="p-2">
+                        <template x-if="(axis.enumerations || []).length">
+                          <div class="flex flex-wrap gap-1.5">
+                            <template x-for="(en, ei) in (axis.enumerations || [])" :key="ei">
+                              <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border bg-white border-gray-200 text-gray-600">
+                                <span x-text="en.class_label"></span>
+                                <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                                  :class="{'bg-green-500': en.relevance==='high', 'bg-yellow-400': en.relevance==='medium', 'bg-red-400': en.relevance==='low'}"></span>
+                                <span class="text-[10px] opacity-60" x-text="en.source_ontology"></span>
+                                <span x-show="en.provenance === 'sibling'" class="text-[9px] px-1 rounded bg-amber-200 text-amber-700 font-medium">sib</span>
+                              </span>
+                            </template>
+                          </div>
+                        </template>
+                        <template x-if="!(axis.enumerations || []).length">
+                          <span class="text-xs text-gray-400 italic px-2 py-1">no enumerations</span>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                </div>
+              </div>
+
+              <!-- Cross mappings -->
+              <div x-show="(profile.cross_mappings || []).length">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cross-Framework Mappings</p>
+                <div class="flex flex-wrap gap-1.5">
+                  <template x-for="(cm, ci) in (profile.cross_mappings || [])" :key="ci">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-gray-200 bg-white">
+                      <span class="font-medium text-gray-700" x-text="cm.name"></span>
+                      <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+                        :class="mappingTypeColor(cm.mapping_type)"
+                        x-text="cm.mapping_type"></span>
+                      <span class="text-[10px] text-gray-400" x-text="cm.taxonomy"></span>
+                    </span>
+                  </template>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </template>
+
+      <!-- Legend -->
+      <div x-show="(domainContext.profiles || []).length" class="flex items-center gap-4 text-[10px] text-gray-400 px-2">
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> high</span>
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> medium</span>
+        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> low</span>
+        <span class="ml-2 px-1.5 py-0.5 rounded bg-amber-200 text-amber-700 text-[9px] font-medium">sib = sibling fallback</span>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ TAB: TAXONOMY ═══════════════ -->
+  <div x-show="tab === 'taxonomy'">
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+      <template x-if="!(taxonomy.entries || []).length">
+        <div class="text-center py-16 text-gray-400">
+          <p class="text-lg">No taxonomy data available.</p>
+          <p class="text-sm mt-1">Run the refine stage to generate the enriched taxonomy.</p>
+        </div>
+      </template>
+
+      <!-- Taxonomy header -->
+      <template x-if="(taxonomy.taxonomies || []).length">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Taxonomy</h2>
+          <template x-for="tax in taxonomy.taxonomies" :key="tax.id">
+            <div class="flex items-center gap-3">
+              <span class="text-lg font-semibold text-gray-800" x-text="tax.name"></span>
+              <span class="px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800 font-medium" x-text="tax.type"></span>
+              <span class="text-xs font-mono text-gray-400" x-text="tax.id"></span>
+            </div>
+          </template>
+          <div class="mt-3 flex gap-4 text-sm text-gray-500">
+            <span><span class="font-semibold text-gray-700" x-text="(taxonomy.groups || []).length"></span> groups</span>
+            <span><span class="font-semibold text-gray-700" x-text="(taxonomy.entries || []).length"></span> entries</span>
+          </div>
+        </section>
+      </template>
+
+      <!-- Groups + Entries -->
+      <template x-for="group in (taxonomy.groups || [])" :key="group.id">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="bg-gray-50 px-5 py-3 border-b border-gray-200">
+            <h3 class="text-sm font-semibold text-gray-700" x-text="group.name"></h3>
+            <p class="text-xs font-mono text-gray-400 mt-0.5" x-text="group.id"></p>
+          </div>
+          <div class="divide-y divide-gray-100">
+            <template x-for="entry in taxonomyEntriesForGroup(group.id)" :key="entry.id">
+              <div class="px-5 py-4" x-data="{ expanded: false }">
+                <div @click="expanded = !expanded" class="cursor-pointer flex items-start justify-between gap-3">
+                  <div class="flex-1 min-w-0">
+                    <div class="flex items-center gap-2 mb-1">
+                      <span class="text-sm font-semibold text-gray-800" x-text="entry.name"></span>
+                      <span x-show="entry.tag" class="px-2 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-500" x-text="entry.tag"></span>
+                    </div>
+                    <!-- Mappings summary -->
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      <template x-for="mt in ['exact_mappings', 'close_mappings', 'related_mappings', 'broad_mappings', 'narrow_mappings']" :key="mt">
+                        <template x-if="(entry[mt] || []).length">
+                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
+                            :class="mappingTypeColor(mt.replace('_mappings', ''))">
+                            <span x-text="mt.replace('_mappings', '')"></span>
+                            <span class="font-mono font-semibold" x-text="entry[mt].length"></span>
+                          </span>
+                        </template>
+                      </template>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-3 shrink-0">
+                    <template x-if="entry.domain_context_summary">
+                      <div class="text-right text-xs text-gray-400">
+                        <span class="font-semibold text-gray-600" x-text="entry.domain_context_summary.axis_count"></span> axes &middot;
+                        <span class="font-semibold text-gray-600" x-text="entry.domain_context_summary.enumeration_count"></span> enums
+                      </div>
+                    </template>
+                    <span class="text-gray-400 text-xs transition-transform" :class="expanded ? 'rotate-90' : ''">&#x25B6;</span>
+                  </div>
+                </div>
+
+                <!-- Expanded details -->
+                <div x-show="expanded" x-collapse class="mt-3 space-y-3">
+                  <!-- Mapping IDs -->
+                  <template x-for="mt in ['exact_mappings', 'close_mappings', 'related_mappings', 'broad_mappings', 'narrow_mappings']" :key="'detail-' + mt">
+                    <div x-show="(entry[mt] || []).length">
+                      <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1" x-text="mt.replace('_', ' ')"></p>
+                      <div class="flex flex-wrap gap-1">
+                        <template x-for="mid in (entry[mt] || [])" :key="mid">
+                          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-600" x-text="mid"></span>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Domain context summary -->
+                  <div x-show="entry.domain_context_summary" class="border border-gray-200 rounded-lg p-3">
+                    <p class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Domain Context Summary</p>
+                    <div class="flex flex-wrap gap-3 mb-2 text-xs text-gray-600">
+                      <span><span class="font-semibold" x-text="entry.domain_context_summary?.axis_count"></span> axes</span>
+                      <span><span class="font-semibold" x-text="entry.domain_context_summary?.enumeration_count"></span> enumerations</span>
+                      <span>from <span class="font-semibold" x-text="(entry.domain_context_summary?.source_ontologies || []).join(', ')"></span></span>
+                    </div>
+                    <div class="space-y-1">
+                      <template x-for="ax in (entry.domain_context_summary?.axes || [])" :key="ax.uri">
+                        <div class="flex items-center gap-2 text-xs bg-gray-50 rounded px-2 py-1">
+                          <template x-for="r in (ax.roles || [])" :key="r">
+                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold" :class="roleColor(r)" x-text="r"></span>
+                          </template>
+                          <span class="font-medium text-gray-700" x-text="ax.class"></span>
+                          <span class="text-gray-400 font-mono truncate" x-text="ax.uri"></span>
+                          <span class="ml-auto font-mono text-gray-500" x-text="ax.enumeration_count + ' enums'"></span>
+                        </div>
+                      </template>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </template>
+          </div>
+        </section>
+      </template>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ TAB: POLICY ═══════════════ -->
+  <div x-show="tab === 'policy'">
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+      <template x-if="!policy?.organization">
+        <div class="text-center py-16 text-gray-400">
+          <p class="text-lg">No enriched policy data available.</p>
+          <p class="text-sm mt-1">Run the ingest stage to produce the enriched policy.</p>
+        </div>
+      </template>
+
+      <!-- Organization context -->
+      <section x-show="policy?.organization" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">Organization Context</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div>
+            <p class="text-xs text-gray-400 uppercase mb-1">Organization</p>
+            <p class="text-sm font-medium text-gray-800" x-text="policy?.organization || '?'"></p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-400 uppercase mb-1">Domain</p>
+            <p class="text-sm font-medium text-gray-800" x-text="policy?.domain || '?'"></p>
+          </div>
+          <div x-show="policy?.airo_version">
+            <p class="text-xs text-gray-400 uppercase mb-1">AIRO Version</p>
+            <p class="text-sm font-mono text-gray-800" x-text="policy?.airo_version"></p>
+          </div>
+          <div x-show="(policy?.purpose || []).length">
+            <p class="text-xs text-gray-400 uppercase mb-1">Purpose</p>
+            <ul class="text-sm text-gray-700 space-y-0.5">
+              <template x-for="p in (policy?.purpose || [])" :key="p">
+                <li class="flex items-start gap-1.5"><span class="text-gray-300 mt-0.5">&bull;</span> <span x-text="p"></span></li>
+              </template>
+            </ul>
+          </div>
+          <div x-show="(policy?.ai_systems || []).length">
+            <p class="text-xs text-gray-400 uppercase mb-1">AI Systems</p>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="s in (policy?.ai_systems || [])" :key="s">
+                <span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800" x-text="s"></span>
+              </template>
+            </div>
+          </div>
+          <div x-show="(policy?.ai_users || []).length">
+            <p class="text-xs text-gray-400 uppercase mb-1">AI Users</p>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="u in (policy?.ai_users || [])" :key="u">
+                <span class="px-2 py-0.5 rounded text-xs bg-teal-100 text-teal-800" x-text="u"></span>
+              </template>
+            </div>
+          </div>
+          <div x-show="(policy?.ai_subjects || []).length">
+            <p class="text-xs text-gray-400 uppercase mb-1">AI Subjects</p>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="s in (policy?.ai_subjects || [])" :key="s">
+                <span class="px-2 py-0.5 rounded text-xs bg-violet-100 text-violet-800" x-text="s"></span>
+              </template>
+            </div>
+          </div>
+          <div x-show="(policy?.governing_regulations || []).length">
+            <p class="text-xs text-gray-400 uppercase mb-1">Governing Regulations</p>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="r in (policy?.governing_regulations || [])" :key="r">
+                <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" x-text="r"></span>
+              </template>
+            </div>
+          </div>
+          <div x-show="(policy?.named_entities || []).length">
+            <p class="text-xs text-gray-400 uppercase mb-1">Named Entities</p>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="e in (policy?.named_entities || [])" :key="e">
+                <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800" x-text="e"></span>
+              </template>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Policy concepts -->
+      <template x-for="(pol, pi) in (policy?.policies || [])" :key="pi">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+          <div class="px-5 py-4 border-b border-gray-200 bg-indigo-50">
+            <h3 class="text-sm font-semibold text-indigo-900" x-text="pol.policy_concept"></h3>
+            <p class="text-sm text-indigo-800 mt-1 leading-relaxed" x-text="pol.concept_definition"></p>
+          </div>
+          <div class="px-5 py-4 space-y-4">
+
+            <!-- Boundary examples -->
+            <div x-show="(pol.boundary_examples || []).length">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Boundary Examples</p>
+              <div class="space-y-2">
+                <template x-for="(be, bi) in (pol.boundary_examples || [])" :key="bi">
+                  <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-red-50 rounded-lg p-3 border border-red-100">
+                      <p class="text-[10px] font-semibold text-red-500 uppercase mb-1">Prohibited</p>
+                      <p class="text-red-800" x-text="be.prohibited"></p>
+                    </div>
+                    <div class="bg-green-50 rounded-lg p-3 border border-green-100">
+                      <p class="text-[10px] font-semibold text-green-500 uppercase mb-1">Acceptable</p>
+                      <p class="text-green-800" x-text="be.acceptable"></p>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Acceptable uses -->
+            <div x-show="(pol.acceptable_uses || []).length">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Acceptable Uses</p>
+              <ul class="text-sm text-gray-700 space-y-0.5">
+                <template x-for="u in (pol.acceptable_uses || [])" :key="u">
+                  <li class="flex items-start gap-1.5"><span class="text-green-400 mt-0.5">&bull;</span> <span x-text="u"></span></li>
+                </template>
+              </ul>
+            </div>
+
+            <!-- Risk controls -->
+            <div x-show="(pol.risk_controls || []).length">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Risk Controls</p>
+              <ul class="text-sm text-gray-700 space-y-0.5">
+                <template x-for="c in (pol.risk_controls || [])" :key="c">
+                  <li class="flex items-start gap-1.5"><span class="text-amber-400 mt-0.5">&bull;</span> <span x-text="c"></span></li>
+                </template>
+              </ul>
+            </div>
+
+            <!-- Human involvement -->
+            <div x-show="pol.human_involvement">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Human Involvement</p>
+              <p class="text-sm text-gray-700" x-text="pol.human_involvement"></p>
+            </div>
+
+          </div>
+        </section>
+      </template>
+
+    </div>
+  </div>
+
+
+  <!-- ═══════════════ EXPLORER MODAL ═══════════════ -->
+  <div
+    x-show="modalOpen"
+    x-transition:enter="transition ease-out duration-150"
+    x-transition:enter-start="opacity-0"
+    x-transition:enter-end="opacity-100"
+    x-transition:leave="transition ease-in duration-100"
+    x-transition:leave-start="opacity-100"
+    x-transition:leave-end="opacity-0"
+    class="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
+    @click.self="closeModal()"
+  >
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl flex flex-col" style="max-height: 90vh;" @click.stop>
+      <!-- Modal Header -->
+      <div class="flex items-start justify-between p-5 border-b border-gray-200 shrink-0">
+        <div class="flex-1 pr-4 flex flex-wrap gap-1.5 items-center">
+          <span class="text-sm font-mono font-bold text-gray-400" x-text="'#' + selectedRecord?._index"></span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="selectedRecord?.policy_concept"></span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-semibold bg-amber-100 text-amber-800" x-text="selectedRecord?.risk_name"></span>
+          <span class="inline-flex items-center px-2.5 py-1 rounded text-xs font-mono font-medium bg-gray-100 text-gray-600" x-text="selectedRecord?.risk_id"></span>
+        </div>
+        <button @click="closeModal()" class="text-gray-400 hover:text-gray-700 text-2xl leading-none font-light ml-2">&times;</button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="overflow-y-auto flex-1 p-5 space-y-5">
+
+        <!-- Prompt -->
+        <div>
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Generated Prompt</h3>
+          <template x-if="selectedRecord?.prompt">
+            <p class="text-gray-900 text-base leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border border-gray-200" x-text="selectedRecord?.prompt"></p>
+          </template>
+          <template x-if="!selectedRecord?.prompt">
+            <p class="italic text-gray-400 bg-gray-50 rounded-lg p-4">No prompt generated for this record.</p>
+          </template>
+        </div>
+
+        <!-- Quality Metrics -->
+        <div x-show="selectedRecord?._metrics">
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Quality Metrics</h3>
+          <div class="rounded-lg border border-gray-200 p-4 grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-3">
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Axis Fidelity</p>
+              <div class="flex items-center gap-1.5 mt-0.5">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold" :class="fidelityBadge(selectedRecord?._metrics?.fidelityClass).cls" x-text="fidelityBadge(selectedRecord?._metrics?.fidelityClass).label"></span>
+                <span class="text-sm text-gray-600" x-text="Math.round((selectedRecord?._metrics?.fidelity || 0) * 100) + '%'"></span>
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Prompt Length</p>
+              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="selectedRecord?._metrics?.wordCount"></span> words</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Role Diversity</p>
+              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="selectedRecord?._metrics?.roleCount"></span> distinct role(s)</p>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Quality Issues</p>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                <span x-show="selectedRecord?._metrics?.hasRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">Red flag</span>
+                <span x-show="selectedRecord?._metrics?.hasJargon" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700">Jargon leak</span>
+                <span x-show="!selectedRecord?._metrics?.hasRedFlag && !selectedRecord?._metrics?.hasJargon" class="text-xs text-green-600">None</span>
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Relevance Profile</p>
+              <div class="flex items-center gap-2 mt-0.5">
+                <template x-for="level in ['high', 'medium', 'low']" :key="level">
+                  <span x-show="(selectedRecord?._metrics?.relevanceProfile || {})[level] > 0" class="inline-flex items-center gap-0.5 text-xs">
+                    <span class="w-1.5 h-1.5 rounded-full" :class="{'bg-green-500': level==='high', 'bg-yellow-400': level==='medium', 'bg-red-400': level==='low'}"></span>
+                    <span x-text="(selectedRecord?._metrics?.relevanceProfile || {})[level]"></span>
+                    <span class="text-gray-400" x-text="level"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+            <div>
+              <p class="text-[10px] text-gray-400 uppercase">Source Ontologies</p>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                <template x-for="ont in (selectedRecord?._metrics?.sourceOntologies || [])" :key="ont">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600" x-text="ont"></span>
+                </template>
+              </div>
+            </div>
+            <div x-show="(selectedRecord?._metrics?.namedEntities || []).length > 0" class="col-span-2 sm:col-span-3">
+              <p class="text-[10px] text-gray-400 uppercase">Named Entity Utilization</p>
+              <div class="flex flex-wrap gap-1 mt-0.5">
+                <template x-for="ne in (selectedRecord?._metrics?.namedEntities || [])" :key="ne.entity">
+                  <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    :class="ne.found ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400 line-through'"
+                    x-text="ne.entity"></span>
+                </template>
+              </div>
+            </div>
+            <div x-show="(selectedRecord?._metrics?.siblingFraction || 0) > 0">
+              <p class="text-[10px] text-gray-400 uppercase">Sibling Fraction</p>
+              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="Math.round((selectedRecord?._metrics?.siblingFraction || 0) * 100) + '%'"></span> from fallback</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Concept Definition -->
+        <div x-show="selectedRecord?.concept_definition" class="flex gap-3 bg-indigo-50 border border-indigo-100 rounded-lg p-4">
+          <div class="text-indigo-400 text-lg leading-none shrink-0">&#x24D8;</div>
+          <div>
+            <p class="text-xs font-semibold text-indigo-700 uppercase tracking-wide mb-1">Policy: <span x-text="selectedRecord?.policy_concept"></span></p>
+            <p class="text-sm text-indigo-900 leading-relaxed" x-text="selectedRecord?.concept_definition"></p>
+          </div>
+        </div>
+
+        <!-- Risk Info -->
+        <div x-show="selectedRecord?.risk_description || selectedRecord?.cross_mappings?.length">
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Risk Info</h3>
+          <div class="rounded-lg border border-gray-200 overflow-hidden">
+            <div class="bg-amber-50 px-4 py-3 border-b border-gray-200">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="text-sm font-semibold text-gray-800" x-text="selectedRecord?.risk_name"></span>
+                <span x-show="selectedRecord?.risk_framework" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800" x-text="selectedRecord?.risk_framework"></span>
+              </div>
+              <p class="text-xs font-mono text-gray-400" x-text="selectedRecord?.risk_id"></p>
+            </div>
+            <div class="px-4 py-3 space-y-2">
+              <div x-show="selectedRecord?.risk_description">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Description</p>
+                <p class="text-sm text-gray-800 leading-relaxed" x-text="selectedRecord?.risk_description"></p>
+              </div>
+              <div x-show="selectedRecord?.risk_concern">
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-0.5">Concern</p>
+                <p class="text-sm text-gray-800 leading-relaxed" x-text="selectedRecord?.risk_concern"></p>
+              </div>
+            </div>
+            <div x-show="selectedRecord?.cross_mappings?.length" class="px-4 py-3 border-t border-gray-200">
+              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Cross-Framework Mappings</p>
+              <div class="flex flex-wrap gap-1.5">
+                <template x-for="(cm, ci) in (selectedRecord?.cross_mappings || [])" :key="ci">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border border-gray-200 bg-white">
+                    <span class="font-medium text-gray-700" x-text="cm.name"></span>
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      :class="mappingTypeColor(cm.mapping_type)"
+                      x-text="cm.mapping_type"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Domain Context -->
+        <div x-show="selectedRecord?.domain_context_axes?.length">
+          <h3 class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Domain Context</h3>
+          <div class="space-y-3">
+            <template x-for="(dcAxis, ai) in (selectedRecord?.domain_context_axes || [])" :key="ai">
+              <div class="rounded-lg border border-gray-200 overflow-hidden">
+                <div class="bg-gray-50 px-3 py-2 flex items-center gap-2 border-b border-gray-200">
+                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold shrink-0"
+                    :class="roleColor((dcAxis.roles || [])[0] || '')"
+                    x-text="(dcAxis.roles || []).join('/')"></span>
+                  <span class="text-sm font-medium text-gray-800" x-text="dcAxis.cco_class_label"></span>
+                  <span class="text-xs text-gray-400 truncate" x-text="dcAxis.cco_class_uri"></span>
+                </div>
+                <div class="p-2 flex flex-wrap gap-1.5">
+                  <template x-for="(en, ei) in (dcAxis.enumerations || [])" :key="ei">
+                    <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border"
+                      :class="isSampled(selectedRecord, dcAxis, en)
+                        ? 'bg-indigo-100 border-indigo-300 text-indigo-800 font-semibold ring-2 ring-indigo-400/50'
+                        : 'bg-white border-gray-200 text-gray-600'">
+                      <span x-text="en.class_label"></span>
+                      <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
+                        :class="{'bg-green-500': en.relevance==='high', 'bg-yellow-400': en.relevance==='medium', 'bg-red-400': en.relevance==='low'}"></span>
+                      <span class="text-[10px] opacity-60" x-text="en.source_ontology"></span>
+                      <span x-show="en.provenance === 'sibling'" class="text-[9px] px-1 rounded bg-amber-200 text-amber-700 font-medium">sib</span>
+                    </span>
+                  </template>
+                  <template x-if="!dcAxis.enumerations?.length">
+                    <span class="text-xs text-gray-400 italic px-2 py-1">no enumerations</span>
+                  </template>
+                </div>
+              </div>
+            </template>
+          </div>
+          <div class="mt-2 flex items-center gap-3 text-[10px] text-gray-400">
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> high</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> medium</span>
+            <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> low</span>
+            <span class="ml-2 px-1.5 py-0.5 rounded bg-indigo-100 border border-indigo-300 text-indigo-700">sampled</span>
+            <span class="ml-1 px-1.5 py-0.5 rounded bg-amber-200 text-amber-700 text-[9px] font-medium">sib = sibling fallback</span>
+          </div>
+        </div>
+
+        <!-- Generation Prompt (collapsible) -->
+        <div x-show="selectedRecord?.generation_prompt?.length" x-data="{ genPromptOpen: false }">
+          <button @click="genPromptOpen = !genPromptOpen" class="flex items-center gap-2 w-full text-left group">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Generation Prompt</span>
+            <span class="text-gray-400 text-xs transition-transform" :class="genPromptOpen ? 'rotate-90' : ''">&#x25B6;</span>
+            <span class="flex-1 border-t border-gray-200 ml-1"></span>
+          </button>
+          <div x-show="genPromptOpen" x-collapse class="mt-2">
+            <pre class="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border border-gray-200 max-h-96 overflow-y-auto" x-text="formatMessages(selectedRecord?.generation_prompt)"></pre>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+<!-- ═══════════════ SCRIPT ═══════════════ -->
+<script>
+
+// --- Quality metric constants ---
+
+const RED_FLAG_RE = /\bhypothetically\b|\bin theory\b|\btheoretically\b|\bfor educational purposes\b|\bfor research purposes\b|\bfor academic purposes\b|\bas a test\b|\bjust testing\b|\bthis is a test\b|\bI want to hack\b|\bhelp me attack\b|\bhow to exploit\b|\bpretend you are\b|\bignore previous instructions\b|\bjailbreak\b|\bwhat if someone wanted to\b|\basking for a friend\b/i;
+const JARGON_RE = /\bAct of [A-Z]\w+\b|\b\w+ Artifact Function\b|\b[A-Z][a-z]+(?:[A-Z][a-z]+){2,}\b|\bAE\b(?!\s+suffix)/;
+const AXIS_STOPWORDS = new Set(['a','an','the','of','in','on','at','to','for','and','or','is','by','act','function']);
+const NAMED_ENTITY_RE_SRC = '\\b[A-Z][a-z]+(?:\\s+[A-Z][a-z]+)+\\b';
+const CAMELCASE_RE_SRC = '\\b[A-Z][a-z]+[A-Z][a-zA-Z]*\\b';
+const COMMON_FIRST_WORDS = new Set(['The','This','These','Those','That','Also','Include','Any','All','Each','Some','Such','Our','Their','Your','Its']);
+
+function axisWords(label) {
+  return label.split(/\s+/).filter(w => w.length > 2 && !AXIS_STOPWORDS.has(w.toLowerCase())).map(w => w.toLowerCase());
+}
+
+function extractNamedEntities(text) {
+  if (!text) return [];
+  const entities = new Set();
+  let m;
+  const re1 = new RegExp(NAMED_ENTITY_RE_SRC, 'g');
+  while ((m = re1.exec(text)) !== null) {
+    if (!COMMON_FIRST_WORDS.has(m[0].split(/\s+/)[0])) entities.add(m[0]);
+  }
+  const re2 = new RegExp(CAMELCASE_RE_SRC, 'g');
+  while ((m = re2.exec(text)) !== null) entities.add(m[0]);
+  return [...entities];
+}
+
+function computeMetrics(record) {
+  const prompt = record.prompt || '';
+  const promptLower = prompt.toLowerCase();
+  const words = prompt.split(/\s+/).filter(w => w.length > 0);
+  const axes = record.sampled_axes || [];
+  let matched = 0;
+  for (const sa of axes) {
+    const aw = axisWords(sa.sampled_label || '');
+    if (aw.length === 0) { matched++; continue; }
+    if (aw.some(w => promptLower.includes(w))) matched++;
+  }
+  const fidelity = axes.length > 0 ? matched / axes.length : 1;
+  const fidelityClass = fidelity === 1 ? 'full' : fidelity === 0 ? 'improvised' : 'partial';
+  const hasRedFlag = prompt ? RED_FLAG_RE.test(prompt) : false;
+  const hasJargon = prompt ? JARGON_RE.test(prompt) : false;
+  const roles = new Set();
+  for (const sa of axes) for (const r of (sa.roles || [])) roles.add(r);
+  const relevanceProfile = { high: 0, medium: 0, low: 0 };
+  for (const sa of axes) { const rel = sa.relevance || 'low'; if (rel in relevanceProfile) relevanceProfile[rel]++; }
+  const ontSet = new Set();
+  for (const sa of axes) if (sa.source_ontology) ontSet.add(sa.source_ontology);
+  const policyEntities = extractNamedEntities(record.concept_definition || '');
+  const namedEntities = policyEntities.map(e => ({ entity: e, found: promptLower.includes(e.toLowerCase()) }));
+  let sibCount = 0, totalSampled = 0;
+  const dcAxes = record.domain_context_axes || [];
+  for (const sa of axes) {
+    totalSampled++;
+    const dcAxis = dcAxes.find(dc => dc.cco_class_uri === sa.cco_class_uri);
+    if (dcAxis) {
+      const enumMatch = (dcAxis.enumerations || []).find(en => en.class_uri === sa.sampled_uri);
+      if (enumMatch && enumMatch.provenance === 'sibling') sibCount++;
+    }
+  }
+  return { fidelity, fidelityClass, hasRedFlag, hasJargon, wordCount: words.length, roleCount: roles.size, relevanceProfile, sourceOntologies: [...ontSet].sort(), namedEntities, siblingFraction: totalSampled > 0 ? sibCount / totalSampled : 0 };
+}
+
+function formatMessages(messages) {
+  if (!messages || !Array.isArray(messages)) return '';
+  return messages.map(m => '[' + m.role + ']\n' + m.content).join('\n\n');
+}
+
+// --- Data load & metric pre-computation ---
+
+const REPORT_DATA = __REPORT_DATA__;
+const EXPLORER_RAW = __EXPLORER_DATA__;
+const DOMAIN_CONTEXT = __DOMAIN_CONTEXT_DATA__;
+const TAXONOMY = __TAXONOMY_DATA__;
+const POLICY = __POLICY_DATA__;
+
+for (let i = 0; i < EXPLORER_RAW.length; i++) {
+  EXPLORER_RAW[i]._index = i + 1;
+  EXPLORER_RAW[i]._metrics = computeMetrics(EXPLORER_RAW[i]);
+}
+
+function app() {
+  const allOnts = new Set();
+  for (const r of EXPLORER_RAW) {
+    for (const ont of r._metrics.sourceOntologies) allOnts.add(ont);
+  }
+
+  // Domain context unique policy concepts
+  const dcPCs = [...new Set((DOMAIN_CONTEXT.profiles || []).map(p => p.policy_concept).filter(Boolean))].sort();
+
+  return {
+    // --- Tab state ---
+    tab: 'evaluation',
+    tabs: [
+      { id: 'evaluation', label: 'Evaluation' },
+      { id: 'explorer', label: 'Dataset Explorer' },
+      { id: 'domain_context', label: 'Domain Context' },
+      { id: 'taxonomy', label: 'Taxonomy' },
+      { id: 'policy', label: 'Policy' },
+    ],
+
+    // --- Evaluation data ---
+    data: REPORT_DATA,
+
+    // --- Explorer data & state ---
+    allRecords: EXPLORER_RAW,
+    totalRecords: EXPLORER_RAW.length,
+    allSourceOntologies: [...allOnts].sort(),
+    showNullPrompts: true,
+    searchQuery: '',
+    filters: {
+      policy_concept: '', risk_name: '', fidelity: '',
+      hideRedFlags: false, hideJargon: false,
+      promptLength: '', relevance: '', minRoles: '', sourceOntology: '',
+    },
+    modalOpen: false,
+    selectedRecord: null,
+
+    get filteredRecords() {
+      const q = this.searchQuery.toLowerCase().trim();
+      return this.allRecords.filter(r => {
+        if (!this.showNullPrompts && !r.prompt) return false;
+        if (this.filters.policy_concept && r.policy_concept !== this.filters.policy_concept) return false;
+        if (this.filters.risk_name && r.risk_name !== this.filters.risk_name) return false;
+        if (q && !(r.prompt || '').toLowerCase().includes(q)) return false;
+        const m = r._metrics;
+        if (this.filters.fidelity && m.fidelityClass !== this.filters.fidelity) return false;
+        if (this.filters.hideRedFlags && m.hasRedFlag) return false;
+        if (this.filters.hideJargon && m.hasJargon) return false;
+        if (this.filters.promptLength) {
+          if (this.filters.promptLength === 'short' && m.wordCount >= 50) return false;
+          if (this.filters.promptLength === 'medium' && (m.wordCount < 50 || m.wordCount > 150)) return false;
+          if (this.filters.promptLength === 'long' && m.wordCount <= 150) return false;
+        }
+        if (this.filters.relevance) {
+          const total = m.relevanceProfile.high + m.relevanceProfile.medium + m.relevanceProfile.low;
+          if (total > 0) {
+            if (this.filters.relevance === 'mostly_high' && m.relevanceProfile.high / total < 0.5) return false;
+            if (this.filters.relevance === 'mostly_low' && m.relevanceProfile.low / total < 0.5) return false;
+          }
+        }
+        if (this.filters.minRoles && m.roleCount < parseInt(this.filters.minRoles)) return false;
+        if (this.filters.sourceOntology && !m.sourceOntologies.includes(this.filters.sourceOntology)) return false;
+        return true;
+      });
+    },
+
+    get filteredWithPrompts() {
+      return this.filteredRecords.filter(r => r.prompt).length;
+    },
+
+    get qualitySummary() {
+      const records = this.filteredRecords.filter(r => r.prompt);
+      let full = 0, partial = 0, improvised = 0, redFlags = 0, jargon = 0, totalWords = 0;
+      for (const r of records) {
+        const m = r._metrics;
+        if (m.fidelityClass === 'full') full++;
+        else if (m.fidelityClass === 'partial') partial++;
+        else improvised++;
+        if (m.hasRedFlag) redFlags++;
+        if (m.hasJargon) jargon++;
+        totalWords += m.wordCount;
+      }
+      return { full, partial, improvised, redFlags, jargon, avgLength: records.length > 0 ? Math.round(totalWords / records.length) : 0 };
+    },
+
+    uniqueValues(field) {
+      return [...new Set(this.allRecords.map(r => r[field]).filter(Boolean))].sort();
+    },
+
+    clearFilters() {
+      this.filters = { policy_concept: '', risk_name: '', fidelity: '', hideRedFlags: false, hideJargon: false, promptLength: '', relevance: '', minRoles: '', sourceOntology: '' };
+      this.searchQuery = '';
+      this.showNullPrompts = true;
+    },
+
+    openModal(record) {
+      this.selectedRecord = record;
+      this.modalOpen = true;
+      document.body.style.overflow = 'hidden';
+    },
+
+    closeModal() {
+      this.modalOpen = false;
+      this.selectedRecord = null;
+      document.body.style.overflow = '';
+    },
+
+    fidelityBadge(cls) {
+      const map = { 'full': { cls: 'bg-green-100 text-green-800', label: 'full' }, 'partial': { cls: 'bg-yellow-100 text-yellow-800', label: 'partial' }, 'improvised': { cls: 'bg-red-100 text-red-800', label: 'improv' } };
+      return map[cls] || map['improvised'];
+    },
+
+    roleColor(role) {
+      const map = { 'agent': 'bg-teal-100 text-teal-800', 'object': 'bg-blue-100 text-blue-800', 'instrument': 'bg-violet-100 text-violet-800', 'location': 'bg-emerald-100 text-emerald-800', 'temporal': 'bg-amber-100 text-amber-800' };
+      return map[role] || 'bg-gray-100 text-gray-800';
+    },
+
+    mappingTypeColor(mt) {
+      const map = { 'exact': 'bg-green-100 text-green-700', 'close': 'bg-blue-100 text-blue-700', 'broad': 'bg-yellow-100 text-yellow-700', 'narrow': 'bg-orange-100 text-orange-700', 'related': 'bg-gray-100 text-gray-600' };
+      return map[mt] || 'bg-gray-100 text-gray-600';
+    },
+
+    isSampled(record, dcAxis, enumeration) {
+      if (!record?.sampled_axes) return false;
+      return record.sampled_axes.some(sa => sa.cco_class_uri === dcAxis.cco_class_uri && sa.sampled_uri === enumeration.class_uri);
+    },
+
+    // --- Domain context ---
+    domainContext: DOMAIN_CONTEXT,
+    dcFilter: '',
+    dcPolicyConcepts: dcPCs,
+
+    get filteredProfiles() {
+      const profiles = this.domainContext.profiles || [];
+      if (!this.dcFilter) return profiles;
+      return profiles.filter(p => p.policy_concept === this.dcFilter);
+    },
+
+    // --- Taxonomy ---
+    taxonomy: TAXONOMY,
+
+    taxonomyEntriesForGroup(groupId) {
+      return (this.taxonomy.entries || []).filter(e => e.isPartOf === groupId);
+    },
+
+    // --- Policy ---
+    policy: POLICY,
+  };
+}
+</script>
+</body>
+</html>

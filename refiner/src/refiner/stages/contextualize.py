@@ -19,24 +19,24 @@ logger = logging.getLogger(__name__)
 SYSTEM_PROMPT = """\
 You are generating domain context profiles for AI risk variation axes.
 
-For each variation axis (an ontology class), you are given candidate classes that form the enumeration space — the specific values that can be substituted when generating diverse prompts.
+For each variation axis, you are given candidate classes that form the enumeration space — the specific values that can be substituted when generating diverse prompts.
 
 Candidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.
 
 Filter out irrelevant candidates and annotate each remaining one with:
 - relevance: "high" (directly relevant), "medium" (potentially relevant), "low" (edge case)
 
-Return one entry per axis using the axis URI as a key, with the filtered enumerations."""
+Return one entry per axis using the axis ID (e.g. A1) as a key, with the filtered enumeration IDs (e.g. E1, E2)."""
 
 
 class _EnumResponse(BaseModel):
-    class_uri: str
+    class_id: str
     class_label: str
     relevance: Literal["high", "medium", "low"]
 
 
 class _AxisResponse(BaseModel):
-    cco_class_uri: str  # matching key to input axis
+    axis_id: str
     enumerations: list[_EnumResponse]
 
 
@@ -90,34 +90,52 @@ def contextualize(
 
         # Gather candidates for each axis — subclasses first, siblings as fallback
         axis_context = []
-        for axis in rva.axes:
+        axis_id_to_uri = {}
+        enum_id_to_uri = {}
+        enum_counter = 0
+
+        for axis_idx, axis in enumerate(rva.axes, 1):
+            axis_id = f"A{axis_idx}"
+            axis_id_to_uri[axis_id] = axis.cco_class_uri
+
             subclasses = onto_handlers["get_subclasses"](axis.cco_class_uri, depth=1)
             if subclasses:
                 candidates = subclasses[:10]
-                source = "Subclasses"
+                source = "subclasses"
                 axis_provenance[axis.cco_class_uri] = "subclass"
             else:
                 siblings = onto_handlers["get_siblings"](axis.cco_class_uri)
                 candidates = [s for s in siblings if s.get("uri") != axis.cco_class_uri][:10]
-                source = "Siblings"
+                source = "siblings"
                 axis_provenance[axis.cco_class_uri] = "sibling"
                 if report:
                     report.events.append({
                         "stage": "contextualize", "event": "sibling_fallback",
                         "axis_uri": axis.cco_class_uri, "sibling_count": len(candidates),
                     })
+
             candidate_lines = []
             for c in candidates:
-                candidate_lines.append(f"  - {c.get('uri', '')}: {c.get('label', '')}")
+                enum_counter += 1
+                enum_id = f"E{enum_counter}"
+                c_uri = c.get("uri", "")
+                enum_id_to_uri[enum_id] = c_uri
+                defn = onto_handlers["get_class_definition"](c_uri)
+                definition = defn.get("definition", "") if defn else ""
+                label = c.get("label", "")
+                if definition:
+                    candidate_lines.append(f"- {enum_id}: {label} — {definition}")
+                else:
+                    candidate_lines.append(f"- {enum_id}: {label}")
 
             # Add restriction context if available
             restriction_lines = []
             if onto_handlers.get("get_restrictions"):
                 restrictions = onto_handlers["get_restrictions"](axis.cco_class_uri)
-                for r in restrictions[:5]:  # cap at 5 to avoid prompt bloat
+                for r in restrictions[:5]:
                     prop_label = r.get("property", "").split("#")[-1].split("/")[-1]
                     filler_label = r.get("filler", "").split("#")[-1].split("/")[-1]
-                    restriction_lines.append(f"  - {r['type']}: {prop_label} -> {filler_label}")
+                    restriction_lines.append(f"- {r['type']}: {prop_label} → {filler_label}")
                 if restriction_lines and report:
                     report.events.append({
                         "stage": "contextualize", "event": "restriction_context_added",
@@ -127,13 +145,14 @@ def contextualize(
 
             constraint_block = ""
             if restriction_lines:
-                constraint_block = "Ontology constraints:\n" + "\n".join(restriction_lines) + "\n"
+                constraint_block = "\nConstraints:\n" + "\n".join(restriction_lines)
 
             axis_context.append(
-                f"Axis: {axis.cco_class_label} ({axis.cco_class_uri})\n"
+                f"### Axis {axis_id}: {axis.cco_class_label}\n"
                 f"Roles: {', '.join(axis.roles)}\n"
-                f"{constraint_block}"
-                f"{source}:\n" + ("\n".join(candidate_lines) if candidate_lines else "  (none)")
+                f"Candidates ({source}):\n"
+                + ("\n".join(candidate_lines) if candidate_lines else "(none)")
+                + constraint_block
             )
 
         details = risk_details.get(rva.risk_id, {}) if risk_details else {}
@@ -141,7 +160,7 @@ def contextualize(
         concern = details.get("concern", "")
 
         user_content = (
-            f"Risk: {rva.risk_name} (ID: {rva.risk_id})\n"
+            f"Risk: {rva.risk_name}\n"
             f"Description: {description}\n"
             f"Concern: {concern}\n"
             f"Policy: {rva.policy_concept}\n\n"
@@ -171,14 +190,22 @@ def contextualize(
         # stitch back axis metadata from input
         validated_axes = []
         for resp_axis in result.axes:
-            input_axis = input_axes_by_uri.get(resp_axis.cco_class_uri)
+            axis_uri = axis_id_to_uri.get(resp_axis.axis_id)
+            if axis_uri is None:
+                logger.warning("LLM returned unknown axis ID: %s", resp_axis.axis_id)
+                continue
+            input_axis = input_axes_by_uri.get(axis_uri)
             if input_axis is None:
-                logger.warning("LLM returned unknown axis URI: %s", resp_axis.cco_class_uri)
+                logger.warning("LLM returned axis ID %s mapping to unknown URI: %s", resp_axis.axis_id, axis_uri)
                 continue
 
             valid_enums = []
             for enum in resp_axis.enumerations:
-                if enum.class_uri == input_axis.cco_class_uri:
+                enum_uri = enum_id_to_uri.get(enum.class_id)
+                if enum_uri is None:
+                    logger.warning("LLM returned unknown enum ID: %s", enum.class_id)
+                    continue
+                if enum_uri == input_axis.cco_class_uri:
                     if report:
                         report.events.append({
                             "stage": "contextualize", "event": "self_reference_filtered",
@@ -187,32 +214,32 @@ def contextualize(
                     continue  # skip self-reference
                 # Domain filtering: check enumeration URI against selected domains
                 if selected_domains:
-                    enum_domain = derive_source_ontology(enum.class_uri)
+                    enum_domain = derive_source_ontology(enum_uri)
                     if enum_domain not in selected_domains:
                         logger.info(
                             "Filtering enumeration %s (domain %s) — not in selected domains %s",
-                            enum.class_uri, enum_domain, selected_domains,
+                            enum_uri, enum_domain, selected_domains,
                         )
                         if report:
                             report.events.append({
                                 "stage": "contextualize", "event": "enumeration_domain_filtered",
                                 "axis_uri": input_axis.cco_class_uri,
-                                "enum_uri": enum.class_uri,
+                                "enum_uri": enum_uri,
                                 "enum_domain": enum_domain,
                                 "selected_domains": selected_domains,
                             })
                         continue
-                check = onto_handlers["get_class_definition"](enum.class_uri)
+                check = onto_handlers["get_class_definition"](enum_uri)
                 if check is not None:
                     valid_enums.append(AxisEnumeration(
-                        class_uri=enum.class_uri,
+                        class_uri=enum_uri,
                         class_label=enum.class_label,
-                        source_ontology=derive_source_ontology(enum.class_uri),
+                        source_ontology=derive_source_ontology(enum_uri),
                         relevance=enum.relevance,
                         provenance=axis_provenance.get(input_axis.cco_class_uri, "subclass"),
                     ))
                 else:
-                    logger.warning("Filtering invalid enumeration class_uri: %s", enum.class_uri)
+                    logger.warning("Filtering invalid enumeration URI for %s: %s", enum.class_id, enum_uri)
 
             # Disjointness filter
             if onto_handlers.get("get_disjoint_classes"):

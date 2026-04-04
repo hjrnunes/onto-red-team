@@ -1,0 +1,213 @@
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+
+<https://www.commoncoreontologies.org/bridges/lkif-labels>
+    a owl:Ontology ;
+    rdfs:label "LKIF Core Labels" ;
+    rdfs:comment "Generated rdfs:label triples for LKIF Core classes that lack labels. LKIF uses URI fragments as class names; this file makes them indexable." .
+
+<http://www.estrellaproject.org/lkif-core/action.owl#Action> rdfs:label "Action" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Agent> rdfs:label "Agent" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Artifact> rdfs:label "Artifact" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Collaborative_Plan> rdfs:label "Collaborative Plan" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Creation> rdfs:label "Creation" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Natural_Object> rdfs:label "Natural Object" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Organisation> rdfs:label "Organisation" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Person> rdfs:label "Person" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Personal_Plan> rdfs:label "Personal Plan" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Plan> rdfs:label "Plan" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Reaction> rdfs:label "Reaction" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Trade> rdfs:label "Trade" .
+<http://www.estrellaproject.org/lkif-core/action.owl#Transaction> rdfs:label "Transaction" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Argument> rdfs:label "Argument" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Assertion> rdfs:label "Assertion" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Assumption> rdfs:label "Assumption" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Belief> rdfs:label "Belief" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Cause> rdfs:label "Cause" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Communicated_Attitude> rdfs:label "Communicated Attitude" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Declaration> rdfs:label "Declaration" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Desire> rdfs:label "Desire" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Document> rdfs:label "Document" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Evaluative_Attitude> rdfs:label "Evaluative Attitude" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Evaluative_Proposition> rdfs:label "Evaluative Proposition" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Evidence> rdfs:label "Evidence" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Exception> rdfs:label "Exception" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Expectation> rdfs:label "Expectation" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Expression> rdfs:label "Expression" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Fact> rdfs:label "Fact" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Intention> rdfs:label "Intention" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Lie> rdfs:label "Lie" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Medium> rdfs:label "Medium" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Observation> rdfs:label "Observation" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Problem> rdfs:label "Problem" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Promise> rdfs:label "Promise" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Proposition> rdfs:label "Proposition" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Propositional_Attitude> rdfs:label "Propositional Attitude" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Qualification> rdfs:label "Qualification" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Qualified> rdfs:label "Qualified" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Reason> rdfs:label "Reason" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Speech_Act> rdfs:label "Speech Act" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Statement_In_Writing> rdfs:label "Statement In Writing" .
+<http://www.estrellaproject.org/lkif-core/expression.owl#Surprise> rdfs:label "Surprise" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Act_of_Law> rdfs:label "Act of Law" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Assignment> rdfs:label "Assignment" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Association> rdfs:label "Association" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Co-operative> rdfs:label "Co-operative" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Company> rdfs:label "Company" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Corporation> rdfs:label "Corporation" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Decision> rdfs:label "Decision" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Delegation> rdfs:label "Delegation" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Foundation> rdfs:label "Foundation" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Incorporated> rdfs:label "Incorporated" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Legal_Person> rdfs:label "Legal Person" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Legal_Speech_Act> rdfs:label "Legal Speech Act" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Limited_Company> rdfs:label "Limited Company" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Mandate> rdfs:label "Mandate" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Natural_Person> rdfs:label "Natural Person" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Public_Act> rdfs:label "Public Act" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Public_Body> rdfs:label "Public Body" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Society> rdfs:label "Society" .
+<http://www.estrellaproject.org/lkif-core/legal-action.owl#Unincorporated> rdfs:label "Unincorporated" .
+<http://www.estrellaproject.org/lkif-core/legal-role.owl#Legal_Role> rdfs:label "Legal Role" .
+<http://www.estrellaproject.org/lkif-core/legal-role.owl#Professional_Legal_Role> rdfs:label "Professional Legal Role" .
+<http://www.estrellaproject.org/lkif-core/legal-role.owl#Social_Legal_Role> rdfs:label "Social Legal Role" .
+<http://www.estrellaproject.org/lkif-core/lkif-rules.owl#Argument> rdfs:label "Argument" .
+<http://www.estrellaproject.org/lkif-core/lkif-rules.owl#Assumption> rdfs:label "Assumption" .
+<http://www.estrellaproject.org/lkif-core/lkif-rules.owl#Atom> rdfs:label "Atom" .
+<http://www.estrellaproject.org/lkif-core/lkif-rules.owl#Exception> rdfs:label "Exception" .
+<http://www.estrellaproject.org/lkif-core/lkif-rules.owl#Negated_Atom> rdfs:label "Negated Atom" .
+<http://www.estrellaproject.org/lkif-core/lkif-rules.owl#Rule> rdfs:label "Rule" .
+<http://www.estrellaproject.org/lkif-core/lkif-rules.owl#Valid_Rule> rdfs:label "Valid Rule" .
+<http://www.estrellaproject.org/lkif-core/lkif-top.owl#Abstract_Entity> rdfs:label "Abstract Entity" .
+<http://www.estrellaproject.org/lkif-core/lkif-top.owl#Mental_Entity> rdfs:label "Mental Entity" .
+<http://www.estrellaproject.org/lkif-core/lkif-top.owl#Mental_Object> rdfs:label "Mental Object" .
+<http://www.estrellaproject.org/lkif-core/lkif-top.owl#Occurrence> rdfs:label "Occurrence" .
+<http://www.estrellaproject.org/lkif-core/lkif-top.owl#Physical_Entity> rdfs:label "Physical Entity" .
+<http://www.estrellaproject.org/lkif-core/lkif-top.owl#Spatio_Temporal_Occurrence> rdfs:label "Spatio Temporal Occurrence" .
+<http://www.estrellaproject.org/lkif-core/mereology.owl#Atom> rdfs:label "Atom" .
+<http://www.estrellaproject.org/lkif-core/mereology.owl#Composition> rdfs:label "Composition" .
+<http://www.estrellaproject.org/lkif-core/mereology.owl#Pair> rdfs:label "Pair" .
+<http://www.estrellaproject.org/lkif-core/mereology.owl#Part> rdfs:label "Part" .
+<http://www.estrellaproject.org/lkif-core/mereology.owl#Whole> rdfs:label "Whole" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Action_Power> rdfs:label "Action Power" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Allowed> rdfs:label "Allowed" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Allowed_And_Disallowed> rdfs:label "Allowed And Disallowed" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Belief_In_Violation> rdfs:label "Belief In Violation" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Code> rdfs:label "Code" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Code_of_Conduct> rdfs:label "Code of Conduct" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Contract> rdfs:label "Contract" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Custom> rdfs:label "Custom" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Customary_Law> rdfs:label "Customary Law" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Declarative_Power> rdfs:label "Declarative Power" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Decree> rdfs:label "Decree" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Definitional_Expression> rdfs:label "Definitional Expression" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Directive> rdfs:label "Directive" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Disallowed> rdfs:label "Disallowed" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Disallowed_Intention> rdfs:label "Disallowed Intention" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Enabling_Power> rdfs:label "Enabling Power" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Evaluative_Expression> rdfs:label "Evaluative Expression" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Exclusionary_Right> rdfs:label "Exclusionary Right" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Existential_Expression> rdfs:label "Existential Expression" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Hohfeldian_Power> rdfs:label "Hohfeldian Power" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Immunity> rdfs:label "Immunity" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#International_Agreement> rdfs:label "International Agreement" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#International_Arbitration> rdfs:label "International Arbitration" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Legal_Doctrine> rdfs:label "Legal Doctrine" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Legal_Document> rdfs:label "Legal Document" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Legal_Expression> rdfs:label "Legal Expression" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Legal_Source> rdfs:label "Legal Source" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Liability_Right> rdfs:label "Liability Right" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Liberty_Right> rdfs:label "Liberty Right" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Mandatory_Precedent> rdfs:label "Mandatory Precedent" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Non-binding_International_Agreement> rdfs:label "Non-binding International Agreement" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Norm> rdfs:label "Norm" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Normatively_Qualified> rdfs:label "Normatively Qualified" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Obligation> rdfs:label "Obligation" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Obligative_Right> rdfs:label "Obligative Right" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Obliged> rdfs:label "Obliged" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Observation_of_Violation> rdfs:label "Observation of Violation" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Permission> rdfs:label "Permission" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Permissive_Right> rdfs:label "Permissive Right" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Persuasive_Precedent> rdfs:label "Persuasive Precedent" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Potestative_Expression> rdfs:label "Potestative Expression" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Potestative_Right> rdfs:label "Potestative Right" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Precedent> rdfs:label "Precedent" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Proclamation> rdfs:label "Proclamation" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Prohibition> rdfs:label "Prohibition" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Qualificatory_Expression> rdfs:label "Qualificatory Expression" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Regulation> rdfs:label "Regulation" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Resolution> rdfs:label "Resolution" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Right> rdfs:label "Right" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Soft_Law> rdfs:label "Soft Law" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Statute> rdfs:label "Statute" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Strictly_Allowed> rdfs:label "Strictly Allowed" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Strictly_Disallowed> rdfs:label "Strictly Disallowed" .
+<http://www.estrellaproject.org/lkif-core/norm.owl#Treaty> rdfs:label "Treaty" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Change> rdfs:label "Change" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Continuation> rdfs:label "Continuation" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Initiation> rdfs:label "Initiation" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Mental_Process> rdfs:label "Mental Process" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Physical_Object> rdfs:label "Physical Object" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Physical_Process> rdfs:label "Physical Process" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Process> rdfs:label "Process" .
+<http://www.estrellaproject.org/lkif-core/process.owl#Termination> rdfs:label "Termination" .
+<http://www.estrellaproject.org/lkif-core/relative-places.owl#Absolute_Place> rdfs:label "Absolute Place" .
+<http://www.estrellaproject.org/lkif-core/relative-places.owl#Comprehensive_Place> rdfs:label "Comprehensive Place" .
+<http://www.estrellaproject.org/lkif-core/relative-places.owl#Location_Complex> rdfs:label "Location Complex" .
+<http://www.estrellaproject.org/lkif-core/relative-places.owl#Place> rdfs:label "Place" .
+<http://www.estrellaproject.org/lkif-core/relative-places.owl#Relative_Place> rdfs:label "Relative Place" .
+<http://www.estrellaproject.org/lkif-core/role.owl#Epistemic_Role> rdfs:label "Epistemic Role" .
+<http://www.estrellaproject.org/lkif-core/role.owl#Function> rdfs:label "Function" .
+<http://www.estrellaproject.org/lkif-core/role.owl#Organisation_Role> rdfs:label "Organisation Role" .
+<http://www.estrellaproject.org/lkif-core/role.owl#Person_Role> rdfs:label "Person Role" .
+<http://www.estrellaproject.org/lkif-core/role.owl#Role> rdfs:label "Role" .
+<http://www.estrellaproject.org/lkif-core/role.owl#Social_Role> rdfs:label "Social Role" .
+<http://www.estrellaproject.org/lkif-core/role.owl#Subjective_Entity> rdfs:label "Subjective Entity" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Annulment> rdfs:label "Annulment" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Application> rdfs:label "Application" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Application_Date> rdfs:label "Application Date" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Application_Interval> rdfs:label "Application Interval" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Delivery_Date> rdfs:label "Delivery Date" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Deregulation> rdfs:label "Deregulation" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Dynamic_Temporal_Entity> rdfs:label "Dynamic Temporal Entity" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Efficacy_Interval> rdfs:label "Efficacy Interval" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Efficacy_Modification> rdfs:label "Efficacy Modification" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#End_efficacy> rdfs:label "End efficacy" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#End_in_Force> rdfs:label "End in Force" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Enter_in_Force_Date> rdfs:label "Enter in Force Date" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Exception> rdfs:label "Exception" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Existence_Date> rdfs:label "Existence Date" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Extension> rdfs:label "Extension" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#In_Force_Interval> rdfs:label "In Force Interval" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#In_Force_Modification> rdfs:label "In Force Modification" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Integration> rdfs:label "Integration" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Interpretation> rdfs:label "Interpretation" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Modification> rdfs:label "Modification" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Modification_of_Meaning> rdfs:label "Modification of Meaning" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Modification_of_Scope> rdfs:label "Modification of Scope" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Modification_of_System> rdfs:label "Modification of System" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Modification_of_Term> rdfs:label "Modification of Term" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Prorogation_Efficacy> rdfs:label "Prorogation Efficacy" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Prorogation_in_Force> rdfs:label "Prorogation in Force" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Publication_Date> rdfs:label "Publication Date" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Ratification> rdfs:label "Ratification" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Relocation> rdfs:label "Relocation" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Remaking> rdfs:label "Remaking" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Renewal> rdfs:label "Renewal" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Repeal> rdfs:label "Repeal" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Retroactivity> rdfs:label "Retroactivity" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Semantic_Annotation> rdfs:label "Semantic Annotation" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Start_Efficacy> rdfs:label "Start Efficacy" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Start_in_Force> rdfs:label "Start in Force" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Static_Temporal_Entity> rdfs:label "Static Temporal Entity" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Substitution> rdfs:label "Substitution" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Suspension> rdfs:label "Suspension" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Temporal_Modification> rdfs:label "Temporal Modification" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Textual_Modification> rdfs:label "Textual Modification" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Transposition> rdfs:label "Transposition" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Ultractivity> rdfs:label "Ultractivity" .
+<http://www.estrellaproject.org/lkif-core/time-modification.owl#Variation> rdfs:label "Variation" .
+<http://www.estrellaproject.org/lkif-core/time.owl#Interval> rdfs:label "Interval" .
+<http://www.estrellaproject.org/lkif-core/time.owl#Moment> rdfs:label "Moment" .
+<http://www.estrellaproject.org/lkif-core/time.owl#Pair_Of_Periods> rdfs:label "Pair Of Periods" .
+<http://www.estrellaproject.org/lkif-core/time.owl#Temporal_Occurrence> rdfs:label "Temporal Occurrence" .

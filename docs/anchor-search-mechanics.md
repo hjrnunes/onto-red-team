@@ -57,11 +57,25 @@ else:
 
 ### 5. WeightedMergeStrategy — merges per-domain results into N candidates
 
-Two passes (`anchor.py:96-138`):
+Three filtering layers, then two passes:
 
-**Pass 1 — Quota for domain-selected ontologies.** FIBO, OBO, IOF (whichever the LLM selected) get guaranteed slots. Formula: `quota_per = max(1, max_candidates // (len(domain_selected) + 1))`. With `max_candidates=5` and 2 domain-selected ontologies, each gets 1 guaranteed slot. No distance threshold.
+**Filtering layers** (applied to both passes via `_passes_threshold()`):
+1. **Generic safety filter** — candidates whose URI is in `generic_safety_uris` are rejected.
+   This set is built at runtime from `get_subclasses(cso#DangerousInformation, depth=3)` and
+   contains 19 CSO physical harm classes (Arson, CBRN, Weapons, Drug Synthesis, etc.). Only
+   active when domain-specific ontologies are selected (FIBO/OBO/IOF); generic-only runs keep
+   full CSO coverage. Set by `pipeline.py` after `identify_domains`.
+2. **Raw distance ceiling** (`DISTANCE_CEILING = 0.6`) — rejects obvious junk regardless of
+   normalization.
+3. **Z-score threshold** (`ZSCORE_THRESHOLD = 1.0`) — rejects within-domain outliers after
+   per-domain z-score normalization via `_normalize_distances()`.
 
-**Pass 2 — Always-included fill remaining.** CCO, Commons, D3FEND, CSO candidates are pooled and sorted by `(-hit_count, best_distance)`. They fill remaining slots. No distance threshold.
+**Pass 1 — Quota for domain-selected ontologies.** FIBO, OBO, IOF (whichever the LLM selected)
+get guaranteed slots. Formula: `quota_per = max(1, max_candidates // (len(domain_selected) + 1))`.
+With `max_candidates=5` and 2 domain-selected ontologies, each gets 1 guaranteed slot.
+
+**Pass 2 — Always-included fill remaining.** CCO, Commons, D3FEND, CSO candidates are pooled
+and sorted by `(-hit_count, normalized_distance)`. They fill remaining slots.
 
 ### 6. anchor LLM call — picks 2-3 axes from the candidates
 
@@ -122,48 +136,121 @@ The CSO harm explosion feeds incoherent axis combinations to the generation LLM:
 
 Evidence: 7 empty prompts in SWB Gemma 3 (gen3 had 0). All 7 had incoherent CSO harm axis combinations.
 
-## Proposed Fixes
+## Fix: Per-Domain Distance Normalization + Dual Threshold
 
-### Fix 1: Distance threshold on WeightedMergeStrategy quota
+Implemented in `anchor.py` on `WeightedMergeStrategy`.
 
-Add a distance check to the quota loop (`anchor.py:120`). Domain-selected ontologies only get their guaranteed slot when their best candidate has a reasonable distance.
+### Problem
 
-```python
-QUOTA_DISTANCE_THRESHOLD = 0.5
+Raw embedding distances aren't comparable across domain collections. A distance of 0.4 in CSO
+(plain English labels) means something different from 0.4 in OBO (technical jargon). Any single
+threshold applied to raw distances is unfair to some domains.
 
-for c in per_domain_candidates.get(domain, []):
-    if (c["uri"] not in seen
-        and remaining > 0
-        and c.get("best_distance", 1.0) < QUOTA_DISTANCE_THRESHOLD  # NEW
-        and len([r for r in result if r.get("domain") == domain]) < quota_per):
+Additionally, with no threshold at all, candidates with poor relevance consume slots: FIBO gets
+guaranteed quota with distance 0.7, and CSO harm classes fill pool slots despite being semantically
+irrelevant to the policy context.
+
+### Approach: Z-Score Normalization + Dual Threshold
+
+**Normalization:** `_normalize_distances()` computes z-scores per domain. Each candidate gets a
+`normalized_distance` field: negative means better than the domain average, positive means worse.
+This makes distances comparable across domains with different embedding distributions.
+
+Edge cases:
+- Single candidate (n < 2): z-score = 0.0 (neutral — can't compute distribution)
+- Uniform distances (std ≈ 0): z-score = 0.0 (all equally distant)
+
+**Dual threshold:** `_passes_threshold()` applies two checks. A candidate must pass both:
+
+1. `DISTANCE_CEILING = 0.6` — raw distance above which candidates are always rejected, regardless
+   of normalization. Catches obvious junk (FIBO credit event notice at 0.7 for healthcare). Handles
+   the n=1 edge case where z-score normalization is unavailable.
+
+2. `ZSCORE_THRESHOLD = 1.0` — z-score above which candidates are rejected when per-domain
+   normalization is available. Catches within-domain outliers (CSO arson at 0.55 in banking, where
+   CSO's mean is ~0.3 and std ~0.12, giving z ≈ 2.0).
+
+**Applied to both quota and pool:** The threshold applies in the quota loop (domain-selected
+ontologies) and the always-included pool. Previously neither had any distance filtering.
+
+**Sort order updated:** The always-included pool now sorts by `(-hit_count, normalized_distance)`
+instead of `(-hit_count, best_distance)`, making the ranking domain-fair.
+
+### Expected Impact
+
+- **FIBO contamination**: single FIBO candidate at distance 0.7 → rejected by raw ceiling.
+  Good FIBO match at 0.35 → passes both checks.
+- **CSO harm explosion**: CSO harm classes with high z-scores (outliers within CSO's distribution)
+  → rejected. Domain-relevant CSO classes (fraud, privacy) with low z-scores → kept.
+- **Empty prompts**: fewer incoherent axis combinations → fewer null generation responses.
+
+### Future Options
+
+- **Cross-encoder reranker** between search and merge for subtle semantic mismatches (not needed
+  yet — current failures are obvious distance outliers)
+- **Extend generic safety filter to other CSO branches** — currently only `DangerousInformation`
+  (18 classes) is filtered. `Violence`, `SelfHarm`, `SexualContent`, `SexualExploitation` could
+  also be tagged if they surface as contamination in gen5 runs
+
+## Fix: CSO DangerousInformation Context Filter
+
+Implemented in `anchor.py` (`build_generic_safety_uris`, `WeightedMergeStrategy`,
+`GroupedMergeStrategy`) and `pipeline.py`.
+
+### Problem
+
+CSO physical harm classes (Arson Methods, Sabotage Instructions, Drug Synthesis, CBRN Information,
+Weapons Manufacturing, Lock Picking and Bypassing) are always-included and semantically close to
+many risk descriptions. They get high hit counts (5-8 queries match them) and pass distance
+thresholds because harm descriptions share vocabulary with many risk types ("unauthorized",
+"exploit", "bypass"). The dual threshold reduces but doesn't eliminate this — a banking fraud risk
+and "Lock Picking and Bypassing" are genuinely close in embedding space.
+
+These classes are legitimate for generic AI safety testing but incoherent in banking, healthcare,
+and energy contexts. 15-25% of prompts in gen4 domain-specific runs were contaminated.
+
+### Approach: Graph-Derived URI Filter
+
+**URI set derivation:** `build_generic_safety_uris(onto_handlers)` calls
+`get_subclasses("cso#DangerousInformation", depth=3)` at runtime. Returns 19 URIs (the parent
++ 18 descendants). The set is derived from the ontology graph, not hardcoded — if CSO adds new
+classes under DangerousInformation, re-indexing picks them up automatically.
+
+**Activation signal:** `pipeline.py` checks the `identify_domains` result after that stage
+completes. If domain-specific ontologies were selected (any of FIBO, OBO, IOF), the URI set is
+computed and assigned to `merge_strategy.generic_safety_uris`. If only always-included domains
+were selected (generic safety run), the set stays empty — no filtering.
+
+**Filter application:** `_passes_threshold()` in `WeightedMergeStrategy` checks
+`generic_safety_uris` before distance thresholds. Candidates whose URI is in the set are
+rejected in both the domain-selected quota pass and the always-included pool pass.
+`GroupedMergeStrategy` has the same filter in its `merge()` loop.
+
+### CSO Hierarchy
+
+```
+ContentSafetyHazard (root)
+├── Violence (29 classes)
+├── HateAndDiscrimination (16 classes)
+├── SelfHarm (13 classes)
+├── SexualExploitation (15 classes)
+├── SexualContent (9 classes)
+├── FraudAndDeception (17 classes)        ← kept (relevant to banking, etc.)
+├── DangerousInformation (18 classes)     ← FILTERED in domain-specific runs
+│   ├── WeaponsManufacturing (4)
+│   ├── DrugSynthesis (3)
+│   ├── CBRNInformation (3)
+│   ├── HarmfulHowTo (3: Arson, Sabotage, Lock Picking)
+│   └── DualUseResearchConcern (1)
+├── IntellectualProperty (18 classes)     ← kept
+└── PrivacyViolation (16 classes)         ← kept
 ```
 
-A healthcare billing concept at distance 0.35 qualifies. A credit event notice at distance 0.7 does not. The freed slot goes to always-included domains with better matches. Also indirectly helps CSO: when FIBO doesn't waste a slot, there's less room pressure.
+### Expected Impact
 
-### Fix 2: Distance threshold on always-included pool
-
-Add the same threshold to the always-included pool loop (`anchor.py:132-136`). Currently no quality filter — any candidate fills a slot if there's room.
-
-```python
-for c in pool:
-    if c["uri"] not in seen and remaining > 0 and c.get("best_distance", 1.0) < QUOTA_DISTANCE_THRESHOLD:
-```
-
-CSO harm classes that are semantically distant from banking/healthcare risks (distance > 0.5) are excluded. Only domain-relevant CSO classes (fraud, privacy violation — typically distance < 0.4) get through.
-
-### How they fit together
-
-Fix 1 handles the quota guarantee problem (FIBO gets free slots with poor relevance). Fix 2 handles the pool quality problem (CSO harm classes fill remaining slots despite poor relevance). Together they restore gen3's "only relevant classes surface" behavior while keeping gen4's architectural advantage of per-domain search preventing large ontologies from drowning out small ones.
-
-### Alternative: CSO category blocklist
-
-A more targeted option for CSO specifically — define CSO class URI fragments that are only valid for generic safety policies:
-
-```python
-CSO_GENERIC_ONLY = {
-    "ArsonMethods", "SabotageInstructions", "DrugSynthesis",
-    "CBRNInformation", "WeaponsManufacturing", "LockPickingAndBypassing",
-}
-```
-
-Filter these out of the always-included pool when the policy set isn't generic. More targeted than a distance threshold but requires maintaining a blocklist.
+- **Banking/SWB:** CSO harm axes (Arson, CBRN, Lock Picking, Sabotage) eliminated. Fraud,
+  Privacy, IP classes retained.
+- **Healthcare:** CSO Drug Synthesis, Weapons Manufacturing eliminated. Privacy, Self-Harm
+  (different branch) retained.
+- **Generic safety:** No change — full CSO coverage including DangerousInformation.
+- **Empty prompts:** fewer incoherent axis combinations → fewer null generation responses.

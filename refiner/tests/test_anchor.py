@@ -1357,7 +1357,7 @@ def test_llm_merge_prefilter_removes_high_distance():
         "CSO": [
             {"uri": "http://cso/good", "label": "Good", "hit_count": 2, "best_distance": 0.1,
              "domain": "CSO", "query_sources": ["description"]},
-            {"uri": "http://cso/bad", "label": "Bad", "hit_count": 1, "best_distance": 0.7,
+            {"uri": "http://cso/bad", "label": "Bad", "hit_count": 1, "best_distance": 0.9,
              "domain": "CSO", "query_sources": ["description"]},
         ],
     }
@@ -1523,6 +1523,41 @@ def test_llm_merge_empty_pool_no_llm_call():
     client.chat.completions.create.assert_not_called()
 
 
+def test_llm_merge_calls_llm_even_for_small_pool():
+    """LLM is called even when pool <= max_candidates, so it can reject irrelevant candidates."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 2, "best_distance": 0.1,
+             "domain": "CSO", "query_sources": ["description"]},
+        ],
+        "FIBO": [
+            {"uri": "http://fibo/fed", "label": "Federal Reserve", "hit_count": 1, "best_distance": 0.3,
+             "domain": "FIBO", "query_sources": ["description"]},
+        ],
+    }
+    # LLM selects only index 0 (Fraud), rejecting Federal Reserve
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    result = strategy.merge(
+        per_domain, ["CSO", "FIBO"], max_candidates=5,
+        risk_context={"description": "healthcare fraud", "concern": "billing", "policy_concept": "Insurance"},
+        generic_safety_uris=set(),
+    )
+    # Pool has 2 candidates but max_candidates is 5 — LLM should still be called
+    client.chat.completions.create.assert_called_once()
+    # LLM rejected Federal Reserve, only Fraud returned
+    assert len(result) == 1
+    assert result[0]["uri"] == "http://cso/fraud"
+
+
 def test_llm_merge_protocol_compliance():
     """LLMMergeStrategy satisfies the SearchMergeStrategy protocol."""
     from refiner.stages.anchor import SearchMergeStrategy, LLMMergeStrategy
@@ -1598,3 +1633,385 @@ def test_expand_candidates_with_llm_strategy(mock_onto_handlers):
     assert stats["search_strategy"] == "LLMMergeStrategy"
     assert len(candidates) >= 1
     mock_client.chat.completions.create.assert_called_once()
+
+
+# --- BFO upper-ontology exclusion ---
+
+from refiner.stages.anchor import _BFO_URI_PREFIX, _is_excluded_uri
+
+
+def test_is_excluded_uri_bfo_prefix():
+    """BFO URIs are always excluded regardless of generic_safety_uris."""
+    assert _is_excluded_uri("http://purl.obolibrary.org/obo/BFO_0000040", set())
+    assert _is_excluded_uri("http://purl.obolibrary.org/obo/BFO_0000031", set())
+    assert _is_excluded_uri("http://purl.obolibrary.org/obo/BFO_0000015", {"http://other"})
+
+
+def test_is_excluded_uri_safety_set():
+    """generic_safety_uris still works through _is_excluded_uri."""
+    assert _is_excluded_uri("http://cso/arson", {"http://cso/arson"})
+    assert not _is_excluded_uri("http://cso/fraud", {"http://cso/arson"})
+
+
+def test_is_excluded_uri_non_bfo_obo():
+    """Non-BFO OBO URIs are NOT excluded (e.g. GSSO, HANCESTRO)."""
+    assert not _is_excluded_uri("http://purl.obolibrary.org/obo/GSSO_000001", set())
+    assert not _is_excluded_uri("http://purl.obolibrary.org/obo/HANCESTRO_0001", set())
+
+
+def test_weighted_merge_filters_bfo_uris():
+    """WeightedMergeStrategy excludes BFO upper-ontology candidates."""
+    strategy = WeightedMergeStrategy(always_included=["CCO"])
+    per_domain = {
+        "OBO": [
+            {"uri": "http://purl.obolibrary.org/obo/BFO_0000040", "label": "material entity",
+             "hit_count": 3, "best_distance": 0.10, "domain": "OBO", "query_sources": []},
+            {"uri": "http://purl.obolibrary.org/obo/GSSO_000123", "label": "Gender Identity",
+             "hit_count": 2, "best_distance": 0.15, "domain": "OBO", "query_sources": []},
+            {"uri": "http://purl.obolibrary.org/obo/GSSO_000456", "label": "Sexual Orientation",
+             "hit_count": 2, "best_distance": 0.18, "domain": "OBO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(
+        per_domain, ["CCO", "OBO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
+    uris = [c["uri"] for c in result]
+    assert "http://purl.obolibrary.org/obo/BFO_0000040" not in uris
+    assert "http://purl.obolibrary.org/obo/GSSO_000123" in uris
+
+
+def test_grouped_merge_filters_bfo_uris():
+    """GroupedMergeStrategy excludes BFO upper-ontology candidates."""
+    from refiner.stages.anchor import GroupedMergeStrategy
+    strategy = GroupedMergeStrategy(always_included=["CCO", "OBO"])
+    per_domain = {
+        "OBO": [
+            {"uri": "http://purl.obolibrary.org/obo/BFO_0000031", "label": "generically dependent continuant",
+             "hit_count": 3, "best_distance": 0.1, "domain": "OBO", "query_sources": []},
+            {"uri": "http://purl.obolibrary.org/obo/OMRSE_00000001", "label": "Healthcare Role",
+             "hit_count": 2, "best_distance": 0.2, "domain": "OBO", "query_sources": []},
+        ],
+    }
+    result = strategy.merge(
+        per_domain, ["OBO"], max_candidates=5,
+        risk_context={}, generic_safety_uris=set(),
+    )
+    uris = [c["uri"] for c in result]
+    assert "http://purl.obolibrary.org/obo/BFO_0000031" not in uris
+    assert "http://purl.obolibrary.org/obo/OMRSE_00000001" in uris
+
+
+def test_llm_merge_prefilter_removes_bfo_uris():
+    """LLMMergeStrategy pre-filter excludes BFO upper-ontology candidates."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "OBO": [
+            {"uri": "http://purl.obolibrary.org/obo/BFO_0000015", "label": "process",
+             "hit_count": 4, "best_distance": 0.05, "domain": "OBO", "query_sources": ["description"]},
+            {"uri": "http://purl.obolibrary.org/obo/GSSO_000456", "label": "Sexual Orientation",
+             "hit_count": 2, "best_distance": 0.15, "domain": "OBO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    result = strategy.merge(
+        per_domain, ["OBO"], max_candidates=5,
+        risk_context={"description": "discrimination", "concern": "bias", "policy_concept": "Fairness"},
+        generic_safety_uris=set(),
+    )
+    uris = [c["uri"] for c in result]
+    assert "http://purl.obolibrary.org/obo/BFO_0000015" not in uris
+    assert "http://purl.obolibrary.org/obo/GSSO_000456" in uris
+
+
+def test_restriction_expansion_filters_bfo_uris(mock_onto_handlers):
+    """Restriction expansion skips BFO filler URIs."""
+    from refiner.stages.anchor import expand_candidates
+
+    mock_onto_handlers["search_domains"] = lambda query, domains, top_k_per_domain=10: {
+        "OBO": [
+            {"uri": "http://purl.obolibrary.org/obo/GSSO_000001", "label": "GenderIdentity", "distance": 0.1},
+        ],
+    }
+    mock_onto_handlers["get_restrictions"] = lambda uri: [
+        {"filler": "http://purl.obolibrary.org/obo/BFO_0000040", "property": "inheres_in"},
+        {"filler": "http://purl.obolibrary.org/obo/GSSO_000099", "property": "related_to"},
+    ]
+    mock_onto_handlers["get_class_definition"] = lambda uri: {"label": "SomeClass", "uri": uri}
+
+    strategy = WeightedMergeStrategy(always_included=["OBO"])
+
+    candidates, stats = expand_candidates(
+        description="gender identity",
+        concern="discrimination",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=["OBO"],
+        merge_strategy=strategy,
+        generic_safety_uris=set(),
+    )
+    uris = [c["uri"] for c in candidates]
+    assert "http://purl.obolibrary.org/obo/BFO_0000040" not in uris
+    assert "http://purl.obolibrary.org/obo/GSSO_000099" in uris
+
+
+def test_equivalence_expansion_filters_bfo_uris(mock_onto_handlers):
+    """Equivalence expansion skips BFO member URIs."""
+    from refiner.stages.anchor import expand_candidates
+
+    mock_onto_handlers["search_domains"] = lambda query, domains, top_k_per_domain=10: {
+        "OBO": [
+            {"uri": "http://purl.obolibrary.org/obo/GSSO_000001", "label": "GenderIdentity", "distance": 0.1},
+        ],
+    }
+    mock_onto_handlers["get_restrictions"] = lambda uri: []
+    mock_onto_handlers["get_equivalent_axioms"] = lambda uri: [
+        {"members": [
+            "http://purl.obolibrary.org/obo/BFO_0000023",
+            "http://purl.obolibrary.org/obo/OMRSE_00000050",
+        ]},
+    ]
+    mock_onto_handlers["get_class_definition"] = lambda uri: {"label": "SomeClass", "uri": uri}
+
+    strategy = WeightedMergeStrategy(always_included=["OBO"])
+
+    candidates, stats = expand_candidates(
+        description="role discrimination",
+        concern="bias",
+        action_descriptions=[],
+        cross_mapped_descriptions=[],
+        onto_handlers=mock_onto_handlers,
+        selected_domains=["OBO"],
+        merge_strategy=strategy,
+        generic_safety_uris=set(),
+    )
+    uris = [c["uri"] for c in candidates]
+    assert "http://purl.obolibrary.org/obo/BFO_0000023" not in uris
+    assert "http://purl.obolibrary.org/obo/OMRSE_00000050" in uris
+
+
+# --- LLM merge prompt improvements ---
+
+from refiner.stages.anchor import _DOMAIN_DISPLAY, _truncate_definition
+
+
+def test_truncate_definition_short():
+    """Short definitions pass through unchanged."""
+    assert _truncate_definition("A type of fraud") == "A type of fraud"
+
+
+def test_truncate_definition_long():
+    """Long definitions are truncated at word boundary with ellipsis."""
+    long_def = " ".join(f"word{i}" for i in range(40))
+    result = _truncate_definition(long_def, max_words=25)
+    assert result.endswith("...")
+    # 25 words with "..." appended to last word (no space before ellipsis)
+    assert result == " ".join(f"word{i}" for i in range(25)) + "..."
+
+
+def test_truncate_definition_empty():
+    """Empty/None definitions return empty string."""
+    assert _truncate_definition("") == ""
+    assert _truncate_definition(None) == ""
+
+
+def test_domain_display_known_domains():
+    """Known domains map to human-readable descriptors."""
+    assert _DOMAIN_DISPLAY["D3FEND"] == "cyber defense"
+    assert _DOMAIN_DISPLAY["FIBO"] == "financial industry"
+    assert _DOMAIN_DISPLAY["OBO"] == "biomedical/social"
+    assert _DOMAIN_DISPLAY["CSO"] == "AI safety/security"
+
+
+def test_llm_merge_prompt_uses_domain_display():
+    """Merge prompt uses human-readable domain names instead of abbreviations."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "D3FEND": [
+            {"uri": "http://d3fend/ac", "label": "Attitude Control", "hit_count": 1,
+             "best_distance": 0.2, "domain": "D3FEND", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    strategy.merge(
+        per_domain, ["D3FEND"], max_candidates=5,
+        risk_context={"description": "test", "concern": "test", "policy_concept": "Test"},
+        generic_safety_uris=set(),
+    )
+
+    call_args = client.chat.completions.create.call_args
+    user_msg = call_args.kwargs.get("messages", call_args[1].get("messages", []))[-1]["content"]
+    assert "[cyber defense]" in user_msg
+    assert "[D3FEND]" not in user_msg
+
+
+def test_llm_merge_prompt_includes_definitions():
+    """Merge prompt includes truncated class definitions when onto_handlers provided."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    onto_handlers = {
+        "get_class_definition": lambda uri: {
+            "definition": "The function of controlling spacecraft orientation in orbit",
+        },
+    }
+    strategy = LLMMergeStrategy(client, config, onto_handlers=onto_handlers)
+
+    per_domain = {
+        "D3FEND": [
+            {"uri": "http://d3fend/ac", "label": "Attitude Control Artifact Function",
+             "hit_count": 1, "best_distance": 0.2, "domain": "D3FEND",
+             "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    strategy.merge(
+        per_domain, ["D3FEND"], max_candidates=5,
+        risk_context={"description": "test", "concern": None, "policy_concept": "Test"},
+        generic_safety_uris=set(),
+    )
+
+    call_args = client.chat.completions.create.call_args
+    user_msg = call_args.kwargs.get("messages", call_args[1].get("messages", []))[-1]["content"]
+    assert "controlling spacecraft orientation" in user_msg
+
+
+def test_llm_merge_prompt_omits_none_concern():
+    """Merge prompt omits Concern line when concern is None."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 1,
+             "best_distance": 0.1, "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud risk", "concern": None, "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+
+    call_args = client.chat.completions.create.call_args
+    user_msg = call_args.kwargs.get("messages", call_args[1].get("messages", []))[-1]["content"]
+    assert "Concern:" not in user_msg
+    assert "Concern: None" not in user_msg
+
+
+def test_llm_merge_prompt_includes_concern_when_present():
+    """Merge prompt includes Concern line when concern has a value."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 1,
+             "best_distance": 0.1, "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud", "concern": "financial loss from deception",
+                      "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+
+    call_args = client.chat.completions.create.call_args
+    user_msg = call_args.kwargs.get("messages", call_args[1].get("messages", []))[-1]["content"]
+    assert "Concern: financial loss from deception" in user_msg
+
+
+def test_llm_merge_prompt_omits_empty_concern():
+    """Merge prompt omits Concern line when concern is empty string."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 1,
+             "best_distance": 0.1, "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud", "concern": "", "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+
+    call_args = client.chat.completions.create.call_args
+    user_msg = call_args.kwargs.get("messages", call_args[1].get("messages", []))[-1]["content"]
+    assert "Concern:" not in user_msg
+
+
+def test_llm_merge_no_definitions_without_onto_handlers():
+    """Without onto_handlers, merge prompt has no definitions (graceful fallback)."""
+    from refiner.stages.anchor import LLMMergeStrategy
+    from refiner.llm import LLMConfig
+    from unittest.mock import MagicMock
+
+    client = MagicMock()
+    config = LLMConfig(base_url="http://localhost:8000/v1", model="test-model")
+    strategy = LLMMergeStrategy(client, config)  # no onto_handlers
+
+    per_domain = {
+        "CSO": [
+            {"uri": "http://cso/fraud", "label": "Fraud", "hit_count": 1,
+             "best_distance": 0.1, "domain": "CSO", "query_sources": ["description"]},
+        ],
+    }
+    client.chat.completions.create.return_value = MagicMock(selected=[0])
+
+    strategy.merge(
+        per_domain, ["CSO"], max_candidates=5,
+        risk_context={"description": "fraud", "concern": None, "policy_concept": "Fraud"},
+        generic_safety_uris=set(),
+    )
+
+    call_args = client.chat.completions.create.call_args
+    user_msg = call_args.kwargs.get("messages", call_args[1].get("messages", []))[-1]["content"]
+    # Should have label and domain but no " — " definition separator
+    assert "Fraud [AI safety/security]" in user_msg
+    assert " — " not in user_msg

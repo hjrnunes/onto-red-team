@@ -545,6 +545,40 @@ def test_strip_framework_suffix_no_suffix():
     assert _strip_framework_suffix("Credit Card Fraud") == "Credit Card Fraud"
 
 
+def test_strip_obo_ae_suffix():
+    assert _strip_framework_suffix("Phobia AE") == "Phobia"
+
+
+def test_strip_obo_ae_suffix_multi_word():
+    assert _strip_framework_suffix("Somnambulism AE") == "Somnambulism"
+
+
+def test_strip_obo_hp_suffix():
+    assert _strip_framework_suffix("Seizure HP") == "Seizure"
+
+
+def test_strip_obo_go_suffix():
+    assert _strip_framework_suffix("Apoptosis GO") == "Apoptosis"
+
+
+def test_strip_obo_suffix_in_prompt():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://purl.obolibrary.org/obo/DOID_0001",
+            cco_class_label="Adverse Event",
+            roles=["object"],
+            sampled_uri="http://purl.obolibrary.org/obo/DOID_0002",
+            sampled_label="Somnambulism AE",
+            source_ontology="OBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("PHI", "About PHI", "PHI Disclosure", axes)
+    user = messages[1]["content"]
+    assert "Somnambulism" in user
+    assert "Somnambulism AE" not in user
+
+
 def test_strip_framework_suffix_in_prompt():
     axes = [
         SampledAxis(

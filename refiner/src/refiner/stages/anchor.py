@@ -14,6 +14,24 @@ from refiner.stages.identify_domains import derive_source_ontology, ALWAYS_INCLU
 
 logger = logging.getLogger(__name__)
 
+# BFO classes are maximally abstract ontological primitives — useful for role
+# derivation via superclass chains but never appropriate as candidate axes
+# (they produce vague, jargon-laden scenarios like "generically dependent continuant").
+_BFO_URI_PREFIX = "http://purl.obolibrary.org/obo/BFO_"
+
+
+def _is_excluded_uri(uri: str, generic_safety_uris: set[str]) -> bool:
+    """Check if a URI should be excluded from candidate pools.
+
+    Excludes BFO upper-ontology classes (always) and generic safety URIs (when set).
+    """
+    if uri.startswith(_BFO_URI_PREFIX):
+        return True
+    if generic_safety_uris and uri in generic_safety_uris:
+        return True
+    return False
+
+
 # BFO/CCO/Commons category → semantic roles mapping.
 # More specific categories are checked first (via superclass walk),
 # falling back to broader categories.
@@ -138,7 +156,7 @@ class WeightedMergeStrategy:
 
     def _passes_threshold(self, c: dict, generic_safety_uris: set[str]) -> bool:
         """Check if candidate passes distance thresholds and context filter."""
-        if generic_safety_uris and c.get("uri", "") in generic_safety_uris:
+        if _is_excluded_uri(c.get("uri", ""), generic_safety_uris):
             return False
         if c.get("best_distance", 1.0) >= self.DISTANCE_CEILING:
             return False
@@ -222,7 +240,7 @@ class GroupedMergeStrategy:
                 uri = c["uri"]
                 if uri in seen:
                     continue
-                if generic_safety_uris and uri in generic_safety_uris:
+                if _is_excluded_uri(uri, generic_safety_uris):
                     continue
                 if taken < per_domain_quota:
                     result.append(c)
@@ -235,9 +253,30 @@ class GroupedMergeStrategy:
 _MERGE_SYSTEM_PROMPT = """\
 You are selecting ontology classes relevant to an AI risk.
 
-Given a risk (with description, concern, and policy context) and a numbered list of candidate ontology classes, select the classes most relevant to this specific risk. Return their indices.
+Given a risk (with description, concern, and policy context) and a numbered list of candidate ontology classes with definitions, select the classes most relevant to this specific risk. Return their indices.
 
 Select up to {max_candidates} classes. Prefer classes that directly relate to the risk over tangentially related ones."""
+
+# Human-readable domain descriptors for LLM merge prompts.
+_DOMAIN_DISPLAY: dict[str, str] = {
+    "CCO": "core concepts",
+    "Commons": "organizations/roles",
+    "D3FEND": "cyber defense",
+    "CSO": "AI safety/security",
+    "FIBO": "financial industry",
+    "OBO": "biomedical/social",
+    "IOF": "industrial",
+}
+
+
+def _truncate_definition(text: str, max_words: int = 25) -> str:
+    """Truncate a definition to max_words, appending '...' if truncated."""
+    if not text:
+        return ""
+    words = text.split()
+    if len(words) <= max_words:
+        return text
+    return " ".join(words[:max_words]) + "..."
 
 
 class _MergeSelection(BaseModel):
@@ -252,11 +291,13 @@ class LLMMergeStrategy:
     Falls back to distance-sorted order on LLM failure.
     """
 
-    DISTANCE_CEILING = 0.6
+    DISTANCE_CEILING = 0.8
 
-    def __init__(self, client: instructor.Instructor, config: LLMConfig):
+    def __init__(self, client: instructor.Instructor, config: LLMConfig,
+                 onto_handlers: dict | None = None):
         self._client = client
         self._config = config
+        self._onto_handlers = onto_handlers
 
     def merge(
         self,
@@ -266,13 +307,13 @@ class LLMMergeStrategy:
         risk_context: dict,
         generic_safety_uris: set[str],
     ) -> list[dict]:
-        # Pre-filter: distance ceiling + safety URIs
+        # Pre-filter: distance ceiling + BFO/safety URI exclusion
         pool: list[dict] = []
         for domain in sorted(per_domain_candidates):
             for c in per_domain_candidates[domain]:
                 if c.get("best_distance", 1.0) >= self.DISTANCE_CEILING:
                     continue
-                if generic_safety_uris and c.get("uri", "") in generic_safety_uris:
+                if _is_excluded_uri(c.get("uri", ""), generic_safety_uris):
                     continue
                 pool.append(c)
 
@@ -281,20 +322,32 @@ class LLMMergeStrategy:
         if not pool:
             return []
 
-        if len(pool) <= max_candidates:
-            return pool[:max_candidates]
+        # Enrich pool with definitions if onto_handlers available
+        get_defn = (self._onto_handlers or {}).get("get_class_definition")
+        if get_defn:
+            for c in pool:
+                if "definition" not in c:
+                    defn = get_defn(c.get("uri", ""))
+                    c["definition"] = defn.get("definition", "") if defn else ""
 
         # Build numbered candidate list for LLM
         lines = []
         for idx, c in enumerate(pool):
-            lines.append(f"{idx}. {c.get('label', '')} [{c.get('domain', '')}]")
+            domain_display = _DOMAIN_DISPLAY.get(c.get("domain", ""), c.get("domain", ""))
+            definition = _truncate_definition(c.get("definition", ""))
+            line = f"{idx}. {c.get('label', '')} [{domain_display}]"
+            if definition:
+                line += f" — {definition}"
+            lines.append(line)
 
-        user_content = (
-            f"Risk: {risk_context.get('description', '')}\n"
-            f"Concern: {risk_context.get('concern', '')}\n"
-            f"Policy: {risk_context.get('policy_concept', '')}\n\n"
-            f"Candidate classes:\n" + "\n".join(lines)
-        )
+        # Build user content with conditional concern
+        header_lines = [f"Risk: {risk_context.get('description', '')}"]
+        concern = risk_context.get("concern")
+        if concern:
+            header_lines.append(f"Concern: {concern}")
+        header_lines.append(f"Policy: {risk_context.get('policy_concept', '')}")
+
+        user_content = "\n".join(header_lines) + "\n\nCandidate classes:\n" + "\n".join(lines)
 
         messages = [
             {"role": "system", "content": _MERGE_SYSTEM_PROMPT.format(max_candidates=max_candidates)},
@@ -533,6 +586,8 @@ def expand_candidates(
                 filler = r.get("filler", "")
                 if not filler or filler in seen_uris:
                     continue
+                if filler.startswith(_BFO_URI_PREFIX):
+                    continue
                 defn = onto_handlers["get_class_definition"](filler)
                 if defn is None:
                     continue
@@ -552,6 +607,8 @@ def expand_candidates(
                 for eq in onto_handlers["get_equivalent_axioms"](c["uri"]):
                     for member in eq.get("members", []):
                         if member in seen_uris:
+                            continue
+                        if member.startswith(_BFO_URI_PREFIX):
                             continue
                         defn = onto_handlers["get_class_definition"](member)
                         if defn is None:

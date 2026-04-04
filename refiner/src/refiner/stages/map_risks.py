@@ -97,15 +97,11 @@ def map_risks(
             line = f"- {i}: {name} — {desc}"
             if ec.get("concern"):
                 line += f" (Concern: {ec['concern']})"
-            if ec["related"]:
-                xm = ", ".join(f"{x['id']}[{x['mapping_type']}]" for x in ec["related"][:3])
-                line += f"\n  Cross-mappings: {xm}"
             candidate_lines.append(line)
 
         user_content = (
                 f"Policy: {cls.policy_concept}\n"
-                f"Definition: {cls.concept_definition}\n"
-                f"Policy Type: {cls.policy_type}\n\n"
+                f"Definition: {cls.concept_definition}\n\n"
                 f"Candidate risks:\n" + "\n".join(candidate_lines)
         )
 

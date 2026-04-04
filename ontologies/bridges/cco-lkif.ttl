@@ -1,0 +1,52 @@
+@prefix rdf:     <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:    <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:     <http://www.w3.org/2002/07/owl#> .
+@prefix cco:     <https://www.commoncoreontologies.org/> .
+@prefix lkif-action: <http://www.estrellaproject.org/lkif-core/action.owl#> .
+@prefix lkif-norm:   <http://www.estrellaproject.org/lkif-core/norm.owl#> .
+@prefix lkif-expr:   <http://www.estrellaproject.org/lkif-core/expression.owl#> .
+@prefix lkif-role:   <http://www.estrellaproject.org/lkif-core/role.owl#> .
+
+<https://www.commoncoreontologies.org/bridges/cco-lkif>
+    rdf:type owl:Ontology ;
+    rdfs:label "CCO-LKIF Bridge Ontology" ;
+    rdfs:comment "Bridge axioms mapping LKIF Core classes to CCO classes for regulatory text structure interoperability. All axioms are rdfs:subClassOf (conservative, no owl:equivalentClass). LKIF classes are made subclasses of CCO classes to integrate into the BFO hierarchy." .
+
+# --- Entity Bridges (4) ---
+
+# LKIF Agent → CCO Agent
+lkif-action:Agent rdfs:subClassOf cco:ont00001017 .
+
+# LKIF Person → CCO Person
+lkif-action:Person rdfs:subClassOf cco:ont00001262 .
+
+# LKIF Organisation → CCO Organization
+lkif-action:Organisation rdfs:subClassOf cco:ont00001180 .
+
+# LKIF Action → CCO Act
+lkif-action:Action rdfs:subClassOf cco:ont00000005 .
+
+# --- Normative Bridges (5) ---
+
+# LKIF Norm → CCO Process Regulation
+lkif-norm:Norm rdfs:subClassOf cco:ont00001324 .
+
+# LKIF Prohibition → CCO Process Prohibition
+lkif-norm:Prohibition rdfs:subClassOf cco:ont00000553 .
+
+# LKIF Obligation → CCO Process Requirement
+lkif-norm:Obligation rdfs:subClassOf cco:ont00001224 .
+
+# LKIF Legal Source → CCO Prescriptive Information Content Entity
+lkif-norm:Legal_Source rdfs:subClassOf cco:ont00000965 .
+
+# LKIF Legal Document → CCO Document Content Entity
+lkif-norm:Legal_Document rdfs:subClassOf cco:ont00002039 .
+
+# --- Expression/Information Bridges (2) ---
+
+# LKIF Expression → CCO Information Content Entity
+lkif-expr:Expression rdfs:subClassOf cco:ont00000958 .
+
+# LKIF Proposition → CCO Information Content Entity
+lkif-expr:Proposition rdfs:subClassOf cco:ont00000958 .

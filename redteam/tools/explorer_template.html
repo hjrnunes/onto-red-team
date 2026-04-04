@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>__EXPLORER_TITLE__</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
     [x-cloak] { display: none !important; }
@@ -461,6 +462,18 @@
           </div>
         </div>
 
+        <!-- Generation Prompt (collapsible) -->
+        <div x-show="selectedRecord?.generation_prompt?.length" x-data="{ genPromptOpen: false }">
+          <button @click="genPromptOpen = !genPromptOpen" class="flex items-center gap-2 w-full text-left group">
+            <span class="text-xs font-semibold text-gray-500 uppercase tracking-wide">Generation Prompt</span>
+            <span class="text-gray-400 text-xs transition-transform" :class="genPromptOpen ? 'rotate-90' : ''">&#x25B6;</span>
+            <span class="flex-1 border-t border-gray-200 ml-1"></span>
+          </button>
+          <div x-show="genPromptOpen" x-collapse class="mt-2">
+            <pre class="text-xs text-gray-700 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border border-gray-200 max-h-96 overflow-y-auto" x-text="formatMessages(selectedRecord?.generation_prompt)"></pre>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
@@ -577,6 +590,11 @@ function computeMetrics(record) {
     namedEntities,
     siblingFraction: totalSampled > 0 ? sibCount / totalSampled : 0,
   };
+}
+
+function formatMessages(messages) {
+  if (!messages || !Array.isArray(messages)) return '';
+  return messages.map(m => `[${m.role}]\n${m.content}`).join('\n\n');
 }
 
 // --- Data load & metric pre-computation ---

@@ -12,10 +12,34 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
+import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 import yaml
+
+_print_lock = threading.Lock()
+
+
+def _ts() -> str:
+    """Return a short elapsed-time or clock stamp for log lines."""
+    return time.strftime("%H:%M:%S")
+
+
+def _progress(msg: str) -> None:
+    """Thread-safe progress print."""
+    with _print_lock:
+        print(f"[{_ts()}] {msg}", flush=True)
+
+
+def _fmt_elapsed(seconds: float) -> str:
+    """Format elapsed seconds as e.g. '2m 34s' or '5s'."""
+    m, s = divmod(int(seconds), 60)
+    if m:
+        return f"{m}m {s:02d}s"
+    return f"{s}s"
+
 
 _REQUIRED_KEYS = [
     "policy_dir",
@@ -149,6 +173,13 @@ def build_evaluate_cmd(
     return cmd, "refiner"
 
 
+def build_combined_report_cmd(*, run_dir: Path, repo_root: Path) -> tuple[list[str], str]:
+    return [
+        "uv", "run", str(repo_root / "scripts" / "build_combined_report.py"),
+        str(run_dir),
+    ], "."
+
+
 def _log_tail(log_path: Path, n: int = 10) -> str:
     try:
         lines = log_path.read_text().splitlines()
@@ -193,10 +224,13 @@ def run_model(
         shutil.copytree(cfg["nexus_chroma_dir"], tmp_nexus, dirs_exist_ok=True)
 
     log_fh = open(log_path, "w") if log_path and not dry_run else None
+    total_policies = len(policies)
     try:
-        for policy in policies:
+        for pi, policy in enumerate(policies, 1):
+            _progress(f"{model_name} ▸ policy {pi}/{total_policies}: {policy}")
             run_dir = cfg["runs_dir"] / f"{policy}-{run_name}"
             run_dir.mkdir(parents=True, exist_ok=True)
+            t0 = time.monotonic()
             try:
                 _run_policy(
                     policy=policy,
@@ -215,22 +249,26 @@ def run_model(
                     tmp_nexus=tmp_nexus if tmp_nexus else cfg["nexus_chroma_dir"],
                     log_file=log_fh,
                 )
+                elapsed = time.monotonic() - t0
+                _progress(f"{model_name}/{policy} ✓ done ({_fmt_elapsed(elapsed)})")
                 results[policy] = "OK"
             except subprocess.CalledProcessError as e:
+                elapsed = time.monotonic() - t0
                 # Flush log so we can read the tail
                 if log_fh:
                     log_fh.flush()
                 tail = _log_tail(log_path, 10) if log_path else ""
-                msg = f"  FAILED: {policy}/{model_name} (exit {e.returncode})"
+                msg = f"{model_name}/{policy} ✗ FAILED (exit {e.returncode}, {_fmt_elapsed(elapsed)})"
                 if tail:
                     msg += f"\n  --- last lines of {log_path.name} ---\n{tail}"
-                print(msg)
+                _progress(msg)
                 if log_fh:
                     log_fh.write(msg + "\n")
                 results[policy] = "FAIL"
             except Exception as e:
-                msg = f"  FAILED: {policy}/{model_name}: {e}"
-                print(msg)
+                elapsed = time.monotonic() - t0
+                msg = f"{model_name}/{policy} ✗ FAILED: {e} ({_fmt_elapsed(elapsed)})"
+                _progress(msg)
                 if log_fh:
                     log_fh.write(msg + "\n")
                 results[policy] = "FAIL"
@@ -265,8 +303,29 @@ def _run_policy(
 ) -> None:
     policy_dir = cfg["policy_dir"]
     stage_kw = dict(dry_run=dry_run, repo_root=repo_root, log_file=log_file)
+    prefix = f"{model_name}/{policy}"
+
+    # Build list of active stages for numbering
+    stages: list[str] = []
+    if not skip_ingest:
+        stages.append("ingest")
+    if not skip_refine:
+        stages.append("refine")
+    stages.append("emit")
+    if not skip_generate:
+        stages.append("generate")
+        stages.append("evaluate")
+    stages.append("report")
+    total_stages = len(stages)
+    stage_idx = 0
+
+    def _stage_msg(name: str) -> str:
+        nonlocal stage_idx
+        stage_idx += 1
+        return f"{prefix} ▸ {name} [{stage_idx}/{total_stages}]"
 
     if not skip_ingest:
+        _progress(_stage_msg("ingest"))
         raw_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=False)
         cmd, cwd = build_ingest_cmd(
             policy_file=raw_file, run_dir=run_dir, policy=policy,
@@ -275,6 +334,7 @@ def _run_policy(
         _run_stage(cmd, cwd, **stage_kw)
 
     if not skip_refine:
+        _progress(_stage_msg("refine"))
         input_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
         cmd, cwd = build_refine_cmd(
             input_file=input_file, run_dir=run_dir, model_name=model_name,
@@ -284,6 +344,7 @@ def _run_policy(
         )
         _run_stage(cmd, cwd, **stage_kw)
 
+    _progress(_stage_msg("emit"))
     policy_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
     cmd, cwd = build_emit_cmd(
         run_dir=run_dir, policy_file=policy_file, samples_per_risk=cfg["samples_per_risk"],
@@ -291,18 +352,24 @@ def _run_policy(
     _run_stage(cmd, cwd, **stage_kw)
 
     if not skip_generate:
+        _progress(_stage_msg("generate"))
         cmd, cwd = build_generate_cmd(
             run_dir=run_dir, model_name=model_name, model_url=model_url, api_key=api_key,
         )
         _run_stage(cmd, cwd, **stage_kw)
 
     if not skip_generate:
+        _progress(_stage_msg("evaluate"))
         policy_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
         cmd, cwd = build_evaluate_cmd(
             run_dir=run_dir, policy_file=policy_file,
             tracking_uri=cfg["tracking_uri"], tags=tags,
         )
         _run_stage(cmd, cwd, **stage_kw)
+
+    _progress(_stage_msg("report"))
+    cmd, cwd = build_combined_report_cmd(run_dir=run_dir, repo_root=repo_root)
+    _run_stage(cmd, cwd, **stage_kw)
 
 
 def format_summary_table(results: dict[str, dict[str, str]], policies: list[str]) -> str:
@@ -362,10 +429,14 @@ def main(argv: list[str] | None = None) -> int:
 
     all_results: dict[str, dict[str, str]] = {}
 
-    def _worker(model_name: str, model_url: str) -> tuple[str, dict[str, str]]:
+    total_models = len(models)
+    _progress(f"Battery: {total_models} model(s) × {len(policies)} policy(ies)")
+
+    def _worker(model_name: str, model_url: str) -> tuple[str, dict[str, str], float]:
         run_name = f"{model_name}-{args.run_name}"
         log_path = cfg["runs_dir"] / f"{run_name}.log"
-        print(f"=== Starting {model_name} (log: {log_path}) ===")
+        _progress(f"=== Starting {model_name} (log: {log_path}) ===")
+        t0 = time.monotonic()
         results = run_model(
             model_name=model_name,
             model_url=model_url,
@@ -381,20 +452,22 @@ def main(argv: list[str] | None = None) -> int:
             repo_root=repo_root,
             log_path=log_path,
         )
-        return model_name, results
+        return model_name, results, time.monotonic() - t0
 
+    models_done = 0
     with ThreadPoolExecutor(max_workers=len(models)) as pool:
         futures = {pool.submit(_worker, name, url): name for name, url in models.items()}
         for future in as_completed(futures):
             model_name = futures[future]
+            models_done += 1
             try:
-                name, results = future.result()
+                name, results, elapsed = future.result()
                 all_results[name] = results
                 failed = any(v == "FAIL" for v in results.values())
-                status = "FAILED" if failed else "done"
-                print(f"=== {name} {status} ===")
+                status = "✗ FAILED" if failed else "✓ done"
+                _progress(f"=== {name} {status} ({_fmt_elapsed(elapsed)}) [{models_done}/{total_models} models] ===")
             except Exception as e:
-                print(f"=== {model_name} FAILED: {e} ===")
+                _progress(f"=== {model_name} ✗ FAILED: {e} [{models_done}/{total_models} models] ===")
                 all_results[model_name] = {p: "FAIL" for p in policies}
 
     print()

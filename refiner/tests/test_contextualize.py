@@ -38,9 +38,9 @@ def test_contextualize_gets_subclasses(mock_client, mock_config, mock_onto_handl
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
-                    _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                    _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
                 ],
             ),
         ],
@@ -73,10 +73,10 @@ def test_contextualize_filters_invalid_enumeration_uris(mock_client, mock_config
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
-                    _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
-                    _EnumResponse(class_uri="http://example.org/FakeClass", class_label="Fake", relevance="low"),
+                    _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
+                    _EnumResponse(class_id="E99", class_label="Fake", relevance="low"),
                 ],
             ),
         ],
@@ -97,10 +97,10 @@ def test_contextualize_derives_source_ontology(mock_client, mock_config, mock_on
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
                     _EnumResponse(
-                        class_uri="https://spec.edmcouncil.org/fibo/ontology/FND/Foo/Bar",
+                        class_id="E1",
                         class_label="Bar", relevance="high",
                     ),
                 ],
@@ -125,9 +125,9 @@ def test_contextualize_falls_back_to_siblings(mock_client, mock_config, mock_ont
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
-                    _EnumResponse(class_uri="http://example.org/Organization", class_label="Organization", relevance="high"),
+                    _EnumResponse(class_id="E1", class_label="Organization", relevance="high"),
                 ],
             ),
         ],
@@ -153,6 +153,7 @@ def test_contextualize_sibling_fallback_excludes_self(mock_client, mock_config, 
 def test_contextualize_filters_self_reference_enumerations(mock_client, mock_config, mock_onto_handlers):
     axes = [_make_axes()]
     mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Person", "label": "Person", "depth": 1},  # self in subclasses
         {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
     ]
     mock_onto_handlers["get_class_definition"].return_value = {
@@ -161,10 +162,10 @@ def test_contextualize_filters_self_reference_enumerations(mock_client, mock_con
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
-                    _EnumResponse(class_uri="http://example.org/Person", class_label="Person", relevance="high"),
-                    _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                    _EnumResponse(class_id="E1", class_label="Person", relevance="high"),  # self-ref: E1 maps to Person URI
+                    _EnumResponse(class_id="E2", class_label="Employee", relevance="high"),
                 ],
             ),
         ],
@@ -195,9 +196,9 @@ def test_contextualize_caches_by_risk_id(mock_client, mock_config, mock_onto_han
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
-                    _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                    _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
                 ],
             ),
         ],
@@ -229,8 +230,8 @@ def test_contextualize_emits_sibling_fallback(mock_client, mock_config, mock_ont
     }
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
-            enumerations=[_EnumResponse(class_uri="http://example.org/Organization", class_label="Organization", relevance="high")],
+            axis_id="A1",
+            enumerations=[_EnumResponse(class_id="E1", class_label="Organization", relevance="high")],
         )],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
@@ -245,6 +246,7 @@ def test_contextualize_emits_self_reference_filtered(mock_client, mock_config, m
     """When enumeration URI matches axis URI, emit self_reference_filtered."""
     axes = [_make_axes()]
     mock_onto_handlers["get_subclasses"].return_value = [
+        {"uri": "http://example.org/Person", "label": "Person", "depth": 1},  # self in subclasses
         {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
     ]
     mock_onto_handlers["get_class_definition"].return_value = {
@@ -252,10 +254,10 @@ def test_contextualize_emits_self_reference_filtered(mock_client, mock_config, m
     }
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
+            axis_id="A1",
             enumerations=[
-                _EnumResponse(class_uri="http://example.org/Person", class_label="Person", relevance="high"),  # self-ref
-                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                _EnumResponse(class_id="E1", class_label="Person", relevance="high"),  # self-ref: E1 maps to Person URI
+                _EnumResponse(class_id="E2", class_label="Employee", relevance="high"),
             ],
         )],
     )
@@ -275,9 +277,9 @@ def test_contextualize_emits_empty_enumerations(mock_client, mock_config, mock_o
     mock_onto_handlers["get_class_definition"].return_value = None  # all enum URIs invalid
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
+            axis_id="A1",
             enumerations=[
-                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
             ],
         )],
     )
@@ -302,14 +304,14 @@ def test_contextualize_filters_enumerations_by_domain(mock_client, mock_config, 
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
                     _EnumResponse(
-                        class_uri="https://spec.edmcouncil.org/fibo/ontology/FND/Foo/CreditMsg",
+                        class_id="E1",
                         class_label="Credit Message", relevance="high",
                     ),
                     _EnumResponse(
-                        class_uri="http://purl.obolibrary.org/obo/OGMS_12345",
+                        class_id="E2",
                         class_label="Clinical Finding", relevance="high",
                     ),
                 ],
@@ -334,10 +336,10 @@ def test_contextualize_domain_filter_emits_event(mock_client, mock_config, mock_
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
                     _EnumResponse(
-                        class_uri="https://spec.edmcouncil.org/fibo/ontology/FND/Foo/CreditMsg",
+                        class_id="E1",
                         class_label="Credit Message", relevance="high",
                     ),
                 ],
@@ -367,10 +369,10 @@ def test_contextualize_no_domain_filter_when_none(mock_client, mock_config, mock
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[
             _AxisResponse(
-                cco_class_uri="http://example.org/Person",
+                axis_id="A1",
                 enumerations=[
                     _EnumResponse(
-                        class_uri="https://spec.edmcouncil.org/fibo/ontology/FND/Foo/CreditMsg",
+                        class_id="E1",
                         class_label="Credit Message", relevance="high",
                     ),
                 ],
@@ -402,8 +404,8 @@ def test_contextualize_subclass_provenance(mock_client, mock_config, mock_onto_h
     }
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
-            enumerations=[_EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high")],
+            axis_id="A1",
+            enumerations=[_EnumResponse(class_id="E1", class_label="Employee", relevance="high")],
         )],
     )
     result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
@@ -423,8 +425,8 @@ def test_contextualize_sibling_provenance(mock_client, mock_config, mock_onto_ha
     }
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
-            enumerations=[_EnumResponse(class_uri="http://example.org/Organization", class_label="Organization", relevance="high")],
+            axis_id="A1",
+            enumerations=[_EnumResponse(class_id="E1", class_label="Organization", relevance="high")],
         )],
     )
     result = contextualize(axes, mock_client, mock_config, mock_onto_handlers)
@@ -450,8 +452,8 @@ def test_contextualize_includes_risk_description_in_prompt(mock_client, mock_con
         {"uri": "http://example.org/Employee", "label": "Employee", "depth": 1},
     ]
     mock_client.chat.completions.create.return_value = _ContextResponse(axes=[
-        _AxisResponse(cco_class_uri="http://example.org/Person", enumerations=[
-            _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+        _AxisResponse(axis_id="A1", enumerations=[
+            _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
         ]),
     ])
     mock_onto_handlers["get_class_definition"].return_value = {
@@ -501,10 +503,10 @@ def test_contextualize_filters_disjoint_enumerations(mock_client, mock_config, m
     )
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
+            axis_id="A1",
             enumerations=[
-                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
-                _EnumResponse(class_uri="http://example.org/Contractor", class_label="Contractor", relevance="low"),
+                _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
+                _EnumResponse(class_id="E2", class_label="Contractor", relevance="low"),
             ],
         )],
     )
@@ -531,10 +533,10 @@ def test_contextualize_emits_disjoint_filtered_event(mock_client, mock_config, m
     )
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
+            axis_id="A1",
             enumerations=[
-                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
-                _EnumResponse(class_uri="http://example.org/Contractor", class_label="Contractor", relevance="low"),
+                _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
+                _EnumResponse(class_id="E2", class_label="Contractor", relevance="low"),
             ],
         )],
     )
@@ -562,9 +564,9 @@ def test_contextualize_no_disjoint_filter_when_handler_absent(mock_client, mock_
     mock_client = MagicMock()
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
+            axis_id="A1",
             enumerations=[
-                _EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high"),
+                _EnumResponse(class_id="E1", class_label="Employee", relevance="high"),
             ],
         )],
     )
@@ -591,8 +593,8 @@ def test_contextualize_includes_restriction_context_in_prompt(mock_client, mock_
     }
     mock_client.chat.completions.create.return_value = _ContextResponse(
         axes=[_AxisResponse(
-            cco_class_uri="http://example.org/Person",
-            enumerations=[_EnumResponse(class_uri="http://example.org/Employee", class_label="Employee", relevance="high")],
+            axis_id="A1",
+            enumerations=[_EnumResponse(class_id="E1", class_label="Employee", relevance="high")],
         )],
     )
     report = RunReport(model="m", policy_set="p", timestamp="t")
@@ -600,7 +602,7 @@ def test_contextualize_includes_restriction_context_in_prompt(mock_client, mock_
 
     call_kwargs = mock_client.chat.completions.create.call_args.kwargs
     user_msg = call_kwargs["messages"][1]["content"]
-    assert "Ontology constraints:" in user_msg
+    assert "Constraints:" in user_msg
 
     context_events = [e for e in report.events if e["event"] == "restriction_context_added"]
     assert len(context_events) == 1

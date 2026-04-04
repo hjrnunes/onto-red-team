@@ -23,8 +23,8 @@ ontoquery/          # Ontology CLI + MCP server (rdflib, pyoxigraph, chromadb)
 nexus-mcp/          # AI Atlas Nexus MCP server (chromadb, ai-atlas-nexus)
 refiner/            # LLM pipeline + emit + evaluate (instructor, openai)
 redteam/            # Adversarial prompt generation (sdg_hub)
-ontologies/         # Ontology files (CCO, Commons, FIBO, OBO, D3FEND, CSO, bridges)
-policy_examples/    # Sample policies: swb.json, generic.json, aramco.json
+ontologies/         # Ontology files (CCO, Commons, FIBO, OBO, D3FEND, CSO, LKIF, DUO, GSSO, HANCESTRO, OMRSE, bridges)
+policy_examples/    # Sample policies: swb.json, generic.json, aramco.json, healthcare.json + md policies
 runs/               # Pipeline outputs (gitignored)
 ```
 
@@ -88,7 +88,7 @@ cd refiner && uv run pytest      # ~313 tests
 ### Pipeline Patterns
 
 - Ground-truth cross-mappings from knowledge graph, never LLM-generated
-- Domain filtering: always-included (CCO, Commons, D3FEND, CSO) + selectable (FIBO, OBO, IOF)
+- Domain filtering: always-included (CCO, Commons, D3FEND, CSO, LKIF) + selectable (FIBO, OBO, IOF)
 - Per-domain ChromaDB collections with merge strategies (weighted/grouped)
 - Sibling fallback when `get_subclasses()` returns empty (leaf nodes)
 - BFO/CCO/Commons role derivation via `_CATEGORY_ROLES` (29 entries)

@@ -22,10 +22,15 @@ _FRAMEWORK_SUFFIXES = [
     " - ATLAS", " - ATTACK ICS", " - ATTACK Mobile", " - ATTACK", " - SPARTA",
 ]
 
+_ONTOLOGY_SUFFIXES = [" AE", " HP", " GO"]
+
 
 def _strip_framework_suffix(label: str) -> str:
-    """Remove D3FEND/ATT&CK/ATLAS framework identifiers from class labels."""
+    """Remove framework identifiers and ontology metadata suffixes from class labels."""
     for suffix in _FRAMEWORK_SUFFIXES:
+        if label.endswith(suffix):
+            return label[: -len(suffix)]
+    for suffix in _ONTOLOGY_SUFFIXES:
         if label.endswith(suffix):
             return label[: -len(suffix)]
     return label

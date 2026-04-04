@@ -125,7 +125,7 @@ def main():
 
     # Drop intermediate columns, keep metadata + generated prompt
     drop_cols = [c for c in result.columns if c in (
-        "raw_response", "extract_response_content"
+        "raw_response", "extract_response_content",
     )]
     output_df = result.drop(columns=drop_cols, errors="ignore")
     output_df.to_json(output_path, orient="records", lines=True)

@@ -1,0 +1,13 @@
+runs
+
+# External ontologies (downloaded via `just fetch-ontologies`)
+ontologies/CommonCoreOntologies/
+ontologies/d3fend-ontology/
+ontologies/ontology/
+ontologies/fibo/
+ontologies/lkif-core/
+ontologies/commons/*.rdf
+ontologies/obo/*.owl
+ontologies/dron-base.owl
+mlflow-artifacts/
+.DS_Store

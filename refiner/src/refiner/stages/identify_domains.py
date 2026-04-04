@@ -17,7 +17,7 @@ DOMAIN_OPTIONS = {
 }
 
 # Always included regardless of LLM selection (domain-independent)
-ALWAYS_INCLUDED = ["CCO", "Commons", "D3FEND", "CSO"]
+ALWAYS_INCLUDED = ["CCO", "Commons", "D3FEND", "CSO", "LKIF"]
 
 SYSTEM_PROMPT = """\
 You are identifying which domain ontologies are relevant for a set of client content policies.
