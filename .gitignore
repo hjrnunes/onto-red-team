@@ -1,5 +1,10 @@
 runs
 
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+
 # External ontologies (downloaded via `just fetch-ontologies`)
 ontologies/CommonCoreOntologies/
 ontologies/d3fend-ontology/
