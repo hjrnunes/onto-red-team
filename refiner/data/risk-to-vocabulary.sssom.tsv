@@ -1,0 +1,55 @@
+# curie_map:
+#   ibm-risk-atlas: https://www.ibm.com/docs/en/watsonx/saas?topic=
+#   airo: https://delaramglp.github.io/airo#
+#   eu-aiact: https://w3id.org/dpv/legal/eu/aiact#
+#   pd: https://w3id.org/dpv/pd#
+#   risk: https://w3id.org/dpv/risk#
+#   eu-rights: https://w3id.org/dpv/legal/eu/rights#
+#   justifications: https://w3id.org/dpv/justifications#
+#   sector-finance: https://w3id.org/dpv/sector/finance#
+#   sector-health: https://w3id.org/dpv/sector/health#
+#   sector-law: https://w3id.org/dpv/sector/law#
+#   tech: https://w3id.org/dpv/tech#
+#   semapv: https://w3id.org/semapv/vocab/
+#   skos: http://www.w3.org/2004/02/skos/core#
+# mapping_set_id: risk-to-vocabulary
+# mapping_set_description: Maps AI risk concepts to AIRO/DPV vocabulary for structured LLM context
+# license: https://www.apache.org/licenses/LICENSE-2.0.html
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.95
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.95
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:Gender	Gender	semapv:ManualMappingCuration	0.95
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	sector-finance:CreditChecking	Credit Checking	semapv:ManualMappingCuration	0.75
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.95
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:Biometric	Biometric	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	justifications:LegitimateInterestOverride	Legitimate Interest Override	semapv:ManualMappingCuration	0.70
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	eu-aiact:AIUser	AI User	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.70
+ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	semapv:ManualMappingCuration	0.75
+ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-explainability	Explainability	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-explainability	Explainability	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-intellectual-property	Intellectual Property	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80

@@ -1,0 +1,44 @@
+# curie_map:
+#   pd: https://w3id.org/dpv/pd#
+#   eu-aiact: https://w3id.org/dpv/legal/eu/aiact#
+#   eu-rights: https://w3id.org/dpv/legal/eu/rights#
+#   risk: https://w3id.org/dpv/risk#
+#   justifications: https://w3id.org/dpv/justifications#
+#   sector-finance: https://w3id.org/dpv/sector/finance#
+#   sector-law: https://w3id.org/dpv/sector/law#
+#   cso: http://taxonomy-refiner.io/ontologies/cso#
+#   d3f: http://d3fend.mitre.org/ontologies/d3fend.owl#
+#   cco: https://www.commoncoreontologies.org/
+#   obo: http://purl.obolibrary.org/obo/
+#   lkif: http://www.estrellaproject.org/lkif-core/
+#   fibo: https://spec.edmcouncil.org/fibo/ontology/
+#   semapv: https://w3id.org/semapv/vocab/
+#   skos: http://www.w3.org/2004/02/skos/core#
+# mapping_set_id: vocabulary-to-ontology
+# mapping_set_description: Maps AIRO/DPV vocabulary concepts to domain ontology branches for structural navigation
+# license: https://www.apache.org/licenses/LICENSE-2.0.html
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence
+pd:EthnicOrigin	Ethnic Origin	skos:broadMatch	obo:HANCESTRO_0001	Ancestry	semapv:ManualMappingCuration	0.95
+pd:Gender	Gender	skos:broadMatch	obo:GSSO_000000	Gender Sex and Sexual Orientation	semapv:ManualMappingCuration	0.95
+pd:CreditScore	Credit Score	skos:relatedMatch	fibo:FBC/CreditRatings	Credit Ratings	semapv:ManualMappingCuration	0.90
+pd:Biometric	Biometric	skos:broadMatch	cco:BiometricIdentifier	Biometric Identifier	semapv:ManualMappingCuration	0.85
+pd:MedicalHealth	Medical Health	skos:broadMatch	obo:OGMS_0000031	Disease	semapv:ManualMappingCuration	0.85
+pd:MedicalHealth	Medical Health	skos:broadMatch	obo:MAXO_0000001	Medical Action	semapv:ManualMappingCuration	0.80
+pd:Financial	Financial	skos:broadMatch	fibo:FBC/FinancialProducts	Financial Products	semapv:ManualMappingCuration	0.85
+eu-aiact:AISubject	AI Subject	skos:relatedMatch	cco:Person	Person	semapv:ManualMappingCuration	0.90
+eu-aiact:AISubject	AI Subject	skos:relatedMatch	obo:OMRSE_00000000	Social Entities	semapv:ManualMappingCuration	0.80
+eu-aiact:AIDeployer	AI Deployer	skos:relatedMatch	cco:Organization	Organization	semapv:ManualMappingCuration	0.85
+eu-aiact:AIProvider	AI Provider	skos:relatedMatch	cco:Organization	Organization	semapv:ManualMappingCuration	0.85
+risk:Threat	Threat	skos:broadMatch	d3f:OffensiveTechnique	Offensive Technique	semapv:ManualMappingCuration	0.90
+risk:Threat	Threat	skos:broadMatch	cso:FraudAndDeception	Fraud and Deception	semapv:ManualMappingCuration	0.85
+risk:Vulnerability	Vulnerability	skos:relatedMatch	d3f:DigitalArtifact	Digital Artifact	semapv:ManualMappingCuration	0.75
+eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	lkif:norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.80
+eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	fibo:FBC/RegulatoryAgency	Regulatory Agency	semapv:ManualMappingCuration	0.75
+eu-rights:T3-Equality	Equality	skos:relatedMatch	obo:GSSO_000000	Gender Sex and Sexual Orientation	semapv:ManualMappingCuration	0.85
+eu-rights:T3-Equality	Equality	skos:relatedMatch	obo:HANCESTRO_0001	Ancestry	semapv:ManualMappingCuration	0.85
+eu-rights:T2-DataProtection	Data Protection	skos:broadMatch	cso:PrivacyViolation	Privacy Violation	semapv:ManualMappingCuration	0.90
+eu-rights:T2-DataProtection	Data Protection	skos:relatedMatch	d3f:DataExfiltration	Data Exfiltration	semapv:ManualMappingCuration	0.80
+sector-finance:CreditChecking	Credit Checking	skos:relatedMatch	fibo:FBC/CreditRatings	Credit Ratings	semapv:ManualMappingCuration	0.85
+sector-law:CriminalLawEnforcement	Criminal Law Enforcement	skos:relatedMatch	lkif:norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.70
+ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness	skos:relatedMatch	d3f:OffensiveTechnique	Offensive Technique	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-intellectual-property	Intellectual Property	skos:broadMatch	cso:IntellectualProperty	Intellectual Property	semapv:ManualMappingCuration	0.90
