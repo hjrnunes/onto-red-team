@@ -90,12 +90,31 @@ The `confidence` field (0.0-1.0) weights candidates during tiered merge:
 
 ### Mapping Granularity
 
-Mappings can exist at two levels:
+Mappings exist at two levels:
 
-1. **Risk level** — `subject_id` is a specific risk (e.g., `ibm-risk-atlas:atlas-exposing-personal-info`). Most precise.
-2. **RiskGroup level** — `subject_id` is a risk group (e.g., `ibm-risk-atlas-privacy`). Inherited by all risks in the group.
+1. **RiskGroup level** — `subject_id` is an IBM Risk Atlas RiskGroup (e.g., `ibm-risk-atlas-privacy`). Inherited by all risks in the group. This is the primary mapping level (~16 groups, ~40-60 SSSOM rows).
+2. **Risk level** — `subject_id` is a specific risk (e.g., `ibm-risk-atlas:atlas-exposing-personal-info`). Overrides or supplements group-level seeds for specific risks that need finer-grained ontology targeting.
 
-Risk-level mappings supplement RiskGroup-level ones. When both exist for the same ontology branch, the risk-level confidence takes precedence. A risk in multiple RiskGroups (via cross-framework mappings) inherits the union of all group-level seeds, deduplicated by object_id.
+Risk-level mappings supplement RiskGroup-level ones. When both exist for the same ontology branch, the risk-level confidence takes precedence.
+
+### IBM Risk Atlas as Canonical Hub
+
+IBM Risk Atlas RiskGroups serve as the canonical subjects in the SSSOM file. This eliminates the need for a normalization layer between taxonomy-specific RiskGroup IDs and cross-cutting concept tags.
+
+**Why IBM Risk Atlas:** It has 16 well-structured RiskGroups, the most comprehensive cross-taxonomy coverage, and already serves as the mapping hub in the nexus (all other taxonomies have cross-mappings to IBM risks via existing SSSOM files).
+
+**Resolution chain for non-IBM risks:**
+
+```
+Matched risk (any taxonomy, e.g., OWASP, NIST, Credo)
+  → existing nexus cross-mappings → IBM Risk Atlas risk
+    → isPartOf → IBM RiskGroup
+      → SSSOM seeds → ontology branches
+```
+
+For example: `owasp-llm-2.0:llm022025-sensitive-information-disclosure` maps to `ibm-risk-atlas:atlas-exposing-personal-info` via existing cross-mappings, which belongs to `ibm-risk-atlas-privacy`, which has seeds pointing to `cso:PrivacyViolation`, `d3f:DataExfiltration`, etc.
+
+**Coverage:** AILuminate and Credo UCF are fully cross-mapped to IBM Risk Atlas. NIST covers ~81/99 IBM risks. OWASP covers ~32/99. Unmapped risks from other taxonomies fall back to constrained search (Section 3).
 
 ### Example Mappings
 
@@ -106,12 +125,15 @@ ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	lkif:norm.owl#Right	Right	semap
 ibm-risk-atlas-fairness	Fairness	skos:broadMatch	obo:GSSO_000000	Gender Sex and Sexual Orientation	semapv:ManualMappingCuration	0.90
 ibm-risk-atlas-fairness	Fairness	skos:broadMatch	obo:HANCESTRO_0001	Ancestry	semapv:ManualMappingCuration	0.90
 ibm-risk-atlas-fairness	Fairness	skos:broadMatch	obo:OMRSE_00000000	Social Entities	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas:atlas-evasion-attack	Evasion attack	skos:relatedMatch	d3f:OffensiveTechnique	Offensive Technique	semapv:LLMBasedMatching	0.75
+ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness	skos:relatedMatch	d3f:OffensiveTechnique	Offensive Technique	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-misuse	Misuse	skos:broadMatch	cso:FraudAndDeception	Fraud and Deception	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-misuse	Misuse	skos:broadMatch	cso:Violence	Violence	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-value-alignment	Value Alignment	skos:broadMatch	cso:HateAndDiscrimination	Hate and Discrimination	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-intellectual-property	Intellectual Property	skos:broadMatch	cso:IntellectualProperty	Intellectual Property	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:broadMatch	lkif:norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	fibo:FBC/RegulatoryAgency	Regulatory Agency	semapv:ManualMappingCuration	0.75
 ibm-risk-atlas:atlas-spreading-toxicity	Spreading toxicity	skos:broadMatch	cso:HateAndDiscrimination	Hate and Discrimination	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas:atlas-spreading-toxicity	Spreading toxicity	skos:broadMatch	cso:Violence	Violence	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas:atlas-copyright-infringement	Copyright infringement	skos:broadMatch	cso:IntellectualProperty	Intellectual Property	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-compliance	Compliance	skos:broadMatch	lkif:norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-compliance	Compliance	skos:relatedMatch	fibo:FBC/RegulatoryAgency	Regulatory Agency	semapv:ManualMappingCuration	0.75
+ibm-risk-atlas:atlas-copyright-infringement	Copyright infringement	skos:exactMatch	cso:IntellectualProperty	Intellectual Property	semapv:ManualMappingCuration	0.95
 ```
 
 ### Migration Path
@@ -119,24 +141,34 @@ ibm-risk-atlas-compliance	Compliance	skos:relatedMatch	fibo:FBC/RegulatoryAgency
 1. **Phase 1 (refiner-side):** SSSOM TSV file in `refiner/data/risk-to-ontology.sssom.tsv`. Loaded at pipeline startup. Quick to iterate, no nexus changes needed.
 2. **Phase 2 (nexus-side):** Move to `ai-atlas-nexus/src/ai_atlas_nexus/data/mappings/risk-to-ontology.sssom.tsv`. Processed by existing `import_entity_mappings.py` pipeline. Exposed via nexus-mcp handlers.
 
-### RiskGroup Resolution
-
-A mapping from nexus RiskGroup IDs to normalized concept tags bridges taxonomy-specific groupings:
+### Seed Resolution Algorithm
 
 ```python
-# refiner/src/refiner/ontology_seeds.py
-RISK_GROUP_NORMALIZE: dict[str, str] = {
-    "ibm-risk-atlas-privacy": "privacy",
-    "ibm-risk-atlas-fairness": "fairness",
-    "nist-ai-rmf-data-privacy": "privacy",
-    "nist-ai-rmf-harmful-bias-or-homogenization": "fairness",
-    # ~30-40 entries covering all RiskGroups across taxonomies
-}
+def resolve_seeds(risk_id, risk_group_id, nexus_handlers, sssom_mappings):
+    """Resolve SSSOM seed mappings for a risk, with cross-taxonomy fallback."""
+    seeds = []
+
+    # 1. Direct risk-level seeds (highest priority)
+    seeds += sssom_mappings.get_by_subject(risk_id)
+
+    # 2. RiskGroup-level seeds
+    if risk_group_id:
+        seeds += sssom_mappings.get_by_subject(risk_group_id)
+
+    # 3. Cross-taxonomy fallback: resolve non-IBM risks to IBM equivalents
+    if not seeds and not risk_id.startswith("ibm-risk-atlas"):
+        ibm_mappings = nexus_handlers["get_related_risks"](risk_id)
+        for rel in ibm_mappings:
+            if rel["id"].startswith("atlas-"):
+                ibm_risk = rel["id"]
+                ibm_group = nexus_handlers["get_risk_group"](ibm_risk)
+                seeds += sssom_mappings.get_by_subject(ibm_group["id"])
+                seeds += sssom_mappings.get_by_subject(f"ibm-risk-atlas:{ibm_risk}")
+                break  # use first IBM match
+
+    # Deduplicate by object_id, keeping highest confidence per branch
+    return deduplicate_seeds(seeds)
 ```
-
-This normalization table enables cross-taxonomy seed inheritance: a risk mapped to both IBM Privacy and NIST Data Privacy groups gets the union of seeds from both.
-
-In Phase 2, this normalization moves into the SSSOM file itself (RiskGroup IDs as subject_ids).
 
 ## 2. Structural Navigation (Primary Discovery)
 
@@ -427,7 +459,7 @@ When policy content is thin (no boundary_examples, no acceptable_uses):
 | Component | Change | Notes |
 |-----------|--------|-------|
 | `refiner/data/risk-to-ontology.sssom.tsv` | NEW | Seed mappings in SSSOM format |
-| `refiner/src/refiner/ontology_seeds.py` | NEW | SSSOM loader, RiskGroup normalization, seed resolution |
+| `refiner/src/refiner/ontology_seeds.py` | NEW | SSSOM loader, seed resolution with cross-taxonomy fallback |
 | `refiner/src/refiner/stages/anchor.py` | REWRITE `expand_candidates()` | Structural navigation + constrained search + tiered merge. Remove `WeightedMergeStrategy`, `GroupedMergeStrategy`, `LLMMergeStrategy` |
 | `refiner/src/refiner/stages/anchor.py` | UPDATE prompt format | Add provenance tags and paths to candidate presentation |
 | `refiner/src/refiner/stages/anchor.py` | KEEP | `derive_roles()`, `_CATEGORY_ROLES`, `_is_excluded_uri()`, `build_generic_safety_uris()` |
@@ -477,7 +509,7 @@ When policy content is thin (no boundary_examples, no acceptable_uses):
 |------|-----------|
 | Seed mapping curation is manual effort | Bootstrap with LLM-based matching (same approach nexus uses for risk-to-risk mappings). ~30-40 RiskGroup mappings + ~50-100 risk-level mappings. |
 | Structural navigation misses relevant classes not connected to seeds | Constrained search as complementary source. Tier 3 (search-only) candidates catch ontology gaps. |
-| RiskGroup normalization table needs maintenance | Phase 2 moves to nexus-side SSSOM, eliminating the normalization table. |
+| Non-IBM risks without IBM cross-mappings | Fallback to constrained search. ~18% of NIST risks lack IBM mappings but these are edge cases. Log as "unmapped_risk" for monitoring. |
 | Policy-driven LLM enumeration may hallucinate | Knowledge graph constraints (actions, cross-mappings) validate. Ontology subclasses as optional reference. |
 | Navigation depth tuning | Start conservative (depth=2), adjust per-domain based on run assessments. Adaptive depth based on candidate count. |
 | New risks without seed mappings | Fallback to constrained search across all selected domains (degrades gracefully to current-like behavior). |
