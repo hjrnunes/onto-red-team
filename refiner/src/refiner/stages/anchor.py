@@ -11,6 +11,7 @@ from refiner.models import (
 )
 from refiner import debug
 from refiner.stages.identify_domains import derive_source_ontology, ALWAYS_INCLUDED
+from refiner.ontology_seeds import resolve_seeds
 
 logger = logging.getLogger(__name__)
 
@@ -787,16 +788,19 @@ def _search_per_domain(
 SYSTEM_PROMPT = """\
 You are identifying variation axes for AI risk concepts using ontology classes.
 
-A variation axis is an ontology class that represents a dimension along which diverse prompts can be generated. Each axis has a semantic role relative to the risk:
-- agent: Who performs or is affected by the action
-- object: What is acted upon
-- instrument: What tool/means is used
-- location: Where it occurs
-- temporal: When it occurs
+A variation axis is an ontology class that represents a dimension along which
+diverse prompts can be generated. Each candidate has a BFO category tag
+(MaterialEntity, Process, InformationContentEntity, etc.) and provenance
+showing how it was discovered.
 
-Given a risk (with description and concern) and candidate ontology classes (with definitions and siblings), select the classes that are most semantically relevant to the risk.
+You are also given vocabulary context describing:
+- Stakeholders: who is involved in this AI risk
+- Data sensitivity: what sensitive data categories are at stake
+- Rights at stake: which fundamental rights may be violated
+- Sector context: in which operational contexts this risk arises
 
-Reference each selected class by its candidate ID (e.g. C1). Use the class name as the class_label.
+Use this context to select the most semantically relevant classes.
+Reference each selected class by its candidate ID (e.g. C1).
 
 Return 2-3 axes max."""
 
@@ -804,7 +808,6 @@ Return 2-3 axes max."""
 class _SlimAxis(BaseModel):
     class_id: str
     class_label: str
-    role: str
     rationale: str
 
 
@@ -970,6 +973,32 @@ def expand_candidates(
     return kept, stats
 
 
+def _format_vocabulary_context(vocab_ctx: dict) -> str:
+    """Format vocabulary context dict into LLM prompt block."""
+    if not vocab_ctx:
+        return ""
+    lines = ["Vocabulary context:"]
+    if vocab_ctx.get("stakeholders"):
+        labels = ", ".join(c["label"] for c in vocab_ctx["stakeholders"])
+        lines.append(f"  Stakeholders: {labels}")
+    if vocab_ctx.get("data_sensitivity"):
+        labels = ", ".join(c["label"] for c in vocab_ctx["data_sensitivity"])
+        lines.append(f"  Data sensitivity: {labels}")
+    if vocab_ctx.get("rights"):
+        labels = ", ".join(c["label"] for c in vocab_ctx["rights"])
+        lines.append(f"  Rights at stake: {labels}")
+    if vocab_ctx.get("sector_purposes"):
+        labels = ", ".join(c["label"] for c in vocab_ctx["sector_purposes"])
+        lines.append(f"  Sector: {labels}")
+    if vocab_ctx.get("justifications"):
+        labels = ", ".join(c["label"] for c in vocab_ctx["justifications"])
+        lines.append(f"  Justification patterns: {labels}")
+    if vocab_ctx.get("prohibited_practices"):
+        labels = ", ".join(c["label"] for c in vocab_ctx["prohibited_practices"])
+        lines.append(f"  Prohibited practices: {labels}")
+    return "\n".join(lines)
+
+
 def anchor(
         risk_mappings: list[PolicyRiskMapping],
         risk_details: dict[str, dict],
@@ -980,11 +1009,16 @@ def anchor(
         risk_actions: dict[str, list[str]] | None = None,
         related_risks: dict[str, list[dict]] | None = None,
         merge_strategy: SearchMergeStrategy | None = None,
+        nexus_handlers: dict | None = None,
+        layer1_mappings=None,
+        layer2_mappings=None,
         report=None,
         generic_safety_uris: set[str] | None = None,
 ) -> list[RiskVariationAxes]:
     if not risk_mappings:
         return []
+
+    use_sssom = layer1_mappings is not None and layer2_mappings is not None
 
     results: list[RiskVariationAxes] = []
     axes_cache: dict[str, list[VariationAxis]] = {}  # risk_id -> cached axes
@@ -1007,156 +1041,308 @@ def anchor(
             description = details.get("description", rm.risk_name)
             concern = details.get("concern", "")
 
-            # Expand candidates via multi-query search (description + concern + actions + cross-mappings)
-            actions = risk_actions.get(rm.risk_id, []) if risk_actions else []
-            cross_mapped_descs = []
-            if related_risks:
-                for rel in related_risks.get(rm.risk_id, []):
-                    desc = rel.get("description", "")
-                    if desc:
-                        cross_mapped_descs.append(desc)
+            if use_sssom:
+                # --- SSSOM seed path ---
+                group_id = details.get("group")
+                _nexus = nexus_handlers or {}
 
-            candidates, expansion_stats = expand_candidates(
-                description=description,
-                concern=concern,
-                action_descriptions=actions,
-                cross_mapped_descriptions=cross_mapped_descs,
-                onto_handlers=onto_handlers,
-                selected_domains=selected_domains,
-                merge_strategy=merge_strategy,
-                policy_concept=mapping.policy_concept,
-                generic_safety_uris=generic_safety_uris,
-            )
+                vocabulary_context, ontology_seeds = resolve_seeds(
+                    risk_id=rm.risk_id,
+                    risk_group_id=group_id,
+                    nexus_handlers=_nexus,
+                    layer1_mappings=layer1_mappings,
+                    layer2_mappings=layer2_mappings,
+                )
 
-            if report and expansion_stats.get("restriction_candidates_added", 0) > 0:
-                report.events.append({
-                    "stage": "anchor", "event": "restriction_expansion",
-                    "risk_id": rm.risk_id,
-                    "source_uri": "",  # multiple sources
-                    "candidates_added": expansion_stats["restriction_candidates_added"],
-                    "source_type": "restriction",
-                })
+                # Structural candidates from seeds
+                structural = navigate_from_seeds(
+                    seed_mappings=ontology_seeds,
+                    onto_handlers=onto_handlers,
+                    selected_domains=selected_domains,
+                    generic_safety_uris=generic_safety_uris,
+                )
 
-            if report:
-                report.events.append({
-                    "stage": "anchor", "event": "candidate_expansion",
-                    "risk_id": rm.risk_id, **expansion_stats,
-                })
-                for c in candidates:
-                    report.events.append({
-                        "stage": "anchor", "event": "multi_query_hit",
-                        "risk_id": rm.risk_id,
+                # Search candidates scoped to seed domains
+                search_results = constrained_search(
+                    risk_description=description,
+                    seed_mappings=ontology_seeds,
+                    onto_handlers=onto_handlers,
+                    selected_domains=selected_domains,
+                )
+
+                # Classify search results as connected/not-connected
+                seed_uris = [m["object_id"] for m in ontology_seeds]
+                search_connected = []
+                search_only = []
+                for sc in search_results:
+                    conn = check_structural_connection(sc["uri"], seed_uris, onto_handlers)
+                    if conn["connected"]:
+                        search_connected.append(sc)
+                    else:
+                        search_only.append(sc)
+
+                # Merge tiers
+                candidates = merge_tiered(structural, search_connected, search_only)
+
+                # Enrich candidates
+                enriched = []
+                for i, c in enumerate(candidates):
+                    defn = onto_handlers["get_class_definition"](c["uri"])
+                    if not defn:
+                        continue
+                    bfo_cat = derive_bfo_category(c["uri"], onto_handlers)
+                    siblings = onto_handlers["get_siblings"](c["uri"])
+                    enriched.append({
+                        "id": f"C{i+1}",
                         "uri": c["uri"],
-                        "hit_count": c["hit_count"],
-                        "best_distance": c["best_distance"],
-                        "query_sources": c["query_sources"],
+                        "label": defn.get("label", c.get("label", "")),
+                        "definition": defn.get("definition", ""),
+                        "bfo_category": bfo_cat,
+                        "source": c.get("source", ""),
+                        "vocabulary_concept": c.get("vocabulary_concept", ""),
+                        "vocabulary_label": c.get("vocabulary_label", ""),
+                        "path": c.get("path", []),
+                        "siblings": [s.get("label", "") for s in siblings[:5]],
                     })
 
-            # Enrich candidates with definitions and siblings
-            enriched = []
-            known_uris = set()
-            for c in candidates:
-                defn = onto_handlers["get_class_definition"](c["uri"])
-                if defn is None:
+                if not enriched:
+                    if report:
+                        report.events.append({"stage": "anchor", "event": "empty_axes", "risk_id": rm.risk_id})
+                    axes_cache[rm.risk_id] = []
+                    results.append(RiskVariationAxes(
+                        risk_id=rm.risk_id,
+                        risk_name=rm.risk_name,
+                        policy_concept=mapping.policy_concept,
+                        axes=[],
+                    ))
                     continue
-                known_uris.add(c["uri"])
-                siblings = onto_handlers["get_siblings"](c["uri"])
-                for s in siblings:
-                    known_uris.add(s.get("uri", ""))
-                enriched.append({**defn, "siblings": siblings})
 
-            if not enriched:
-                if report:
-                    report.events.append({"stage": "anchor", "event": "empty_axes", "risk_id": rm.risk_id})
-                axes_cache[rm.risk_id] = []
-                results.append(RiskVariationAxes(
-                    risk_id=rm.risk_id,
-                    risk_name=rm.risk_name,
-                    policy_concept=mapping.policy_concept,
-                    axes=[],
-                ))
-                continue
+                # Build vocabulary context block
+                vocab_lines = _format_vocabulary_context(vocabulary_context)
 
-            # Build context for LLM — assign short IDs, use Markdown format
-            id_to_uri = {}
-            class_lines = []
-            for idx, ec in enumerate(enriched, 1):
-                cand_id = f"C{idx}"
-                id_to_uri[cand_id] = ec["uri"]
-                cand = next((c for c in candidates if c["uri"] == ec["uri"]), None)
+                # Build candidate list
+                candidate_lines = []
+                id_to_uri = {}
+                for e in enriched:
+                    id_to_uri[e["id"]] = e["uri"]
+                    via = f" (via {e['vocabulary_label']})" if e.get("vocabulary_label") else ""
+                    cat_tag = f" [{e['bfo_category']}]" if e["bfo_category"] else ""
+                    source_tag = f"-- {e['source']}{via}"
+                    block = f"## {e['id']}: {e['label']}{cat_tag} {source_tag}\n"
+                    if e["definition"]:
+                        block += f"Definition: {e['definition'][:200]}\n"
+                    if e.get("path") and len(e["path"]) > 1:
+                        path_labels = " > ".join(p.split("/")[-1].split("#")[-1] for p in e["path"])
+                        block += f"Path: {path_labels}\n"
+                    if e["siblings"]:
+                        block += f"Siblings: {', '.join(e['siblings'])}\n"
+                    candidate_lines.append(block)
 
-                lines = [f"## {cand_id}: {ec.get('label', '')}"]
-                lines.append(f"Definition: {ec.get('definition', '')}")
-
-                if cand and cand.get("restriction_from"):
-                    prop_label = cand.get("restriction_property", "").split("#")[-1].split("/")[-1]
-                    from_label = cand.get("restriction_from", "").split("#")[-1].split("/")[-1]
-                    lines.append(f"Source: restriction ({prop_label} on {from_label})")
-                elif cand and "equivalence" in cand.get("query_sources", []):
-                    lines.append("Source: equivalence")
-                elif cand and cand.get("hit_count", 1) > 1:
-                    ratio = cand["hit_count"] / expansion_stats["queries_run"]
-                    label = "high" if ratio >= 0.5 else "medium"
-                    lines.append(f"Relevance: {label}")
-
-                if ec.get("siblings"):
-                    sibs = ", ".join(s.get("label", s.get("uri", "")) for s in ec["siblings"][:3])
-                    lines.append(f"Siblings: {sibs}")
-
-                class_lines.append("\n".join(lines))
-
-            user_content = (
+                user_content = (
                     f"Risk: {rm.risk_name}\n"
                     f"Description: {description}\n"
-                    f"Concern: {concern}\n"
-                    f"Policy: {mapping.policy_concept}\n\n"
-                    f"Candidate classes:\n\n" + "\n\n".join(class_lines)
-            )
+                    + (f"Concern: {concern}\n" if concern else "")
+                    + f"Policy: {mapping.policy_concept}\n\n"
+                    + (f"{vocab_lines}\n\n" if vocab_lines else "")
+                    + f"Candidate classes:\n\n"
+                    + "\n".join(candidate_lines)
+                )
 
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_content},
-            ]
-            result = client.chat.completions.create(
-                model=config.model,
-                response_model=_AnchorResponse,
-                messages=messages,
-                temperature=config.temperature,
-                max_retries=config.max_retries,
-                max_tokens=config.max_tokens,
-            )
-            debug.log_call("anchor", messages, result, context={
-                "policy_concept": mapping.policy_concept,
-                "risk_id": rm.risk_id,
-                "risk_name": rm.risk_name,
-                "num_candidates": len(enriched),
-            })
+                messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_content},
+                ]
+                result = client.chat.completions.create(
+                    model=config.model,
+                    response_model=_AnchorResponse,
+                    messages=messages,
+                    temperature=config.temperature,
+                    max_retries=config.max_retries,
+                    max_tokens=config.max_tokens,
+                )
+                debug.log_call("anchor", messages, result, context={
+                    "policy_concept": mapping.policy_concept,
+                    "risk_id": rm.risk_id,
+                    "risk_name": rm.risk_name,
+                    "num_candidates": len(enriched),
+                })
 
-            # Post-processing: map short IDs back to URIs, validate, derive roles
-            valid_axes = []
-            for axis in result.axes:
-                actual_uri = id_to_uri.get(axis.class_id)
-                if actual_uri is None:
-                    logger.warning("Filtering unknown class_id: %s", axis.class_id)
-                    continue
-                check = onto_handlers["get_class_definition"](actual_uri)
-                if check is None:
-                    logger.warning("Filtering invalid URI for class_id %s: %s", axis.class_id, actual_uri)
-                    continue
-                derived = derive_roles(actual_uri, onto_handlers)
+                # Post-processing: map IDs to URIs, derive BFO category, build VariationAxis
+                valid_axes = []
+                for axis in result.axes:
+                    actual_uri = id_to_uri.get(axis.class_id)
+                    if actual_uri is None:
+                        logger.warning("Filtering unknown class_id: %s", axis.class_id)
+                        continue
+                    check = onto_handlers["get_class_definition"](actual_uri)
+                    if check is None:
+                        logger.warning("Filtering invalid URI for class_id %s: %s", axis.class_id, actual_uri)
+                        continue
+                    enriched_match = next((e for e in enriched if e["id"] == axis.class_id), None)
+                    bfo_cat = enriched_match["bfo_category"] if enriched_match else ""
+                    vocab_c = enriched_match.get("vocabulary_concept", "") if enriched_match else ""
+                    vocab_l = enriched_match.get("vocabulary_label", "") if enriched_match else ""
+                    valid_axes.append(VariationAxis(
+                        cco_class_uri=actual_uri,
+                        cco_class_label=axis.class_label,
+                        bfo_category=bfo_cat,
+                        vocabulary_concept=vocab_c,
+                        vocabulary_label=vocab_l,
+                        rationale=axis.rationale,
+                        roles=[],  # backward compat
+                    ))
+
+            else:
+                # --- Legacy expand_candidates path ---
+                actions = risk_actions.get(rm.risk_id, []) if risk_actions else []
+                cross_mapped_descs = []
+                if related_risks:
+                    for rel in related_risks.get(rm.risk_id, []):
+                        desc = rel.get("description", "")
+                        if desc:
+                            cross_mapped_descs.append(desc)
+
+                candidates, expansion_stats = expand_candidates(
+                    description=description,
+                    concern=concern,
+                    action_descriptions=actions,
+                    cross_mapped_descriptions=cross_mapped_descs,
+                    onto_handlers=onto_handlers,
+                    selected_domains=selected_domains,
+                    merge_strategy=merge_strategy,
+                    policy_concept=mapping.policy_concept,
+                    generic_safety_uris=generic_safety_uris,
+                )
+
+                if report and expansion_stats.get("restriction_candidates_added", 0) > 0:
+                    report.events.append({
+                        "stage": "anchor", "event": "restriction_expansion",
+                        "risk_id": rm.risk_id,
+                        "source_uri": "",  # multiple sources
+                        "candidates_added": expansion_stats["restriction_candidates_added"],
+                        "source_type": "restriction",
+                    })
+
                 if report:
                     report.events.append({
-                        "stage": "anchor", "event": "role_derivation",
-                        "uri": actual_uri,
-                        "method": "derived" if derived is not None else "llm_fallback",
+                        "stage": "anchor", "event": "candidate_expansion",
+                        "risk_id": rm.risk_id, **expansion_stats,
                     })
-                roles = derived if derived is not None else [axis.role]
-                valid_axes.append(VariationAxis(
-                    cco_class_uri=actual_uri,
-                    cco_class_label=axis.class_label,
-                    roles=roles,
-                    rationale=axis.rationale,
-                ))
+                    for c in candidates:
+                        report.events.append({
+                            "stage": "anchor", "event": "multi_query_hit",
+                            "risk_id": rm.risk_id,
+                            "uri": c["uri"],
+                            "hit_count": c["hit_count"],
+                            "best_distance": c["best_distance"],
+                            "query_sources": c["query_sources"],
+                        })
+
+                # Enrich candidates with definitions and siblings
+                enriched = []
+                known_uris = set()
+                for c in candidates:
+                    defn = onto_handlers["get_class_definition"](c["uri"])
+                    if defn is None:
+                        continue
+                    known_uris.add(c["uri"])
+                    siblings = onto_handlers["get_siblings"](c["uri"])
+                    for s in siblings:
+                        known_uris.add(s.get("uri", ""))
+                    enriched.append({**defn, "siblings": siblings})
+
+                if not enriched:
+                    if report:
+                        report.events.append({"stage": "anchor", "event": "empty_axes", "risk_id": rm.risk_id})
+                    axes_cache[rm.risk_id] = []
+                    results.append(RiskVariationAxes(
+                        risk_id=rm.risk_id,
+                        risk_name=rm.risk_name,
+                        policy_concept=mapping.policy_concept,
+                        axes=[],
+                    ))
+                    continue
+
+                # Build context for LLM — assign short IDs, use Markdown format
+                id_to_uri = {}
+                class_lines = []
+                for idx, ec in enumerate(enriched, 1):
+                    cand_id = f"C{idx}"
+                    id_to_uri[cand_id] = ec["uri"]
+                    cand = next((c for c in candidates if c["uri"] == ec["uri"]), None)
+
+                    lines = [f"## {cand_id}: {ec.get('label', '')}"]
+                    lines.append(f"Definition: {ec.get('definition', '')}")
+
+                    if cand and cand.get("restriction_from"):
+                        prop_label = cand.get("restriction_property", "").split("#")[-1].split("/")[-1]
+                        from_label = cand.get("restriction_from", "").split("#")[-1].split("/")[-1]
+                        lines.append(f"Source: restriction ({prop_label} on {from_label})")
+                    elif cand and "equivalence" in cand.get("query_sources", []):
+                        lines.append("Source: equivalence")
+                    elif cand and cand.get("hit_count", 1) > 1:
+                        ratio = cand["hit_count"] / expansion_stats["queries_run"]
+                        label = "high" if ratio >= 0.5 else "medium"
+                        lines.append(f"Relevance: {label}")
+
+                    if ec.get("siblings"):
+                        sibs = ", ".join(s.get("label", s.get("uri", "")) for s in ec["siblings"][:3])
+                        lines.append(f"Siblings: {sibs}")
+
+                    class_lines.append("\n".join(lines))
+
+                user_content = (
+                        f"Risk: {rm.risk_name}\n"
+                        f"Description: {description}\n"
+                        f"Concern: {concern}\n"
+                        f"Policy: {mapping.policy_concept}\n\n"
+                        f"Candidate classes:\n\n" + "\n\n".join(class_lines)
+                )
+
+                messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_content},
+                ]
+                result = client.chat.completions.create(
+                    model=config.model,
+                    response_model=_AnchorResponse,
+                    messages=messages,
+                    temperature=config.temperature,
+                    max_retries=config.max_retries,
+                    max_tokens=config.max_tokens,
+                )
+                debug.log_call("anchor", messages, result, context={
+                    "policy_concept": mapping.policy_concept,
+                    "risk_id": rm.risk_id,
+                    "risk_name": rm.risk_name,
+                    "num_candidates": len(enriched),
+                })
+
+                # Post-processing: map short IDs back to URIs, validate, derive roles
+                valid_axes = []
+                for axis in result.axes:
+                    actual_uri = id_to_uri.get(axis.class_id)
+                    if actual_uri is None:
+                        logger.warning("Filtering unknown class_id: %s", axis.class_id)
+                        continue
+                    check = onto_handlers["get_class_definition"](actual_uri)
+                    if check is None:
+                        logger.warning("Filtering invalid URI for class_id %s: %s", axis.class_id, actual_uri)
+                        continue
+                    derived = derive_roles(actual_uri, onto_handlers)
+                    if report:
+                        report.events.append({
+                            "stage": "anchor", "event": "role_derivation",
+                            "uri": actual_uri,
+                            "method": "derived" if derived is not None else "llm_fallback",
+                        })
+                    roles = derived if derived is not None else []
+                    valid_axes.append(VariationAxis(
+                        cco_class_uri=actual_uri,
+                        cco_class_label=axis.class_label,
+                        roles=roles,
+                        rationale=axis.rationale,
+                    ))
 
             # Cache axes by risk_id for deduplication
             axes_cache[rm.risk_id] = valid_axes
