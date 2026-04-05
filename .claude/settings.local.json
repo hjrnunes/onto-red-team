@@ -70,7 +70,26 @@
       "Bash(mv /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/gsso.owl /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/ontologies/obo/)",
       "Bash(mv /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/hancestro.owl /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/ontologies/obo/)",
       "Bash(mv /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/omrse.owl /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/ontologies/obo/)",
-      "WebFetch(domain:obofoundry.org)"
+      "WebFetch(domain:obofoundry.org)",
+      "Bash(grep -E \"\\\\.py$\")",
+      "Bash(ls -la /Users/hnunes/workspace/hjrnunes/onto-red-team/runs/gen*/*/assessment.md)",
+      "Bash(grep -h '\"role_distribution\"' runs/gen6/swb-*/swb-enriched-evaluation.json runs/gen5/swb-*/swb-enriched-evaluation.json)",
+      "Bash(python3 -m json.tool)",
+      "Bash(python3 -c \"import json, sys; data = json.load\\(sys.stdin\\); print\\(json.dumps\\({k: type\\(v\\).__name__ for k, v in data.items\\(\\)}, indent=2\\)\\)\")",
+      "Bash(python3 -c \"import json, sys; [print\\('Found sampled_axes' if 'sampled_axes' in json.loads\\(line\\) else 'No sampled_axes'\\) for line in sys.stdin]\")",
+      "Bash(python3)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:dl.acm.org)",
+      "WebFetch(domain:www.semanticscholar.org)",
+      "WebFetch(domain:harshp.com)",
+      "WebFetch(domain:oecd.ai)",
+      "WebFetch(domain:zenodo.org)",
+      "WebFetch(domain:w3c.github.io)",
+      "WebFetch(domain:w3id.org)",
+      "Read(//Users/hnunes/workspace/**)",
+      "Read(//Users/hjrnunes/workspace/**)",
+      "WebFetch(domain:www.w3.org)"
     ]
   }
 }
