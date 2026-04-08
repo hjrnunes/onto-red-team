@@ -2,7 +2,7 @@
 name = "redteam"
 version = "0.1.0"
 description = "Generate adversarial prompts from refiner emit datasets via sdg_hub"
-requires-python = ">=3.11"
+requires-python = ">=3.11,<3.14"
 dependencies = [
     "sdg_hub",
     "pandas>=2.0",

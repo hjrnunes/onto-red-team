@@ -75,6 +75,12 @@ def main():
         help="Max concurrent LLM requests (default: 10)",
     )
     parser.add_argument(
+        "--timeout",
+        type=int,
+        default=600,
+        help="LLM request timeout in seconds (default: 600)",
+    )
+    parser.add_argument(
         "--output", "-o",
         type=Path,
         default=None,
@@ -106,6 +112,9 @@ def main():
         model_kwargs["api_base"] = args.api_base
     if args.api_key:
         model_kwargs["api_key"] = args.api_key
+
+    import litellm
+    litellm.request_timeout = args.timeout
 
     flow.set_model_config(**model_kwargs)
     print(f"Model configured: {args.model}")

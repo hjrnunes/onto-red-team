@@ -2,7 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 8.3 — Multi-Taxonomy SSSOM Coverage (current)
+## Gen 8.4 (current)
+
+### Fixed
+
+- **Garbled role prefix in generation prompts** — Since g8.1 removed the role system, every scenario
+  line in the emit stage produced `- : a {label}` instead of `- {label}`. The empty `roles` list
+  generated a dangling colon prefix on every generation prompt across the entire battery. Now omits
+  the role prefix when `sa.roles` is empty.
+
+- **CCO Process Prohibition excluded from candidate pools** — CCO Process Prohibition (`ont00000553`)
+  and Process Requirement (`ont00001223`) are normative meta-concepts that describe "the act of
+  prohibiting/requiring something" rather than substantive risk dimensions. They appeared as axes in
+  11 profiles across RDaSH and DHS-Gov g8.3 runs. Added to `_is_excluded_uri` via `_CCO_NORMATIVE_URIS`.
+
+### Added
+
+- **Dedup saturation warnings** — Evaluation summary now warns when any risk reaches ≥70% dedup
+  saturation (combinatorial space near-exhaustion), showing the risk ID, saturation percentage, and
+  samples/space ratio.
+
+- **Combined report contextual help** — Every section, metric, and badge in the combined HTML report
+  now has tooltip explanations accessible on hover. Each tab (Evaluation, Explorer, Domain Context,
+  Taxonomy, Policy) has a collapsible "Reading guide" that explains the tab's purpose, terminology,
+  and how to interpret the data. Judge evaluation dimensions (subtlety, plausibility, domain grounding,
+  policy relevance) have individual tooltips explaining the 1-5 scale. Intended for reviewers who are
+  not familiar with the pipeline internals.
+
+## Gen 8.3 — Multi-Taxonomy SSSOM Coverage
 
 ### Changed
 
@@ -46,16 +73,6 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
-- **Garbled role prefix in generation prompts** — Since g8.1 removed the role system, every scenario
-  line in the emit stage produced `- : a {label}` instead of `- {label}`. The empty `roles` list
-  generated a dangling colon prefix on every generation prompt across the entire battery. Now omits
-  the role prefix when `sa.roles` is empty.
-
-- **CCO Process Prohibition excluded from candidate pools** — CCO Process Prohibition (`ont00000553`)
-  and Process Requirement (`ont00001223`) are normative meta-concepts that describe "the act of
-  prohibiting/requiring something" rather than substantive risk dimensions. They appeared as axes in
-  11 profiles across RDaSH and DHS-Gov g8.3 runs. Added to `_is_excluded_uri` via `_CCO_NORMATIVE_URIS`.
-
 - **Slash characters in risk IDs causing debug file crash** — AI Risk Taxonomy risk IDs containing
   `/` (e.g., `ai-risk-taxonomy-phishing/catfishing`) caused `FileNotFoundError` in debug file
   writing. Slug generation now replaces `/` with `-`.
@@ -63,12 +80,6 @@ All notable changes to this project will be documented in this file.
 - **Contextualize debug.md rendering** — `_render_contextualize_response` expected the old
   `axes[].enumerations[]` response format. Updated to handle the current `variations[].{instance,
   relevance}` format with legacy fallback.
-
-### Added
-
-- **Dedup saturation warnings** — Evaluation summary now warns when any risk reaches ≥70% dedup
-  saturation (combinatorial space near-exhaustion), showing the risk ID, saturation percentage, and
-  samples/space ratio.
 
 ## Gen 8.2 — Policy Context Injection
 
