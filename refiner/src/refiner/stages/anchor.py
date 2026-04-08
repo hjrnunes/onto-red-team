@@ -20,6 +20,14 @@ logger = logging.getLogger(__name__)
 # (they produce vague, jargon-laden scenarios like "generically dependent continuant").
 _BFO_URI_PREFIX = "http://purl.obolibrary.org/obo/BFO_"
 
+# CCO normative meta-concepts — describe the process of prohibiting/requiring
+# something, not substantive risk dimensions.  When selected as axes they produce
+# prompts about "the act of prohibiting" rather than domain-specific scenarios.
+_CCO_NORMATIVE_URIS: set[str] = {
+    "https://www.commoncoreontologies.org/ont00000553",  # Process Prohibition
+    "https://www.commoncoreontologies.org/ont00001223",  # Process Requirement
+}
+
 # LKIF normative deontic-status classes describe permissibility categories
 # (allowed/disallowed/obliged), not domain concepts that can ground adversarial
 # scenarios. When sampled, they leak raw taxonomy labels into prompts.
@@ -49,6 +57,8 @@ def _is_excluded_uri(uri: str, generic_safety_uris: set[str]) -> bool:
     classes (always), and generic safety URIs (when set).
     """
     if uri.startswith(_BFO_URI_PREFIX):
+        return True
+    if uri in _CCO_NORMATIVE_URIS:
         return True
     if uri in _LKIF_NORMATIVE_URIS:
         return True
