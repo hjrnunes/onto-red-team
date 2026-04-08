@@ -147,6 +147,25 @@ def create_tool_handlers(
             })
         return results
 
+    def get_risk_group(risk_id: str) -> dict | None:
+        """Return the RiskGroup containing the given risk."""
+        risk = risks_by_id.get(risk_id) or risks_by_tag.get(risk_id)
+        if risk is None:
+            return None
+        group_id = getattr(risk, "isPartOf", "")
+        if not group_id:
+            return None
+        for g in groups:
+            if not _is_risk_group(g):
+                continue
+            if g.id == group_id:
+                return {
+                    "id": g.id,
+                    "name": g.name,
+                    "taxonomy": getattr(g, "isDefinedByTaxonomy", ""),
+                }
+        return None
+
     def explore_risk(risk_id: str) -> dict | None:
         details = get_risk_details(risk_id)
         if details is None:
@@ -200,6 +219,7 @@ def create_tool_handlers(
         "get_related_actions": get_related_actions,
         "list_taxonomies": list_taxonomies,
         "list_risk_groups": list_risk_groups,
+        "get_risk_group": get_risk_group,
         "explore_risk": explore_risk,
         "gap_analysis": gap_analysis,
     }

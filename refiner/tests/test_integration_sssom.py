@@ -1,0 +1,198 @@
+"""End-to-end integration test for the SSSOM-based pipeline."""
+import pytest
+from pathlib import Path
+from unittest.mock import MagicMock
+from refiner.ontology_seeds import SSSOMIndex
+
+
+@pytest.fixture
+def real_layer1():
+    path = Path(__file__).parent.parent / "data" / "risk-to-vocabulary.sssom.tsv"
+    if not path.exists():
+        pytest.skip("SSSOM seed files not found")
+    return SSSOMIndex.from_tsv(path)
+
+
+@pytest.fixture
+def real_layer2():
+    path = Path(__file__).parent.parent / "data" / "vocabulary-to-ontology.sssom.tsv"
+    if not path.exists():
+        pytest.skip("SSSOM seed files not found")
+    return SSSOMIndex.from_tsv(path, expand_objects=True)
+
+
+def test_real_sssom_files_load(real_layer1, real_layer2):
+    """Verify the actual SSSOM seed files parse correctly."""
+    assert len(real_layer1.mappings) > 0
+    assert len(real_layer2.mappings) > 0
+    # All layer1 subjects should be risk group IDs from known taxonomies
+    known_prefixes = (
+        "ibm-risk-atlas", "ai-risk-taxonomy", "credo-rg", "mit-ai-risk",
+        "ail-", "granite-guardian", "shieldgemma",
+    )
+    for m in real_layer1.mappings:
+        assert any(m.subject_id.startswith(p) for p in known_prefixes), (
+            f"Unknown layer1 subject prefix: {m.subject_id}"
+        )
+    # All layer2 subjects should be AIRO/DPV concepts or direct fallbacks
+    for m in real_layer2.mappings:
+        prefix = m.subject_id.split(":")[0]
+        assert prefix in (
+            "pd", "eu-aiact", "eu-rights", "risk", "justifications",
+            "sector-finance", "sector-health", "sector-law",
+        ) or m.subject_id.startswith("ibm-risk-atlas")
+
+
+def test_privacy_risk_resolves_seeds(real_layer1, real_layer2):
+    """Privacy RiskGroup should resolve to biometric/person ontology branches."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "ibm-risk-atlas-privacy"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    vocab_ctx, onto_seeds = resolve_seeds(
+        risk_id="atlas-test-privacy-risk",
+        risk_group_id="ibm-risk-atlas-privacy",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    # Should have stakeholder and data sensitivity context
+    assert len(vocab_ctx["stakeholders"]) > 0
+    assert len(vocab_ctx["data_sensitivity"]) > 0
+    # Should have ontology seeds
+    onto_uris = {s["object_id"] for s in onto_seeds}
+    assert len(onto_uris) > 0
+
+
+def test_fairness_risk_resolves_to_hancestro_gsso(real_layer1, real_layer2):
+    """Fairness should route through pd:EthnicOrigin/Gender to HANCESTRO/GSSO."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "ibm-risk-atlas-fairness"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    _, onto_seeds = resolve_seeds(
+        risk_id="atlas-test-fairness-risk",
+        risk_group_id="ibm-risk-atlas-fairness",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    onto_uris = {s["object_id"] for s in onto_seeds}
+    assert any("HANCESTRO" in u for u in onto_uris)
+    assert any("GSSO" in u for u in onto_uris)
+
+
+def test_robustness_has_direct_fallback_seeds(real_layer1, real_layer2):
+    """Robustness should have direct fallback seeds (ibm-risk-atlas-robustness-* in layer 2)."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "ibm-risk-atlas-robustness"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    vocab_ctx, onto_seeds = resolve_seeds(
+        risk_id="atlas-test-robustness-risk",
+        risk_group_id="ibm-risk-atlas-robustness",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    # Should have D3FEND/CSO ontology seeds via Threat/Vulnerability
+    onto_uris = {s["object_id"] for s in onto_seeds}
+    assert len(onto_uris) > 0
+    # Should have risk concepts in vocabulary
+    assert len(vocab_ctx["risk_concepts"]) > 0
+
+
+def test_effective_confidence_within_bounds(real_layer1, real_layer2):
+    """All effective confidences should be between 0 and 1."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "ibm-risk-atlas-privacy"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    _, onto_seeds = resolve_seeds(
+        risk_id="atlas-test",
+        risk_group_id="ibm-risk-atlas-privacy",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    for seed in onto_seeds:
+        assert 0 < seed["effective_confidence"] <= 1.0, f"Bad confidence: {seed}"
+
+
+def test_ai_risk_taxonomy_privacy_resolves_seeds(real_layer1, real_layer2):
+    """AI Risk Taxonomy privacy group should resolve to ontology seeds directly."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "ai-risk-taxonomy-privacy-violations/sensitive-data-combinations"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    vocab_ctx, onto_seeds = resolve_seeds(
+        risk_id="ai-risk-taxonomy-unauthorized-disclosure---health-data",
+        risk_group_id="ai-risk-taxonomy-privacy-violations/sensitive-data-combinations",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    # Should have seeds from group-level mappings
+    assert len(onto_seeds) > 0
+    assert len(vocab_ctx["stakeholders"]) > 0
+    assert len(vocab_ctx["data_sensitivity"]) > 0
+
+
+def test_credo_malicious_use_resolves_seeds(real_layer1, real_layer2):
+    """Credo malicious use group should resolve to threat/criminal ontology seeds."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "credo-rg-malicious-use"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    vocab_ctx, onto_seeds = resolve_seeds(
+        risk_id="credo-risk-026",
+        risk_group_id="credo-rg-malicious-use",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    onto_uris = {s["object_id"] for s in onto_seeds}
+    assert len(onto_uris) > 0
+    # Should include CSO threat classes
+    assert any("cso" in u.lower() or "FraudAndDeception" in u or "DangerousInformation" in u for u in onto_uris)
+
+
+def test_mit_domain_resolves_seeds(real_layer1, real_layer2):
+    """MIT AI Risk domain 7 (system safety) should resolve seeds."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "mit-ai-risk-domain-7"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    _, onto_seeds = resolve_seeds(
+        risk_id="mit-ai-risk-subdomain-7.3",
+        risk_group_id="mit-ai-risk-domain-7",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    assert len(onto_seeds) > 0
+
+
+def test_misuse_categorizes_deepfake_as_prohibited(real_layer1, real_layer2):
+    """DeepFake from Misuse risk should be categorized as prohibited practice."""
+    from refiner.ontology_seeds import resolve_seeds
+    mock_nexus = {
+        "get_risk_details": MagicMock(return_value={"group": "ibm-risk-atlas-misuse"}),
+        "get_related_risks": MagicMock(return_value=[]),
+    }
+    vocab_ctx, _ = resolve_seeds(
+        risk_id="atlas-test-misuse-risk",
+        risk_group_id="ibm-risk-atlas-misuse",
+        nexus_handlers=mock_nexus,
+        layer1_mappings=real_layer1,
+        layer2_mappings=real_layer2,
+    )
+    prohibited = [c["concept_id"] for c in vocab_ctx.get("prohibited_practices", [])]
+    assert "eu-aiact:DeepFake" in prohibited

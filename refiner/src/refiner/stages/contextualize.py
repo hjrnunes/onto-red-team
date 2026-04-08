@@ -5,6 +5,7 @@ import instructor
 from pydantic import BaseModel
 from refiner.llm import LLMConfig
 from refiner.models import (
+    Policy,
     RiskVariationAxes,
     DomainContextProfile,
     DomainContextAxis,
@@ -12,40 +13,63 @@ from refiner.models import (
     RunReport,
 )
 from refiner import debug
-from refiner.stages.identify_domains import derive_source_ontology
 
 logger = logging.getLogger(__name__)
 
 SYSTEM_PROMPT = """\
-You are generating domain context profiles for AI risk variation axes.
+You are generating concrete domain-specific variations for an AI risk axis.
 
-For each variation axis, you are given candidate classes that form the enumeration space — the specific values that can be substituted when generating diverse prompts.
+Given:
+- A risk description and concern
+- A policy with boundaries and controls
+- An ontology class (the variation axis) with BFO category and vocabulary context
+- Optional subclass examples from the ontology
 
-Candidates may be subclasses (specializations) or siblings (parallel concepts at the same level). Both are valid enumeration values.
+Generate 5-8 specific, diverse instances that represent concrete ways
+this axis manifests in the real world, relevant to the risk and policy.
 
-Filter out irrelevant candidates and annotate each remaining one with:
-- relevance: "high" (directly relevant), "medium" (potentially relevant), "low" (edge case)
+Each instance should be a short phrase (3-10 words) that could substitute
+into a prompt template. Prefer specific, concrete instances over abstract ones.
 
-Return one entry per axis using the axis ID (e.g. A1) as a key, with the filtered enumeration IDs (e.g. E1, E2)."""
+Annotate each with relevance: "high" (directly tests policy), "medium"
+(indirectly relevant), "low" (edge case worth exploring)."""
 
 
-class _EnumResponse(BaseModel):
-    class_id: str
-    class_label: str
+class _Variation(BaseModel):
+    instance: str
     relevance: Literal["high", "medium", "low"]
 
 
-class _AxisResponse(BaseModel):
-    axis_id: str
-    enumerations: list[_EnumResponse]
-
-
 class _ContextResponse(BaseModel):
-    axes: list[_AxisResponse]
+    variations: list[_Variation]
 
 
-def _relevance_rank(relevance: str) -> int:
-    return {"high": 3, "medium": 2, "low": 1}.get(relevance, 0)
+def _format_vocabulary_context(vocab_ctx: dict) -> str:
+    """Format vocabulary context dict into prompt block."""
+    if not vocab_ctx:
+        return ""
+    lines = ["Vocabulary context:"]
+    for key, label in [
+        ("stakeholders", "Stakeholders"),
+        ("data_sensitivity", "Data sensitivity"),
+        ("rights", "Rights at stake"),
+        ("sector_purposes", "Sector"),
+    ]:
+        items = vocab_ctx.get(key, [])
+        if items:
+            labels = ", ".join(c["label"] for c in items)
+            lines.append(f"  {label}: {labels}")
+    return "\n".join(lines)
+
+
+def _find_policy(policies: list[Policy] | None, policy_concept: str) -> Policy | None:
+    """Find the matching policy by concept name."""
+    if not policies:
+        return None
+    for p in policies:
+        if p.policy_concept == policy_concept:
+            return p
+    return None
 
 
 def contextualize(
@@ -56,6 +80,8 @@ def contextualize(
     selected_domains: list[str] | None = None,
     risk_details: dict[str, dict] | None = None,
     report: RunReport | None = None,
+    policies: list[Policy] | None = None,
+    vocabulary_contexts: dict[str, dict] | None = None,
 ) -> list[DomainContextProfile]:
     if not variation_axes:
         return []
@@ -84,212 +110,119 @@ def contextualize(
             ))
             continue
 
-        # Build lookup of input axes by URI for stitching back metadata
-        input_axes_by_uri = {axis.cco_class_uri: axis for axis in rva.axes}
-        axis_provenance: dict[str, str] = {}  # axis URI -> "subclass" or "sibling"
-
-        # Gather candidates for each axis — subclasses first, siblings as fallback
-        axis_context = []
-        axis_id_to_uri = {}
-        enum_id_to_uri = {}
-        enum_counter = 0
-
-        for axis_idx, axis in enumerate(rva.axes, 1):
-            axis_id = f"A{axis_idx}"
-            axis_id_to_uri[axis_id] = axis.cco_class_uri
-
-            subclasses = onto_handlers["get_subclasses"](axis.cco_class_uri, depth=1)
-            if subclasses:
-                candidates = subclasses[:10]
-                source = "subclasses"
-                axis_provenance[axis.cco_class_uri] = "subclass"
-            else:
-                siblings = onto_handlers["get_siblings"](axis.cco_class_uri)
-                candidates = [s for s in siblings if s.get("uri") != axis.cco_class_uri][:10]
-                source = "siblings"
-                axis_provenance[axis.cco_class_uri] = "sibling"
-                if report:
-                    report.events.append({
-                        "stage": "contextualize", "event": "sibling_fallback",
-                        "axis_uri": axis.cco_class_uri, "sibling_count": len(candidates),
-                    })
-
-            candidate_lines = []
-            for c in candidates:
-                enum_counter += 1
-                enum_id = f"E{enum_counter}"
-                c_uri = c.get("uri", "")
-                enum_id_to_uri[enum_id] = c_uri
-                defn = onto_handlers["get_class_definition"](c_uri)
-                definition = defn.get("definition", "") if defn else ""
-                label = c.get("label", "")
-                if definition:
-                    candidate_lines.append(f"- {enum_id}: {label} — {definition}")
-                else:
-                    candidate_lines.append(f"- {enum_id}: {label}")
-
-            # Add restriction context if available
-            restriction_lines = []
-            if onto_handlers.get("get_restrictions"):
-                restrictions = onto_handlers["get_restrictions"](axis.cco_class_uri)
-                for r in restrictions[:5]:
-                    prop_label = r.get("property", "").split("#")[-1].split("/")[-1]
-                    filler_label = r.get("filler", "").split("#")[-1].split("/")[-1]
-                    restriction_lines.append(f"- {r['type']}: {prop_label} → {filler_label}")
-                if restriction_lines and report:
-                    report.events.append({
-                        "stage": "contextualize", "event": "restriction_context_added",
-                        "axis_uri": axis.cco_class_uri,
-                        "restriction_count": len(restrictions),
-                    })
-
-            constraint_block = ""
-            if restriction_lines:
-                constraint_block = "\nConstraints:\n" + "\n".join(restriction_lines)
-
-            axis_context.append(
-                f"### Axis {axis_id}: {axis.cco_class_label}\n"
-                f"Roles: {', '.join(axis.roles)}\n"
-                f"Candidates ({source}):\n"
-                + ("\n".join(candidate_lines) if candidate_lines else "(none)")
-                + constraint_block
-            )
-
         details = risk_details.get(rva.risk_id, {}) if risk_details else {}
         description = details.get("description", "")
         concern = details.get("concern", "")
 
-        user_content = (
-            f"Risk: {rva.risk_name}\n"
-            f"Description: {description}\n"
-            f"Concern: {concern}\n"
-            f"Policy: {rva.policy_concept}\n\n"
-            + "\n\n".join(axis_context)
-        )
+        policy = _find_policy(policies, rva.policy_concept)
+        vocab_ctx = (vocabulary_contexts or {}).get(rva.risk_id, {})
 
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
-        ]
-        result = client.chat.completions.create(
-            model=config.model,
-            response_model=_ContextResponse,
-            messages=messages,
-            temperature=config.temperature,
-            max_retries=config.max_retries,
-            max_tokens=config.max_tokens,
-        )
-        debug.log_call("contextualize", messages, result, context={
-            "risk_id": rva.risk_id,
-            "risk_name": rva.risk_name,
-            "policy_concept": rva.policy_concept,
-            "num_axes": len(rva.axes),
-        })
+        populated_axes = []
+        for axis in rva.axes:
+            # Get optional subclass examples as reference
+            subclass_examples = []
+            subclasses = onto_handlers["get_subclasses"](axis.cco_class_uri, depth=1)
+            for sc in subclasses[:5]:
+                defn = onto_handlers["get_class_definition"](sc.get("uri", ""))
+                if defn:
+                    subclass_examples.append(defn.get("label", sc.get("label", "")))
 
-        # Post-processing: validate enumeration URIs, derive source_ontology,
-        # stitch back axis metadata from input
-        validated_axes = []
-        for resp_axis in result.axes:
-            axis_uri = axis_id_to_uri.get(resp_axis.axis_id)
-            if axis_uri is None:
-                logger.warning("LLM returned unknown axis ID: %s", resp_axis.axis_id)
-                continue
-            input_axis = input_axes_by_uri.get(axis_uri)
-            if input_axis is None:
-                logger.warning("LLM returned axis ID %s mapping to unknown URI: %s", resp_axis.axis_id, axis_uri)
-                continue
+            # Build prompt
+            vocab_block = _format_vocabulary_context(vocab_ctx)
+            bfo_tag = f" [{axis.bfo_category}]" if axis.bfo_category else ""
+            vocab_tag = ""
+            if axis.vocabulary_concept:
+                vocab_tag = f" (via {axis.vocabulary_label or axis.vocabulary_concept})"
 
-            valid_enums = []
-            for enum in resp_axis.enumerations:
-                enum_uri = enum_id_to_uri.get(enum.class_id)
-                if enum_uri is None:
-                    logger.warning("LLM returned unknown enum ID: %s", enum.class_id)
-                    continue
-                if enum_uri == input_axis.cco_class_uri:
-                    if report:
-                        report.events.append({
-                            "stage": "contextualize", "event": "self_reference_filtered",
-                            "axis_uri": input_axis.cco_class_uri,
-                        })
-                    continue  # skip self-reference
-                # Domain filtering: check enumeration URI against selected domains
-                if selected_domains:
-                    enum_domain = derive_source_ontology(enum_uri)
-                    if enum_domain not in selected_domains:
-                        logger.info(
-                            "Filtering enumeration %s (domain %s) — not in selected domains %s",
-                            enum_uri, enum_domain, selected_domains,
-                        )
-                        if report:
-                            report.events.append({
-                                "stage": "contextualize", "event": "enumeration_domain_filtered",
-                                "axis_uri": input_axis.cco_class_uri,
-                                "enum_uri": enum_uri,
-                                "enum_domain": enum_domain,
-                                "selected_domains": selected_domains,
-                            })
-                        continue
-                check = onto_handlers["get_class_definition"](enum_uri)
-                if check is not None:
-                    valid_enums.append(AxisEnumeration(
-                        class_uri=enum_uri,
-                        class_label=enum.class_label,
-                        source_ontology=derive_source_ontology(enum_uri),
-                        relevance=enum.relevance,
-                        provenance=axis_provenance.get(input_axis.cco_class_uri, "subclass"),
-                    ))
-                else:
-                    logger.warning("Filtering invalid enumeration URI for %s: %s", enum.class_id, enum_uri)
+            axis_block = (
+                f"Axis: {axis.cco_class_label}{bfo_tag}{vocab_tag}\n"
+                f"Rationale: {axis.rationale}\n"
+            )
+            if subclass_examples:
+                axis_block += f"Ontology examples: {', '.join(subclass_examples)}\n"
 
-            # Disjointness filter
-            if onto_handlers.get("get_disjoint_classes"):
-                filtered_by_disjoint = []
-                removed_uris: set[str] = set()
-                for enum in valid_enums:
-                    if enum.class_uri in removed_uris:
-                        continue
-                    disjoints = set(onto_handlers["get_disjoint_classes"](enum.class_uri))
-                    conflicting = [e for e in valid_enums if e.class_uri in disjoints and e.class_uri not in removed_uris]
-                    for conflict in conflicting:
-                        if _relevance_rank(enum.relevance) >= _relevance_rank(conflict.relevance):
-                            removed_uris.add(conflict.class_uri)
-                        else:
-                            removed_uris.add(enum.class_uri)
-                            break
-                    if enum.class_uri not in removed_uris:
-                        filtered_by_disjoint.append(enum)
-                if removed_uris and report:
-                    report.events.append({
-                        "stage": "contextualize", "event": "disjoint_filtered",
-                        "risk_id": rva.risk_id,
-                        "axis_uri": input_axis.cco_class_uri,
-                        "kept": [e.class_uri for e in filtered_by_disjoint],
-                        "filtered": list(removed_uris),
-                    })
-                valid_enums = filtered_by_disjoint
+            policy_block = ""
+            if policy:
+                policy_block = f"\nPolicy: {policy.policy_concept}\n"
+                policy_block += f"Definition: {policy.concept_definition}\n"
+                if policy.boundary_examples:
+                    boundary = policy.boundary_examples[0]
+                    policy_block += f"Prohibited: {boundary.prohibited}\n"
+                    policy_block += f"Acceptable: {boundary.acceptable}\n"
+                if policy.acceptable_uses:
+                    policy_block += f"Acceptable uses: {', '.join(policy.acceptable_uses[:3])}\n"
+                if policy.risk_controls:
+                    policy_block += f"Controls: {', '.join(policy.risk_controls[:3])}\n"
 
-            validated_axes.append(DomainContextAxis(
-                cco_class_uri=input_axis.cco_class_uri,
-                cco_class_label=input_axis.cco_class_label,
-                roles=input_axis.roles,
-                enumerations=valid_enums,
-            ))
+            user_content = (
+                f"Risk: {rva.risk_name}\n"
+                f"Description: {description}\n"
+                + (f"Concern: {concern}\n" if concern else "")
+                + "\n"
+                + axis_block
+                + (f"\n{vocab_block}\n" if vocab_block else "")
+                + policy_block
+            )
 
-        # Emit event for empty enumerations
-        for va in validated_axes:
-            if not va.enumerations and report:
+            messages = [
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": user_content},
+            ]
+            result = client.chat.completions.create(
+                model=config.model,
+                response_model=_ContextResponse,
+                messages=messages,
+                temperature=config.temperature,
+                max_retries=config.max_retries,
+                max_tokens=config.max_tokens,
+            )
+            debug.log_call("contextualize", messages, result, context={
+                "risk_id": rva.risk_id,
+                "axis_uri": axis.cco_class_uri,
+                "axis_label": axis.cco_class_label,
+            })
+
+            if report:
                 report.events.append({
-                    "stage": "contextualize", "event": "empty_enumerations",
-                    "risk_id": rva.risk_id, "axis_uri": va.cco_class_uri,
+                    "stage": "contextualize", "event": "variations_generated",
+                    "risk_id": rva.risk_id,
+                    "axis_uri": axis.cco_class_uri,
+                    "count": len(result.variations),
                 })
 
-        context_cache[rva.risk_id] = validated_axes
+            enumerations = []
+            for var in result.variations:
+                enumerations.append(AxisEnumeration(
+                    class_uri=f"generated:{var.instance.lower().replace(' ', '_')}",
+                    class_label=var.instance,
+                    source_ontology="generated",
+                    relevance=var.relevance,
+                    provenance="generated",
+                ))
+
+            if enumerations:
+                populated_axes.append(DomainContextAxis(
+                    cco_class_uri=axis.cco_class_uri,
+                    cco_class_label=axis.cco_class_label,
+                    bfo_category=axis.bfo_category,
+                    vocabulary_context=vocab_ctx,
+                    enumerations=enumerations,
+                    roles=[],
+                ))
+            elif report:
+                report.events.append({
+                    "stage": "contextualize", "event": "empty_variations",
+                    "risk_id": rva.risk_id,
+                    "axis_uri": axis.cco_class_uri,
+                })
+
+        context_cache[rva.risk_id] = populated_axes
 
         results.append(DomainContextProfile(
             risk_id=rva.risk_id,
             risk_name=rva.risk_name,
             policy_concept=rva.policy_concept,
-            axes=validated_axes,
+            axes=populated_axes,
         ))
 
     return results

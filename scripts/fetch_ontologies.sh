@@ -40,6 +40,9 @@ clone_or_pull fibo \
 clone_or_pull lkif-core \
     https://github.com/RinkeHoekstra/lkif-core.git
 
+clone_or_pull ai-atlas-nexus \
+    https://github.com/IBM/ai-atlas-nexus.git main
+
 # ---------------------------------------------------------------------------
 # OMG Commons (22 modules)
 # https://www.omg.org/spec/Commons/

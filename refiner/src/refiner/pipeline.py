@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import instructor
 
@@ -17,7 +17,7 @@ from refiner.models import (
 from refiner.stages.classify import classify
 from refiner.stages.identify_domains import identify_domains
 from refiner.stages.map_risks import map_risks
-from refiner.stages.anchor import anchor, SearchMergeStrategy, build_generic_safety_uris
+from refiner.stages.anchor import anchor, build_generic_safety_uris
 from refiner.stages.identify_domains import ALWAYS_INCLUDED
 from refiner.stages.contextualize import contextualize
 
@@ -36,6 +36,7 @@ class PipelineState:
     risk_actions: dict[str, list[str]] | None = None
     variation_axes: list[RiskVariationAxes] | None = None
     domain_context: list[DomainContextProfile] | None = None
+    vocabulary_contexts: dict[str, dict] = field(default_factory=dict)
     report: RunReport | None = None
     doc_context: PolicyDocument | None = None
 
@@ -48,7 +49,8 @@ def run_pipeline(
     onto_handlers: dict,
     until: str | None = None,
     report: RunReport | None = None,
-    merge_strategy: SearchMergeStrategy | None = None,
+    layer1_mappings=None,
+    layer2_mappings=None,
 ) -> PipelineState:
     state = PipelineState(policies=policies, report=report)
 
@@ -86,14 +88,17 @@ def run_pipeline(
     if until == "map_risks":
         return state
 
-    state.variation_axes = anchor(
+    state.variation_axes, state.vocabulary_contexts = anchor(
         state.risk_mappings, state.risk_details, client, config, onto_handlers,
         selected_domains=state.selected_domains,
         risk_actions=state.risk_actions,
         related_risks=state.related_risks,
-        merge_strategy=merge_strategy,
+        nexus_handlers=risk_handlers,
+        layer1_mappings=layer1_mappings,
+        layer2_mappings=layer2_mappings,
         report=report,
         generic_safety_uris=generic_safety_uris,
+        policies=policies,
     )
     if report:
         report.stages_completed.append("anchor")
@@ -105,6 +110,8 @@ def run_pipeline(
         selected_domains=state.selected_domains,
         risk_details=state.risk_details,
         report=report,
+        policies=policies,
+        vocabulary_contexts=state.vocabulary_contexts,
     )
     if report:
         report.stages_completed.append("contextualize")

@@ -92,82 +92,129 @@ The `confidence` field (0.0-1.0) weights candidates during tiered merge:
 
 Mappings exist at two levels:
 
-1. **RiskGroup level** — `subject_id` is an IBM Risk Atlas RiskGroup (e.g., `ibm-risk-atlas-privacy`). Inherited by all risks in the group. This is the primary mapping level (~16 groups, ~40-60 SSSOM rows).
-2. **Risk level** — `subject_id` is a specific risk (e.g., `ibm-risk-atlas:atlas-exposing-personal-info`). Overrides or supplements group-level seeds for specific risks that need finer-grained ontology targeting.
+1. **RiskGroup level** — `subject_id` is a RiskGroup from any nexus taxonomy (e.g.,
+   `ibm-risk-atlas-privacy`, `ai-risk-taxonomy-fraud`, `credo-rg-malicious-use`). Inherited by all
+   risks in the group. This is the primary mapping level (~91 groups, ~257 SSSOM rows across 7
+   taxonomies).
+2. **Risk level** — `subject_id` is a specific risk (e.g., `atlas-exposing-personal-info`). Overrides
+   or supplements group-level seeds for specific risks that need finer-grained ontology targeting.
 
-Risk-level mappings supplement RiskGroup-level ones. When both exist for the same ontology branch, the risk-level confidence takes precedence.
+Risk-level mappings supplement RiskGroup-level ones. When both exist for the same ontology branch,
+the risk-level confidence takes precedence.
 
-### IBM Risk Atlas as Canonical Hub
+### Multi-Taxonomy Direct Mapping (replaces IBM hub-and-spoke)
 
-IBM Risk Atlas RiskGroups serve as the canonical subjects in the SSSOM file. This eliminates the need for a normalization layer between taxonomy-specific RiskGroup IDs and cross-cutting concept tags.
+> **Design change (gen 8.3):** The original design used IBM Risk Atlas RiskGroups as a canonical hub,
+> with non-IBM risks resolving through nexus cross-taxonomy mappings to IBM equivalents. This was
+> abandoned after g8.2 analysis revealed three structural failures:
+>
+> 1. **AI Risk Taxonomy entries have zero nexus cross-mappings** — 314 entries exist as isolated nodes
+>    with no `exact_mappings`, `close_mappings`, or `related_mappings` to any taxonomy. Fixing this
+>    nexus-side would require 300+ new mapping rows.
+> 2. **Some non-IBM risks cross-map to other non-IBM taxonomies but not IBM** — e.g., Credo risks
+>    mapped to Granite Guardian and MIT but not to `atlas-*` entries. The fallback filtered for
+>    IBM-only (`rel_id.startswith("atlas-")`), so these non-IBM paths were ignored.
+> 3. **Fallback took first IBM match and broke** — if the first `atlas-*` hit happened to be in an
+>    unmapped IBM group (e.g., `ibm-risk-atlas-data-laws`), the resolution failed even though later
+>    matches would have succeeded.
+>
+> These three modes accounted for all 32 zero-seed risks in g8.2 (25 + 4 + 1, plus 2 IBM risks in
+> unmapped groups that the fallback never triggers for).
 
-**Why IBM Risk Atlas:** It has 16 well-structured RiskGroups, the most comprehensive cross-taxonomy coverage, and already serves as the mapping hub in the nexus (all other taxonomies have cross-mappings to IBM risks via existing SSSOM files).
+Layer 1 now maps RiskGroups directly from all 7 risk taxonomies in the nexus. Thematically similar
+groups across taxonomies share the same AIRO/DPV vocabulary concepts:
 
-**Resolution chain for non-IBM risks:**
+| Theme | Example groups | Shared vocabulary |
+|-------|---------------|-------------------|
+| Privacy & data | ibm-risk-atlas-privacy, ai-risk-taxonomy-privacy-violations/*, credo-rg-privacy | pd:Biometric, pd:MedicalHealth, eu-rights:T2-DataProtection |
+| Fraud & crime | ibm-risk-atlas-misuse, ai-risk-taxonomy-fraud, credo-rg-malicious-use, mit-ai-risk-domain-4 | risk:Threat, sector-law:CriminalLawEnforcement |
+| Discrimination | ibm-risk-atlas-fairness, ai-risk-taxonomy-discrimination/*, mit-ai-risk-domain-1 | pd:EthnicOrigin, pd:Gender, eu-rights:T3-Equality |
+| System safety | ibm-risk-atlas-robustness, ai-risk-taxonomy-integrity, credo-rg-security, mit-ai-risk-domain-7 | risk:Vulnerability, risk:Threat, eu-aiact:AIProvider |
+
+The cross-taxonomy fallback via `get_related_risks` is retained as a safety net but is no longer the
+primary resolution path for non-IBM risks.
+
+**Coverage by taxonomy:** IBM Risk Atlas (16 groups), AI Risk Taxonomy (44), Credo (13), MIT AI Risk
+Repository (10), AILuminate (3), Granite Guardian (4), ShieldGemma (1).
+
+### Two-Layer Architecture
+
+The actual implementation splits the original single-layer risk→ontology mapping into two layers
+via an intermediate AIRO/DPV vocabulary:
 
 ```
-Matched risk (any taxonomy, e.g., OWASP, NIST, Credo)
-  → existing nexus cross-mappings → IBM Risk Atlas risk
-    → isPartOf → IBM RiskGroup
-      → SSSOM seeds → ontology branches
+Layer 1: RiskGroup → AIRO/DPV vocabulary    (risk-to-vocabulary.sssom.tsv)
+Layer 2: AIRO/DPV → Domain ontology classes  (vocabulary-to-ontology.sssom.tsv)
 ```
 
-For example: `owasp-llm-2.0:llm022025-sensitive-information-disclosure` maps to `ibm-risk-atlas:atlas-exposing-personal-info` via existing cross-mappings, which belongs to `ibm-risk-atlas-privacy`, which has seeds pointing to `cso:PrivacyViolation`, `d3f:DataExfiltration`, etc.
+**Layer 1** maps risk groups to regulatory/AI vocabulary concepts (EU AI Act stakeholders, DPV
+personal data categories, DPV rights and risk concepts, sector-specific purposes). These provide
+both structured LLM context and act as keys into Layer 2.
 
-**Coverage:** AILuminate and Credo UCF are fully cross-mapped to IBM Risk Atlas. NIST covers ~81/99 IBM risks. OWASP covers ~32/99. Unmapped risks from other taxonomies fall back to constrained search (Section 3).
+**Layer 2** maps vocabulary concepts to domain ontology branch URIs for structural navigation
+(CCO Person, OMRSE Human Social Role, HANCESTRO Ancestry, CSO DangerousInformation, etc.).
 
-### Example Mappings
+This indirection means adding a new risk group to Layer 1 automatically inherits all existing
+ontology paths from Layer 2 — no need to manually specify ontology URIs for each new group.
+
+### Example Layer 1 Mappings (risk-to-vocabulary.sssom.tsv)
 
 ```tsv
-ibm-risk-atlas-privacy	Privacy	skos:broadMatch	cso:PrivacyViolation	Privacy Violation	semapv:ManualMappingCuration	0.95
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	d3f:DataExfiltration	Data Exfiltration	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	lkif:norm.owl#Right	Right	semapv:ManualMappingCuration	0.70
-ibm-risk-atlas-fairness	Fairness	skos:broadMatch	obo:GSSO_000000	Gender Sex and Sexual Orientation	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-fairness	Fairness	skos:broadMatch	obo:HANCESTRO_0001	Ancestry	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-fairness	Fairness	skos:broadMatch	obo:OMRSE_00000000	Social Entities	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness	skos:relatedMatch	d3f:OffensiveTechnique	Offensive Technique	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-misuse	Misuse	skos:broadMatch	cso:FraudAndDeception	Fraud and Deception	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-misuse	Misuse	skos:broadMatch	cso:Violence	Violence	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-value-alignment	Value Alignment	skos:broadMatch	cso:HateAndDiscrimination	Hate and Discrimination	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-intellectual-property	Intellectual Property	skos:broadMatch	cso:IntellectualProperty	Intellectual Property	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-legal-compliance	Legal Compliance	skos:broadMatch	lkif:norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	fibo:FBC/RegulatoryAgency	Regulatory Agency	semapv:ManualMappingCuration	0.75
-ibm-risk-atlas:atlas-spreading-toxicity	Spreading toxicity	skos:broadMatch	cso:HateAndDiscrimination	Hate and Discrimination	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas:atlas-copyright-infringement	Copyright infringement	skos:exactMatch	cso:IntellectualProperty	Intellectual Property	semapv:ManualMappingCuration	0.95
+# IBM Risk Atlas group
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:Biometric	Biometric	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
+# AI Risk Taxonomy group (shares vocabulary with IBM Privacy)
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:Biometric	Biometric	semapv:ManualMappingCuration	0.90
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.85
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
+# Credo group (fraud theme)
+credo-rg-malicious-use	Malicious Use	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
+credo-rg-malicious-use	Malicious Use	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.85
 ```
 
-### Migration Path
+### Example Layer 2 Mappings (vocabulary-to-ontology.sssom.tsv)
 
-1. **Phase 1 (refiner-side):** SSSOM TSV file in `refiner/data/risk-to-ontology.sssom.tsv`. Loaded at pipeline startup. Quick to iterate, no nexus changes needed.
-2. **Phase 2 (nexus-side):** Move to `ai-atlas-nexus/src/ai_atlas_nexus/data/mappings/risk-to-ontology.sssom.tsv`. Processed by existing `import_entity_mappings.py` pipeline. Exposed via nexus-mcp handlers.
+```tsv
+pd:Biometric	Biometric	skos:relatedMatch	cco:ont00001262	Person	semapv:ManualMappingCuration	0.80
+eu-rights:T2-DataProtection	Data Protection	skos:broadMatch	cso:PrivacyViolation	Privacy Violation	semapv:ManualMappingCuration	0.90
+risk:Threat	Threat	skos:broadMatch	cso:DangerousInformation	Dangerous Information	semapv:ManualMappingCuration	0.90
+risk:Threat	Threat	skos:broadMatch	cso:FraudAndDeception	Fraud and Deception	semapv:ManualMappingCuration	0.85
+```
 
 ### Seed Resolution Algorithm
 
 ```python
-def resolve_seeds(risk_id, risk_group_id, nexus_handlers, sssom_mappings):
-    """Resolve SSSOM seed mappings for a risk, with cross-taxonomy fallback."""
-    seeds = []
+def resolve_seeds(risk_id, risk_group_id, nexus_handlers, layer1_mappings, layer2_mappings):
+    """Two-layer SSSOM seed resolution with cross-taxonomy fallback."""
+    vocab_seeds = []
 
-    # 1. Direct risk-level seeds (highest priority)
-    seeds += sssom_mappings.get_by_subject(risk_id)
+    # 1. Direct risk-level vocabulary seeds
+    vocab_seeds += layer1_mappings.get_by_subject(risk_id)
 
-    # 2. RiskGroup-level seeds
+    # 2. RiskGroup-level vocabulary seeds
     if risk_group_id:
-        seeds += sssom_mappings.get_by_subject(risk_group_id)
+        vocab_seeds += layer1_mappings.get_by_subject(risk_group_id)
 
-    # 3. Cross-taxonomy fallback: resolve non-IBM risks to IBM equivalents
-    if not seeds and not risk_id.startswith("ibm-risk-atlas"):
-        ibm_mappings = nexus_handlers["get_related_risks"](risk_id)
-        for rel in ibm_mappings:
+    # 3. Cross-taxonomy fallback (safety net, rarely needed with full Layer 1)
+    if not vocab_seeds and not risk_id.startswith("ibm-risk-atlas"):
+        related = nexus_handlers["get_related_risks"](risk_id)
+        for rel in related:
             if rel["id"].startswith("atlas-"):
-                ibm_risk = rel["id"]
-                ibm_group = nexus_handlers["get_risk_group"](ibm_risk)
-                seeds += sssom_mappings.get_by_subject(ibm_group["id"])
-                seeds += sssom_mappings.get_by_subject(f"ibm-risk-atlas:{ibm_risk}")
-                break  # use first IBM match
+                ibm_group = nexus_handlers["get_risk_details"](rel["id"])["group"]
+                vocab_seeds += layer1_mappings.get_by_subject(ibm_group)
+                break
 
-    # Deduplicate by object_id, keeping highest confidence per branch
-    return deduplicate_seeds(seeds)
+    # Chain through Layer 2: vocabulary → ontology branches
+    ontology_seeds = []
+    for vs in vocab_seeds:
+        for hit in layer2_mappings.get_by_subject(vs.object_id):
+            ontology_seeds.append({...hit, effective_confidence: vs.confidence * hit.confidence})
+
+    # Build structured vocabulary context for LLM prompt
+    vocabulary_context = categorize_vocabulary(vocab_seeds)
+
+    return vocabulary_context, deduplicate_seeds(ontology_seeds)
 ```
 
 ## 2. Structural Navigation (Primary Discovery)

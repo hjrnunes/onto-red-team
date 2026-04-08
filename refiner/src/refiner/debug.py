@@ -32,7 +32,7 @@ def log_call(
     if context:
         for key in ("policy_concept", "risk_name", "risk_id"):
             if key in context:
-                slug = "-" + context[key].lower().replace(" ", "-")[:40]
+                slug = "-" + context[key].lower().replace(" ", "-").replace("/", "-")[:40]
                 break
 
     # Extract response data
@@ -75,6 +75,39 @@ def log_call(
         logger.debug("MLflow span creation failed", exc_info=True)
 
 
+def log_event(
+    stage: str,
+    data: dict,
+    *,
+    context: dict | None = None,
+) -> None:
+    """Log a non-LLM pipeline event (e.g. candidate tier reporting)."""
+    global _call_counter
+    _call_counter += 1
+
+    slug = ""
+    if context:
+        for key in ("policy_concept", "risk_name", "risk_id"):
+            if key in context:
+                slug = "-" + context[key].lower().replace(" ", "-").replace("/", "-")[:40]
+                break
+
+    if _debug_dir is not None:
+        entry = {
+            "call_number": _call_counter,
+            "stage": stage,
+            "messages": [],
+            "response": data,
+        }
+        if context:
+            entry["context"] = context
+
+        filename = f"{_call_counter:02d}-{stage}{slug}.json"
+        path = _debug_dir / filename
+        path.write_text(json.dumps(entry, indent=2, default=str))
+        logger.debug("Debug event written to %s", path)
+
+
 # ---------------------------------------------------------------------------
 # Markdown rendering
 # ---------------------------------------------------------------------------
@@ -100,6 +133,10 @@ def _render_context(ctx: dict) -> str:
         parts.append(f"**Risk:** {ctx['risk_name']}")
     if "risk_id" in ctx:
         parts.append(f"`{ctx['risk_id']}`")
+    if "axis_label" in ctx:
+        parts.append(f"**Axis:** {ctx['axis_label']}")
+    if "axis_uri" in ctx:
+        parts.append(f"`{ctx['axis_uri'].split('/')[-1]}`")
     if "num_candidates" in ctx:
         parts.append(f"**Candidates:** {ctx['num_candidates']}")
     if "num_axes" in ctx:
@@ -145,19 +182,29 @@ def _render_anchor_response(data: dict) -> str:
     axes = data.get("axes", [])
     if not axes:
         return "_No axes selected._"
-    lines = ["| Class | Role | Rationale |",
-             "|-------|------|-----------|"]
+    lines = ["| ID | Class | Rationale |",
+             "|----|-------|-----------|"]
     for a in axes:
-        label = a.get("cco_class_label", a.get("cco_class_uri", ""))
+        class_id = a.get("class_id", "")
+        label = a.get("class_label", a.get("cco_class_label", ""))
         lines.append(
+            f"| {class_id} "
             f"| {label} "
-            f"| {a.get('role', '')} "
             f"| {a.get('rationale', '')} |"
         )
     return "\n".join(lines)
 
 
 def _render_contextualize_response(data: dict) -> str:
+    # Current format: {"variations": [{"instance": "...", "relevance": "high"}, ...]}
+    variations = data.get("variations", [])
+    if variations:
+        lines = ["| Instance | Relevance |",
+                 "|----------|-----------|"]
+        for v in variations:
+            lines.append(f"| {v.get('instance', '')} | {v.get('relevance', '')} |")
+        return "\n".join(lines)
+    # Legacy format: {"axes": [{"cco_class_uri": "...", "enumerations": [...]}]}
     axes = data.get("axes", [])
     if not axes:
         return "_No context profiles._"
@@ -174,6 +221,36 @@ def _render_contextualize_response(data: dict) -> str:
     return "\n\n".join(parts)
 
 
+def _render_candidate_tiers_response(data: dict) -> str:
+    seeds = data.get("seeds", 0)
+    structural = data.get("structural", 0)
+    search_connected = data.get("search_connected", 0)
+    search_only = data.get("search_only", 0)
+    merged = data.get("merged", 0)
+
+    lines = [
+        "| Metric | Count |",
+        "|--------|-------|",
+        f"| Seeds | {seeds} |",
+        f"| Structural | {structural} |",
+        f"| Search (connected) | {search_connected} |",
+        f"| Search (only) | {search_only} |",
+        f"| **Merged** | **{merged}** |",
+    ]
+
+    seed_uris = data.get("seed_uris", [])
+    if seed_uris:
+        lines.append("")
+        lines.append("**Seed mappings:**\n")
+        for s in seed_uris:
+            label = s.get("label", "")
+            uri = s.get("uri", "")
+            predicate = s.get("predicate", "")
+            lines.append(f"- `{label or uri}` ({predicate})")
+
+    return "\n".join(lines)
+
+
 def _render_ingest_response(data) -> str:
     """Render ingest stage responses (context/policies/enrichment)."""
     if isinstance(data, dict):
@@ -188,6 +265,7 @@ _STAGE_RENDERERS = {
     "identify_domains": _render_identify_domains_response,
     "map_risks": _render_map_risks_response,
     "anchor": _render_anchor_response,
+    "anchor_tiers": _render_candidate_tiers_response,
     "contextualize": _render_contextualize_response,
 }
 

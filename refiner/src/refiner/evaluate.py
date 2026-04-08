@@ -871,11 +871,21 @@ def format_summary(evaluation: dict) -> str:
         conc_str = ""
         if ec:
             conc_str = f", top-{ec.get('top_k', 5)} concentration {ec.get('top_k_share', 0)}"
+        sat = gen.get("dedup_saturation", {})
+        saturated = {k: v for k, v in sat.items() if v.get("saturation", 0) >= 0.7}
+        sat_str = f"dedup saturation {len(sat)} risks tracked"
+        if saturated:
+            sat_str += f" ({len(saturated)} near-exhausted)"
         lines.append(
             f"  Generation: axis diversity {gen.get('axis_diversity', {}).get('overall_mean', 0)}, "
-            f"dedup saturation {len(gen.get('dedup_saturation', {}))} risks tracked"
-            f"{conc_str}"
+            f"{sat_str}{conc_str}"
         )
+        for risk_id, s in saturated.items():
+            short_id = risk_id.split("/")[-1] if "/" in risk_id else risk_id
+            lines.append(
+                f"  WARNING: {short_id} saturation {s['saturation']:.0%} "
+                f"({s['samples']}/{s['combinatorial_space']} combinations)"
+            )
 
     pm = evaluation.get("prompt_metrics", {})
     if pm:

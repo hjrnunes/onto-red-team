@@ -34,12 +34,14 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         {"r1": [{"id": "r2", "mapping_type": "close"}]},
         {},
     )
-    anchor_result = [
+    anchor_axes = [
         RiskVariationAxes(
             risk_id="r1", risk_name="R1", policy_concept="Fraud",
             axes=[VariationAxis(cco_class_uri="http://ex/P", cco_class_label="P", roles=["agent"], rationale="r")],
         ),
     ]
+    anchor_vocab = {"r1": {"stakeholders": [{"concept": "eu-aiact:AISubject", "label": "AI Subject"}]}}
+    anchor_result = (anchor_axes, anchor_vocab)
     context_result = [
         DomainContextProfile(
             risk_id="r1", risk_name="R1", policy_concept="Fraud",
@@ -65,7 +67,8 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         assert state.risk_details == map_result[1]
         assert state.related_risks == map_result[3]
         assert state.risk_actions == map_result[4]
-        assert state.variation_axes == anchor_result
+        assert state.variation_axes == anchor_axes
+        assert state.vocabulary_contexts == anchor_vocab
         assert state.domain_context == context_result
         assert state.report == report
         assert report.stages_completed == ["classify", "identify_domains", "map_risks", "anchor", "contextualize"]
@@ -80,15 +83,20 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             selected_domains=domains_result,
             risk_actions=map_result[4],
             related_risks=map_result[3],
-            merge_strategy=None,
+            nexus_handlers=mock_risk_handlers,
+            layer1_mappings=None,
+            layer2_mappings=None,
             report=report,
             generic_safety_uris=fake_uris,
+            policies=policies,
         )
         m_ctx.assert_called_once_with(
-            anchor_result, mock_client, mock_config, mock_onto_handlers,
+            anchor_axes, mock_client, mock_config, mock_onto_handlers,
             selected_domains=domains_result,
             risk_details=map_result[1],
             report=report,
+            policies=policies,
+            vocabulary_contexts=anchor_vocab,
         )
 
 
@@ -140,7 +148,6 @@ def test_pipeline_until_identify_domains(mock_client, mock_config, mock_risk_han
 
 def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     """When domain-specific ontologies selected, build_generic_safety_uris is called."""
-    from refiner.stages.anchor import WeightedMergeStrategy
     policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
     classify_result = [
         PolicyClassification(
@@ -150,7 +157,6 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
     ]
     # FIBO is domain-specific (not in ALWAYS_INCLUDED)
     domains_result = ["CCO", "Commons", "D3FEND", "CSO", "FIBO"]
-    strategy = WeightedMergeStrategy()
 
     fake_descendants = [
         {"uri": "http://cso#Weapons", "label": "Weapons", "depth": 1},
@@ -165,7 +171,7 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
 
         run_pipeline(
             policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers,
-            until="identify_domains", merge_strategy=strategy,
+            until="identify_domains",
         )
 
         # build_generic_safety_uris should be called with onto_handlers
@@ -174,7 +180,6 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
 
 def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     """When only always-included domains selected, build_generic_safety_uris is not called."""
-    from refiner.stages.anchor import WeightedMergeStrategy
     policies = [Policy(policy_concept="Safety", concept_definition="About safety")]
     classify_result = [
         PolicyClassification(
@@ -184,7 +189,6 @@ def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_conf
     ]
     # Only always-included domains — no domain-specific selection
     domains_result = ["CCO", "Commons", "D3FEND", "CSO"]
-    strategy = WeightedMergeStrategy()
 
     with patch("refiner.pipeline.classify", return_value=classify_result), \
          patch("refiner.pipeline.identify_domains", return_value=domains_result), \
@@ -193,7 +197,7 @@ def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_conf
 
         run_pipeline(
             policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers,
-            until="identify_domains", merge_strategy=strategy,
+            until="identify_domains",
         )
 
         # build_generic_safety_uris should NOT be called (no domain-specific domains)
