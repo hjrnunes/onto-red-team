@@ -112,11 +112,15 @@ def build_prompt(
 ) -> list[dict]:
     # Build scenario lines from sampled axes
     if sampled_axes:
-        axis_lines = "\n".join(
-            f"- {'/'.join(sa.roles)}: a {_strip_framework_suffix(sa.sampled_label)} "
-            f"(a type of {_strip_framework_suffix(sa.cco_class_label)})"
-            for sa in sampled_axes
-        )
+        lines = []
+        for sa in sampled_axes:
+            label = _strip_framework_suffix(sa.sampled_label)
+            class_label = _strip_framework_suffix(sa.cco_class_label)
+            if sa.roles:
+                lines.append(f"- {'/'.join(sa.roles)}: a {label} (a type of {class_label})")
+            else:
+                lines.append(f"- {label} (a type of {class_label})")
+        axis_lines = "\n".join(lines)
         scenario_block = f"The scenario involves:\n{axis_lines}"
     else:
         scenario_block = ""
