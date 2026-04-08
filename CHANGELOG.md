@@ -2,7 +2,170 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 7 (current)
+## Gen 8.3 — Multi-Taxonomy SSSOM Coverage (current)
+
+### Changed
+
+- **SSSOM Layer 1 expanded from 11 IBM groups to 91 groups across 7 taxonomies** — The original
+  design used IBM Risk Atlas RiskGroups as a hub-and-spoke: non-IBM risks resolved to IBM equivalents
+  via nexus cross-taxonomy mappings (`get_related_risks`), then used the IBM group's vocabulary seeds.
+  Investigation of g8.2 zero-seed risks revealed three failure modes:
+
+  1. **AI Risk Taxonomy entries have no nexus cross-mappings at all** (25 of 32 zero-seed risks).
+     These 314 entries exist as isolated nodes — the nexus knowledge graph simply doesn't link them
+     to IBM equivalents. Fixing this nexus-side would require 300+ new mapping rows.
+
+  2. **Some Credo risks cross-map to Granite/MIT/NIST but not IBM** (4 of 32). The fallback
+     specifically filters for `atlas-*` IDs, so non-IBM cross-mappings are ignored. The working
+     Credo risks (e.g., `credo-risk-013` → `atlas-spreading-toxicity`) happen to have IBM links.
+
+  3. **Fallback takes first IBM match and breaks** (1 of 32). `mit-ai-risk-subdomain-7.3` maps to
+     9 IBM risks, but the first hit (`atlas-data-acquisition`) was in the unmapped `ibm-risk-atlas-
+     data-laws` group. Had it hit `atlas-data-curation` (mapped group) instead, it would have worked.
+
+  Rather than building 300+ nexus cross-mappings to make hub-and-spoke work, Layer 1 now maps risk
+  groups directly: `risk-to-vocabulary.sssom.tsv` expanded from 37 rows / 11 groups to 257 rows /
+  91 groups. Thematically similar groups across taxonomies share vocabulary concepts (e.g.,
+  ai-risk-taxonomy-fraud, credo-rg-malicious-use, and mit-ai-risk-domain-4 all map to `risk:Threat`
+  + `sector-law:CriminalLawEnforcement`).
+
+  Coverage by taxonomy: IBM Risk Atlas (16, was 11), AI Risk Taxonomy (44), Credo (13), MIT (10),
+  AILuminate (3), Granite Guardian (4), ShieldGemma (1).
+
+- **SSSOM Layer 2 expanded with 7 new vocabulary→ontology paths** — `vocabulary-to-ontology.sssom.tsv`
+  expanded from 22 to 29 rows. Previously, vocabulary concepts `eu-aiact:AIUser`, `eu-aiact:DeepFake`,
+  `eu-aiact:MarketSurveillanceAuthority`, and `pd:Biometric` had no Layer 2 paths — they contributed
+  structured LLM context but produced zero ontology seeds. New mappings:
+  - `eu-aiact:AIUser` → CCO Person + OMRSE Human Social Role
+  - `eu-aiact:DeepFake` → CSO Fraud and Deception
+  - `eu-aiact:MarketSurveillanceAuthority` → FIBO Government Body + LKIF Regulation
+  - `pd:Biometric` → CCO Person + OMRSE Human Social Role
+
+- **All 32 g8.2 zero-seed risks now resolve** — Every previously zero-seed risk produces 3–7
+  ontology seeds. This should eliminate zero-axis profiles for these risks in the next battery.
+
+## Gen 8.2 — Policy Context Injection
+
+Second battery on the SSSOM pipeline. 1,890 prompts across 15 runs. Anchor prompt now receives
+policy concept_definition and boundary examples (PROHIBITED/ACCEPTABLE pairs).
+
+### Battery Results (g8.2 vs g8.1)
+
+- Inappropriate demographic axes eliminated: Healthcare Gemma 4 Oceanian ancestry 45x → 0
+- DHS-Gov volume recovered: 225 → 270 (+20%), reversing g8.1 regression
+- More specific axis classes: Health Data Exposure, Employment Data Exposure, Direct Identifier Exposure
+  replace broad Person/Organization defaults
+- RDaSH Gemma 4 achieves 0 zero-axis profiles (full coverage milestone)
+- Red flags: 21 → 19
+- SWB volume regression: 195 → 120 (38% drop, SSSOM seed gap — not policy context related)
+- Axis concentration persists: Act of Violence 135x, human social role 135x (upstream of selection)
+- New metric: axis fidelity 0.58–0.97 (Gemma 4 best, Mistral worst)
+- Domain term hit rate slight recovery: 0.0–0.059 (was 0.0–0.037)
+
+## Gen 8.1 — SSSOM Redesign
+
+First battery on the SSSOM-redesigned pipeline. 1,950 prompts across 15 runs.
+
+### Fixed
+
+- **Anchor label suffix leakage** — LLM responses echoed candidate heading tags (`-- structural`,
+  `-- search`, `[Role]`, `[InformationContentEntity]`) into axis labels, affecting 180/1,950 prompts
+  (9.2%). Post-processing now uses the authoritative label from the enriched candidate dict. A
+  `_strip_label_suffix` fallback handles edge cases where no enriched match exists.
+
+- **Debug anchor response rendering** — `_render_anchor_response` in `debug.py` referenced wrong
+  field names (`cco_class_label`, `role`) instead of the actual `_AnchorResponse` fields (`class_id`,
+  `class_label`, `rationale`), producing empty Class/Role columns in `debug.md`.
+
+- **Opaque path labels in anchor prompt** — Path display showed raw CCO numeric URIs
+  (`ont00001180 > ont00001239`) instead of human-readable class names. Path URIs are now resolved
+  via `get_class_definition` during candidate enrichment, producing labels like `Agent > Legal Entity`.
+
+### Added
+
+- **Policy context in anchor prompt** — Anchor LLM now receives `concept_definition` and up to 3
+  boundary examples (PROHIBITED/ACCEPTABLE pairs) from the enriched policy, giving the LLM explicit
+  knowledge of what behavior is prohibited and where the boundary lies. System prompt updated to
+  instruct axis selection toward the gray zone between prohibited and acceptable behavior. Threaded
+  via a new `policies` parameter from the pipeline. Future option: pass full `Policy` objects
+  (acceptable_uses, risk_controls) if boundary examples alone prove insufficient.
+
+- **Anchor candidate tier reporting** — Anchor stage emits a `candidate_tiers` event per risk with
+  seed count, per-tier candidate counts (structural, search_connected, search_only), merged total,
+  and the actual seed URIs with labels and predicates.
+
+- **Two-layer SSSOM seed mapping files** — Ontology integration now driven by SSSOM (Simple Standard for
+  Sharing Ontological Mappings) seed files instead of ChromaDB distance-based retrieval. Two layers:
+  a risk-to-ontology mapping layer and an ontology-to-ontology bridge layer. Seed resolution replaces
+  the old `SearchMergeStrategy` hierarchy.
+
+- **SSSOM loader and seed resolution** (`refiner/src/refiner/ontology_seeds.py`) — Loads two-layer seed
+  files, resolves risk IDs to ontology class sets via structural navigation of ontology hierarchies.
+  Replaces the ChromaDB-based candidate pool construction.
+
+- **Policy-driven LLM enumeration generation** — Contextualize stage rewritten to generate scenario
+  descriptions via LLM rather than sampling from ontology subclass pools. Enumerations are now
+  `source_ontology: "generated"` with scenario-specific descriptions (e.g., "step-by-step guide to
+  committing credit card fraud") instead of ontology class labels (e.g., "Pretexting", "Confidence Trick").
+
+- **Vocabulary context per axis** — Each axis carries structured regulatory metadata with stakeholders
+  (EU AI Act subject types), data_sensitivity (GDPR categories), and rights (EU Charter of Fundamental
+  Rights) sourced from regulatory ontologies.
+
+- **Enriched policy files** — All policy sets updated to `-enriched.json` variants with explicit
+  PROHIBITED/ACCEPTABLE boundary examples and permitted-use specifications in the generation prompt.
+
+- **`get_risk_group` nexus-mcp handler** — New handler for retrieving risk group metadata from the
+  AI Atlas Nexus knowledge graph.
+
+### Changed
+
+- **Anchor stage rewritten** — `anchor()` now uses SSSOM seed path with structural navigation (parent/
+  sibling/child traversal), tiered merge, and BFO category derivation. Backward-compatible legacy
+  fallback retained for non-SSSOM runs. Old `_CATEGORY_ROLES` (29 entries) and `derive_roles()` removed.
+
+- **Role system removed** — Sampled axes no longer carry agent/object/instrument/context/location role
+  tags (`roles: []`). The old role-based compositional guidance is replaced by the LLM-generated
+  scenario descriptions.
+
+- **Old merge strategies removed** — `WeightedMergeStrategy`, `GroupedMergeStrategy`, and
+  `LLMMergeStrategy` removed from anchor stage. Candidate selection now handled by SSSOM seed
+  resolution + structural navigation.
+
+- **Data models updated** — Pipeline models extended with vocabulary_context fields, SSSOM seed
+  references, and generated-enumeration provenance tracking.
+
+### Battery Results (g8.1 vs g8)
+
+- Value-level concentration eliminated: max 13x (down from 53x)
+- Empty prompts: 6 (down from 7), still Gemma 3 only
+- RDaSH coverage doubled: 246 → 510 prompts
+- Domain term hit rate regressed: 0.15-0.33 → 0.0-0.037 (LLM-generated enums lack ontology vocabulary)
+- New issue: axis class over-concentration (Person 165x, GSSO 135x, Organization 120x)
+- SWB volume halved: 365 → 195 (fewer SSSOM seed matches)
+
+## Gen 8
+
+### Added
+
+- **LKIF normative class exclusion** — 13 URIs (9 deontic meta-labels + 4 upper-ontology primitives)
+  excluded from candidate pools via `_is_excluded_uri()`. Eliminates Disallowed Intention, Strictly
+  Disallowed, Allowed And Disallowed, Observation of Violation, Belief In Violation, and Obliged from
+  all prompts. Also excludes LKIF upper-ontology primitives (Intention, Belief, Agent from
+  expression/action.owl, Mental Process).
+
+- **Empty enumeration guard** — Axes with zero enumerations after filtering excluded from profiles in
+  contextualize stage, preventing dead-zone axes and downstream generation failures.
+
+- **Role-diversity guidance in LLM merge prompt** — Candidates tagged with roles, prompt instructs
+  diverse role selection across agent/object/instrument/context.
+
+- **Enumeration concentration soft cap** — `max(3, effective_n // unique_values)` per axis limits
+  oversampling of any single enumeration value within a risk.
+
+- **LKIF domain display name** — "legal/regulatory" instead of raw "LKIF" in merge prompts.
+
+## Gen 7
 
 ### Added
 

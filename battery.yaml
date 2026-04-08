@@ -1,12 +1,12 @@
 # battery.yaml — pipeline battery configuration
 policy_dir: policy_examples
 runs_dir: runs
-nexus_base_dir: /Users/hjrnunes/workspace/redhat/ibm/ai-atlas-nexus
+nexus_base_dir: ontologies/ai-atlas-nexus
 ontoquery_chroma_dir: ontoquery/.chroma
 nexus_chroma_dir: nexus-mcp/.chroma
 
 samples_per_risk: 15
-tracking_uri: https://mlflow.taxonomy-refiner.orb.local
+#tracking_uri: https://mlflow.taxonomy-refiner.orb.local
 
 policies:
   - swb

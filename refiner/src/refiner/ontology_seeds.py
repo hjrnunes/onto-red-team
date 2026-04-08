@@ -32,6 +32,16 @@ _VOCAB_CATEGORIES = {
 _PROHIBITED_PRACTICES = {"eu-aiact:DeepFake", "eu-aiact:EmotionRecognition"}
 
 
+def _expand_curie(value: str, curie_map: dict[str, str]) -> str:
+    """Expand a CURIE (e.g. 'cco:Organization') to a full URI using curie_map."""
+    if ":" not in value or value.startswith("http://") or value.startswith("https://"):
+        return value
+    prefix, _, local = value.partition(":")
+    if prefix in curie_map:
+        return curie_map[prefix] + local
+    return value
+
+
 @dataclass(frozen=True)
 class SSSOMMapping:
     subject_id: str
@@ -53,24 +63,40 @@ class SSSOMIndex:
             self._by_subject.setdefault(m.subject_id, []).append(m)
 
     @classmethod
-    def from_tsv(cls, path: Path) -> "SSSOMIndex":
+    def from_tsv(cls, path: Path, *, expand_objects: bool = False) -> "SSSOMIndex":
+        curie_map: dict[str, str] = {}
         mappings = []
         with open(path, "r", encoding="utf-8") as f:
             reader = csv.reader(f, delimiter="\t")
             header_seen = False
             for row in reader:
-                if not row or row[0].startswith("#"):
+                if not row:
+                    continue
+                line = row[0]
+                if line.startswith("#"):
+                    if expand_objects:
+                        # Parse curie_map entries: "#   prefix: uri"
+                        stripped = line.lstrip("#").strip()
+                        if ":" in stripped and stripped[0] != "{" and stripped != "curie_map:":
+                            prefix, _, uri = stripped.partition(":")
+                            prefix = prefix.strip()
+                            uri = uri.strip()
+                            if uri and not uri.startswith("#"):
+                                curie_map[prefix] = uri
                     continue
                 if not header_seen:
                     header_seen = True
                     continue  # skip header row
                 if len(row) < 7:
                     continue
+                object_id = row[3].strip()
+                if expand_objects:
+                    object_id = _expand_curie(object_id, curie_map)
                 mappings.append(SSSOMMapping(
                     subject_id=row[0].strip(),
                     subject_label=row[1].strip(),
                     predicate_id=row[2].strip(),
-                    object_id=row[3].strip(),
+                    object_id=object_id,
                     object_label=row[4].strip(),
                     mapping_justification=row[5].strip(),
                     confidence=float(row[6].strip()),

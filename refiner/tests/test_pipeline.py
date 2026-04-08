@@ -88,6 +88,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             layer2_mappings=None,
             report=report,
             generic_safety_uris=fake_uris,
+            policies=policies,
         )
         m_ctx.assert_called_once_with(
             anchor_axes, mock_client, mock_config, mock_onto_handlers,

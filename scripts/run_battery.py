@@ -48,7 +48,6 @@ _REQUIRED_KEYS = [
     "ontoquery_chroma_dir",
     "nexus_chroma_dir",
     "samples_per_risk",
-    "tracking_uri",
     "policies",
     "models",
 ]
@@ -63,6 +62,7 @@ def load_config(config_path: Path) -> dict:
     if missing:
         print(f"Error: missing config keys: {', '.join(missing)}", file=sys.stderr)
         sys.exit(1)
+    raw.setdefault("tracking_uri", "")
     root = config_path.parent
     for key in _PATH_KEYS:
         p = Path(raw[key])
@@ -126,9 +126,9 @@ def build_refine_cmd(
         "--nexus-base-dir", str(nexus_base_dir),
         "--ontoquery-chroma-dir", str(onto_chroma),
         "--nexus-chroma-dir", str(nexus_chroma),
-        "--track",
-        "--tracking-uri", tracking_uri,
     ])
+    if tracking_uri:
+        cmd.extend(["--track", "--tracking-uri", tracking_uri])
     for tag in tags:
         cmd.extend(["--tag", tag])
     return cmd, "refiner"
@@ -165,9 +165,9 @@ def build_evaluate_cmd(
         "--emit", str(run_dir / "dataset.jsonl"),
         "--adversarial", str(run_dir / "adversarial_prompts.jsonl"),
         "--policies", str(policy_file),
-        "--track",
-        "--tracking-uri", tracking_uri,
     ]
+    if tracking_uri:
+        cmd.extend(["--track", "--tracking-uri", tracking_uri])
     for tag in tags:
         cmd.extend(["--tag", tag])
     return cmd, "refiner"
@@ -220,8 +220,10 @@ def run_model(
     if not skip_refine and not dry_run:
         tmp_onto = Path(tempfile.mkdtemp())
         tmp_nexus = Path(tempfile.mkdtemp())
-        shutil.copytree(cfg["ontoquery_chroma_dir"], tmp_onto, dirs_exist_ok=True)
-        shutil.copytree(cfg["nexus_chroma_dir"], tmp_nexus, dirs_exist_ok=True)
+        if cfg["ontoquery_chroma_dir"].exists():
+            shutil.copytree(cfg["ontoquery_chroma_dir"], tmp_onto, dirs_exist_ok=True)
+        if cfg["nexus_chroma_dir"].exists():
+            shutil.copytree(cfg["nexus_chroma_dir"], tmp_nexus, dirs_exist_ok=True)
 
     log_fh = open(log_path, "w") if log_path and not dry_run else None
     total_policies = len(policies)

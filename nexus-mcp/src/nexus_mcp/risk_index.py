@@ -82,11 +82,11 @@ class RiskIndex:
         for i in range(len(results["ids"][0])):
             meta = results["metadatas"][0][i]
             output.append({
-                "id": meta["id"],
-                "name": meta["name"],
-                "description": meta["description"] or None,
-                "concern": meta["concern"] or None,
-                "taxonomy": meta["taxonomy"],
+                "id": meta.get("id", results["ids"][0][i]),
+                "name": meta.get("name", meta.get("id", "")),
+                "description": meta.get("description") or None,
+                "concern": meta.get("concern") or None,
+                "taxonomy": meta.get("taxonomy", ""),
                 "distance": results["distances"][0][i],
             })
         return output

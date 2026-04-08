@@ -98,6 +98,7 @@ def run_pipeline(
         layer2_mappings=layer2_mappings,
         report=report,
         generic_safety_uris=generic_safety_uris,
+        policies=policies,
     )
     if report:
         report.stages_completed.append("anchor")

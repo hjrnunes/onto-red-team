@@ -205,7 +205,7 @@ def run(
     if layer1_path.exists() and layer2_path.exists():
         from refiner.ontology_seeds import SSSOMIndex
         layer1_mappings = SSSOMIndex.from_tsv(layer1_path)
-        layer2_mappings = SSSOMIndex.from_tsv(layer2_path)
+        layer2_mappings = SSSOMIndex.from_tsv(layer2_path, expand_objects=True)
         typer.echo(f"Loaded SSSOM seeds: {len(layer1_mappings.mappings)} layer-1, {len(layer2_mappings.mappings)} layer-2 mappings")
 
     if search_strategy != "llm":

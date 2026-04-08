@@ -114,6 +114,22 @@ def assess_run(run_dir: Path):
             for w in weak:
                 print(f"  {w['risk_id']}: distance={w['distance']:.3f}")
 
+        tiers = [e for e in events if e.get("event") == "candidate_tiers"]
+        if tiers:
+            print(f"\nCandidate tiers ({len(tiers)} risks):")
+            for t in tiers:
+                seeds = t.get("seeds", 0)
+                struct = t.get("structural", 0)
+                s_conn = t.get("search_connected", 0)
+                s_only = t.get("search_only", 0)
+                merged = t.get("merged", 0)
+                seed_labels = ", ".join(
+                    s.get("label", s.get("uri", "?"))[:30] for s in t.get("seed_uris", [])
+                )
+                print(f"  {t['risk_id']}: seeds={seeds} structural={struct} search_conn={s_conn} search_only={s_only} merged={merged}")
+                if seed_labels:
+                    print(f"    seeds: {seed_labels}")
+
         empty = [e for e in events if e.get("event") == "empty_axes"]
         if empty:
             print(f"\nEmpty axes (no anchor candidates after filtering):")
