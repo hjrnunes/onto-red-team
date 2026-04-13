@@ -1,5 +1,6 @@
 import logging
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 
 import instructor
 
@@ -55,15 +56,27 @@ def run_pipeline(
 ) -> PipelineState:
     state = PipelineState(policies=policies, report=report)
 
+    def _now() -> str:
+        return datetime.now(timezone.utc).isoformat()
+
+    def _stage_done(name: str, started: str) -> None:
+        if report:
+            report.stages_completed.append(name)
+            report.events.append({
+                "stage": name, "event": "stage_completed",
+                "started_at": started, "completed_at": _now(),
+                "model": config.model,
+            })
+
+    t0 = _now()
     state.classifications = classify(state.policies, client, config, report=report)
-    if report:
-        report.stages_completed.append("classify")
+    _stage_done("classify", t0)
     if until == "classify":
         return state
 
+    t0 = _now()
     state.selected_domains = identify_domains(state.classifications, client, config, report=report)
-    if report:
-        report.stages_completed.append("identify_domains")
+    _stage_done("identify_domains", t0)
 
     # Compute CSO DangerousInformation filter for domain-specific runs
     generic_safety_uris: set[str] = set()
@@ -81,14 +94,15 @@ def run_pipeline(
     if until == "identify_domains":
         return state
 
+    t0 = _now()
     state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions = map_risks(
         state.classifications, client, config, risk_handlers, report=report
     )
-    if report:
-        report.stages_completed.append("map_risks")
+    _stage_done("map_risks", t0)
     if until == "map_risks":
         return state
 
+    t0 = _now()
     state.variation_axes, state.vocabulary_contexts = anchor(
         state.risk_mappings, state.risk_details, client, config, onto_handlers,
         selected_domains=state.selected_domains,
@@ -102,11 +116,11 @@ def run_pipeline(
         policies=policies,
         bfo_fallbacks=bfo_fallbacks,
     )
-    if report:
-        report.stages_completed.append("anchor")
+    _stage_done("anchor", t0)
     if until == "anchor":
         return state
 
+    t0 = _now()
     state.domain_context = contextualize(
         state.variation_axes, client, config, onto_handlers,
         selected_domains=state.selected_domains,
@@ -115,6 +129,5 @@ def run_pipeline(
         policies=policies,
         vocabulary_contexts=state.vocabulary_contexts,
     )
-    if report:
-        report.stages_completed.append("contextualize")
+    _stage_done("contextualize", t0)
     return state

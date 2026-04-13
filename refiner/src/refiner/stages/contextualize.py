@@ -198,6 +198,7 @@ def contextualize(
                     source_ontology="generated",
                     relevance=var.relevance,
                     provenance="generated",
+                    generated_by=config.model,
                 ))
 
             if enumerations:
@@ -208,6 +209,7 @@ def contextualize(
                     vocabulary_concept=axis.vocabulary_concept,
                     vocabulary_label=axis.vocabulary_label,
                     vocabulary_context=vocab_ctx,
+                    derivation=axis.derivation,
                     enumerations=enumerations,
                     roles=[],
                 ))

@@ -5,6 +5,7 @@ import instructor
 from pydantic import BaseModel
 from refiner.llm import LLMConfig
 from refiner.models import (
+    AxisDerivation,
     PolicyRiskMapping,
     RiskVariationAxes,
     VariationAxis,
@@ -622,6 +623,12 @@ def anchor(
                     "vocabulary_label": c.get("vocabulary_label") or "",
                     "path_labels": path_labels,
                     "siblings": [s.get("label") or "" for s in siblings[:5]],
+                    # Derivation provenance (carried from candidate)
+                    "seed_uri": c.get("seed_uri", ""),
+                    "path": c.get("path", []),
+                    "effective_confidence": c.get("effective_confidence", 0.0),
+                    "best_distance": c.get("best_distance"),
+                    "domain": c.get("domain", ""),
                 })
 
             if not enriched:
@@ -717,6 +724,16 @@ def anchor(
                 # Use authoritative label from enriched candidate, not the LLM echo
                 # (which may include suffix tags like "-- structural" or "[Role]")
                 label = enriched_match["label"] if enriched_match else _strip_label_suffix(axis.class_label)
+                derivation = None
+                if enriched_match:
+                    derivation = AxisDerivation(
+                        source=enriched_match.get("source", ""),
+                        seed_uri=enriched_match.get("seed_uri", ""),
+                        path=enriched_match.get("path", []),
+                        effective_confidence=enriched_match.get("effective_confidence", 0.0),
+                        best_distance=enriched_match.get("best_distance"),
+                        domain=enriched_match.get("domain", ""),
+                    )
                 valid_axes.append(VariationAxis(
                     cco_class_uri=actual_uri,
                     cco_class_label=label,
@@ -724,6 +741,7 @@ def anchor(
                     vocabulary_concept=vocab_c,
                     vocabulary_label=vocab_l,
                     rationale=axis.rationale,
+                    derivation=derivation,
                     roles=[],  # backward compat
                 ))
 

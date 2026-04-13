@@ -26,6 +26,22 @@ All notable changes to this project will be documented in this file.
 - **CURIE map sidecar** — `emit` writes a `dataset.curie_map.json` alongside `dataset.jsonl`,
   providing the prefix-to-URI mapping for all CURIEs used in outputs.
 
+- **Axis derivation provenance** — New `AxisDerivation` model captures how each variation axis was
+  discovered: source (structural/search), seed URI, navigation path, effective confidence, and search
+  distance. Carried from anchor through contextualize to the domain-context YAML output. Previously
+  this data was computed but dropped after LLM axis selection.
+
+- **Provenance sidecar** — New `refiner/src/refiner/provenance.py` writes `provenance.jsonl`
+  alongside `dataset.jsonl`. PROV-O-style triples (wasGeneratedBy, wasDerivedFrom, wasAssociatedWith,
+  used, partOf) capture the full derivation chain: profile → axis → enumeration → prompt. Queryable
+  with jq, semantically compatible with PROV-O JSON-LD export.
+
+- **Per-stage timestamps** — Pipeline events now include `started_at`, `completed_at`, and `model`
+  for each stage, enabling temporal reconstruction and agent attribution at the stage level.
+
+- **Agent attribution on enumerations** — `AxisEnumeration.generated_by` records which LLM model
+  produced each enumeration instance.
+
 ## Gen 9.3
 
 ### Added

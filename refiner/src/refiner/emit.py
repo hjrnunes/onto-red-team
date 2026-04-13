@@ -7,6 +7,7 @@ import yaml
 
 from refiner.curie_registry import CURIE_MAP
 from refiner.frames import DEFAULT_WEIGHTS, AdversarialFrame, resolve_slot_label, select_frame
+from refiner.provenance import write_provenance
 from refiner.models import (
     AxisEnumeration,
     DomainContextAxis,
@@ -308,5 +309,10 @@ def emit(
     with open(curie_path, "w") as f:
         json.dump(CURIE_MAP, f, indent=2)
 
+    # Write provenance sidecar
+    prov_path = output_path.parent / "provenance.jsonl"
+    write_provenance(dc_path, output_path, prov_path)
+
     logger.info("Wrote %d rows to %s", len(rows), output_path)
     logger.info("Wrote curie_map to %s", curie_path)
+    logger.info("Wrote provenance to %s", prov_path)

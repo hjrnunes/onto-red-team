@@ -56,6 +56,15 @@ class PolicyRiskMapping(BaseModel):
     matched_risks: list[RiskMatch]
 
 
+class AxisDerivation(BaseModel):
+    source: str = ""  # "structural" or "search"
+    seed_uri: str = ""
+    path: list[str] = []
+    effective_confidence: float = 0.0
+    best_distance: float | None = None
+    domain: str = ""
+
+
 class VariationAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
@@ -63,6 +72,7 @@ class VariationAxis(BaseModel):
     vocabulary_concept: str = ""
     vocabulary_label: str = ""
     rationale: str
+    derivation: AxisDerivation | None = None
     # Kept for backward compatibility with emit stage
     roles: list[str] = []
 
@@ -80,6 +90,7 @@ class AxisEnumeration(BaseModel):
     source_ontology: str
     relevance: Literal["high", "medium", "low"]
     provenance: str = "generated"  # "generated", "subclass", "sibling"
+    generated_by: str = ""  # model name when provenance is "generated"
 
 
 class DomainContextAxis(BaseModel):
@@ -89,6 +100,7 @@ class DomainContextAxis(BaseModel):
     vocabulary_concept: str = ""
     vocabulary_label: str = ""
     vocabulary_context: dict = {}
+    derivation: AxisDerivation | None = None
     enumerations: list[AxisEnumeration]
     # Kept for backward compatibility with emit stage
     roles: list[str] = []
