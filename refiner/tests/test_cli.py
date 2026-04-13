@@ -181,9 +181,9 @@ def _make_enriched_policy_file(tmp_path: Path) -> Path:
         "organization": {"name": "Test Org", "roles": [], "description": None},
         "domain": "healthcare",
         "purpose": [],
-        "ai_systems": [],
+        "governed_systems": [],
         "stakeholders": [],
-        "governing_regulations": [],
+        "regulations": [],
         "policies": [
             {"policy_concept": "Fraud", "concept_definition": "About fraud"},
         ],

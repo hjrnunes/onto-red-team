@@ -61,9 +61,9 @@ def test_policy_document_defaults():
     assert doc.organization is None
     assert doc.domain is None
     assert doc.purpose == []
-    assert doc.ai_systems == []
+    assert doc.governed_systems == []
     assert doc.stakeholders == []
-    assert doc.governing_regulations == []
+    assert doc.regulations == []
     assert doc.policies == []
 
 
@@ -76,14 +76,14 @@ def test_policy_document_roundtrip():
         "organization": "South West Bank",
         "domain": "banking",
         "purpose": ["Customer support chatbot"],
-        "ai_systems": ["LLM-powered assistant"],
+        "governed_systems": [{"name": "LLM-powered assistant"}],
         "stakeholders": [
             {"name": "Bank employees", "roles": ["airo:AIUser"]},
             {"name": "Bank customers", "roles": ["airo:AISubject"]},
             {"name": "Jenny Carlson", "roles": ["CEO"]},
             {"name": "CreditAlpha", "roles": ["Credit card product"]},
         ],
-        "governing_regulations": ["GDPR", "PCI-DSS"],
+        "regulations": [{"name": "GDPR"}, {"name": "PCI-DSS"}],
         "policies": [
             {
                 "policy_concept": "Fraud",

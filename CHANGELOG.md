@@ -26,6 +26,14 @@ All notable changes to this project will be documented in this file.
   original role string (e.g. "CEO"). HTML report template renders a single Stakeholders section
   with role tooltips.
 
+- **`ai_systems` field** — Replaced by `governed_systems: list[GovernedSystem]`. Each governed system
+  carries name, description, purpose, and AI Act risk level. `_build_document()` wraps extracted
+  system names into `GovernedSystem` objects.
+
+- **`governing_regulations` field** — Replaced by `regulations: list[RegulatoryReference]`. Each
+  reference carries name, jurisdiction, and URI. `_build_document()` wraps extracted regulation
+  names into `RegulatoryReference` objects.
+
 ### Added
 
 - **AIRO-grounded PolicyDocument envelope** — `PolicyDocument.organization` is now a typed

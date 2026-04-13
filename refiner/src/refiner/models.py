@@ -60,9 +60,9 @@ class PolicyDocument(BaseModel):
     organization: Stakeholder | None = None
     domain: str | None = None
     purpose: list[str] = []
-    ai_systems: list[str] = []
+    governed_systems: list[GovernedSystem] = []
     stakeholders: list[Stakeholder] = []
-    governing_regulations: list[str] = []
+    regulations: list[RegulatoryReference] = []
     policies: list[Policy] = []
 
     @field_validator("organization", mode="before")
