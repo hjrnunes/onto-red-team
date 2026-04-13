@@ -43,6 +43,25 @@ class TestDeriveBfoCategory:
         result = derive_bfo_category("http://example.org/Unknown", mock_onto)
         assert result == ""
 
+    def test_uses_bfo_fallback_when_walk_fails(self, mock_onto):
+        mock_onto["get_superclasses"].return_value = []
+        fallbacks = {"http://example.org/Unknown": "Act"}
+        result = derive_bfo_category("http://example.org/Unknown", mock_onto, bfo_fallbacks=fallbacks)
+        assert result == "Act"
+
+    def test_walk_takes_precedence_over_fallback(self, mock_onto):
+        mock_onto["get_superclasses"].side_effect = [
+            [{"uri": "http://purl.obolibrary.org/obo/BFO_0000040", "label": "material entity"}],
+        ]
+        fallbacks = {"http://example.org/Person": "Act"}
+        result = derive_bfo_category("http://example.org/Person", mock_onto, bfo_fallbacks=fallbacks)
+        assert result == "MaterialEntity"
+
+    def test_cco_direct_hit(self, mock_onto):
+        """CCO Person/Organization URIs added to _BFO_CATEGORIES should resolve without walking."""
+        result = derive_bfo_category("https://www.commoncoreontologies.org/ont00001262", mock_onto)
+        assert result == "Agent"
+
 
 class TestNavigateFromSeeds:
     def test_broad_match_navigates_down(self, mock_onto):

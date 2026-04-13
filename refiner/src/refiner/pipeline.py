@@ -51,6 +51,7 @@ def run_pipeline(
     report: RunReport | None = None,
     layer1_mappings=None,
     layer2_mappings=None,
+    bfo_fallbacks: dict[str, str] | None = None,
 ) -> PipelineState:
     state = PipelineState(policies=policies, report=report)
 
@@ -99,6 +100,7 @@ def run_pipeline(
         report=report,
         generic_safety_uris=generic_safety_uris,
         policies=policies,
+        bfo_fallbacks=bfo_fallbacks,
     )
     if report:
         report.stages_completed.append("anchor")

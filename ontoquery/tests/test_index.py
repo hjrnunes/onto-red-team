@@ -1,4 +1,4 @@
-from ontoquery.index import OntologyIndex, derive_domain
+from ontoquery.index import OntologyIndex, build_structural_context, derive_domain
 
 
 def test_index_classes(chroma_dir):
@@ -193,3 +193,111 @@ def test_list_domains(chroma_dir):
     assert "CCO" in domains
     assert "FIBO" in domains
     assert "CSO" in domains
+
+
+# --- Structural context tests ---
+
+
+def test_build_structural_context():
+    from rdflib import Graph
+    from ontoquery.backend import RdflibBackend
+    from ontoquery.owl2vec import project_ontology
+
+    ttl = """\
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/ont#> .
+
+ex:Animal a owl:Class ; rdfs:label "Animal" .
+ex:Mammal a owl:Class ; rdfs:label "Mammal" ; rdfs:subClassOf ex:Animal .
+ex:Dog a owl:Class ; rdfs:label "Dog" ; rdfs:subClassOf ex:Mammal .
+ex:Cat a owl:Class ; rdfs:label "Cat" ; rdfs:subClassOf ex:Mammal .
+"""
+    g = Graph()
+    g.parse(data=ttl, format="turtle")
+    backend = RdflibBackend(g)
+    projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
+    ctx = build_structural_context(projected)
+
+    # Mammal should mention parent (Animal) and children (Cat, Dog)
+    assert "http://example.org/ont#Mammal" in ctx
+    mammal_ctx = ctx["http://example.org/ont#Mammal"]
+    assert "Animal" in mammal_ctx
+    assert "SubClassOf" in mammal_ctx
+    assert "HasSubClass" in mammal_ctx
+    assert "Dog" in mammal_ctx or "Cat" in mammal_ctx
+
+
+def test_build_structural_context_with_properties():
+    from rdflib import Graph
+    from ontoquery.backend import RdflibBackend
+    from ontoquery.owl2vec import project_ontology
+
+    ttl = """\
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/ont#> .
+
+ex:Person a owl:Class ; rdfs:label "Person" .
+ex:Company a owl:Class ; rdfs:label "Company" .
+ex:worksFor a owl:ObjectProperty ;
+    rdfs:domain ex:Person ;
+    rdfs:range ex:Company .
+"""
+    g = Graph()
+    g.parse(data=ttl, format="turtle")
+    backend = RdflibBackend(g)
+    projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
+    ctx = build_structural_context(projected)
+
+    assert "http://example.org/ont#Person" in ctx
+    person_ctx = ctx["http://example.org/ont#Person"]
+    assert "worksFor" in person_ctx
+    assert "Company" in person_ctx
+
+
+def test_index_with_structural_context(chroma_dir):
+    """Structural context should be included in indexed documents."""
+    from rdflib import Graph
+    from ontoquery.backend import RdflibBackend
+    from ontoquery.owl2vec import project_ontology
+
+    ttl = """\
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix skos: <http://www.w3.org/2004/02/skos/core#> .
+@prefix ex: <http://example.org/ont#> .
+
+ex:Animal a owl:Class ;
+    rdfs:label "Animal" ;
+    skos:definition "A living creature." .
+ex:Mammal a owl:Class ;
+    rdfs:label "Mammal" ;
+    skos:definition "A warm-blooded animal." ;
+    rdfs:subClassOf ex:Animal .
+ex:Dog a owl:Class ;
+    rdfs:label "Dog" ;
+    skos:definition "A domesticated canine." ;
+    rdfs:subClassOf ex:Mammal .
+"""
+    g = Graph()
+    g.parse(data=ttl, format="turtle")
+    backend = RdflibBackend(g)
+    projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
+    ctx = build_structural_context(projected)
+
+    classes = [
+        {"uri": "http://example.org/ont#Animal", "label": "Animal", "definition": "A living creature."},
+        {"uri": "http://example.org/ont#Mammal", "label": "Mammal", "definition": "A warm-blooded animal."},
+        {"uri": "http://example.org/ont#Dog", "label": "Dog", "definition": "A domesticated canine."},
+    ]
+
+    idx = OntologyIndex(chroma_dir)
+    idx.index_classes(classes, source_dir="/src", structural_context=ctx)
+
+    # Search for "warm-blooded creature that is a parent of dogs"
+    # With structural context, Mammal's doc includes "HasSubClass: Dog"
+    # so it should rank well
+    results = idx.search_raw("parent class of dog", top_k=3)
+    labels = [r["label"] for r in results]
+    assert "Mammal" in labels

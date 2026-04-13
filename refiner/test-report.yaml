@@ -1,6 +1,6 @@
 model: test-model
 policy_set: test.json
-timestamp: '2026-04-08T13:14:40.645441+00:00'
+timestamp: '2026-04-10T18:52:43.145450+00:00'
 stages_completed:
 - structure
 events: []

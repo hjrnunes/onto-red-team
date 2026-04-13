@@ -143,6 +143,21 @@ def categorize_vocabulary(vocab_seeds: list[SSSOMMapping]) -> dict[str, list[dic
     return categories
 
 
+def load_bfo_fallbacks(path: Path) -> dict[str, str]:
+    """Load ontology-to-BFO SSSOM mappings as a URI → category lookup.
+
+    The object_id column in this file contains BFO category *labels* (e.g.
+    ``Act``, ``InformationContentEntity``) rather than URIs, so we use them
+    directly.
+    """
+    index = SSSOMIndex.from_tsv(path)
+    fallbacks: dict[str, str] = {}
+    for m in index.mappings:
+        if m.subject_id not in fallbacks:
+            fallbacks[m.subject_id] = m.object_id
+    return fallbacks
+
+
 def _deduplicate_seeds(seeds: list[dict], key: str = "object_id") -> list[dict]:
     """Deduplicate seed dicts, keeping highest effective_confidence per key."""
     best: dict[str, dict] = {}

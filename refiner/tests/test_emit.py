@@ -640,6 +640,163 @@ def test_fuzzy_match_policy_case_insensitive():
     assert result is not None
 
 
+def test_sample_axes_propagates_bfo_category():
+    """bfo_category from DomainContextAxis should flow to SampledAxis."""
+    import random
+    random.seed(42)
+    profile = DomainContextProfile(
+        risk_id="r1", risk_name="R", policy_concept="P",
+        axes=[
+            DomainContextAxis(
+                cco_class_uri="http://example.org/A",
+                cco_class_label="A",
+                bfo_category="Role",
+                enumerations=[_enum("high")],
+            ),
+        ],
+    )
+    samples = sample_axes(profile, n=1)
+    assert len(samples) == 1
+    assert samples[0][0].bfo_category == "Role"
+
+
+def test_sample_axes_propagates_empty_bfo_category():
+    """Empty bfo_category should also propagate cleanly."""
+    import random
+    random.seed(42)
+    profile = DomainContextProfile(
+        risk_id="r1", risk_name="R", policy_concept="P",
+        axes=[
+            DomainContextAxis(
+                cco_class_uri="http://example.org/A",
+                cco_class_label="A",
+                enumerations=[_enum("high")],
+            ),
+        ],
+    )
+    samples = sample_axes(profile, n=1)
+    assert samples[0][0].bfo_category == ""
+
+
+def test_build_prompt_with_frame():
+    from refiner.frames import FRAMES
+    frame = FRAMES["pretexting"]
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            bfo_category="Role",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("Fraud", "About fraud", "Financial Fraud", axes, frame=frame)
+    user = messages[1]["content"]
+    assert "professional role: Manager" in user
+    assert "Adversarial technique:" in user
+
+
+def test_build_prompt_with_frame_uses_slot_labels():
+    from refiner.frames import FRAMES
+    frame = FRAMES["delegated_authority"]
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Agent",
+            cco_class_label="Agent",
+            bfo_category="Agent",
+            sampled_uri="http://example.org/CMO",
+            sampled_label="Chief Medical Officer",
+            source_ontology="CCO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("PHI", "About PHI", "Data Leak", axes, frame=frame)
+    user = messages[1]["content"]
+    assert "authority figure: Chief Medical Officer" in user
+
+
+def test_build_prompt_with_frame_empty_bfo_falls_back():
+    from refiner.frames import FRAMES
+    frame = FRAMES["pretexting"]
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/X",
+            cco_class_label="X",
+            bfo_category="",
+            sampled_uri="http://example.org/Y",
+            sampled_label="Y Label",
+            source_ontology="CCO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("P", "D", "R", axes, frame=frame)
+    user = messages[1]["content"]
+    # No slot label, should fall back to plain format
+    assert "Y Label (a type of X)" in user
+    # But technique block should still appear
+    assert "Adversarial technique:" in user
+
+
+def test_build_prompt_with_frame_includes_examples():
+    from refiner.frames import FRAMES
+    frame = FRAMES["analytical_reframing"]
+    messages = build_prompt("P", "D", "R", [], frame=frame)
+    user = messages[1]["content"]
+    assert "Examples of effective prompts" in user
+
+
+def test_build_prompt_without_frame_backward_compat():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            roles=["agent"],
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_prompt("Fraud", "About fraud", "Financial Fraud", axes, frame=None)
+    user = messages[1]["content"]
+    assert "agent" in user
+    assert "Adversarial technique:" not in user
+
+
+def test_emit_writes_technique_metadata(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=out_path, seed=42)
+    lines = out_path.read_text().strip().split("\n")
+    for line in lines:
+        row = json.loads(line)
+        assert "technique" in row
+        assert "technique_description" in row
+        assert row["technique"] in {
+            "pretexting", "narrative_framing", "analytical_reframing",
+            "delegated_authority", "comparative_benchmark",
+        }
+        assert len(row["technique_description"]) > 50
+
+
+def test_emit_with_custom_technique_weights(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    weights = {"pretexting": 0.0, "narrative_framing": 0.0,
+               "analytical_reframing": 0.0, "delegated_authority": 0.0,
+               "comparative_benchmark": 1.0}
+    emit(tmp_path, pol_path, samples_per_risk=5, output_path=out_path, seed=42,
+         technique_weights=weights)
+    lines = out_path.read_text().strip().split("\n")
+    for line in lines:
+        row = json.loads(line)
+        assert row["technique"] == "comparative_benchmark"
+
+
 def test_sample_axes_caps_at_combinatorial_space():
     """When space is smaller than n, return at most space samples."""
     profile = DomainContextProfile(

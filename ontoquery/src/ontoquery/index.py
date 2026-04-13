@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+from collections import defaultdict
 from pathlib import Path
 import chromadb
 
@@ -47,6 +50,72 @@ def _parse_results(results: dict, domain: str | None = None) -> list[dict]:
     return output
 
 
+def build_structural_context(
+    projected_graph, *, max_children: int = 8, max_properties: int = 6
+) -> dict[str, str]:
+    """Build a structural context string for each class from projected edges.
+
+    Returns {uri: context_string} where context_string summarizes the class's
+    structural neighborhood (parents, children, properties, equivalences).
+
+    Caps children and property targets to avoid blowing up document length for
+    broad parent classes (e.g. OBO disease hierarchies with 2000+ subclasses).
+    """
+    from ontoquery.owl2vec import SUBCLASS_OF, SUPERCLASS_OF
+
+    # Collect edges by subject
+    parents: dict[str, list[str]] = defaultdict(list)
+    children: dict[str, list[str]] = defaultdict(list)
+    properties: dict[str, list[tuple[str, str]]] = defaultdict(list)
+
+    for s, p, o in projected_graph.edges:
+        if p == SUBCLASS_OF:
+            parents[s].append(o)
+        elif p == SUPERCLASS_OF:
+            children[s].append(o)
+        else:
+            properties[s].append((p, o))
+
+    # Build label lookup from literal edges
+    labels: dict[str, str] = {}
+    label_pred = "http://www.w3.org/2000/01/rdf-schema#label"
+    for s, p, o in projected_graph.literal_edges:
+        if p == label_pred and s not in labels:
+            labels[s] = o
+
+    def _label(uri: str) -> str:
+        return labels.get(uri, uri.rsplit("#", 1)[-1].rsplit("/", 1)[-1])
+
+    def _prop_label(uri: str) -> str:
+        return uri.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+
+    def _cap(items: list[str], limit: int) -> str:
+        if len(items) <= limit:
+            return ", ".join(items)
+        return ", ".join(items[:limit]) + f" (+{len(items) - limit} more)"
+
+    result: dict[str, str] = {}
+    for uri in projected_graph.classes:
+        parts: list[str] = []
+        if uri in parents:
+            parent_labels = sorted(set(_label(p) for p in parents[uri]))
+            parts.append(f"SubClassOf: {_cap(parent_labels, max_children)}")
+        if uri in children:
+            child_labels = sorted(set(_label(c) for c in children[uri]))
+            parts.append(f"HasSubClass: {_cap(child_labels, max_children)}")
+        if uri in properties:
+            prop_groups: dict[str, list[str]] = defaultdict(list)
+            for prop_uri, target_uri in properties[uri]:
+                target_label = _label(target_uri)
+                if target_label not in prop_groups[_prop_label(prop_uri)]:
+                    prop_groups[_prop_label(prop_uri)].append(target_label)
+            for prop_name, targets in sorted(prop_groups.items())[:max_properties]:
+                parts.append(f"{prop_name}: {_cap(targets, max_children)}")
+        if parts:
+            result[uri] = ". ".join(parts)
+    return result
+
+
 class OntologyIndex:
     def __init__(self, chroma_dir: Path):
         self._chroma_dir = Path(chroma_dir)
@@ -68,7 +137,12 @@ class OntologyIndex:
             self._collection = self._client.get_collection(name=COLLECTION_NAME)
         return self._collection
 
-    def index_classes(self, classes: list[dict], source_dir: str) -> None:
+    def index_classes(
+        self,
+        classes: list[dict],
+        source_dir: str,
+        structural_context: dict[str, str] | None = None,
+    ) -> None:
         """Index extracted classes into unified ChromaDB collection. Overwrites existing."""
 
         collection = self._get_or_create_collection(
@@ -77,9 +151,14 @@ class OntologyIndex:
         if not classes:
             return
 
-        self._upsert_batch(collection, classes)
+        self._upsert_batch(collection, classes, structural_context)
 
-    def index_domain_classes(self, classes: list[dict], source_dir: str) -> dict[str, int]:
+    def index_domain_classes(
+        self,
+        classes: list[dict],
+        source_dir: str,
+        structural_context: dict[str, str] | None = None,
+    ) -> dict[str, int]:
         """Index classes into per-domain ChromaDB collections. Returns domain -> count."""
         by_domain: dict[str, list[dict]] = {}
         for cls in classes:
@@ -97,12 +176,17 @@ class OntologyIndex:
                 name=col_name,
                 metadata={"source_dir": source_dir, "hnsw:space": "cosine", "domain": domain},
             )
-            self._upsert_batch(collection, domain_classes)
+            self._upsert_batch(collection, domain_classes, structural_context)
             counts[domain] = len(domain_classes)
 
         return counts
 
-    def _upsert_batch(self, collection: chromadb.Collection, classes: list[dict]) -> None:
+    def _upsert_batch(
+        self,
+        collection: chromadb.Collection,
+        classes: list[dict],
+        structural_context: dict[str, str] | None = None,
+    ) -> None:
         ids = []
         documents = []
         metadatas = []
@@ -113,6 +197,8 @@ class OntologyIndex:
             source_file = cls.get("source_file", "")
 
             doc = f"{label}: {definition}" if definition else label
+            if structural_context and uri in structural_context:
+                doc = f"{doc}. {structural_context[uri]}"
             ids.append(uri)
             documents.append(doc)
             metadatas.append({

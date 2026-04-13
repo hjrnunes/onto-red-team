@@ -134,13 +134,20 @@ def build_refine_cmd(
     return cmd, "refiner"
 
 
-def build_emit_cmd(*, run_dir: Path, policy_file: Path, samples_per_risk: int) -> tuple[list[str], str]:
-    return [
+def build_emit_cmd(
+    *, run_dir: Path, policy_file: Path, samples_per_risk: int,
+    technique_weights: dict[str, float] | None = None,
+) -> tuple[list[str], str]:
+    cmd = [
         "uv", "run", "refiner", "emit", str(run_dir),
         "--policies", str(policy_file),
         "--samples-per-risk", str(samples_per_risk),
         "--output", str(run_dir / "dataset.jsonl"),
-    ], "refiner"
+    ]
+    if technique_weights:
+        import json as _json
+        cmd.extend(["--technique-weights", _json.dumps(technique_weights)])
+    return cmd, "refiner"
 
 
 def build_generate_cmd(
@@ -350,6 +357,7 @@ def _run_policy(
     policy_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
     cmd, cwd = build_emit_cmd(
         run_dir=run_dir, policy_file=policy_file, samples_per_risk=cfg["samples_per_risk"],
+        technique_weights=cfg.get("technique_weights"),
     )
     _run_stage(cmd, cwd, **stage_kw)
 

@@ -34,12 +34,23 @@ def index(
     all_classes = {c["uri"]: c for c in backend.extract_classes()}
     classes = list(all_classes.values())
 
+    # Project ontology structure for context-augmented embeddings
+    from ontoquery.owl2vec import project_ontology
+    from ontoquery.index import build_structural_context
+    projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
+    structural_context = build_structural_context(projected)
+    typer.echo(
+        f"Projected {projected.edge_count()} structural + "
+        f"{projected.literal_edge_count()} literal edges, "
+        f"context for {len(structural_context)} classes"
+    )
+
     source_dirs = [str(d.resolve()) for d in directories]
     idx = OntologyIndex(chroma)
-    idx.index_classes(classes, source_dir=json.dumps(source_dirs))
+    idx.index_classes(classes, source_dir=json.dumps(source_dirs), structural_context=structural_context)
 
     # Per-domain collections for domain-aware search
-    domain_counts = idx.index_domain_classes(classes, source_dir=json.dumps(source_dirs))
+    domain_counts = idx.index_domain_classes(classes, source_dir=json.dumps(source_dirs), structural_context=structural_context)
 
     typer.echo(f"{len(files)} files parsed, {len(classes)} classes indexed")
     for domain, count in sorted(domain_counts.items()):

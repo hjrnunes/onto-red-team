@@ -1,6 +1,6 @@
 import pytest
 from pathlib import Path
-from refiner.ontology_seeds import SSSOMMapping, SSSOMIndex, categorize_vocabulary, resolve_seeds
+from refiner.ontology_seeds import SSSOMMapping, SSSOMIndex, categorize_vocabulary, resolve_seeds, load_bfo_fallbacks
 
 
 SAMPLE_TSV = """\
@@ -160,3 +160,34 @@ eu-aiact:AISubject\tAI Subject\tskos:relatedMatch\tcco:Person\tPerson\tsemapv:Ma
         )
         uris = [s["object_id"] for s in onto_seeds]
         assert len(uris) == len(set(uris))
+
+
+BFO_TSV = """\
+# curie_map:
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+# mapping_set_id: ontology-to-bfo
+subject_id\tsubject_label\tpredicate_id\tobject_id\tobject_label\tmapping_justification\tconfidence
+http://example.org/cso#FinancialFraud\tFinancial Fraud\tskos:broadMatch\tAct\tAct\tsemapv:ManualMappingCuration\t0.90
+http://example.org/cso#DataExposure\tData Exposure\tskos:broadMatch\tInformationContentEntity\tInformation Content Entity\tsemapv:ManualMappingCuration\t0.90
+http://example.org/lkif#Regulation\tRegulation\tskos:broadMatch\tGenericallyDependentContinuant\tGenerically Dependent Continuant\tsemapv:ManualMappingCuration\t0.80
+"""
+
+
+class TestLoadBfoFallbacks:
+    def test_loads_uri_to_category_mapping(self, tmp_path):
+        p = tmp_path / "bfo.sssom.tsv"
+        p.write_text(BFO_TSV)
+        result = load_bfo_fallbacks(p)
+        assert result["http://example.org/cso#FinancialFraud"] == "Act"
+        assert result["http://example.org/cso#DataExposure"] == "InformationContentEntity"
+        assert result["http://example.org/lkif#Regulation"] == "GenericallyDependentContinuant"
+        assert len(result) == 3
+
+    def test_loads_real_file(self):
+        real_path = Path(__file__).parent.parent / "data" / "ontology-to-bfo.sssom.tsv"
+        if not real_path.exists():
+            pytest.skip("ontology-to-bfo.sssom.tsv not found")
+        result = load_bfo_fallbacks(real_path)
+        assert len(result) > 40
+        assert result["http://taxonomy-refiner.io/ontologies/cso#FinancialFraud"] == "Act"

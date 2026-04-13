@@ -3094,13 +3094,15 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "chromadb", specifier = ">=0.5" },
+    { name = "gensim", marker = "extra == 'dev'", specifier = ">=4.3.0" },
+    { name = "gensim", marker = "extra == 'embeddings'", specifier = ">=4.3.0" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.0" },
     { name = "pyoxigraph", specifier = ">=0.4" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=8.0" },
     { name = "rdflib", specifier = ">=7.0" },
     { name = "typer", specifier = ">=0.12" },
 ]
-provides-extras = ["dev"]
+provides-extras = ["embeddings", "dev"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pytest", specifier = ">=8.0" }]

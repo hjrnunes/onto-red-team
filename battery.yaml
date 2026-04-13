@@ -8,6 +8,15 @@ nexus_chroma_dir: nexus-mcp/.chroma
 samples_per_risk: 15
 #tracking_uri: https://mlflow.taxonomy-refiner.orb.local
 
+# Adversarial technique frame weights for emit stage.
+# Default: uniform distribution across all 5 frames.
+# technique_weights:
+#   pretexting: 0.35
+#   narrative_framing: 0.15
+#   analytical_reframing: 0.25
+#   delegated_authority: 0.15
+#   comparative_benchmark: 0.10
+
 policies:
   - swb
   - generic

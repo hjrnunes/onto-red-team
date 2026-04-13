@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>__REPORT_TITLE__</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script defer src="https://unpkg.com/@alpinejs/collapse@3.x.x/dist/cdn.min.js"></script>
   <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <style>
@@ -141,7 +142,7 @@
           <span class="tip-icon tip" data-tip="Each pipeline stage emits diagnostic events as it runs. Green counts are healthy; amber/red indicate quality concerns or fallbacks. Expand each card to see stage-specific diagnostics.">i</span>
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <template x-for="[stage, info] in Object.entries(data.stage_quality || {})" :key="stage">
+          <template x-for="[stage, info] in Object.entries(data.stage_quality || {}).filter(([k]) => !['candidate_expansion','query_source_contribution'].includes(k))" :key="stage">
             <div class="border border-gray-200 rounded-lg p-4">
               <h3 class="text-sm font-semibold text-gray-700 mb-2" x-text="stage"></h3>
               <dl class="space-y-1 text-sm">
@@ -416,7 +417,7 @@
           </div>
 
           <!-- Enumeration Domain Mismatch -->
-          <div x-show="data.coverage?.enumeration_domain_mismatch" class="border border-gray-200 rounded-lg p-4">
+          <div x-show="data.coverage?.enumeration_domain_mismatch && !(data.coverage?.enumeration_domain_mismatch?.by_mismatched_ontology?.generated)" class="border border-gray-200 rounded-lg p-4">
             <h3 class="text-sm font-semibold text-gray-700 mb-2">
               <span class="tip" data-tip="Enumerations sourced from ontology domains that weren't selected as relevant for this policy. For example, financial ontology terms in a healthcare policy run.">Enumeration Domain Mismatch</span>
               <span class="tip-icon tip" data-tip="Some mismatches are normal (always-included ontologies like CCO contribute broadly). A high rate (>10%) from unexpected domains suggests domain filtering may need tuning.">i</span>
@@ -444,6 +445,17 @@
                 </div>
               </template>
             </div>
+          </div>
+          <!-- Enumeration Domain Mismatch: all generated (informational) -->
+          <div x-show="data.coverage?.enumeration_domain_mismatch?.by_mismatched_ontology?.generated" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="All enumerations in this run are LLM-generated rather than sourced from ontology instances. Domain mismatch is not applicable.">Enumeration Source</span>
+            </h3>
+            <div class="text-center">
+              <p class="text-2xl font-bold text-blue-600">100%</p>
+              <p class="text-xs text-gray-400">LLM-generated</p>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">All enumerations are LLM-generated with policy context. Domain mismatch metric is not applicable.</p>
           </div>
 
           <!-- Sibling Relevance -->
@@ -511,10 +523,23 @@
             </div>
           </div>
 
-          <!-- Role & Relevance Distribution -->
+          <!-- Technique & Relevance Distribution -->
           <div class="border border-gray-200 rounded-lg p-4">
             <h3 class="text-sm font-semibold text-gray-700 mb-2">Distributions</h3>
-            <div class="mb-3">
+            <!-- Technique distribution (shown when available) -->
+            <div x-show="Object.keys(data.generation_metrics?.technique_distribution || {}).length" class="mb-3">
+              <p class="text-xs text-gray-400 uppercase mb-1"><span class="tip" data-tip="Adversarial technique frames used to guide prompt generation. Each technique represents a different social engineering strategy: pretexting (professional identity), narrative_framing (case study/fiction), analytical_reframing (research/audit), delegated_authority (urgency/chain of command), comparative_benchmark (test data/calibration).">Technique</span></p>
+              <div class="flex flex-wrap gap-2">
+                <template x-for="[tech, count] in Object.entries(data.generation_metrics?.technique_distribution || {})" :key="tech">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-indigo-100 text-indigo-800">
+                    <span x-text="tech"></span>
+                    <span class="font-mono font-semibold" x-text="count"></span>
+                  </span>
+                </template>
+              </div>
+            </div>
+            <!-- Role distribution (shown when available, legacy) -->
+            <div x-show="Object.keys(data.generation_metrics?.role_distribution || {}).length" class="mb-3">
               <p class="text-xs text-gray-400 uppercase mb-1"><span class="tip" data-tip="Semantic roles assigned to axes: agent (who acts), object (what is acted upon), instrument (tool/method used), location (where it happens), temporal (when it happens). Derived from ontology class hierarchy.">Role</span></p>
               <div class="flex flex-wrap gap-2">
                 <template x-for="[role, count] in Object.entries(data.generation_metrics?.role_distribution || {})" :key="role">
@@ -535,6 +560,36 @@
                     <span x-text="rel"></span>
                     <span class="font-mono font-semibold" x-text="count"></span>
                   </span>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Technique Diversity -->
+          <div x-show="data.generation_metrics?.technique_diversity" class="border border-gray-200 rounded-lg p-4">
+            <h3 class="text-sm font-semibold text-gray-700 mb-2">
+              <span class="tip" data-tip="Shannon entropy of technique distribution. Normalized entropy of 1.0 means perfectly uniform selection across all techniques. Per-risk count shows how many distinct techniques each risk received.">Technique Diversity</span>
+              <span class="tip-icon tip" data-tip="Higher entropy = more uniform technique coverage. If a risk only receives 1-2 techniques, its attack surface coverage is narrow.">i</span>
+            </h3>
+            <div class="flex gap-6 mb-3">
+              <div>
+                <p class="text-2xl font-bold" :class="(data.generation_metrics?.technique_diversity?.technique_normalized_entropy || 0) > 0.9 ? 'text-green-600' : (data.generation_metrics?.technique_diversity?.technique_normalized_entropy || 0) > 0.7 ? 'text-amber-600' : 'text-red-600'"
+                  x-text="data.generation_metrics?.technique_diversity?.technique_normalized_entropy || 0"></p>
+                <p class="text-xs text-gray-400">normalized entropy</p>
+              </div>
+              <div>
+                <p class="text-2xl font-bold text-gray-600" x-text="(data.generation_metrics?.technique_diversity?.technique_entropy || 0).toFixed(2)"></p>
+                <p class="text-xs text-gray-400">Shannon entropy (bits)</p>
+              </div>
+            </div>
+            <div x-show="Object.keys(data.generation_metrics?.technique_diversity?.per_risk_technique_count || {}).length">
+              <p class="text-xs text-gray-400 uppercase mb-1">Techniques per risk</p>
+              <div class="space-y-1 max-h-48 overflow-y-auto">
+                <template x-for="[rid, count] in Object.entries(data.generation_metrics?.technique_diversity?.per_risk_technique_count || {}).sort((a,b) => a[1] - b[1])" :key="rid">
+                  <div class="flex justify-between text-xs bg-gray-50 rounded px-2 py-1">
+                    <span class="font-mono truncate mr-2" x-text="rid"></span>
+                    <span class="font-semibold" :class="count >= 4 ? 'text-green-600' : count >= 2 ? 'text-amber-600' : 'text-red-600'" x-text="count"></span>
+                  </div>
                 </template>
               </div>
             </div>
@@ -619,9 +674,13 @@
             <p class="text-2xl font-bold text-teal-600" x-text="data.prompt_metrics?.domain_term_hit_rate || 0"></p>
             <p class="text-xs text-gray-400">Domain Term Hit Rate</p>
           </div>
-          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Prompts containing obvious jailbreak patterns ('hypothetically', 'for educational purposes', 'pretend you are', etc.). Good red-team prompts should have zero red flags — they should be indistinguishable from legitimate requests.">
-            <p class="text-2xl font-bold" :class="(data.prompt_metrics?.red_flag_count || 0) > 0 ? 'text-red-600' : 'text-green-600'" x-text="data.prompt_metrics?.red_flag_count || 0"></p>
-            <p class="text-xs text-gray-400">Red Flags</p>
+          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Hard red flags: overt jailbreak patterns ('pretend you are', 'ignore previous instructions', 'jailbreak'). These are always problematic regardless of technique.">
+            <p class="text-2xl font-bold" :class="(data.prompt_metrics?.red_flag_hard || 0) > 0 ? 'text-red-600' : 'text-green-600'" x-text="data.prompt_metrics?.red_flag_hard || 0"></p>
+            <p class="text-xs text-gray-400">Hard Red Flags</p>
+          </div>
+          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Soft red flags: hedging language ('hypothetically', 'for educational purposes', 'as a test'). These may be legitimate for narrative_framing, analytical_reframing, and comparative_benchmark techniques, but indicate weak pretexting or delegated_authority prompts.">
+            <p class="text-2xl font-bold" :class="(data.prompt_metrics?.red_flag_soft || 0) > 0 ? 'text-amber-600' : 'text-green-600'" x-text="data.prompt_metrics?.red_flag_soft || 0"></p>
+            <p class="text-xs text-gray-400">Soft Red Flags</p>
           </div>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -867,6 +926,46 @@
   </div>
 
 
+  <!-- ═══════════════ TAB: VISUALIZATIONS ═══════════════ -->
+  <div x-show="tab === 'visualizations'">
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+      <!-- C1: Risk-Ontology Bipartite Graph -->
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+          <span class="tip" data-tip="Bipartite network showing how risks (left) connect to ontology axis classes (right). Node size reflects prompt count (risks) or usage count (axes). Colors indicate risk framework and source ontology.">Risk–Ontology Bipartite Graph</span>
+        </h2>
+        <p class="text-xs text-gray-400 mb-3">Drag nodes to rearrange. Click a node to highlight its connections. Click background to reset.</p>
+        <div id="viz-bipartite" class="w-full" style="min-height: 500px;"></div>
+        <div id="legend-bipartite" class="mt-3"></div>
+      </section>
+
+      <!-- C2: Technique × Risk Heatmap -->
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+          <span class="tip" data-tip="Heatmap showing prompt count for each technique × risk combination. Rows are grouped by policy concept. Click a cell to filter the Dataset Explorer.">Technique × Risk Heatmap</span>
+        </h2>
+        <p class="text-xs text-gray-400 mb-3">Click any cell to jump to the Dataset Explorer filtered by that technique and risk.</p>
+        <div id="viz-heatmap" class="w-full overflow-x-auto"></div>
+      </section>
+
+      <!-- C3: Prompt Similarity Network -->
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-1">
+          <span class="tip" data-tip="Network graph where nodes are prompts and edges connect semantically similar pairs (TF-IDF cosine similarity above threshold). Clusters indicate redundancy. Colors show policy concept.">Prompt Similarity Network</span>
+        </h2>
+        <p class="text-xs text-gray-400 mb-3">Drag nodes to rearrange. Scroll to zoom. Click a node to open prompt details.</p>
+        <div id="viz-similarity" class="w-full" style="min-height: 500px;"></div>
+        <div id="legend-similarity" class="mt-3"></div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- Shared D3 tooltip -->
+  <div id="d3-tooltip" class="fixed z-50 bg-gray-900 text-gray-50 text-xs px-3 py-2 rounded-lg shadow-lg pointer-events-none opacity-0 transition-opacity duration-150" style="max-width: 320px;"></div>
+
+
   <!-- ═══════════════ TAB: DATASET EXPLORER ═══════════════ -->
   <div x-show="tab === 'explorer'">
 
@@ -885,7 +984,7 @@
             <li><strong>Policy concept</strong> (purple badge) — which policy rule this prompt targets</li>
             <li><strong>Risk name</strong> (amber badge) — the AI safety risk this prompt tests</li>
             <li><strong>Fidelity badge</strong> — whether the LLM used the domain context it was given: <span class="text-green-700">full</span> (all terms used), <span class="text-yellow-700">partial</span> (some), <span class="text-red-700">improv</span> (none)</li>
-            <li><strong>Warning icon</strong> — red flag (obvious jailbreak pattern) or gear icon (ontology jargon leaked into prompt)</li>
+            <li><strong>Warning icon</strong> — <span class="text-red-700">red &#x26A0;</span> hard red flag (overt jailbreak pattern), <span class="text-amber-700">amber &#x26A0;</span> soft red flag (hedging language, may be technique-appropriate), or gear icon (ontology jargon leaked into prompt)</li>
             <li><strong>Axis tags</strong> (bottom) — the ontology concepts sampled for this prompt's scenario, with their semantic roles</li>
           </ul>
           <p><strong>Filters</strong> (sidebar) let you narrow by policy, risk, quality metrics, or keyword search within prompt text.</p>
@@ -933,6 +1032,15 @@
             </select>
           </div>
           <div>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1"><span class="tip" data-tip="Adversarial technique frame used for this prompt. Each technique represents a different social engineering strategy.">Technique</span></label>
+            <select x-model="filters.technique" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+              <option value="">All</option>
+              <template x-for="v in uniqueValues('technique')" :key="v">
+                <option :value="v" x-text="v"></option>
+              </template>
+            </select>
+          </div>
+          <div>
             <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Search Prompts</label>
             <input type="text" x-model="searchQuery" placeholder="keyword..." class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500" />
           </div>
@@ -966,7 +1074,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Relevance Profile</label>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1"><span class="tip" data-tip="Filter by the relevance scores of sampled axes. 'Mostly High' = over half the axes are high-relevance. 'Mostly Low' = over half are low-relevance.">Axis Relevance</span></label>
             <select x-model="filters.relevance" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="">Any</option>
               <option value="mostly_high">Mostly High</option>
@@ -974,7 +1082,7 @@
             </select>
           </div>
           <div>
-            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1">Min Roles</label>
+            <label class="block text-xs font-semibold text-gray-500 uppercase mb-1"><span class="tip" data-tip="Filter by number of sampled axes (domain context dimensions) used in each prompt.">Min Axes</span></label>
             <select x-model="filters.minRoles" class="w-full text-sm border border-gray-300 rounded-md px-2 py-1.5 focus:outline-none focus:ring-2 focus:ring-indigo-500">
               <option value="">Any</option>
               <option value="2">2+</option>
@@ -1001,7 +1109,8 @@
           <span class="px-2 py-1 rounded bg-green-100 text-green-800"><span class="font-semibold" x-text="qualitySummary.full"></span> full</span>
           <span class="px-2 py-1 rounded bg-yellow-100 text-yellow-800"><span class="font-semibold" x-text="qualitySummary.partial"></span> partial</span>
           <span class="px-2 py-1 rounded bg-red-100 text-red-800"><span class="font-semibold" x-text="qualitySummary.improvised"></span> improvised</span>
-          <span x-show="qualitySummary.redFlags > 0" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200"><span class="font-semibold" x-text="qualitySummary.redFlags"></span> red flags</span>
+          <span x-show="qualitySummary.hardRedFlags > 0" class="px-2 py-1 rounded bg-red-50 text-red-600 border border-red-200"><span class="font-semibold" x-text="qualitySummary.hardRedFlags"></span> hard red flags</span>
+          <span x-show="qualitySummary.softRedFlags > 0" class="px-2 py-1 rounded bg-amber-50 text-amber-600 border border-amber-200"><span class="font-semibold" x-text="qualitySummary.softRedFlags"></span> soft red flags</span>
           <span x-show="qualitySummary.jargon > 0" class="px-2 py-1 rounded bg-orange-50 text-orange-600 border border-orange-200"><span class="font-semibold" x-text="qualitySummary.jargon"></span> jargon leaks</span>
           <span class="px-2 py-1 rounded bg-gray-200 text-gray-700">avg <span class="font-semibold" x-text="qualitySummary.avgLength"></span> words</span>
         </div>
@@ -1014,10 +1123,12 @@
                   <span class="text-[10px] font-mono text-gray-400 leading-none" x-text="'#' + record._index"></span>
                   <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="record.policy_concept"></span>
                   <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-800" x-text="record.risk_name"></span>
+                  <span x-show="record.technique" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-violet-100 text-violet-700" x-text="record.technique"></span>
                 </div>
                 <div class="flex items-center gap-1 shrink-0">
                   <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold" :class="fidelityBadge(record._metrics.fidelityClass).cls" x-text="fidelityBadge(record._metrics.fidelityClass).label"></span>
-                  <span x-show="record._metrics.hasRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">&#x26A0;</span>
+                  <span x-show="record._metrics.hasHardRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700" title="Hard red flag">&#x26A0;</span>
+                  <span x-show="record._metrics.hasSoftRedFlag && !record._metrics.hasHardRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700" title="Soft red flag">&#x26A0;</span>
                   <span x-show="record._metrics.hasJargon" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700">&#x2699;</span>
                 </div>
               </div>
@@ -1422,8 +1533,10 @@
           <div x-show="(policy?.named_entities || []).length">
             <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="Specific names (companies, products, regulations) extracted from the policy. Used to ground generated prompts in the organization's actual context.">Named Entities</p>
             <div class="flex flex-wrap gap-1">
-              <template x-for="e in (policy?.named_entities || [])" :key="e">
-                <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800" x-text="e"></span>
+              <template x-for="e in (policy?.named_entities || [])" :key="typeof e === 'object' ? e.name : e">
+                <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800 tip"
+                  :data-tip="typeof e === 'object' && e.role ? e.role : ''"
+                  x-text="typeof e === 'object' ? e.name : e"></span>
               </template>
             </div>
           </div>
@@ -1546,19 +1659,20 @@
               <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="selectedRecord?._metrics?.wordCount"></span> words</p>
             </div>
             <div>
-              <p class="text-[10px] text-gray-400 uppercase">Role Diversity</p>
-              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="selectedRecord?._metrics?.roleCount"></span> distinct role(s)</p>
+              <p class="text-[10px] text-gray-400 uppercase">Axes</p>
+              <p class="text-sm text-gray-800 mt-0.5"><span class="font-semibold" x-text="selectedRecord?._metrics?.axisCount"></span> sampled axis/axes</p>
             </div>
             <div>
               <p class="text-[10px] text-gray-400 uppercase">Quality Issues</p>
               <div class="flex flex-wrap gap-1 mt-0.5">
-                <span x-show="selectedRecord?._metrics?.hasRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">Red flag</span>
+                <span x-show="selectedRecord?._metrics?.hasHardRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-100 text-red-700">Hard red flag</span>
+                <span x-show="selectedRecord?._metrics?.hasSoftRedFlag" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-100 text-amber-700">Soft red flag</span>
                 <span x-show="selectedRecord?._metrics?.hasJargon" class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-orange-100 text-orange-700">Jargon leak</span>
                 <span x-show="!selectedRecord?._metrics?.hasRedFlag && !selectedRecord?._metrics?.hasJargon" class="text-xs text-green-600">None</span>
               </div>
             </div>
             <div>
-              <p class="text-[10px] text-gray-400 uppercase">Relevance Profile</p>
+              <p class="text-[10px] text-gray-400 uppercase">Axis Relevance</p>
               <div class="flex items-center gap-2 mt-0.5">
                 <template x-for="level in ['high', 'medium', 'low']" :key="level">
                   <span x-show="(selectedRecord?._metrics?.relevanceProfile || {})[level] > 0" class="inline-flex items-center gap-0.5 text-xs">
@@ -1704,6 +1818,8 @@
 
 // --- Quality metric constants ---
 
+const HARD_RED_FLAG_RE = /\bI want to hack\b|\bhelp me attack\b|\bhow to exploit\b|\bpretend you are\b|\bignore previous instructions\b|\bjailbreak\b|\bwhat if someone wanted to\b|\basking for a friend\b/i;
+const SOFT_RED_FLAG_RE = /\bhypothetically\b|\bin theory\b|\btheoretically\b|\bfor educational purposes\b|\bfor research purposes\b|\bfor academic purposes\b|\bas a test\b|\bjust testing\b|\bthis is a test\b/i;
 const RED_FLAG_RE = /\bhypothetically\b|\bin theory\b|\btheoretically\b|\bfor educational purposes\b|\bfor research purposes\b|\bfor academic purposes\b|\bas a test\b|\bjust testing\b|\bthis is a test\b|\bI want to hack\b|\bhelp me attack\b|\bhow to exploit\b|\bpretend you are\b|\bignore previous instructions\b|\bjailbreak\b|\bwhat if someone wanted to\b|\basking for a friend\b/i;
 const JARGON_RE = /\bAct of [A-Z]\w+\b|\b\w+ Artifact Function\b|\b[A-Z][a-z]+(?:[A-Z][a-z]+){2,}\b|\bAE\b(?!\s+suffix)/;
 const AXIS_STOPWORDS = new Set(['a','an','the','of','in','on','at','to','for','and','or','is','by','act','function']);
@@ -1741,7 +1857,9 @@ function computeMetrics(record) {
   }
   const fidelity = axes.length > 0 ? matched / axes.length : 1;
   const fidelityClass = fidelity === 1 ? 'full' : fidelity === 0 ? 'improvised' : 'partial';
-  const hasRedFlag = prompt ? RED_FLAG_RE.test(prompt) : false;
+  const hasHardRedFlag = prompt ? HARD_RED_FLAG_RE.test(prompt) : false;
+  const hasSoftRedFlag = prompt ? SOFT_RED_FLAG_RE.test(prompt) : false;
+  const hasRedFlag = hasHardRedFlag || hasSoftRedFlag;
   const hasJargon = prompt ? JARGON_RE.test(prompt) : false;
   const roles = new Set();
   for (const sa of axes) for (const r of (sa.roles || [])) roles.add(r);
@@ -1761,12 +1879,445 @@ function computeMetrics(record) {
       if (enumMatch && enumMatch.provenance === 'sibling') sibCount++;
     }
   }
-  return { fidelity, fidelityClass, hasRedFlag, hasJargon, wordCount: words.length, roleCount: roles.size, relevanceProfile, sourceOntologies: [...ontSet].sort(), namedEntities, siblingFraction: totalSampled > 0 ? sibCount / totalSampled : 0 };
+  return { fidelity, fidelityClass, hasRedFlag, hasHardRedFlag, hasSoftRedFlag, hasJargon, wordCount: words.length, roleCount: roles.size, axisCount: axes.length, relevanceProfile, sourceOntologies: [...ontSet].sort(), namedEntities, siblingFraction: totalSampled > 0 ? sibCount / totalSampled : 0 };
 }
 
 function formatMessages(messages) {
   if (!messages || !Array.isArray(messages)) return '';
   return messages.map(m => '[' + m.role + ']\n' + m.content).join('\n\n');
+}
+
+// --- D3 Visualization helpers ---
+
+const d3Tooltip = {
+  show(event, html) {
+    const el = document.getElementById('d3-tooltip');
+    el.innerHTML = html;
+    el.style.left = (event.pageX + 12) + 'px';
+    el.style.top = (event.pageY - 10) + 'px';
+    el.style.opacity = 1;
+  },
+  hide() {
+    document.getElementById('d3-tooltip').style.opacity = 0;
+  }
+};
+
+// Consistent color scales
+const FRAMEWORK_COLORS = {
+  'IBM AI Risk Atlas': '#6366f1',
+  'OWASP LLM Top 10': '#f59e0b',
+  'NIST AI RMF': '#10b981',
+  'MITRE ATLAS': '#ef4444',
+  'MIT AI Risk Repository': '#8b5cf6',
+  'AIR 2024': '#ec4899',
+};
+const ONTOLOGY_COLORS = {
+  'CCO': '#6366f1', 'Commons': '#8b5cf6', 'D3FEND': '#ef4444',
+  'CSO': '#f59e0b', 'LKIF': '#10b981', 'FIBO': '#06b6d4',
+  'OBO': '#ec4899', 'IOF': '#f97316', 'generated': '#9ca3af',
+};
+const POLICY_COLORS = d3.scaleOrdinal(d3.schemeTableau10);
+
+function frameworkColor(fw) {
+  return FRAMEWORK_COLORS[fw] || d3.schemeTableau10[Object.keys(FRAMEWORK_COLORS).length % 10];
+}
+function ontologyColor(ont) {
+  return ONTOLOGY_COLORS[ont] || '#9ca3af';
+}
+
+// --- C2: Technique × Risk Heatmap ---
+
+function renderHeatmap(selector, explorerRaw) {
+  const container = document.querySelector(selector);
+  if (!explorerRaw || !explorerRaw.length) {
+    container.innerHTML = '<p class="text-gray-400 text-center py-8">No data available for heatmap.</p>';
+    return;
+  }
+
+  const counts = {};
+  const techniques = new Set();
+  const risks = new Set();
+  const riskPolicy = {};
+
+  for (const r of explorerRaw) {
+    if (!r.prompt) continue;
+    const tech = r.technique || 'unknown';
+    const risk = r.risk_name || 'unknown';
+    techniques.add(tech);
+    risks.add(risk);
+    if (!counts[tech]) counts[tech] = {};
+    counts[tech][risk] = (counts[tech][risk] || 0) + 1;
+    if (!riskPolicy[risk]) riskPolicy[risk] = r.policy_concept || '';
+  }
+
+  if (!techniques.size || !risks.size) {
+    container.innerHTML = '<p class="text-gray-400 text-center py-8">No prompt data for heatmap.</p>';
+    return;
+  }
+
+  const sortedTechs = [...techniques].sort();
+  const sortedRisks = [...risks].sort((a, b) => {
+    const pA = riskPolicy[a] || '';
+    const pB = riskPolicy[b] || '';
+    return pA.localeCompare(pB) || a.localeCompare(b);
+  });
+
+  let maxCount = 0;
+  for (const tech of sortedTechs)
+    for (const risk of sortedRisks)
+      maxCount = Math.max(maxCount, (counts[tech] || {})[risk] || 0);
+
+  const margin = { top: 80, right: 20, bottom: 10, left: 260 };
+  const cellH = 22, cellW = Math.max(80, Math.min(140, (container.clientWidth - margin.left - margin.right) / sortedTechs.length));
+  const width = margin.left + cellW * sortedTechs.length + margin.right;
+  const height = margin.top + cellH * sortedRisks.length + margin.bottom;
+
+  const svg = d3.select(selector).append('svg')
+    .attr('width', width).attr('height', height);
+
+  const color = d3.scaleSequential(d3.interpolateBlues).domain([0, maxCount || 1]);
+  const x = d3.scaleBand().domain(sortedTechs).range([margin.left, margin.left + cellW * sortedTechs.length]).padding(0.04);
+  const y = d3.scaleBand().domain(sortedRisks).range([margin.top, margin.top + cellH * sortedRisks.length]).padding(0.04);
+
+  // Policy group separators
+  let prevPolicy = '';
+  for (let i = 0; i < sortedRisks.length; i++) {
+    const pc = riskPolicy[sortedRisks[i]] || '';
+    if (pc !== prevPolicy && i > 0) {
+      svg.append('line')
+        .attr('x1', margin.left).attr('x2', margin.left + cellW * sortedTechs.length)
+        .attr('y1', y(sortedRisks[i])).attr('y2', y(sortedRisks[i]))
+        .attr('stroke', '#9ca3af').attr('stroke-width', 1.5).attr('stroke-dasharray', '4,3');
+    }
+    prevPolicy = pc;
+  }
+
+  // Cells
+  for (const tech of sortedTechs) {
+    for (const risk of sortedRisks) {
+      const v = (counts[tech] || {})[risk] || 0;
+      svg.append('rect')
+        .attr('x', x(tech)).attr('y', y(risk))
+        .attr('width', x.bandwidth()).attr('height', y.bandwidth())
+        .attr('rx', 3)
+        .attr('fill', v > 0 ? color(v) : '#f3f4f6')
+        .attr('stroke', '#e5e7eb')
+        .style('cursor', v > 0 ? 'pointer' : 'default')
+        .on('mouseover', (event) => {
+          d3Tooltip.show(event, `<strong>${tech}</strong><br>${risk}<br>Prompts: <strong>${v}</strong><br><span class="text-gray-300">${riskPolicy[risk]}</span>`);
+        })
+        .on('mousemove', (event) => {
+          d3Tooltip.show(event, `<strong>${tech}</strong><br>${risk}<br>Prompts: <strong>${v}</strong><br><span class="text-gray-300">${riskPolicy[risk]}</span>`);
+        })
+        .on('mouseout', () => d3Tooltip.hide())
+        .on('click', () => {
+          if (v > 0) {
+            container.dispatchEvent(new CustomEvent('filter-explorer', { detail: { technique: tech, risk_name: risk }, bubbles: true }));
+          }
+        });
+      if (v > 0) {
+        svg.append('text')
+          .attr('x', x(tech) + x.bandwidth() / 2).attr('y', y(risk) + y.bandwidth() / 2)
+          .attr('text-anchor', 'middle').attr('dominant-baseline', 'central')
+          .attr('fill', v > maxCount * 0.6 ? '#fff' : '#374151')
+          .attr('font-size', '10px').attr('pointer-events', 'none')
+          .text(v);
+      }
+    }
+  }
+
+  // X axis labels (techniques)
+  svg.selectAll('.x-label')
+    .data(sortedTechs).enter().append('text')
+    .attr('x', d => x(d) + x.bandwidth() / 2).attr('y', margin.top - 8)
+    .attr('text-anchor', 'middle').attr('font-size', '11px').attr('fill', '#374151')
+    .text(d => d.replace(/_/g, ' '));
+
+  // Y axis labels (risks) with policy color dot
+  svg.selectAll('.y-label')
+    .data(sortedRisks).enter().append('text')
+    .attr('x', margin.left - 8).attr('y', d => y(d) + y.bandwidth() / 2)
+    .attr('text-anchor', 'end').attr('dominant-baseline', 'central')
+    .attr('font-size', '10px').attr('fill', '#374151')
+    .text(d => d.length > 38 ? d.slice(0, 36) + '...' : d);
+}
+
+// --- C1: Risk-Ontology Bipartite Graph ---
+
+function renderBipartiteGraph(selector, legendSelector, domainContext, explorerRaw) {
+  const container = document.querySelector(selector);
+  const profiles = domainContext?.profiles || [];
+  if (!profiles.length) {
+    container.innerHTML = '<p class="text-gray-400 text-center py-8">No domain context data available.</p>';
+    return;
+  }
+
+  // Build prompt counts per risk
+  const promptCounts = {};
+  for (const r of explorerRaw) {
+    if (r.prompt) promptCounts[r.risk_id] = (promptCounts[r.risk_id] || 0) + 1;
+  }
+
+  // Build nodes and edges
+  const riskNodes = [];
+  const axisMap = {};
+  const links = [];
+  const seenRisks = new Set();
+  const frameworks = new Set();
+  const ontologies = new Set();
+
+  for (const p of profiles) {
+    if (!seenRisks.has(p.risk_id)) {
+      seenRisks.add(p.risk_id);
+      const fw = p.risk_framework || 'unknown';
+      frameworks.add(fw);
+      riskNodes.push({
+        id: 'risk-' + p.risk_id,
+        label: p.risk_name || p.risk_id,
+        framework: fw,
+        policyConcept: p.policy_concept || '',
+        promptCount: promptCounts[p.risk_id] || 0,
+        type: 'risk',
+      });
+    }
+    for (const axis of (p.axes || [])) {
+      const axisId = 'axis-' + axis.cco_class_uri;
+      if (!axisMap[axisId]) {
+        const ontSet = new Set();
+        for (const en of (axis.enumerations || [])) ontSet.add(en.source_ontology || 'unknown');
+        const primaryOnt = [...ontSet][0] || 'unknown';
+        ontologies.add(primaryOnt);
+        axisMap[axisId] = {
+          id: axisId,
+          label: axis.cco_class_label || axis.cco_class_uri.split('/').pop(),
+          primaryOntology: primaryOnt,
+          riskCount: 0,
+          type: 'axis',
+        };
+      }
+      axisMap[axisId].riskCount++;
+      links.push({ source: 'risk-' + p.risk_id, target: axisId });
+    }
+  }
+
+  const axisNodes = Object.values(axisMap);
+  const nodes = [...riskNodes, ...axisNodes];
+
+  // Deduplicate links
+  const linkSet = new Set();
+  const uniqueLinks = [];
+  for (const l of links) {
+    const key = l.source + '|' + l.target;
+    if (!linkSet.has(key)) { linkSet.add(key); uniqueLinks.push(l); }
+  }
+
+  const width = container.clientWidth || 900;
+  const height = Math.max(500, nodes.length * 14);
+
+  const maxPrompts = Math.max(1, ...riskNodes.map(n => n.promptCount));
+  const maxRiskCount = Math.max(1, ...axisNodes.map(n => n.riskCount));
+  const riskRadius = d3.scaleSqrt().domain([0, maxPrompts]).range([6, 22]);
+  const axisRadius = d3.scaleSqrt().domain([0, maxRiskCount]).range([5, 16]);
+
+  const svg = d3.select(selector).append('svg')
+    .attr('width', width).attr('height', height);
+
+  const g = svg.append('g');
+
+  // Zoom
+  svg.call(d3.zoom().scaleExtent([0.3, 4]).on('zoom', (event) => {
+    g.attr('transform', event.transform);
+  }));
+
+  const simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(uniqueLinks).id(d => d.id).distance(90).strength(0.4))
+    .force('charge', d3.forceManyBody().strength(-180))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('x', d3.forceX().x(d => d.type === 'risk' ? width * 0.3 : width * 0.7).strength(0.15))
+    .force('collision', d3.forceCollide(d => (d.type === 'risk' ? riskRadius(d.promptCount) : axisRadius(d.riskCount)) + 3))
+    .alphaDecay(0.03);
+
+  const link = g.selectAll('.link')
+    .data(uniqueLinks).enter().append('line')
+    .attr('stroke', '#d1d5db').attr('stroke-width', 1).attr('stroke-opacity', 0.5);
+
+  const node = g.selectAll('.node')
+    .data(nodes).enter().append('circle')
+    .attr('r', d => d.type === 'risk' ? riskRadius(d.promptCount) : axisRadius(d.riskCount))
+    .attr('fill', d => d.type === 'risk' ? frameworkColor(d.framework) : ontologyColor(d.primaryOntology))
+    .attr('stroke', '#fff').attr('stroke-width', 1.5)
+    .style('cursor', 'pointer')
+    .on('mouseover', (event, d) => {
+      const info = d.type === 'risk'
+        ? `<strong>${d.label}</strong><br>Framework: ${d.framework}<br>Policy: ${d.policyConcept}<br>Prompts: ${d.promptCount}`
+        : `<strong>${d.label}</strong><br>Ontology: ${d.primaryOntology}<br>Used by ${d.riskCount} risk(s)`;
+      d3Tooltip.show(event, info);
+    })
+    .on('mousemove', (event, d) => {
+      const info = d.type === 'risk'
+        ? `<strong>${d.label}</strong><br>Framework: ${d.framework}<br>Policy: ${d.policyConcept}<br>Prompts: ${d.promptCount}`
+        : `<strong>${d.label}</strong><br>Ontology: ${d.primaryOntology}<br>Used by ${d.riskCount} risk(s)`;
+      d3Tooltip.show(event, info);
+    })
+    .on('mouseout', () => d3Tooltip.hide())
+    .on('click', (event, d) => {
+      const connected = new Set();
+      connected.add(d.id);
+      for (const l of uniqueLinks) {
+        const src = typeof l.source === 'object' ? l.source.id : l.source;
+        const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+        if (src === d.id) connected.add(tgt);
+        if (tgt === d.id) connected.add(src);
+      }
+      const isHighlighted = node.classed('highlighted');
+      if (isHighlighted) {
+        node.attr('opacity', 1).classed('highlighted', false);
+        link.attr('stroke-opacity', 0.5);
+        label.attr('opacity', 1);
+      } else {
+        node.attr('opacity', n => connected.has(n.id) ? 1 : 0.1).classed('highlighted', true);
+        link.attr('stroke-opacity', l => {
+          const src = typeof l.source === 'object' ? l.source.id : l.source;
+          const tgt = typeof l.target === 'object' ? l.target.id : l.target;
+          return connected.has(src) && connected.has(tgt) ? 0.8 : 0.03;
+        });
+        label.attr('opacity', n => connected.has(n.id) ? 1 : 0.1);
+      }
+    })
+    .call(d3.drag()
+      .on('start', (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end', (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+    );
+
+  const label = g.selectAll('.label')
+    .data(nodes).enter().append('text')
+    .attr('font-size', '9px').attr('fill', '#374151')
+    .attr('text-anchor', 'middle').attr('dy', d => (d.type === 'risk' ? riskRadius(d.promptCount) : axisRadius(d.riskCount)) + 11)
+    .text(d => d.label.length > 24 ? d.label.slice(0, 22) + '...' : d.label)
+    .attr('pointer-events', 'none');
+
+  simulation.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('cx', d => d.x).attr('cy', d => d.y);
+    label.attr('x', d => d.x).attr('y', d => d.y);
+  });
+
+  // Legend
+  const legendEl = document.querySelector(legendSelector);
+  let html = '<div class="flex flex-wrap gap-4 text-xs text-gray-600">';
+  html += '<div><span class="font-semibold text-gray-500 mr-1">Risks by framework:</span>';
+  for (const fw of frameworks) {
+    html += `<span class="inline-flex items-center mr-2"><span class="inline-block w-2.5 h-2.5 rounded-full mr-1" style="background:${frameworkColor(fw)}"></span>${fw}</span>`;
+  }
+  html += '</div><div><span class="font-semibold text-gray-500 mr-1">Axes by ontology:</span>';
+  for (const ont of ontologies) {
+    html += `<span class="inline-flex items-center mr-2"><span class="inline-block w-2.5 h-2.5 rounded-full mr-1" style="background:${ontologyColor(ont)}"></span>${ont}</span>`;
+  }
+  html += '</div></div>';
+  legendEl.innerHTML = html;
+}
+
+// --- C3: Prompt Similarity Network ---
+
+function renderSimilarityNetwork(selector, legendSelector, graphData, explorerRaw) {
+  const container = document.querySelector(selector);
+
+  if (!graphData || !graphData.nodes || !graphData.nodes.length) {
+    container.innerHTML = '<p class="text-gray-400 text-center py-8">Similarity graph not available. Re-run evaluation to generate.</p>';
+    return;
+  }
+
+  // Notice for sampled data
+  if (graphData.sampled) {
+    const notice = document.createElement('p');
+    notice.className = 'text-xs text-amber-600 mb-2';
+    notice.textContent = `Showing ${graphData.nodes.length} of ${graphData.total_prompts} prompts (stratified sample). Threshold: ${graphData.threshold_used}`;
+    container.appendChild(notice);
+  }
+
+  if (!graphData.edges.length) {
+    container.innerHTML += '<p class="text-gray-400 text-center py-8">No prompt pairs above similarity threshold (' + graphData.threshold_used + '). Try lowering the threshold.</p>';
+    return;
+  }
+
+  // Collect unique policy concepts for color scale
+  const policies = [...new Set(graphData.nodes.map(n => n.policy_concept))].sort();
+
+  const width = container.clientWidth || 900;
+  const height = 500;
+
+  const nodes = graphData.nodes.map(n => ({ ...n }));
+  const edges = graphData.edges.map(e => ({ ...e }));
+
+  const svg = d3.select(selector).append('svg')
+    .attr('width', width).attr('height', height);
+
+  const g = svg.append('g');
+
+  svg.call(d3.zoom().scaleExtent([0.2, 5]).on('zoom', (event) => {
+    g.attr('transform', event.transform);
+  }));
+
+  const simulation = d3.forceSimulation(nodes)
+    .force('link', d3.forceLink(edges).id(d => d.id).distance(d => 60 / (d.similarity || 0.5)).strength(d => d.similarity * 0.3))
+    .force('charge', d3.forceManyBody().strength(-50))
+    .force('center', d3.forceCenter(width / 2, height / 2))
+    .force('collision', d3.forceCollide(8))
+    .alphaDecay(0.03);
+
+  const link = g.selectAll('.link')
+    .data(edges).enter().append('line')
+    .attr('stroke', '#94a3b8')
+    .attr('stroke-width', d => Math.max(0.5, d.similarity * 2))
+    .attr('stroke-opacity', d => 0.15 + d.similarity * 0.45);
+
+  const node = g.selectAll('.node')
+    .data(nodes).enter().append('circle')
+    .attr('r', 5)
+    .attr('fill', d => POLICY_COLORS(d.policy_concept))
+    .attr('stroke', '#fff').attr('stroke-width', 1)
+    .style('cursor', 'pointer')
+    .on('mouseover', (event, d) => {
+      const record = explorerRaw[d.prompt_index];
+      const text = (record?.prompt || '').slice(0, 120) + ((record?.prompt || '').length > 120 ? '...' : '');
+      d3Tooltip.show(event, `<strong>${d.policy_concept}</strong><br>Risk: ${d.risk_name}<br>Technique: ${d.technique}<br><span class="text-gray-300 italic">"${text}"</span>`);
+    })
+    .on('mousemove', (event, d) => {
+      const record = explorerRaw[d.prompt_index];
+      const text = (record?.prompt || '').slice(0, 120) + ((record?.prompt || '').length > 120 ? '...' : '');
+      d3Tooltip.show(event, `<strong>${d.policy_concept}</strong><br>Risk: ${d.risk_name}<br>Technique: ${d.technique}<br><span class="text-gray-300 italic">"${text}"</span>`);
+    })
+    .on('mouseout', () => d3Tooltip.hide())
+    .on('click', (event, d) => {
+      const record = explorerRaw[d.prompt_index];
+      if (record && window.__reportApp) {
+        window.__reportApp.openModal(record);
+      }
+    })
+    .call(d3.drag()
+      .on('start', (event, d) => { if (!event.active) simulation.alphaTarget(0.3).restart(); d.fx = d.x; d.fy = d.y; })
+      .on('drag', (event, d) => { d.fx = event.x; d.fy = event.y; })
+      .on('end', (event, d) => { if (!event.active) simulation.alphaTarget(0); d.fx = null; d.fy = null; })
+    );
+
+  simulation.on('tick', () => {
+    link.attr('x1', d => d.source.x).attr('y1', d => d.source.y)
+        .attr('x2', d => d.target.x).attr('y2', d => d.target.y);
+    node.attr('cx', d => d.x).attr('cy', d => d.y);
+  });
+
+  // Legend
+  const legendEl = document.querySelector(legendSelector);
+  let html = '<div class="flex flex-wrap gap-3 text-xs text-gray-600">';
+  html += '<span class="font-semibold text-gray-500">Policy:</span>';
+  for (const pc of policies) {
+    html += `<span class="inline-flex items-center"><span class="inline-block w-2.5 h-2.5 rounded-full mr-1" style="background:${POLICY_COLORS(pc)}"></span>${pc}</span>`;
+  }
+  html += `<span class="text-gray-400 ml-2">|</span><span class="text-gray-400 ml-2">${graphData.nodes.length} nodes, ${graphData.edges.length} edges (threshold ≥ ${graphData.threshold_used})</span>`;
+  html += '</div>';
+  legendEl.innerHTML = html;
 }
 
 // --- Data load & metric pre-computation ---
@@ -1796,6 +2347,7 @@ function app() {
     tab: 'evaluation',
     tabs: [
       { id: 'evaluation', label: 'Evaluation' },
+      { id: 'visualizations', label: 'Visualizations' },
       { id: 'explorer', label: 'Dataset Explorer' },
       { id: 'domain_context', label: 'Domain Context' },
       { id: 'taxonomy', label: 'Taxonomy' },
@@ -1812,7 +2364,7 @@ function app() {
     showNullPrompts: true,
     searchQuery: '',
     filters: {
-      policy_concept: '', risk_name: '', fidelity: '',
+      policy_concept: '', risk_name: '', fidelity: '', technique: '',
       hideRedFlags: false, hideJargon: false,
       promptLength: '', relevance: '', minRoles: '', sourceOntology: '',
     },
@@ -1825,6 +2377,7 @@ function app() {
         if (!this.showNullPrompts && !r.prompt) return false;
         if (this.filters.policy_concept && r.policy_concept !== this.filters.policy_concept) return false;
         if (this.filters.risk_name && r.risk_name !== this.filters.risk_name) return false;
+        if (this.filters.technique && r.technique !== this.filters.technique) return false;
         if (q && !(r.prompt || '').toLowerCase().includes(q)) return false;
         const m = r._metrics;
         if (this.filters.fidelity && m.fidelityClass !== this.filters.fidelity) return false;
@@ -1842,7 +2395,7 @@ function app() {
             if (this.filters.relevance === 'mostly_low' && m.relevanceProfile.low / total < 0.5) return false;
           }
         }
-        if (this.filters.minRoles && m.roleCount < parseInt(this.filters.minRoles)) return false;
+        if (this.filters.minRoles && m.axisCount < parseInt(this.filters.minRoles)) return false;
         if (this.filters.sourceOntology && !m.sourceOntologies.includes(this.filters.sourceOntology)) return false;
         return true;
       });
@@ -1854,17 +2407,18 @@ function app() {
 
     get qualitySummary() {
       const records = this.filteredRecords.filter(r => r.prompt);
-      let full = 0, partial = 0, improvised = 0, redFlags = 0, jargon = 0, totalWords = 0;
+      let full = 0, partial = 0, improvised = 0, hardRedFlags = 0, softRedFlags = 0, jargon = 0, totalWords = 0;
       for (const r of records) {
         const m = r._metrics;
         if (m.fidelityClass === 'full') full++;
         else if (m.fidelityClass === 'partial') partial++;
         else improvised++;
-        if (m.hasRedFlag) redFlags++;
+        if (m.hasHardRedFlag) hardRedFlags++;
+        if (m.hasSoftRedFlag) softRedFlags++;
         if (m.hasJargon) jargon++;
         totalWords += m.wordCount;
       }
-      return { full, partial, improvised, redFlags, jargon, avgLength: records.length > 0 ? Math.round(totalWords / records.length) : 0 };
+      return { full, partial, improvised, hardRedFlags, softRedFlags, jargon, avgLength: records.length > 0 ? Math.round(totalWords / records.length) : 0 };
     },
 
     uniqueValues(field) {
@@ -1872,7 +2426,7 @@ function app() {
     },
 
     clearFilters() {
-      this.filters = { policy_concept: '', risk_name: '', fidelity: '', hideRedFlags: false, hideJargon: false, promptLength: '', relevance: '', minRoles: '', sourceOntology: '' };
+      this.filters = { policy_concept: '', risk_name: '', fidelity: '', technique: '', hideRedFlags: false, hideJargon: false, promptLength: '', relevance: '', minRoles: '', sourceOntology: '' };
       this.searchQuery = '';
       this.showNullPrompts = true;
     },
@@ -1929,6 +2483,27 @@ function app() {
 
     // --- Policy ---
     policy: POLICY,
+
+    // --- Visualizations ---
+    _vizInitialized: false,
+    init() {
+      window.__reportApp = this;
+      document.addEventListener('filter-explorer', (e) => {
+        if (e.detail.technique) this.filters.technique = e.detail.technique;
+        if (e.detail.risk_name) this.filters.risk_name = e.detail.risk_name;
+        this.tab = 'explorer';
+      });
+      this.$watch('tab', (val) => {
+        if (val === 'visualizations' && !this._vizInitialized) {
+          this._vizInitialized = true;
+          this.$nextTick(() => {
+            renderBipartiteGraph('#viz-bipartite', '#legend-bipartite', DOMAIN_CONTEXT, EXPLORER_RAW);
+            renderHeatmap('#viz-heatmap', EXPLORER_RAW);
+            renderSimilarityNetwork('#viz-similarity', '#legend-similarity', REPORT_DATA.prompt_metrics?.similarity_graph, EXPLORER_RAW);
+          });
+        }
+      });
+    },
   };
 }
 </script>

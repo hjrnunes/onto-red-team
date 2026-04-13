@@ -111,11 +111,24 @@ _BFO_CATEGORIES: dict[str, str] = {
     "https://www.commoncoreontologies.org/ont00000995": "MaterialArtifact",
     "https://www.commoncoreontologies.org/ont00000192": "Facility",
     "https://www.commoncoreontologies.org/ont00000005": "Act",
+    # CCO classes missing from superclass walk
+    "https://www.commoncoreontologies.org/ont00001262": "Agent",         # Person
+    "https://www.commoncoreontologies.org/ont00001180": "Agent",         # Organization
+    "https://www.commoncoreontologies.org/ont00000740": "MaterialEntity",  # Resource
 }
 
 
-def derive_bfo_category(class_uri: str, onto_handlers: dict, max_depth: int = 10) -> str:
-    """Walk superclass chain to find BFO/CCO category name. Returns '' if not found."""
+def derive_bfo_category(
+    class_uri: str,
+    onto_handlers: dict,
+    max_depth: int = 10,
+    bfo_fallbacks: dict[str, str] | None = None,
+) -> str:
+    """Walk superclass chain to find BFO/CCO category name.
+
+    Falls back to ``bfo_fallbacks`` (URI → category) for ontologies without
+    BFO ancestry.  Returns '' if not found.
+    """
     visited = set()
     current = class_uri
     for _ in range(max_depth):
@@ -129,6 +142,8 @@ def derive_bfo_category(class_uri: str, onto_handlers: dict, max_depth: int = 10
         if not named:
             break
         current = named[0]["uri"]
+    if bfo_fallbacks and class_uri in bfo_fallbacks:
+        return bfo_fallbacks[class_uri]
     return ""
 
 
@@ -270,6 +285,7 @@ def constrained_search(
         onto_handlers: dict,
         selected_domains: list[str] | None,
         top_k: int = 8,
+        generic_safety_uris: set[str] | None = None,
 ) -> list[dict]:
     """ChromaDB search scoped to domains containing seed URIs."""
     if not onto_handlers.get("search_domains") or not selected_domains:
@@ -290,8 +306,11 @@ def constrained_search(
         if not isinstance(hits, list):
             continue
         for hit in hits:
+            uri = hit["uri"]
+            if _is_excluded_uri(uri, generic_safety_uris or set()):
+                continue
             results.append({
-                "uri": hit["uri"],
+                "uri": uri,
                 "label": hit.get("label", ""),
                 "source": "search",
                 "best_distance": hit.get("distance", 1.0),
@@ -473,6 +492,7 @@ def anchor(
         report=None,
         generic_safety_uris: set[str] | None = None,
         policies: list | None = None,
+        bfo_fallbacks: dict[str, str] | None = None,
 ) -> tuple[list[RiskVariationAxes], dict[str, dict]]:
     """Returns (variation_axes, vocabulary_contexts_by_risk_id)."""
     if not risk_mappings:
@@ -532,6 +552,7 @@ def anchor(
                 seed_mappings=ontology_seeds,
                 onto_handlers=onto_handlers,
                 selected_domains=selected_domains,
+                generic_safety_uris=generic_safety_uris,
             )
 
             # Classify search results as connected/not-connected
@@ -580,7 +601,7 @@ def anchor(
                 defn = onto_handlers["get_class_definition"](c["uri"])
                 if not defn:
                     continue
-                bfo_cat = derive_bfo_category(c["uri"], onto_handlers)
+                bfo_cat = derive_bfo_category(c["uri"], onto_handlers, bfo_fallbacks=bfo_fallbacks)
                 siblings = onto_handlers["get_siblings"](c["uri"])
                 # Resolve path URIs to human-readable labels
                 raw_path = c.get("path", [])
@@ -600,7 +621,7 @@ def anchor(
                     "vocabulary_concept": c.get("vocabulary_concept") or "",
                     "vocabulary_label": c.get("vocabulary_label") or "",
                     "path_labels": path_labels,
-                    "siblings": [s.get("label", "") for s in siblings[:5]],
+                    "siblings": [s.get("label") or "" for s in siblings[:5]],
                 })
 
             if not enriched:

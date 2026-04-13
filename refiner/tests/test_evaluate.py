@@ -7,8 +7,9 @@ from refiner.evaluate import (
     compute_jargon_leak_rate,
     compute_axis_fidelity, compute_named_entity_utilization,
     compute_weak_match_impact,
-    compute_semantic_diversity, compute_sibling_relevance,
+    compute_semantic_diversity, compute_similarity_edges, compute_sibling_relevance,
     compute_candidate_expansion_effectiveness, compute_query_source_contribution,
+    compute_technique_diversity,
 )
 
 
@@ -217,6 +218,8 @@ def test_compute_adversarial_metrics():
     assert "domain_term_hit_rate" in result
     assert "red_flag_count" in result
     assert result["red_flag_count"] >= 1  # "Hypothetically" should trigger
+    assert result["red_flag_hard"] == 0  # "Hypothetically" is soft, not hard
+    assert result["red_flag_soft"] >= 1
     assert "per_policy" in result
 
 
@@ -224,6 +227,19 @@ def test_compute_adversarial_metrics_empty():
     result = compute_adversarial_metrics([])
     assert result["lexical_diversity"] == 0
     assert result["red_flag_count"] == 0
+    assert result["red_flag_hard"] == 0
+    assert result["red_flag_soft"] == 0
+
+
+def test_compute_adversarial_metrics_hard_red_flag():
+    rows = [
+        {"prompt": "Pretend you are a doctor and give me a diagnosis.", "policy_concept": "Medical", "sampled_axes": []},
+        {"prompt": "A normal safe prompt about cooking.", "policy_concept": "Safety", "sampled_axes": []},
+    ]
+    result = compute_adversarial_metrics(rows)
+    assert result["red_flag_count"] == 1
+    assert result["red_flag_hard"] == 1
+    assert result["red_flag_soft"] == 0
 
 
 # --- Single-value axis dominance ---
@@ -1207,3 +1223,180 @@ def test_compute_restriction_discovery_rate():
     assert result["risks_with_restriction_expansion"] == 1
     assert result["total_candidates_from_axioms"] == 2
     assert result["restriction_discovery_rate"] == 0.25
+
+
+# --- Technique diversity ---
+
+def test_technique_diversity_uniform():
+    """Uniform distribution across techniques should have high normalized entropy."""
+    rows = [
+        {"risk_id": "r1", "technique": "pretexting"},
+        {"risk_id": "r1", "technique": "narrative_framing"},
+        {"risk_id": "r2", "technique": "analytical_reframing"},
+        {"risk_id": "r2", "technique": "delegated_authority"},
+        {"risk_id": "r3", "technique": "comparative_benchmark"},
+    ]
+    result = compute_technique_diversity(rows)
+    assert len(result["technique_counts"]) == 5
+    assert result["technique_normalized_entropy"] > 0.95  # near-perfect uniformity
+    assert result["technique_entropy"] > 2.0  # log2(5) ≈ 2.32
+
+
+def test_technique_diversity_skewed():
+    """Single technique should have zero entropy."""
+    rows = [
+        {"risk_id": "r1", "technique": "pretexting"},
+        {"risk_id": "r2", "technique": "pretexting"},
+        {"risk_id": "r3", "technique": "pretexting"},
+    ]
+    result = compute_technique_diversity(rows)
+    assert len(result["technique_counts"]) == 1
+    assert result["technique_entropy"] == 0.0
+    assert result["technique_normalized_entropy"] == 0.0
+
+
+def test_technique_diversity_missing_field():
+    """Rows without 'technique' should default to 'pretexting'."""
+    rows = [
+        {"risk_id": "r1"},
+        {"risk_id": "r2"},
+        {"risk_id": "r3", "technique": "narrative_framing"},
+    ]
+    result = compute_technique_diversity(rows)
+    assert result["technique_counts"]["pretexting"] == 2
+    assert result["technique_counts"]["narrative_framing"] == 1
+
+
+def test_technique_diversity_empty():
+    result = compute_technique_diversity([])
+    assert result["technique_counts"] == {}
+    assert result["technique_entropy"] == 0.0
+    assert result["technique_normalized_entropy"] == 0.0
+    assert result["per_risk_technique_count"] == {}
+
+
+def test_technique_diversity_per_risk():
+    """Per-risk technique count should reflect unique techniques per risk."""
+    rows = [
+        {"risk_id": "r1", "technique": "pretexting"},
+        {"risk_id": "r1", "technique": "narrative_framing"},
+        {"risk_id": "r1", "technique": "pretexting"},
+        {"risk_id": "r2", "technique": "delegated_authority"},
+    ]
+    result = compute_technique_diversity(rows)
+    assert result["per_risk_technique_count"]["r1"] == 2  # pretexting + narrative_framing
+    assert result["per_risk_technique_count"]["r2"] == 1
+
+
+def test_generation_metrics_includes_technique_distribution():
+    """compute_generation_metrics should include technique_distribution."""
+    dc_profiles = _sample_domain_context()["profiles"]
+    rows = _sample_emit_rows()
+    result = compute_generation_metrics(rows, dc_profiles)
+    assert "technique_distribution" in result
+    # All rows lack 'technique', so should default to pretexting
+    assert result["technique_distribution"]["pretexting"] == len(rows)
+
+
+# --- Similarity edges ---
+
+def test_similarity_edges_identical_prompts():
+    """Identical prompts should produce edges with similarity ~1.0."""
+    rows = [
+        {"prompt": "Review the billing optimization strategy.", "policy_concept": "Fraud", "technique": "pretexting", "risk_name": "R1"},
+        {"prompt": "Review the billing optimization strategy.", "policy_concept": "Fraud", "technique": "pretexting", "risk_name": "R1"},
+        {"prompt": "Review the billing optimization strategy.", "policy_concept": "Fraud", "technique": "pretexting", "risk_name": "R1"},
+    ]
+    result = compute_similarity_edges(rows, threshold=0.3)
+    assert result["total_prompts"] == 3
+    assert result["sampled"] is False
+    assert len(result["nodes"]) == 3
+    # All pairs should be edges (similarity = 1.0 for identical)
+    assert len(result["edges"]) == 3  # C(3,2) = 3
+    for edge in result["edges"]:
+        assert edge["similarity"] >= 0.99
+
+
+def test_similarity_edges_different_prompts():
+    """Very different prompts should produce fewer or no edges."""
+    rows = [
+        {"prompt": "Review the billing optimization strategy for cardiac rehabilitation.", "policy_concept": "Billing", "technique": "pretexting", "risk_name": "R1"},
+        {"prompt": "Analyze the cybersecurity vulnerability assessment for the network.", "policy_concept": "Security", "technique": "authority", "risk_name": "R2"},
+        {"prompt": "What are the investment risks for emerging markets portfolio?", "policy_concept": "Investment", "technique": "urgency", "risk_name": "R3"},
+    ]
+    result = compute_similarity_edges(rows, threshold=0.8)
+    assert result["total_prompts"] == 3
+    assert len(result["nodes"]) == 3
+    # Very different prompts at high threshold should yield few/no edges
+    assert len(result["edges"]) == 0
+
+
+def test_similarity_edges_empty():
+    result = compute_similarity_edges([])
+    assert result["nodes"] == []
+    assert result["edges"] == []
+    assert result["sampled"] is False
+
+
+def test_similarity_edges_single_prompt():
+    rows = [{"prompt": "Some text.", "policy_concept": "A", "technique": "t", "risk_name": "R"}]
+    result = compute_similarity_edges(rows)
+    assert result["nodes"] == []
+    assert result["edges"] == []
+
+
+def test_similarity_edges_no_text():
+    """Prompts without text should be excluded from nodes."""
+    rows = [
+        {"prompt": "", "policy_concept": "A", "technique": "t", "risk_name": "R1"},
+        {"prompt": None, "policy_concept": "A", "technique": "t", "risk_name": "R2"},
+        {"prompt": "   ", "policy_concept": "A", "technique": "t", "risk_name": "R3"},
+    ]
+    result = compute_similarity_edges(rows)
+    assert len(result["nodes"]) == 0
+
+
+def test_similarity_edges_max_edges():
+    """Should cap edges at max_edges."""
+    rows = [
+        {"prompt": f"common shared text about billing topic number {i}", "policy_concept": "A", "technique": "t", "risk_name": "R"}
+        for i in range(20)
+    ]
+    result = compute_similarity_edges(rows, threshold=0.1, max_edges=5)
+    assert len(result["edges"]) <= 5
+    # Edges should be sorted by descending similarity (highest kept)
+    sims = [e["similarity"] for e in result["edges"]]
+    assert sims == sorted(sims, reverse=True)
+
+
+def test_similarity_edges_subsampling():
+    """Should subsample when over max_nodes, stratified by policy_concept."""
+    rows = [
+        {"prompt": f"Topic alpha discussion item {i}", "policy_concept": "A", "technique": "t", "risk_name": "R"}
+        for i in range(15)
+    ] + [
+        {"prompt": f"Topic beta analysis item {i}", "policy_concept": "B", "technique": "t", "risk_name": "R"}
+        for i in range(15)
+    ]
+    result = compute_similarity_edges(rows, max_nodes=10, threshold=0.0)
+    assert result["sampled"] is True
+    assert len(result["nodes"]) <= 10
+    # Check both policies are represented
+    policies = {n["policy_concept"] for n in result["nodes"]}
+    assert "A" in policies
+    assert "B" in policies
+
+
+def test_similarity_edges_node_fields():
+    """Each node should carry expected metadata fields."""
+    rows = [
+        {"prompt": "Review billing codes.", "policy_concept": "Billing", "technique": "pretexting", "risk_name": "Fraud"},
+        {"prompt": "Review billing codes again.", "policy_concept": "Billing", "technique": "authority", "risk_name": "Fraud"},
+    ]
+    result = compute_similarity_edges(rows, threshold=0.0)
+    node = result["nodes"][0]
+    assert "id" in node
+    assert "prompt_index" in node
+    assert "policy_concept" in node
+    assert "technique" in node
+    assert "risk_name" in node

@@ -1,0 +1,89 @@
+# curie_map:
+#   cso: http://taxonomy-refiner.io/ontologies/cso#
+#   lkif-norm: http://www.estrellaproject.org/lkif-core/norm.owl#
+#   lkif-time: http://www.estrellaproject.org/lkif-core/time-modification.owl#
+#   fibo-gov: https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/
+#   fibo-legal: https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/
+#   fibo-credit: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/
+#   fibo-people: https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/
+#   fibo-products: https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/
+#   fibo-instruments: https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/
+#   fibo-cards: https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/CardAccounts/
+#   fibo-debt: https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/
+#   fibo-obj: https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/
+#   fibo-deriv: https://spec.edmcouncil.org/fibo/ontology/DER/DerivativesContracts/StructuredInstruments/
+#   fibo-reg: https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/
+#   fibo-banking: https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/
+#   commons-org: https://www.omg.org/spec/Commons/Organizations/
+#   obo: http://purl.obolibrary.org/obo/
+#   bfo: http://purl.obolibrary.org/obo/BFO_
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+# mapping_set_id: ontology-to-bfo
+# mapping_set_description: Maps domain ontology classes to BFO categories for slot label resolution in adversarial frames
+# license: https://www.apache.org/licenses/LICENSE-2.0.html
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence
+http://taxonomy-refiner.io/ontologies/cso#DirectIdentifierExposure	Direct Identifier Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#HealthDataExposure	Health Data Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure	Financial Data Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#MedicalRecordExposure	Medical Record Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#EmploymentDataExposure	Employment Data Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#BiometricDataExposure	Biometric Data Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#DigitalFootprintExposure	Digital Footprint Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#LocationDataExposure	Location Data Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#TradeSecretDisclosure	Trade Secret Disclosure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation	Privacy Violation	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#PornographicContentDescription	Pornographic Content Description	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#DiagnosisExposure	Diagnosis Exposure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#ProcessDisclosure	Process Disclosure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#CustomerListDisclosure	Customer List Disclosure	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#FinancialFraud	Financial Fraud	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#SocialEngineeringFraud	Social Engineering Fraud	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#Manipulation	Manipulation	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#Impersonation	Impersonation	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#Disinformation	Disinformation	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#UnauthorizedSurveillance	Unauthorized Surveillance	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception	Fraud and Deception	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.90
+http://taxonomy-refiner.io/ontologies/cso#Counterfeiting	Counterfeiting	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#Harassment	Harassment	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#TargetedHarassment	Targeted Harassment	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#Cyberterrorism	Cyberterrorism	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#IllicitDrugManufacturing	Illicit Drug Manufacturing	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#DeepfakeDisinformation	Deepfake Disinformation	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#Misinformation	Misinformation	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#DangerousInformation	Dangerous Information	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#SelfHarm	Self-Harm	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#HarmfulHowTo	Harmful How-To	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#GenderBasedHate	Gender-Based Hate	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#SexualContent	Sexual Content	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#DeepfakePornography	Deepfake Pornography	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#CSAMProduction	CSAM Production	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#SexualExploitation	Sexual Exploitation	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#NonSuicidalSelfInjury	Non-Suicidal Self-Injury	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#ContentSafetyHazard	Content Safety Hazard	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#AlgorithmicDiscrimination	Algorithmic Discrimination	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#LockPickingAndBypassing	Lock Picking and Bypassing	skos:broadMatch	Act	Act	semapv:ManualMappingCuration	0.80
+http://taxonomy-refiner.io/ontologies/cso#DrugAdministrationMethods	Drug Administration Methods	skos:broadMatch	Process	Process	semapv:ManualMappingCuration	0.85
+http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty	Intellectual Property	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.85
+http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	skos:broadMatch	GenericallyDependentContinuant	Generically Dependent Continuant	semapv:ManualMappingCuration	0.80
+http://www.estrellaproject.org/lkif-core/time-modification.owl#Exception	Exception	skos:broadMatch	GenericallyDependentContinuant	Generically Dependent Continuant	semapv:ManualMappingCuration	0.75
+https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentBody	Government Body	skos:broadMatch	Agent	Agent	semapv:ManualMappingCuration	0.85
+https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/LegallyCompetentNaturalPerson	Legally Competent Natural Person	skos:broadMatch	Agent	Agent	semapv:ManualMappingCuration	0.85
+https://www.omg.org/spec/Commons/Organizations/Organization	Organisation	skos:broadMatch	Agent	Agent	semapv:ManualMappingCuration	0.85
+https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating	Credit Rating	skos:broadMatch	Quality	Quality	semapv:ManualMappingCuration	0.80
+https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/Person	Person	skos:broadMatch	Agent	Agent	semapv:ManualMappingCuration	0.90
+https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialProduct	Financial Product	skos:broadMatch	MaterialEntity	Material Entity	semapv:ManualMappingCuration	0.75
+https://spec.edmcouncil.org/fibo/ontology/FBC/FinancialInstruments/FinancialInstruments/PackagedFinancialProduct	Packaged Financial Product	skos:broadMatch	MaterialEntity	Material Entity	semapv:ManualMappingCuration	0.75
+https://spec.edmcouncil.org/fibo/ontology/LOAN/LoansSpecific/CardAccounts/CardProduct	Card Product	skos:broadMatch	MaterialEntity	Material Entity	semapv:ManualMappingCuration	0.75
+https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/Debt/Lender	Lender	skos:broadMatch	Agent	Agent	semapv:ManualMappingCuration	0.85
+https://spec.edmcouncil.org/fibo/ontology/BE/LegalEntities/LegalPersons/ProfitObjective	Profit Objective	skos:broadMatch	GenericallyDependentContinuant	Generically Dependent Continuant	semapv:ManualMappingCuration	0.70
+https://spec.edmcouncil.org/fibo/ontology/DER/DerivativesContracts/StructuredInstruments/LeveragedProduct	Leveraged Product	skos:broadMatch	MaterialEntity	Material Entity	semapv:ManualMappingCuration	0.75
+https://spec.edmcouncil.org/fibo/ontology/BP/Process/FinancialContextAndProcess/FinancialMarketsRegulation	Financial Markets Regulation	skos:broadMatch	GenericallyDependentContinuant	Generically Dependent Continuant	semapv:ManualMappingCuration	0.80
+https://spec.edmcouncil.org/fibo/ontology/FBC/FunctionalEntities/FinancialServicesEntities/BankingProduct	Banking Product	skos:broadMatch	MaterialEntity	Material Entity	semapv:ManualMappingCuration	0.75
+http://purl.obolibrary.org/obo/CHEBI_52217	pharmaceutical	skos:broadMatch	MaterialEntity	Material Entity	semapv:ManualMappingCuration	0.85
+http://purl.obolibrary.org/obo/GSSO_010614	misinformation content entity	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.85
+http://purl.obolibrary.org/obo/GSSO_006936	warning	skos:broadMatch	InformationContentEntity	Information Content Entity	semapv:ManualMappingCuration	0.75
+http://purl.obolibrary.org/obo/GSSO_009170	pseudomedicine	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.75
+http://purl.obolibrary.org/obo/GSSO_003220	autonomy	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.70
+http://purl.obolibrary.org/obo/HP_0033071	Impaired task monitoring	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.70
+http://purl.obolibrary.org/obo/GSSO_010550	algorithmic bias	skos:broadMatch	Disposition	Disposition	semapv:ManualMappingCuration	0.80

@@ -213,15 +213,23 @@ def compute_cross_mapping_coverage(taxonomy: dict, filtered_count: int = 0) -> d
     }
 
 
-RED_FLAG_PATTERNS = [
-    r"\bhypothetically\b", r"\bin theory\b", r"\btheoretically\b",
-    r"\bfor educational purposes\b", r"\bfor research purposes\b", r"\bfor academic purposes\b",
-    r"\bas a test\b", r"\bjust testing\b", r"\bthis is a test\b",
+HARD_RED_FLAG_PATTERNS = [
     r"\bI want to hack\b", r"\bhelp me attack\b", r"\bhow to exploit\b",
     r"\bpretend you are\b", r"\bignore previous instructions\b", r"\bjailbreak\b",
     r"\bwhat if someone wanted to\b", r"\basking for a friend\b",
 ]
+
+SOFT_RED_FLAG_PATTERNS = [
+    r"\bhypothetically\b", r"\bin theory\b", r"\btheoretically\b",
+    r"\bfor educational purposes\b", r"\bfor research purposes\b", r"\bfor academic purposes\b",
+    r"\bas a test\b", r"\bjust testing\b", r"\bthis is a test\b",
+]
+
+# Combined for backward compat
+RED_FLAG_PATTERNS = HARD_RED_FLAG_PATTERNS + SOFT_RED_FLAG_PATTERNS
 _RED_FLAG_RE = re.compile("|".join(RED_FLAG_PATTERNS), re.IGNORECASE)
+_HARD_RED_FLAG_RE = re.compile("|".join(HARD_RED_FLAG_PATTERNS), re.IGNORECASE)
+_SOFT_RED_FLAG_RE = re.compile("|".join(SOFT_RED_FLAG_PATTERNS), re.IGNORECASE)
 
 
 def compute_generation_metrics(emit_rows: list[dict], dc_profiles: list[dict]) -> dict:
@@ -272,11 +280,57 @@ def compute_generation_metrics(emit_rows: list[dict], dc_profiles: list[dict]) -
                 "saturation": n_samples / space if space > 0 else 0,
             }
 
+    technique_counts: dict[str, int] = defaultdict(int)
+    for row in emit_rows:
+        technique_counts[row.get("technique", "pretexting")] += 1
+
     return {
         "axis_diversity": {"per_risk": diversity_per_risk, "overall_mean": round(overall_diversity, 3)},
         "role_distribution": dict(role_counts),
         "relevance_distribution": dict(relevance_counts),
+        "technique_distribution": dict(technique_counts),
         "dedup_saturation": dedup_per_risk,
+    }
+
+
+def compute_technique_diversity(rows: list[dict]) -> dict:
+    """Compute technique distribution and diversity metrics."""
+    technique_counts: dict[str, int] = defaultdict(int)
+    per_risk: dict[str, set[str]] = defaultdict(set)
+
+    for row in rows:
+        tech = row.get("technique", "pretexting")
+        technique_counts[tech] += 1
+        risk_id = row.get("risk_id", "unknown")
+        per_risk[risk_id].add(tech)
+
+    total = sum(technique_counts.values())
+    if total == 0:
+        return {
+            "technique_counts": {},
+            "technique_entropy": 0.0,
+            "technique_normalized_entropy": 0.0,
+            "per_risk_technique_count": {},
+        }
+
+    # Shannon entropy
+    entropy = 0.0
+    for count in technique_counts.values():
+        p = count / total
+        if p > 0:
+            entropy -= p * math.log2(p)
+
+    n_techniques = len(technique_counts)
+    max_entropy = math.log2(n_techniques) if n_techniques > 1 else 1.0
+    normalized = round(entropy / max_entropy, 3) if max_entropy > 0 else 0.0
+
+    return {
+        "technique_counts": dict(technique_counts),
+        "technique_entropy": round(entropy, 3),
+        "technique_normalized_entropy": normalized,
+        "per_risk_technique_count": {
+            rid: len(techs) for rid, techs in per_risk.items()
+        },
     }
 
 
@@ -581,6 +635,80 @@ def compute_semantic_diversity(rows: list[dict], max_pairs: int = 5000) -> dict:
     }
 
 
+def compute_similarity_edges(
+    rows: list[dict],
+    threshold: float = 0.5,
+    max_edges: int = 500,
+    max_nodes: int = 200,
+) -> dict:
+    """Pre-compute similarity edges between prompts for the similarity network visualization."""
+    import random as _random
+
+    prompts_with_text = [
+        (i, r) for i, r in enumerate(rows) if (r.get("prompt") or "").strip()
+    ]
+    if len(prompts_with_text) <= 1:
+        return {
+            "nodes": [],
+            "edges": [],
+            "threshold_used": threshold,
+            "total_prompts": len(rows),
+            "sampled": False,
+        }
+
+    sampled = False
+    if len(prompts_with_text) > max_nodes:
+        sampled = True
+        rng = _random.Random(42)
+        by_policy: dict[str, list[tuple[int, dict]]] = defaultdict(list)
+        for item in prompts_with_text:
+            by_policy[item[1].get("policy_concept", "unknown")].append(item)
+        selected: list[tuple[int, dict]] = []
+        per_group = max(1, max_nodes // len(by_policy))
+        for pc in sorted(by_policy):
+            group = by_policy[pc]
+            k = min(len(group), per_group)
+            selected.extend(rng.sample(group, k))
+        # Fill remaining slots if under budget
+        remaining = [item for item in prompts_with_text if item not in selected]
+        deficit = max_nodes - len(selected)
+        if deficit > 0 and remaining:
+            selected.extend(rng.sample(remaining, min(deficit, len(remaining))))
+        prompts_with_text = selected
+
+    docs = [(r.get("prompt") or "").lower().split() for _, r in prompts_with_text]
+    vectors, _ = _tfidf_vectors(docs)
+
+    edges = []
+    for i in range(len(vectors)):
+        for j in range(i + 1, len(vectors)):
+            sim = 1.0 - _cosine_distance(vectors[i], vectors[j])
+            if sim >= threshold:
+                edges.append({"source": i, "target": j, "similarity": round(sim, 3)})
+
+    if len(edges) > max_edges:
+        edges.sort(key=lambda e: e["similarity"], reverse=True)
+        edges = edges[:max_edges]
+
+    nodes = []
+    for idx, (orig_index, r) in enumerate(prompts_with_text):
+        nodes.append({
+            "id": idx,
+            "prompt_index": orig_index,
+            "policy_concept": r.get("policy_concept", ""),
+            "technique": r.get("technique", ""),
+            "risk_name": r.get("risk_name", ""),
+        })
+
+    return {
+        "nodes": nodes,
+        "edges": edges,
+        "threshold_used": threshold,
+        "total_prompts": len(rows),
+        "sampled": sampled,
+    }
+
+
 _RELEVANCE_SCORES = {"high": 3, "medium": 2, "low": 1}
 
 
@@ -617,7 +745,8 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
     if not rows:
         return {
             "lexical_diversity": 0, "mean_prompt_length": 0,
-            "domain_term_hit_rate": 0, "red_flag_count": 0, "per_policy": [],
+            "domain_term_hit_rate": 0, "red_flag_count": 0,
+            "red_flag_hard": 0, "red_flag_soft": 0, "per_policy": [],
         }
 
     all_tokens = []
@@ -625,6 +754,8 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
     term_hits = 0
     term_total = 0
     red_flag_count = 0
+    red_flag_hard = 0
+    red_flag_soft = 0
     per_policy: dict[str, int] = defaultdict(int)
 
     for row in rows:
@@ -633,8 +764,14 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
         all_tokens.extend(tokens)
         prompt_lengths.append(len(tokens))
         per_policy[row.get("policy_concept") or "unknown"] += 1
-        if _RED_FLAG_RE.search(prompt):
+        has_hard = bool(_HARD_RED_FLAG_RE.search(prompt))
+        has_soft = bool(_SOFT_RED_FLAG_RE.search(prompt))
+        if has_hard or has_soft:
             red_flag_count += 1
+        if has_hard:
+            red_flag_hard += 1
+        if has_soft:
+            red_flag_soft += 1
         prompt_lower = prompt.lower()
         for sa in row.get("sampled_axes", []):
             label = sa.get("sampled_label", "")
@@ -650,6 +787,8 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
         "mean_prompt_length": round(sum(prompt_lengths) / len(prompt_lengths), 1),
         "domain_term_hit_rate": round(term_hits / term_total, 3) if term_total > 0 else 0,
         "red_flag_count": red_flag_count,
+        "red_flag_hard": red_flag_hard,
+        "red_flag_soft": red_flag_soft,
         "per_policy": [{"policy_concept": pc, "count": c} for pc, c in sorted(per_policy.items())],
     }
 
@@ -796,6 +935,7 @@ def run_evaluation(
     if emit_rows and profiles:
         gen = compute_generation_metrics(emit_rows, profiles)
         gen["enumeration_concentration"] = compute_enumeration_concentration(emit_rows)
+        gen["technique_diversity"] = compute_technique_diversity(emit_rows)
         result["generation_metrics"] = gen
 
     if adversarial_path and adversarial_path.exists():
@@ -813,6 +953,7 @@ def run_evaluation(
         )
         pm["weak_match_impact"] = compute_weak_match_impact(weak_matches, adv_rows)
         pm["semantic_diversity"] = compute_semantic_diversity(adv_rows)
+        pm["similarity_graph"] = compute_similarity_edges(adv_rows)
         result["prompt_metrics"] = pm
 
     return result
@@ -911,7 +1052,7 @@ def format_summary(evaluation: dict) -> str:
         lines.append(
             f"  Prompts: TTR {pm.get('lexical_diversity', 0)}, "
             f"domain hit rate {pm.get('domain_term_hit_rate', 0)}, "
-            f"{pm.get('red_flag_count', 0)} red flags"
+            f"{pm.get('red_flag_count', 0)} red flags ({pm.get('red_flag_hard', 0)} hard, {pm.get('red_flag_soft', 0)} soft)"
             f"{extra}"
         )
 

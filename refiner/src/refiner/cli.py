@@ -202,11 +202,16 @@ def run(
     data_dir = Path(__file__).parent.parent.parent / "data"
     layer1_path = data_dir / "risk-to-vocabulary.sssom.tsv"
     layer2_path = data_dir / "vocabulary-to-ontology.sssom.tsv"
+    bfo_fallbacks = None
+    bfo_path = data_dir / "ontology-to-bfo.sssom.tsv"
     if layer1_path.exists() and layer2_path.exists():
-        from refiner.ontology_seeds import SSSOMIndex
+        from refiner.ontology_seeds import SSSOMIndex, load_bfo_fallbacks
         layer1_mappings = SSSOMIndex.from_tsv(layer1_path)
         layer2_mappings = SSSOMIndex.from_tsv(layer2_path, expand_objects=True)
         typer.echo(f"Loaded SSSOM seeds: {len(layer1_mappings.mappings)} layer-1, {len(layer2_mappings.mappings)} layer-2 mappings")
+        if bfo_path.exists():
+            bfo_fallbacks = load_bfo_fallbacks(bfo_path)
+            typer.echo(f"Loaded BFO fallbacks: {len(bfo_fallbacks)} mappings")
 
     if search_strategy != "llm":
         typer.echo(f"Warning: --search-strategy is deprecated (SSSOM seeds used instead)", err=True)
@@ -218,6 +223,7 @@ def run(
         until=until, report=report,
         layer1_mappings=layer1_mappings,
         layer2_mappings=layer2_mappings,
+        bfo_fallbacks=bfo_fallbacks,
     )
     # TODO: thread doc_context into pipeline stages (e.g. identify_domains domain hint)
     state.doc_context = doc_context
@@ -373,6 +379,10 @@ def emit(
     samples_per_risk: int = typer.Option(10, "--samples-per-risk", help="Samples per risk (default: 10)"),
     seed: int = typer.Option(None, "--seed", help="Random seed for reproducible sampling"),
     output: Path = typer.Option(None, "--output", "-o", help="Output JSONL path (default: <output-dir>/dataset.jsonl)"),
+    technique_weights: str = typer.Option(
+        None, "--technique-weights",
+        help="JSON string with technique weight overrides, e.g. '{\"pretexting\": 2, \"analytical_reframing\": 1}'",
+    ),
 ):
     """Emit an sdg_hub-ready JSONL dataset from domain context profiles."""
     if not output_dir.is_dir():
@@ -384,8 +394,17 @@ def emit(
 
     out_path = output or (output_dir / "dataset.jsonl")
 
+    parsed_weights = None
+    if technique_weights:
+        try:
+            parsed_weights = json.loads(technique_weights)
+        except json.JSONDecodeError as e:
+            typer.echo(f"Error: invalid JSON for --technique-weights: {e}", err=True)
+            raise typer.Exit(1)
+
     from refiner.emit import emit as do_emit
-    do_emit(output_dir, policies, samples_per_risk, out_path, seed=seed)
+    do_emit(output_dir, policies, samples_per_risk, out_path, seed=seed,
+            technique_weights=parsed_weights)
     typer.echo(f"Dataset written to {out_path}")
 
 

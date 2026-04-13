@@ -2,7 +2,123 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 8.4 (current)
+## Gen 9.3 (current)
+
+### Added
+
+- **OWL2Vec\*-style ontology projection** — New `ontoquery/src/ontoquery/owl2vec.py` module implements
+  the core projection rules from Chen et al. (2021): SubClassOf taxonomy (with bidirectional reverse
+  edges), existential/universal restrictions → property edges, domain+range combination, atomic and
+  complex equivalences, and annotation literal edges. Works against the existing pyoxigraph/rdflib
+  backend via the `_query_triples` adapter — no Java/JVM dependency.
+
+- **Random walks and Word2Vec embeddings** — DeepWalk-style random walks over the projected graph,
+  interleaving entities and predicates. Word2Vec (skip-gram) training via gensim produces per-URI
+  embeddings that capture pure structural similarity. Validated with 6 structural assertions on a
+  9-class test ontology: hierarchy depth, branch clustering, sibling proximity, and hierarchy vs.
+  property link discrimination all confirmed.
+
+- **Context-augmented ChromaDB embeddings** — `build_structural_context()` serializes each class's
+  projected edges into text (e.g., `SubClassOf: Person. worksFor: Organization. HasSubClass: Manager`)
+  and appends it to the ChromaDB document at index time. The existing transformer embedding model now
+  captures structural signals alongside lexical ones — no additional model or training step required.
+  Wired into `ontoquery index` CLI and passed through `index_classes` / `index_domain_classes`.
+
+- **gensim optional dependency** — Added as `[embeddings]` extra in ontoquery (`uv sync --extra
+  embeddings`). Requires Python ≤3.13 (gensim C extensions don't build on 3.14 yet). The projection
+  and context-augmented indexing work without gensim; only `train_embeddings()` / `owl2vec_embed()`
+  require it.
+
+## Gen 9.2 
+
+### Added
+
+- **BFO category fallback via SSSOM** — New `refiner/data/ontology-to-bfo.sssom.tsv` (63 mappings)
+  maps domain ontology classes without BFO ancestry (CSO, LKIF, FIBO, Commons, OBO) to BFO categories.
+  `derive_bfo_category()` uses these as fallback when the superclass walk returns empty. Projected
+  coverage: 23% → ~88% of axes. Added `load_bfo_fallbacks()` loader in `ontology_seeds.py`, threaded
+  through pipeline → anchor via `bfo_fallbacks` parameter.
+
+- **Hard/soft red flag tiers** — Red flag patterns split into hard (overt jailbreak: `pretend you are`,
+  `ignore previous instructions`, `jailbreak`, etc.) and soft (hedging language: `hypothetically`,
+  `for educational purposes`, `as a test`, etc.). `compute_adversarial_metrics()` returns `red_flag_hard`
+  and `red_flag_soft` alongside total `red_flag_count`. Combined report shows separate counts with
+  distinct colors (red for hard, amber for soft). Explorer badges and modal detail view updated.
+  g9.1 battery retroactively analyzed: 1 hard red flag, 39 soft across 3,030 prompts.
+
+- **Technique diversity in evaluation output** — `compute_technique_diversity()` now wired into
+  `run_evaluation()`. Shannon entropy, normalized entropy, and per-risk technique counts appear in
+  the evaluation JSON under `generation_metrics.technique_diversity`.
+
+- **Technique diversity card in combined report** — New card in Evaluation → Generation Metrics
+  showing normalized entropy (color-coded), Shannon entropy in bits, and per-risk technique counts
+  sorted ascending with coverage color coding.
+
+- **Technique filter in explorer** — Dropdown filter in explorer sidebar filters prompts by
+  adversarial technique frame.
+
+### Fixed
+
+- **Process Prohibition bypass via search path** — `constrained_search()` in anchor stage was not
+  applying `_is_excluded_uri()` filter, allowing Process Prohibition to enter via ChromaDB semantic
+  search even though the structural navigation path correctly excluded it. Added
+  `generic_safety_uris` parameter and exclusion check. Eliminates the 10 residual Process
+  Prohibition samples in DHS-Gov Mistral.
+
+- **3 missing CCO URIs in `_BFO_CATEGORIES`** — Person (`ont00001262`), Organization (`ont00001180`),
+  and Resource (`ont00000740`) were not in the BFO category mapping, causing 510 axes across the
+  battery to miss BFO category assignment despite having direct CCO ancestry.
+
+- **Combined report rendering issues** — Fixed 5 issues: (1) `candidate_expansion` and
+  `query_source_contribution` rendered as empty stage quality cards — filtered from iteration.
+  (2) 100% enumeration domain mismatch misleading for LLM-generated enumerations — replaced with
+  informational "100% LLM-generated" block. (3) Empty role distribution — replaced with technique
+  distribution (indigo badges), roles kept as conditional legacy. (4) `[object Object]` in Policy →
+  named entities — fixed to render `{name, role}` objects correctly. (5) "Relevance Profile" and
+  "Min Roles" renamed to "Axis Relevance" and "Min Axes".
+
+## Gen 9.1
+
+### Added
+
+- **Multi-frame adversarial technique system** — Emit stage now selects from 5 adversarial technique
+  frames instead of producing homogeneous pretexting prompts. Each frame provides a distinct social
+  engineering strategy with soft LLM guidance (description paragraph + example prompts, not hard
+  templates). Frames: `pretexting` (professional identity), `narrative_framing` (fiction/case study
+  distancing), `analytical_reframing` (research/audit positioning), `delegated_authority` (urgency +
+  chain of command), `comparative_benchmark` (harmful content as test data). Cross-validated against
+  Galtea (26K prompts) and TUD-ARTS (282 prompts, 6 attack techniques) external datasets to confirm
+  these families cover the observed attack surface beyond our own generation bias.
+
+- **Ontology-grounded slot labels** — Each frame maps BFO categories to frame-specific human-readable
+  labels (e.g., pretexting maps `Role`→"professional role", delegated_authority maps `Agent`→"authority
+  figure"). When `bfo_category` is populated on a sampled axis, the scenario line uses the slot label
+  (`- professional role: Financial Analyst (a type of Person)`) instead of the generic role prefix.
+  Falls back to plain format when `bfo_category` is empty (~78% of current axes). As upstream SSSOM
+  seed coverage improves, slot labels become more effective automatically.
+
+- **Configurable technique distribution** — Frame selection uses weighted random choice with optional
+  risk affinity boosting (2x weight when risk name/description matches frame keywords). Default:
+  uniform across all 5 frames. Override via `--technique-weights` CLI option (JSON string) or
+  `technique_weights` in `battery.yaml`. Affinity examples: fraud risks boost pretexting, bias risks
+  boost analytical_reframing, privacy risks boost delegated_authority.
+
+- **Technique diversity metrics** — `compute_technique_diversity()` in evaluate returns Shannon entropy,
+  normalized entropy (0–1), per-technique counts, and per-risk unique technique counts. Also added
+  `technique_distribution` to `compute_generation_metrics()` for backward-compatible technique counting
+  (rows without `technique` field default to `"pretexting"`).
+
+- **Technique metadata in emit output** — Each dataset.jsonl row now includes `technique` (frame name)
+  and `technique_description` (frame description paragraph) fields.
+
+### Fixed
+
+- **`bfo_category` not propagated to SampledAxis** — Pre-existing gap: `bfo_category` existed on both
+  `DomainContextAxis` and `SampledAxis` models but was never copied in `sample_axes()`. Added
+  `bfo_category=axis.bfo_category` to the SampledAxis constructor. This was a prerequisite for slot
+  labels to work.
+
+## Gen 8.4
 
 ### Fixed
 

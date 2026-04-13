@@ -26,7 +26,8 @@ packages = ["src/ontoquery"]
 testpaths = ["tests"]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0"]
+embeddings = ["gensim>=4.3.0"]
+dev = ["pytest>=8.0", "gensim>=4.3.0"]
 
 [tool.uv]
 dev-dependencies = ["pytest>=8.0"]
