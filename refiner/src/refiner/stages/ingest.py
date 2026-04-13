@@ -13,6 +13,7 @@ from refiner.models import (
     Policy,
     PolicyDocument,
     RunReport,
+    Stakeholder,
 )
 from refiner import debug
 
@@ -371,7 +372,7 @@ def enrich_policies(
 
 def _build_document(context: _SlimContext, policies: list[Policy]) -> PolicyDocument:
     return PolicyDocument(
-        organization=context.organization,
+        organization=Stakeholder(name=context.organization) if context.organization else None,
         domain=context.domain,
         purpose=context.purpose,
         ai_systems=context.ai_systems,

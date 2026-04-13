@@ -21,6 +21,20 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **AIRO-grounded PolicyDocument envelope** — `PolicyDocument.organization` is now a typed
+  `Stakeholder` (name + AIRO role CURIEs + description) instead of a bare string. A `@field_validator`
+  coerces plain strings for backward compatibility with existing JSON policy files. `domain` default
+  changed from `""` to `None` (absent vs empty distinction).
+
+- **Envelope type definitions** — New models `Stakeholder`, `GovernedSystem`, `RegulatoryReference`
+  define the AIRO-grounded governance context. `GovernedSystem` captures AI system purpose and risk
+  level (AI Act classification). `RegulatoryReference` captures regulation name, jurisdiction, and URI.
+  These are available for future use by downstream stages.
+
+- **Policy decomposition model** — New `PolicyDecomposition` (agent/activity/entity triple) on
+  `Policy.decomposition` captures the Activity-Entity-Agent configuration a policy constraint governs,
+  following the Lewis et al. 2021 ontology vocabulary. Optional — populated by future enrichment steps.
+
 - **AIRO typing in structured output** — Taxonomy entries, groups, and the taxonomy itself now carry
   `class_uri` fields using AIRO CURIEs (`airo:Risk`, `airo:RiskConcept`). Taxonomy YAML output includes
   a top-level `curie_map` dict (21 prefixes) so downstream consumers can expand CURIEs to full URIs.

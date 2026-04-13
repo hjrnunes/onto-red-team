@@ -162,7 +162,7 @@ def build_prompt(
 
     org_block = ""
     if doc_context and doc_context.organization:
-        org_parts = [f"Organization: {doc_context.organization}"]
+        org_parts = [f"Organization: {doc_context.organization.name}"]
         if doc_context.domain:
             org_parts[0] += f" ({doc_context.domain})"
         if doc_context.ai_subjects:

@@ -121,7 +121,7 @@ def test_cli_ingest_markdown(mock_create_client, tmp_path, monkeypatch):
     assert out.exists()
 
     data = json.loads(out.read_text())
-    assert data["organization"] == "Test"
+    assert data["organization"]["name"] == "Test"
     assert len(data["policies"]) == 1
 
 
@@ -265,7 +265,7 @@ def test_ingest_then_run_integration(mock_create_client, tmp_path, monkeypatch):
 
     # Verify enriched file is valid PolicyDocument
     data = json.loads(enriched.read_text())
-    assert data["organization"] == "Bank"
+    assert data["organization"]["name"] == "Bank"
     assert data["policies"][0]["boundary_examples"][0]["prohibited"] == "commit fraud"
 
     # Verify refiner run would accept this file

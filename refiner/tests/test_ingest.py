@@ -311,7 +311,7 @@ def test_ingest_markdown(mock_client, mock_config):
         ),
     ]
     result = ingest(SAMPLE_MARKDOWN, "markdown", mock_client, mock_config)
-    assert result.organization == "South West Bank"
+    assert result.organization.name == "South West Bank"
     assert result.domain == "banking"
     assert len(result.policies) == 1
     assert result.policies[0].policy_concept == "Fraud"
@@ -355,7 +355,7 @@ def test_ingest_json_array(mock_client, mock_config):
         ),
     ]
     result = ingest(SAMPLE_JSON_TEXT, "json_array", mock_client, mock_config)
-    assert result.organization == "South West Bank"
+    assert result.organization.name == "South West Bank"
     assert len(result.policies) == 2
     assert result.policies[0].policy_concept == "Fraud"
     assert result.policies[1].policy_concept == "Money Laundering"
@@ -403,7 +403,7 @@ def test_ingest_until_context(mock_client, mock_config):
         ),
     ]
     result = ingest(SAMPLE_MARKDOWN, "markdown", mock_client, mock_config, until="context")
-    assert result.organization == "Bank"
+    assert result.organization.name == "Bank"
     assert result.policies == []
     assert mock_client.chat.completions.create.call_count == 1
 
@@ -456,4 +456,4 @@ def test_ingest_domain_override(mock_client, mock_config):
         organization_override="South West Bank",
     )
     assert result.domain == "banking"
-    assert result.organization == "South West Bank"
+    assert result.organization.name == "South West Bank"

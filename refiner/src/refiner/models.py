@@ -1,6 +1,6 @@
 from typing import Literal
 from dataclasses import dataclass, field
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 class BoundaryExample(BaseModel):
@@ -13,6 +13,38 @@ class NamedEntity(BaseModel):
     role: str
 
 
+# --- AIRO-grounded envelope types ---
+
+
+class Stakeholder(BaseModel):
+    name: str
+    roles: list[str] = []        # CURIEs: "airo:AIProvider", "airo:AIDeployer",
+                                  #         "airo:AIUser", "airo:AISubject"
+    description: str | None = None
+
+
+class GovernedSystem(BaseModel):
+    name: str
+    description: str | None = None
+    purpose: list[str] = []
+    risk_level: Literal["high", "limited", "minimal", "unclassified"] | None = None
+
+
+class RegulatoryReference(BaseModel):
+    name: str
+    jurisdiction: str | None = None
+    reference: str | None = None   # URI or document identifier
+
+
+# --- Per-policy decomposition ---
+
+
+class PolicyDecomposition(BaseModel):
+    agent: str | None = None       # Who acts (CURIE or label)
+    activity: str | None = None    # What is done
+    entity: str | None = None      # What is acted upon
+
+
 class Policy(BaseModel):
     policy_concept: str
     concept_definition: str
@@ -20,12 +52,13 @@ class Policy(BaseModel):
     acceptable_uses: list[str] = []
     risk_controls: list[str] = []
     human_involvement: str | None = None
+    decomposition: PolicyDecomposition | None = None
 
 
 class PolicyDocument(BaseModel):
     airo_version: str = "0.2"
-    organization: str = ""
-    domain: str = ""
+    organization: Stakeholder | None = None
+    domain: str | None = None
     purpose: list[str] = []
     ai_systems: list[str] = []
     ai_users: list[str] = []
@@ -33,6 +66,13 @@ class PolicyDocument(BaseModel):
     governing_regulations: list[str] = []
     named_entities: list[NamedEntity] = []
     policies: list[Policy] = []
+
+    @field_validator("organization", mode="before")
+    @classmethod
+    def _coerce_organization(cls, v):
+        if isinstance(v, str):
+            return Stakeholder(name=v) if v else None
+        return v
 
 
 class RiskMatch(BaseModel):

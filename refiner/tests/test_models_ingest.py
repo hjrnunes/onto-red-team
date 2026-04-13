@@ -58,8 +58,8 @@ def test_policy_with_enrichments():
 def test_policy_document_defaults():
     doc = PolicyDocument()
     assert doc.airo_version == "0.2"
-    assert doc.organization == ""
-    assert doc.domain == ""
+    assert doc.organization is None
+    assert doc.domain is None
     assert doc.purpose == []
     assert doc.ai_systems == []
     assert doc.ai_users == []
@@ -105,7 +105,7 @@ def test_policy_document_roundtrip():
         ],
     }
     doc = PolicyDocument(**data)
-    assert doc.organization == "South West Bank"
+    assert doc.organization.name == "South West Bank"
     assert doc.domain == "banking"
     assert len(doc.named_entities) == 2
     assert doc.named_entities[0].name == "Jenny Carlson"
@@ -119,6 +119,6 @@ def test_policy_document_roundtrip():
 
     # Round-trip: model_dump should produce equivalent dict
     dumped = doc.model_dump()
-    assert dumped["organization"] == data["organization"]
+    assert dumped["organization"]["name"] == data["organization"]
     assert len(dumped["named_entities"]) == 2
     assert len(dumped["policies"]) == 2

@@ -45,7 +45,7 @@
           <h1 class="text-2xl font-bold tracking-tight">__REPORT_TITLE__</h1>
           <p class="text-gray-400 text-xs mt-0.5">Red-team prompt generation pipeline report</p>
           <p class="text-gray-400 text-sm mt-0.5">
-            <span x-text="data.run?.policy_set || policy?.organization || ''"></span>
+            <span x-text="data.run?.policy_set || policy?.organization?.name || ''"></span>
             <template x-if="data.run?.model">
               <span> &mdash; <span x-text="data.run.model"></span></span>
             </template>
@@ -1433,7 +1433,7 @@
     <div class="max-w-screen-xl mx-auto p-6 space-y-6">
 
       <!-- Tab intro -->
-      <div x-show="policy?.organization" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900" x-data="{ helpOpen: false }">
+      <div x-show="policy?.organization?.name" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900" x-data="{ helpOpen: false }">
         <div class="flex items-center justify-between">
           <p>The enriched policy document extracted from the input, with structured concepts and boundary examples.</p>
           <button @click="helpOpen = !helpOpen" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-4 whitespace-nowrap">
@@ -1452,7 +1452,7 @@
         </div>
       </div>
 
-      <template x-if="!policy?.organization">
+      <template x-if="!policy?.organization?.name">
         <div class="text-center py-16 text-gray-400">
           <p class="text-lg">No enriched policy data available.</p>
           <p class="text-sm mt-1">Run the ingest stage to produce the enriched policy.</p>
@@ -1460,14 +1460,14 @@
       </template>
 
       <!-- Organization context -->
-      <section x-show="policy?.organization" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <section x-show="policy?.organization?.name" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
         <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
           <span class="tip" data-tip="Metadata about the organization operating the AI system. Extracted from the policy document during the ingest stage.">Organization Context</span>
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div>
             <p class="text-xs text-gray-400 uppercase mb-1">Organization</p>
-            <p class="text-sm font-medium text-gray-800" x-text="policy?.organization || '?'"></p>
+            <p class="text-sm font-medium text-gray-800" x-text="policy?.organization?.name || '?'"></p>
           </div>
           <div>
             <p class="text-xs text-gray-400 uppercase mb-1">Domain</p>

@@ -93,7 +93,7 @@ def ingest(
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result.model_dump(), indent=2))
     typer.echo(f"Enriched PolicyDocument written to {out_path}")
-    typer.echo(f"  Organization: {result.organization}")
+    typer.echo(f"  Organization: {result.organization.name if result.organization else ''}")
     typer.echo(f"  Domain: {result.domain}")
     typer.echo(f"  Policies: {len(result.policies)}")
     _echo_token_usage(tracker)

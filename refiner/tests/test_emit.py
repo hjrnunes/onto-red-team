@@ -269,7 +269,7 @@ def test_load_policies_enriched_format(tmp_path):
     policies, doc_context = load_policies(p)
     assert "PHI" in policies
     assert doc_context is not None
-    assert doc_context.organization == "Test Org"
+    assert doc_context.organization.name == "Test Org"
     assert len(policies["PHI"].boundary_examples) == 1
 
 
