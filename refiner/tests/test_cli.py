@@ -178,14 +178,12 @@ def test_cli_ingest_already_enriched(tmp_path, monkeypatch):
 def _make_enriched_policy_file(tmp_path: Path) -> Path:
     doc = {
         "airo_version": "0.2",
-        "organization": "Test Org",
+        "organization": {"name": "Test Org", "roles": [], "description": None},
         "domain": "healthcare",
         "purpose": [],
         "ai_systems": [],
-        "ai_users": [],
-        "ai_subjects": [],
+        "stakeholders": [],
         "governing_regulations": [],
-        "named_entities": [],
         "policies": [
             {"policy_concept": "Fraud", "concept_definition": "About fraud"},
         ],

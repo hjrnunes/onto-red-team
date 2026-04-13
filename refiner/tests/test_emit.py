@@ -2,7 +2,7 @@ import json
 
 import yaml
 
-from refiner.models import AxisEnumeration, DomainContextProfile, DomainContextAxis, SampledAxis
+from refiner.models import AxisEnumeration, DomainContextProfile, DomainContextAxis, SampledAxis, Stakeholder
 from refiner.emit import relevance_weights, sample_axes, build_prompt, load_domain_context, load_policies
 
 
@@ -287,7 +287,7 @@ def test_build_prompt_with_boundary_examples():
     doc_ctx = PolicyDocument(
         organization="NHS Trust",
         domain="healthcare",
-        ai_subjects=["patients"],
+        stakeholders=[Stakeholder(name="patients", roles=["airo:AISubject"])],
     )
 
     messages = build_prompt("Clinical", "No clinical decisions", "Misdiagnosis", [], policy=policy, doc_context=doc_ctx)

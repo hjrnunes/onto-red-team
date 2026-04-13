@@ -19,6 +19,13 @@ All notable changes to this project will be documented in this file.
 - **Type distribution in reports** — Removed `type_distribution` event from pipeline reports,
   evaluation aggregation, and both HTML report templates.
 
+- **`ai_users`, `ai_subjects`, `named_entities` fields** — Replaced by unified `stakeholders:
+  list[Stakeholder]` on `PolicyDocument`. The LLM extraction model (`_SlimContext`) still extracts
+  users/subjects/entities separately; `_build_document()` consolidates them into typed `Stakeholder`
+  objects with AIRO role CURIEs (`airo:AIUser`, `airo:AISubject`). Named entities carry their
+  original role string (e.g. "CEO"). HTML report template renders a single Stakeholders section
+  with role tooltips.
+
 ### Added
 
 - **AIRO-grounded PolicyDocument envelope** — `PolicyDocument.organization` is now a typed

@@ -62,28 +62,28 @@ def test_policy_document_defaults():
     assert doc.domain is None
     assert doc.purpose == []
     assert doc.ai_systems == []
-    assert doc.ai_users == []
-    assert doc.ai_subjects == []
+    assert doc.stakeholders == []
     assert doc.governing_regulations == []
-    assert doc.named_entities == []
     assert doc.policies == []
 
 
 def test_policy_document_roundtrip():
     """Construct from dict, serialize back, and verify equality."""
+    from refiner.models import Stakeholder
+
     data = {
         "airo_version": "0.2",
         "organization": "South West Bank",
         "domain": "banking",
         "purpose": ["Customer support chatbot"],
         "ai_systems": ["LLM-powered assistant"],
-        "ai_users": ["Bank employees"],
-        "ai_subjects": ["Bank customers"],
-        "governing_regulations": ["GDPR", "PCI-DSS"],
-        "named_entities": [
-            {"name": "Jenny Carlson", "role": "CEO"},
-            {"name": "CreditAlpha", "role": "Credit card product"},
+        "stakeholders": [
+            {"name": "Bank employees", "roles": ["airo:AIUser"]},
+            {"name": "Bank customers", "roles": ["airo:AISubject"]},
+            {"name": "Jenny Carlson", "roles": ["CEO"]},
+            {"name": "CreditAlpha", "roles": ["Credit card product"]},
         ],
+        "governing_regulations": ["GDPR", "PCI-DSS"],
         "policies": [
             {
                 "policy_concept": "Fraud",
@@ -107,8 +107,9 @@ def test_policy_document_roundtrip():
     doc = PolicyDocument(**data)
     assert doc.organization.name == "South West Bank"
     assert doc.domain == "banking"
-    assert len(doc.named_entities) == 2
-    assert doc.named_entities[0].name == "Jenny Carlson"
+    assert len(doc.stakeholders) == 4
+    assert doc.stakeholders[0].name == "Bank employees"
+    assert doc.stakeholders[0].roles == ["airo:AIUser"]
     assert len(doc.policies) == 2
     # First policy: minimal (backward compat)
     assert doc.policies[0].boundary_examples == []
@@ -120,5 +121,5 @@ def test_policy_document_roundtrip():
     # Round-trip: model_dump should produce equivalent dict
     dumped = doc.model_dump()
     assert dumped["organization"]["name"] == data["organization"]
-    assert len(dumped["named_entities"]) == 2
+    assert len(dumped["stakeholders"]) == 4
     assert len(dumped["policies"]) == 2

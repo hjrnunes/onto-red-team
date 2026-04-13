@@ -1493,19 +1493,13 @@
               </template>
             </div>
           </div>
-          <div x-show="(policy?.ai_users || []).length">
-            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="Who interacts with the AI system (e.g. employees, customers, general public). Informs what kinds of requests to expect.">AI Users</p>
+          <div x-show="(policy?.stakeholders || []).length">
+            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="People, groups, and named entities involved in or affected by the AI system. Roles indicate their relationship (e.g. airo:AIUser, airo:AISubject).">Stakeholders</p>
             <div class="flex flex-wrap gap-1">
-              <template x-for="u in (policy?.ai_users || [])" :key="u">
-                <span class="px-2 py-0.5 rounded text-xs bg-teal-100 text-teal-800" x-text="u"></span>
-              </template>
-            </div>
-          </div>
-          <div x-show="(policy?.ai_subjects || []).length">
-            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="People or groups affected by the AI system's outputs (e.g. job applicants, patients, students). These are the people whose safety the policy aims to protect.">AI Subjects</p>
-            <div class="flex flex-wrap gap-1">
-              <template x-for="s in (policy?.ai_subjects || [])" :key="s">
-                <span class="px-2 py-0.5 rounded text-xs bg-violet-100 text-violet-800" x-text="s"></span>
+              <template x-for="sh in (policy?.stakeholders || [])" :key="sh.name">
+                <span class="px-2 py-0.5 rounded text-xs bg-teal-100 text-teal-800 tip"
+                  :data-tip="(sh.roles || []).join(', ')"
+                  x-text="sh.name"></span>
               </template>
             </div>
           </div>
@@ -1514,16 +1508,6 @@
             <div class="flex flex-wrap gap-1">
               <template x-for="r in (policy?.governing_regulations || [])" :key="r">
                 <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" x-text="r"></span>
-              </template>
-            </div>
-          </div>
-          <div x-show="(policy?.named_entities || []).length">
-            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="Specific names (companies, products, regulations) extracted from the policy. Used to ground generated prompts in the organization's actual context.">Named Entities</p>
-            <div class="flex flex-wrap gap-1">
-              <template x-for="e in (policy?.named_entities || [])" :key="typeof e === 'object' ? e.name : e">
-                <span class="px-2 py-0.5 rounded text-xs bg-emerald-100 text-emerald-800 tip"
-                  :data-tip="typeof e === 'object' && e.role ? e.role : ''"
-                  x-text="typeof e === 'object' ? e.name : e"></span>
               </template>
             </div>
           </div>

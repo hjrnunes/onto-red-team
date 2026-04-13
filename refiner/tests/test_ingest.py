@@ -316,7 +316,8 @@ def test_ingest_markdown(mock_client, mock_config):
     assert len(result.policies) == 1
     assert result.policies[0].policy_concept == "Fraud"
     assert result.policies[0].acceptable_uses == ["education"]
-    assert len(result.named_entities) == 1
+    # staff (AIUser) + customers (AISubject) + Jenny Carlson (named)
+    assert len(result.stakeholders) == 3
     assert mock_client.chat.completions.create.call_count == 3
 
 

@@ -165,8 +165,9 @@ def build_prompt(
         org_parts = [f"Organization: {doc_context.organization.name}"]
         if doc_context.domain:
             org_parts[0] += f" ({doc_context.domain})"
-        if doc_context.ai_subjects:
-            org_parts.append(f"AI subjects: {', '.join(doc_context.ai_subjects)}")
+        subjects = [s.name for s in doc_context.stakeholders if "airo:AISubject" in s.roles]
+        if subjects:
+            org_parts.append(f"AI subjects: {', '.join(subjects)}")
         org_block = "\n" + "\n".join(org_parts) + "\n"
 
     user_content = f"""\

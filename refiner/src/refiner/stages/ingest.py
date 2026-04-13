@@ -9,7 +9,6 @@ from pydantic import BaseModel
 from refiner.llm import LLMConfig
 from refiner.models import (
     BoundaryExample,
-    NamedEntity,
     Policy,
     PolicyDocument,
     RunReport,
@@ -371,18 +370,20 @@ def enrich_policies(
 # ---------------------------------------------------------------------------
 
 def _build_document(context: _SlimContext, policies: list[Policy]) -> PolicyDocument:
+    stakeholders: list[Stakeholder] = []
+    for u in context.ai_users:
+        stakeholders.append(Stakeholder(name=u, roles=["airo:AIUser"]))
+    for s in context.ai_subjects:
+        stakeholders.append(Stakeholder(name=s, roles=["airo:AISubject"]))
+    for ne in context.named_entities:
+        stakeholders.append(Stakeholder(name=ne.name, roles=[ne.role]))
     return PolicyDocument(
         organization=Stakeholder(name=context.organization) if context.organization else None,
         domain=context.domain,
         purpose=context.purpose,
         ai_systems=context.ai_systems,
-        ai_users=context.ai_users,
-        ai_subjects=context.ai_subjects,
+        stakeholders=stakeholders,
         governing_regulations=context.governing_regulations,
-        named_entities=[
-            NamedEntity(name=ne.name, role=ne.role)
-            for ne in context.named_entities
-        ],
         policies=policies,
     )
 
