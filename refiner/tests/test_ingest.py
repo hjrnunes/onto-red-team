@@ -187,6 +187,9 @@ def test_enrich_policies(mock_client, mock_config):
                 acceptable_uses=["Fraud detection education"],
                 risk_controls=["Human review required"],
                 human_involvement="Compliance officer must validate",
+                agent="AI assistant",
+                activity="advise on fraud techniques",
+                entity="financial transaction methods",
             ),
             _SlimEnrichment(
                 policy_concept="AML",
@@ -205,10 +208,15 @@ def test_enrich_policies(mock_client, mock_config):
     assert fraud.acceptable_uses == ["Fraud detection education"]
     assert fraud.risk_controls == ["Human review required"]
     assert fraud.human_involvement == "Compliance officer must validate"
+    assert fraud.decomposition is not None
+    assert fraud.decomposition.agent == "AI assistant"
+    assert fraud.decomposition.activity == "advise on fraud techniques"
+    assert fraud.decomposition.entity == "financial transaction methods"
 
     aml = next(p for p in result if p.policy_concept == "AML")
     assert aml.acceptable_uses == ["AML training"]
     assert aml.human_involvement is None  # empty string -> None
+    assert aml.decomposition is None  # no agent/activity/entity provided
 
 
 def test_enrich_policies_missing_concept(mock_client, mock_config):

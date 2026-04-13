@@ -34,6 +34,14 @@ All notable changes to this project will be documented in this file.
   reference carries name, jurisdiction, and URI. `_build_document()` wraps extracted regulation
   names into `RegulatoryReference` objects.
 
+### Changed
+
+- **Enrichment pass populates PolicyDecomposition** — The ingest enrichment prompt now asks the LLM
+  to identify the agent (who acts), activity (what is done), and entity (what is acted upon) for each
+  policy. When provided, these are stored as `Policy.decomposition` — an Agent/Activity/Entity triple
+  following the Lewis et al. 2021 ontology vocabulary. No extra LLM call; the decomposition fields
+  are part of the existing enrichment response model.
+
 ### Added
 
 - **AIRO-grounded PolicyDocument envelope** — `PolicyDocument.organization` is now a typed

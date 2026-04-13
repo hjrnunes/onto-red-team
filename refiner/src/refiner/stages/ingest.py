@@ -11,6 +11,7 @@ from refiner.models import (
     BoundaryExample,
     GovernedSystem,
     Policy,
+    PolicyDecomposition,
     PolicyDocument,
     RegulatoryReference,
     RunReport,
@@ -61,6 +62,9 @@ class _SlimEnrichment(BaseModel):
     acceptable_uses: list[str]
     risk_controls: list[str]
     human_involvement: str = ""
+    agent: str = ""
+    activity: str = ""
+    entity: str = ""
 
 
 class _SlimEnrichmentList(BaseModel):
@@ -162,7 +166,10 @@ def _build_enrichment_prompt(
         "- boundary_examples: pairs of prohibited vs acceptable use\n"
         "- acceptable_uses: list of explicitly permitted uses\n"
         "- risk_controls: mitigations or guardrails mentioned\n"
-        "- human_involvement: any human oversight requirement"
+        "- human_involvement: any human oversight requirement\n"
+        "- agent: who performs the governed action (e.g. 'AI assistant', 'clinician', 'the system')\n"
+        "- activity: what action is being governed (e.g. 'diagnose', 'disclose', 'recommend')\n"
+        "- entity: what is acted upon (e.g. 'patient data', 'financial records', 'personal information')"
     )
     lines.append("")
 
@@ -337,6 +344,13 @@ def enrich_policies(
             boundary_pairs_total += len(e.boundary_examples)
             if not e.boundary_examples:
                 policies_with_zero_pairs += 1
+            decomposition = None
+            if e.agent or e.activity or e.entity:
+                decomposition = PolicyDecomposition(
+                    agent=e.agent or None,
+                    activity=e.activity or None,
+                    entity=e.entity or None,
+                )
             enriched.append(Policy(
                 policy_concept=p.policy_concept,
                 concept_definition=p.concept_definition,
@@ -347,6 +361,7 @@ def enrich_policies(
                 acceptable_uses=e.acceptable_uses,
                 risk_controls=e.risk_controls,
                 human_involvement=e.human_involvement if e.human_involvement else None,
+                decomposition=decomposition,
             ))
         else:
             policies_with_zero_pairs += 1
