@@ -86,6 +86,8 @@ class DomainContextAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
     bfo_category: str = ""
+    vocabulary_concept: str = ""
+    vocabulary_label: str = ""
     vocabulary_context: dict = {}
     enumerations: list[AxisEnumeration]
     # Kept for backward compatibility with emit stage
@@ -107,10 +109,13 @@ class SampledAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
     bfo_category: str = ""
+    vocabulary_concept: str = ""
+    vocabulary_label: str = ""
     sampled_uri: str
     sampled_label: str
     source_ontology: str
     relevance: Literal["high", "medium", "low"]
+    provenance: str = "generated"
     # Kept for backward compatibility with emit stage
     roles: list[str] = []
 

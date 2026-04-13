@@ -1,6 +1,7 @@
 import logging
 import re
 
+from refiner.curie_registry import CURIE_MAP
 from refiner.models import (
     PolicyClassification,
     PolicyRiskMapping,
@@ -54,6 +55,7 @@ def structure(
             "id": f"{taxonomy_id}-{slug}",
             "name": name,
             "type": "RiskGroup",
+            "class_uri": "airo:RiskConcept",
             "isDefinedByTaxonomy": taxonomy_id,
         })
 
@@ -71,6 +73,7 @@ def structure(
                     "id": entry_id,
                     "name": rm.risk_name,
                     "type": "Risk",
+                    "class_uri": "airo:Risk",
                     "isDefinedByTaxonomy": taxonomy_id,
                     "isPartOf": group_id,
                     "tag": slugify(rm.risk_name),
@@ -120,11 +123,13 @@ def structure(
     entries = list(entries_by_id.values())
 
     taxonomy = {
+        "curie_map": CURIE_MAP,
         "taxonomies": [
             {
                 "id": taxonomy_id,
                 "name": f"Client {client_slug.upper()} Policy Taxonomy",
                 "type": "RiskTaxonomy",
+                "class_uri": "airo:RiskConcept",
             },
         ],
         "groups": groups,

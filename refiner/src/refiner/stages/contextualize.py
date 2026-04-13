@@ -205,6 +205,8 @@ def contextualize(
                     cco_class_uri=axis.cco_class_uri,
                     cco_class_label=axis.cco_class_label,
                     bfo_category=axis.bfo_category,
+                    vocabulary_concept=axis.vocabulary_concept,
+                    vocabulary_label=axis.vocabulary_label,
                     vocabulary_context=vocab_ctx,
                     enumerations=enumerations,
                     roles=[],

@@ -33,7 +33,11 @@ _PROHIBITED_PRACTICES = {"eu-aiact:DeepFake", "eu-aiact:EmotionRecognition"}
 
 
 def _expand_curie(value: str, curie_map: dict[str, str]) -> str:
-    """Expand a CURIE (e.g. 'cco:Organization') to a full URI using curie_map."""
+    """Expand a CURIE (e.g. 'cco:Organization') to a full URI using curie_map.
+
+    Uses the file-local curie_map from SSSOM headers (which may contain prefixes
+    not in the shared registry). For the shared registry, see curie_registry.py.
+    """
     if ":" not in value or value.startswith("http://") or value.startswith("https://"):
         return value
     prefix, _, local = value.partition(":")

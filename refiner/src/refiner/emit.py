@@ -5,6 +5,7 @@ from pathlib import Path
 
 import yaml
 
+from refiner.curie_registry import CURIE_MAP
 from refiner.frames import DEFAULT_WEIGHTS, AdversarialFrame, resolve_slot_label, select_frame
 from refiner.models import (
     AxisEnumeration,
@@ -71,11 +72,14 @@ def sample_axes(
                 cco_class_uri=axis.cco_class_uri,
                 cco_class_label=axis.cco_class_label,
                 bfo_category=axis.bfo_category,
+                vocabulary_concept=axis.vocabulary_concept,
+                vocabulary_label=axis.vocabulary_label,
                 roles=axis.roles,
                 sampled_uri=chosen.class_uri,
                 sampled_label=chosen.class_label,
                 source_ontology=chosen.source_ontology,
                 relevance=chosen.relevance,
+                provenance=chosen.provenance,
             ))
 
         key = tuple(sa.sampled_uri for sa in sample)
@@ -299,4 +303,10 @@ def emit(
         for row in rows:
             f.write(json.dumps(row) + "\n")
 
+    # Write curie_map sidecar for URI expansion
+    curie_path = output_path.with_suffix(".curie_map.json")
+    with open(curie_path, "w") as f:
+        json.dump(CURIE_MAP, f, indent=2)
+
     logger.info("Wrote %d rows to %s", len(rows), output_path)
+    logger.info("Wrote curie_map to %s", curie_path)

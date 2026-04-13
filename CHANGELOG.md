@@ -2,7 +2,31 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 9.3 (current)
+## Gen 10 (current)
+
+### Added
+
+- **AIRO typing in structured output** — Taxonomy entries, groups, and the taxonomy itself now carry
+  `class_uri` fields using AIRO CURIEs (`airo:Risk`, `airo:RiskConcept`). Taxonomy YAML output includes
+  a top-level `curie_map` dict (21 prefixes) so downstream consumers can expand CURIEs to full URIs.
+
+- **Shared CURIE registry** — New `refiner/src/refiner/curie_registry.py` provides a canonical
+  `CURIE_MAP` plus `expand_curie()` and `compact_uri()` utilities. Convention: CURIEs in data
+  structures and outputs, labels in LLM prompts, curie_map sidecar for URI expansion.
+
+- **Provenance propagated to JSONL output** — `SampledAxis` now carries `provenance`
+  (generated/subclass/sibling) from the source `AxisEnumeration`, so the emit-stage JSONL preserves
+  how each sampled instance was discovered.
+
+- **Vocabulary concept on SampledAxis** — `DomainContextAxis` and `SampledAxis` now carry
+  `vocabulary_concept` and `vocabulary_label` from the source `VariationAxis`. The AIRO/DPV bridge
+  concept (e.g., `eu-aiact:AISubject`) that explains why an axis was selected now survives through
+  contextualize and emit to the final JSONL output.
+
+- **CURIE map sidecar** — `emit` writes a `dataset.curie_map.json` alongside `dataset.jsonl`,
+  providing the prefix-to-URI mapping for all CURIEs used in outputs.
+
+## Gen 9.3
 
 ### Added
 
