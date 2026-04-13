@@ -110,22 +110,6 @@
           <div class="border border-gray-200 rounded-lg p-4">
             <h3 class="text-sm font-semibold text-gray-700 mb-2" x-text="stage"></h3>
             <dl class="space-y-1 text-sm">
-              <!-- type_distribution -->
-              <template x-if="info.type_distribution">
-                <div>
-                  <dt class="text-gray-400 text-xs uppercase">
-                    <span class="tip" data-tip="How policies were classified: A=Safety, B=Confidentiality, C=Scope/Regulatory, D=Routing. Unbalanced distributions may indicate classification issues.">Type Distribution</span>
-                  </dt>
-                  <dd class="flex gap-2 mt-1">
-                    <template x-for="[t, c] in Object.entries(info.type_distribution)" :key="t">
-                      <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold"
-                        :class="{'bg-blue-100 text-blue-800': t==='A', 'bg-green-100 text-green-800': t==='B', 'bg-yellow-100 text-yellow-800': t==='C', 'bg-purple-100 text-purple-800': t==='D'}">
-                        <span x-text="t"></span>: <span x-text="c" class="ml-1"></span>
-                      </span>
-                    </template>
-                  </dd>
-                </div>
-              </template>
               <!-- selected_domains -->
               <template x-if="info.selected_domains">
                 <div>

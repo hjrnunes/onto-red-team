@@ -5,7 +5,7 @@ import instructor
 from pydantic import BaseModel
 from refiner.llm import LLMConfig
 from refiner.models import (
-    PolicyClassification,
+    Policy,
     PolicyRiskMapping,
     RiskMatch,
 )
@@ -40,13 +40,13 @@ class _RiskSelection(BaseModel):
 
 
 def map_risks(
-        classifications: list[PolicyClassification],
+        policies: list[Policy],
         client: instructor.Instructor,
         config: LLMConfig,
         risk_handlers: dict,
         report=None,
 ) -> tuple[list[PolicyRiskMapping], dict[str, dict], set[str], dict[str, list[dict]], dict[str, list[str]]]:
-    if not classifications:
+    if not policies:
         return [], {}, set(), {}, {}
 
     risk_details_cache: dict[str, dict] = {}
@@ -55,9 +55,9 @@ def map_risks(
     risk_actions_cache: dict[str, list[str]] = {}
     mappings: list[PolicyRiskMapping] = []
 
-    for cls in classifications:
+    for pol in policies:
         # 1. Semantic search for candidate risks
-        candidates = risk_handlers["search_risks"](cls.concept_definition, top_k=5)
+        candidates = risk_handlers["search_risks"](pol.concept_definition, top_k=5)
 
         # 2. Get full details for each candidate
         enriched_candidates = []
@@ -79,8 +79,7 @@ def map_risks(
 
         if not enriched_candidates:
             mappings.append(PolicyRiskMapping(
-                policy_concept=cls.policy_concept,
-                policy_type=cls.policy_type,
+                policy_concept=pol.policy_concept,
                 matched_risks=[],
             ))
             continue
@@ -100,8 +99,8 @@ def map_risks(
             candidate_lines.append(line)
 
         user_content = (
-                f"Policy: {cls.policy_concept}\n"
-                f"Definition: {cls.concept_definition}\n\n"
+                f"Policy: {pol.policy_concept}\n"
+                f"Definition: {pol.concept_definition}\n\n"
                 f"Candidate risks:\n" + "\n".join(candidate_lines)
         )
 
@@ -118,8 +117,7 @@ def map_risks(
             max_tokens=config.max_tokens,
         )
         debug.log_call("map_risks", messages, result, context={
-            "policy_concept": cls.policy_concept,
-            "policy_type": cls.policy_type,
+            "policy_concept": pol.policy_concept,
             "num_candidates": len(enriched_candidates),
         })
 
@@ -139,7 +137,7 @@ def map_risks(
                 if distance is not None and distance > WEAK_MATCH_THRESHOLD:
                     logger.warning(
                         "Weak match for policy '%s': risk '%s' (distance=%.3f > %.2f)",
-                        cls.policy_concept, actual_id, distance, WEAK_MATCH_THRESHOLD,
+                        pol.policy_concept, actual_id, distance, WEAK_MATCH_THRESHOLD,
                     )
                     if report:
                         report.events.append({
@@ -158,11 +156,10 @@ def map_risks(
         if report:
             report.events.append({
                 "stage": "map_risks", "event": "match_count",
-                "policy_concept": cls.policy_concept, "count": len(valid_risks),
+                "policy_concept": pol.policy_concept, "count": len(valid_risks),
             })
         mappings.append(PolicyRiskMapping(
-            policy_concept=cls.policy_concept,
-            policy_type=cls.policy_type,
+            policy_concept=pol.policy_concept,
             matched_risks=valid_risks,
         ))
 

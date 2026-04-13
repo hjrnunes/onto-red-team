@@ -3,20 +3,12 @@ import re
 
 from refiner.curie_registry import CURIE_MAP
 from refiner.models import (
-    PolicyClassification,
     PolicyRiskMapping,
     DomainContextProfile,
     RunReport,
 )
 
 logger = logging.getLogger(__name__)
-
-POLICY_TYPE_GROUPS = {
-    "A": ("safety", "Safety Policies"),
-    "B": ("confidentiality", "Confidentiality Policies"),
-    "C": ("scope-regulatory", "Scope & Regulatory Policies"),
-    "D": ("routing", "Routing Policies"),
-}
 
 
 def slugify(text: str) -> str:
@@ -29,7 +21,6 @@ def slugify(text: str) -> str:
 
 def structure(
     client_slug: str,
-    classifications: list[PolicyClassification],
     risk_mappings: list[PolicyRiskMapping],
     domain_context: list[DomainContextProfile],
     related_risks: dict[str, list[dict]] | None = None,
@@ -44,16 +35,14 @@ def structure(
         if p.risk_id not in dc_by_risk_id:
             dc_by_risk_id[p.risk_id] = p
 
-    # Determine which policy types are present
-    policy_types_present = {c.policy_type for c in classifications}
-
-    # Build groups
+    # Build groups from policy concepts present in risk mappings
+    policy_concepts_present = dict.fromkeys(m.policy_concept for m in risk_mappings)
     groups = []
-    for ptype in sorted(policy_types_present):
-        slug, name = POLICY_TYPE_GROUPS[ptype]
+    for concept in policy_concepts_present:
+        slug = slugify(concept)
         groups.append({
             "id": f"{taxonomy_id}-{slug}",
-            "name": name,
+            "name": concept,
             "type": "RiskGroup",
             "class_uri": "airo:RiskConcept",
             "isDefinedByTaxonomy": taxonomy_id,
@@ -62,8 +51,7 @@ def structure(
     # Build entries from risk mappings, deduplicating by entry ID
     entries_by_id: dict[str, dict] = {}
     for mapping in risk_mappings:
-        ptype = mapping.policy_type
-        group_slug = POLICY_TYPE_GROUPS.get(ptype, ("unknown", "Unknown"))[0]
+        group_slug = slugify(mapping.policy_concept)
         group_id = f"{taxonomy_id}-{group_slug}"
 
         for rm in mapping.matched_risks:

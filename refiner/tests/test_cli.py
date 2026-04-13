@@ -5,9 +5,7 @@ from typer.testing import CliRunner
 from refiner.cli import app
 from refiner.models import (
     Policy,
-    PolicyClassification,
     PolicyRiskMapping,
-    RiskVariationAxes,
     DomainContextProfile,
 )
 from refiner.pipeline import PipelineState
@@ -27,15 +25,9 @@ def _make_policy_file(tmp_path: Path) -> Path:
 def _make_completed_state():
     state = PipelineState(
         policies=[Policy(policy_concept="Fraud", concept_definition="About fraud")],
-        classifications=[
-            PolicyClassification(
-                policy_concept="Fraud", concept_definition="About fraud",
-                policy_type="A", justification="j",
-            ),
-        ],
         risk_mappings=[
             PolicyRiskMapping(
-                policy_concept="Fraud", policy_type="A",
+                policy_concept="Fraud",
                 matched_risks=[],
             ),
         ],
@@ -84,10 +76,10 @@ def test_cli_run_with_until(mock_run, mock_create_client, mock_onto, mock_risk, 
     mock_risk.return_value = {}
     mock_onto.return_value = {}
 
-    result = runner.invoke(app, ["run", "--until", "classify", str(policy_file)])
+    result = runner.invoke(app, ["run", "--until", "identify_domains", str(policy_file)])
     assert result.exit_code == 0, result.output
     call_kwargs = mock_run.call_args.kwargs
-    assert call_kwargs.get("until") == "classify"
+    assert call_kwargs.get("until") == "identify_domains"
 
 
 @patch("refiner.cli.create_client")

@@ -1,22 +1,20 @@
 import logging
 from refiner.models import (
-    PolicyClassification,
+    Policy,
     PolicyRiskMapping,
 )
 from refiner.stages.map_risks import map_risks, _RiskSelection, _SlimRiskMatch
 
 
-def _make_classification(concept="Fraud", policy_type="A"):
-    return PolicyClassification(
+def _make_policy(concept="Fraud"):
+    return Policy(
         policy_concept=concept,
         concept_definition=f"Prompts about {concept.lower()}",
-        policy_type=policy_type,
-        justification="test",
     )
 
 
 def test_map_risks_calls_search_and_details(mock_client, mock_config, mock_risk_handlers):
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
     ]
@@ -38,13 +36,12 @@ def test_map_risks_calls_search_and_details(mock_client, mock_config, mock_risk_
     assert len(mappings) == 1
     assert mappings[0].matched_risks[0].risk_id == "atlas-fraud"
     assert mappings[0].policy_concept == "Fraud"
-    assert mappings[0].policy_type == "A"
     mock_risk_handlers["search_risks"].assert_called_once()
     mock_risk_handlers["get_risk_details"].assert_called_once_with("atlas-fraud")
 
 
 def test_map_risks_filters_hallucinated_risk_ids(mock_client, mock_config, mock_risk_handlers):
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
     ]
@@ -68,7 +65,7 @@ def test_map_risks_filters_hallucinated_risk_ids(mock_client, mock_config, mock_
 
 
 def test_map_risks_returns_risk_details_cache(mock_client, mock_config, mock_risk_handlers):
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     risk_detail = {
         "id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk",
         "concern": "Financial loss", "risk_type": "output", "taxonomy": "ibm-risk-atlas",
@@ -87,7 +84,7 @@ def test_map_risks_returns_risk_details_cache(mock_client, mock_config, mock_ris
 
 
 def test_map_risks_seen_ids_includes_related(mock_client, mock_config, mock_risk_handlers):
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
     ]
@@ -109,7 +106,7 @@ def test_map_risks_seen_ids_includes_related(mock_client, mock_config, mock_risk
 
 
 def test_map_risks_returns_related_risks(mock_client, mock_config, mock_risk_handlers):
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
     ]
@@ -132,7 +129,7 @@ def test_map_risks_returns_related_risks(mock_client, mock_config, mock_risk_han
 
 
 def test_map_risks_populates_match_distance(mock_client, mock_config, mock_risk_handlers):
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.25},
     ]
@@ -149,7 +146,7 @@ def test_map_risks_populates_match_distance(mock_client, mock_config, mock_risk_
 
 
 def test_map_risks_warns_on_weak_match(mock_client, mock_config, mock_risk_handlers, caplog):
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.65},
     ]
@@ -179,7 +176,7 @@ def test_map_risks_empty_classifications(mock_client, mock_config, mock_risk_han
 def test_map_risks_emits_weak_match(mock_client, mock_config, mock_risk_handlers):
     """When a match distance > 0.6, emit a weak_match event."""
     from refiner.models import RunReport
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.65},
     ]
@@ -202,7 +199,7 @@ def test_map_risks_emits_weak_match(mock_client, mock_config, mock_risk_handlers
 def test_map_risks_emits_invalid_risk_index(mock_client, mock_config, mock_risk_handlers):
     """When LLM returns an out-of-range index, emit invalid_risk_index."""
     from refiner.models import RunReport
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
     ]
@@ -227,7 +224,7 @@ def test_map_risks_emits_invalid_risk_index(mock_client, mock_config, mock_risk_
 def test_map_risks_emits_match_count(mock_client, mock_config, mock_risk_handlers):
     """Emit match_count per policy concept."""
     from refiner.models import RunReport
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
     ]
@@ -249,7 +246,7 @@ def test_map_risks_emits_match_count(mock_client, mock_config, mock_risk_handler
 
 def test_map_risks_no_report_works(mock_client, mock_config, mock_risk_handlers):
     """map_risks works without report param (backward compat)."""
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "d", "distance": 0.2},
     ]
@@ -267,7 +264,7 @@ def test_map_risks_no_report_works(mock_client, mock_config, mock_risk_handlers)
 
 def test_map_risks_returns_risk_actions(mock_client, mock_config, mock_risk_handlers):
     """map_risks collects action descriptions from get_related_actions."""
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
     ]
@@ -293,7 +290,7 @@ def test_map_risks_returns_risk_actions(mock_client, mock_config, mock_risk_hand
 
 def test_map_risks_actions_empty_when_none(mock_client, mock_config, mock_risk_handlers):
     """When get_related_actions returns empty, risk_actions has empty list."""
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "d", "distance": 0.2},
     ]
@@ -314,7 +311,7 @@ def test_map_risks_actions_empty_when_none(mock_client, mock_config, mock_risk_h
 
 def test_map_risks_actions_skips_empty_descriptions(mock_client, mock_config, mock_risk_handlers):
     """Actions without descriptions are not included."""
-    classifications = [_make_classification()]
+    classifications = [_make_policy()]
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "d", "distance": 0.2},
     ]

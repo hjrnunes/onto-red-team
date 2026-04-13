@@ -75,7 +75,6 @@ def layer2():
 def sample_mapping():
     return PolicyRiskMapping(
         policy_concept="Do not disclose biometric data",
-        policy_type="A",
         matched_risks=[RiskMatch(
             risk_id="atlas-biometric-exposure",
             risk_name="Biometric exposure",
@@ -132,12 +131,12 @@ def test_anchor_caches_by_risk_id(
     mock_client.chat.completions.create.return_value = _AnchorResponse(axes=[])
 
     mapping1 = PolicyRiskMapping(
-        policy_concept="Policy A", policy_type="A",
+        policy_concept="Policy A",
         matched_risks=[RiskMatch(risk_id="atlas-biometric-exposure", risk_name="Bio",
                                  relevance="primary", justification="test")],
     )
     mapping2 = PolicyRiskMapping(
-        policy_concept="Policy B", policy_type="A",
+        policy_concept="Policy B",
         matched_risks=[RiskMatch(risk_id="atlas-biometric-exposure", risk_name="Bio",
                                  relevance="primary", justification="test")],
     )

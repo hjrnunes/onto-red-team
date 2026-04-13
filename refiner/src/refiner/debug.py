@@ -127,8 +127,6 @@ def _render_context(ctx: dict) -> str:
     parts = []
     if "policy_concept" in ctx:
         parts.append(f"**Policy:** {ctx['policy_concept']}")
-    if "policy_type" in ctx:
-        parts.append(f"**Type:** {ctx['policy_type']}")
     if "risk_name" in ctx:
         parts.append(f"**Risk:** {ctx['risk_name']}")
     if "risk_id" in ctx:
@@ -142,19 +140,6 @@ def _render_context(ctx: dict) -> str:
     if "num_axes" in ctx:
         parts.append(f"**Axes:** {ctx['num_axes']}")
     return " · ".join(parts)
-
-
-def _render_classify_response(data: list[dict]) -> str:
-    lines = ["| Policy | Type | Definition | Justification |",
-             "|--------|------|------------|---------------|"]
-    for item in data:
-        lines.append(
-            f"| {item.get('policy_concept', '')} "
-            f"| {item.get('policy_type', '')} "
-            f"| {item.get('concept_definition', '')} "
-            f"| {item.get('justification', '')} |"
-        )
-    return "\n".join(lines)
 
 
 def _render_identify_domains_response(data: dict) -> str:
@@ -261,7 +246,6 @@ def _render_ingest_response(data) -> str:
 
 
 _STAGE_RENDERERS = {
-    "classify": lambda d: _render_classify_response(d) if isinstance(d, list) else _render_ingest_response(d),
     "identify_domains": _render_identify_domains_response,
     "map_risks": _render_map_risks_response,
     "anchor": _render_anchor_response,

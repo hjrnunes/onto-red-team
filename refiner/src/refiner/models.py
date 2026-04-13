@@ -35,13 +35,6 @@ class PolicyDocument(BaseModel):
     policies: list[Policy] = []
 
 
-class PolicyClassification(BaseModel):
-    policy_concept: str
-    concept_definition: str
-    policy_type: Literal["A", "B", "C", "D"]
-    justification: str
-
-
 class RiskMatch(BaseModel):
     risk_id: str
     risk_name: str
@@ -52,7 +45,6 @@ class RiskMatch(BaseModel):
 
 class PolicyRiskMapping(BaseModel):
     policy_concept: str
-    policy_type: str
     matched_risks: list[RiskMatch]
 
 

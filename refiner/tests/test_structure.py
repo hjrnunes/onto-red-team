@@ -1,7 +1,6 @@
 import pytest
 from refiner.models import (
     Policy,
-    PolicyClassification,
     PolicyRiskMapping,
     RiskMatch,
     DomainContextProfile,
@@ -22,25 +21,15 @@ def test_slugify():
 
 
 def _make_state_data():
-    classifications = [
-        PolicyClassification(
-            policy_concept="Fraud", concept_definition="About fraud",
-            policy_type="A", justification="Safety",
-        ),
-        PolicyClassification(
-            policy_concept="Executive Compensation", concept_definition="About exec pay",
-            policy_type="B", justification="Confidentiality",
-        ),
-    ]
     risk_mappings = [
         PolicyRiskMapping(
-            policy_concept="Fraud", policy_type="A",
+            policy_concept="Fraud",
             matched_risks=[
                 RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j"),
             ],
         ),
         PolicyRiskMapping(
-            policy_concept="Executive Compensation", policy_type="B",
+            policy_concept="Executive Compensation",
             matched_risks=[
                 RiskMatch(risk_id="atlas-data-disclosure", risk_name="Data Disclosure", relevance="primary", justification="j"),
             ],
@@ -64,51 +53,49 @@ def _make_state_data():
             ],
         ),
     ]
-    return classifications, risk_mappings, related_risks, domain_context
+    return risk_mappings, related_risks, domain_context
 
 
 def test_structure_taxonomy_has_correct_id():
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    taxonomy, profiles = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, profiles = structure("swb", risk_mappings, domain_context,
                                    related_risks=related_risks)
     assert taxonomy["taxonomies"][0]["id"] == "client-swb"
     assert taxonomy["taxonomies"][0]["type"] == "RiskTaxonomy"
 
 
-def test_structure_creates_groups_per_policy_type():
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+def test_structure_creates_groups_per_policy_concept():
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks)
-    group_ids = {g["id"] for g in taxonomy["groups"]}
-    assert "client-swb-safety" in group_ids  # type A
-    assert "client-swb-confidentiality" in group_ids  # type B
-    assert "client-swb-scope-regulatory" not in group_ids  # no type C policies
-    assert "client-swb-routing" not in group_ids  # no type D policies
+    group_names = {g["name"] for g in taxonomy["groups"]}
+    assert "Fraud" in group_names
+    assert "Executive Compensation" in group_names
 
 
 def test_structure_entries_have_correct_isPartOf():
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks)
     entries = taxonomy["entries"]
     fraud_entry = next(e for e in entries if "fraud" in e["id"])
-    assert fraud_entry["isPartOf"] == "client-swb-safety"
+    assert fraud_entry["isPartOf"] == "client-swb-fraud"
     disclosure_entry = next(e for e in entries if "data-disclosure" in e["id"])
-    assert disclosure_entry["isPartOf"] == "client-swb-confidentiality"
+    assert disclosure_entry["isPartOf"] == "client-swb-executive-compensation"
 
 
 def test_structure_entries_have_cross_mappings():
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks)
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     assert "owasp-fraud" in fraud_entry.get("close_mappings", [])
 
 
 def test_structure_filters_invalid_cross_mapping_targets():
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    risk_mappings, related_risks, domain_context = _make_state_data()
     # Only "owasp-fraud" is in the valid set; any other target would be filtered
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks,
                             valid_risk_ids={"owasp-fraud"})
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
@@ -116,9 +103,9 @@ def test_structure_filters_invalid_cross_mapping_targets():
 
 
 def test_structure_warns_on_unknown_cross_mapping_targets():
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    risk_mappings, related_risks, domain_context = _make_state_data()
     # Empty valid set means all cross-mappings are filtered
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks,
                             valid_risk_ids=set())
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
@@ -127,16 +114,16 @@ def test_structure_warns_on_unknown_cross_mapping_targets():
 
 def test_structure_no_cross_mappings_when_related_risks_none():
     """When related_risks is None, no cross-mappings are added."""
-    classifications, risk_mappings, _, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, _, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=None)
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     assert "close_mappings" not in fraud_entry
 
 
 def test_structure_profiles_output():
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    _, profiles = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    _, profiles = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks)
     assert len(profiles["profiles"]) == 1
     assert profiles["profiles"][0]["risk_id"] == "atlas-fraud"
@@ -144,17 +131,13 @@ def test_structure_profiles_output():
 
 def test_structure_deduplicates_entries_by_id():
     """Same risk matched from two policies should produce one entry with merged mappings."""
-    classifications = [
-        PolicyClassification(policy_concept="Fraud", concept_definition="d", policy_type="A", justification="j"),
-        PolicyClassification(policy_concept="AML", concept_definition="d", policy_type="A", justification="j"),
-    ]
     risk_mappings = [
         PolicyRiskMapping(
-            policy_concept="Fraud", policy_type="A",
+            policy_concept="Fraud",
             matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
         ),
         PolicyRiskMapping(
-            policy_concept="AML", policy_type="A",
+            policy_concept="AML",
             matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="supporting", justification="j")],
         ),
     ]
@@ -165,7 +148,7 @@ def test_structure_deduplicates_entries_by_id():
         ],
     }
     domain_context = []
-    taxonomy, _ = structure("test", classifications, risk_mappings, domain_context,
+    taxonomy, _ = structure("test", risk_mappings, domain_context,
                             related_risks=related_risks)
     fraud_entries = [e for e in taxonomy["entries"] if "fraud" in e["id"]]
     assert len(fraud_entries) == 1
@@ -176,10 +159,10 @@ def test_structure_deduplicates_entries_by_id():
 
 def test_structure_emits_cross_mapping_filtered():
     """When cross-mapping target is not in valid_risk_ids, emit cross_mapping_filtered."""
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
+    risk_mappings, related_risks, domain_context = _make_state_data()
     report = RunReport(model="m", policy_set="p", timestamp="t")
     # Empty valid set — all cross-mappings should be filtered
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks, valid_risk_ids=set(), report=report)
     filtered = [e for e in report.events if e["event"] == "cross_mapping_filtered"]
     assert len(filtered) >= 1
@@ -188,16 +171,16 @@ def test_structure_emits_cross_mapping_filtered():
 
 def test_structure_no_report_works():
     """structure works without report param (backward compat)."""
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    taxonomy, profiles = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, profiles = structure("swb", risk_mappings, domain_context,
                                     related_risks=related_risks)
     assert len(taxonomy["entries"]) > 0
 
 
 def test_structure_includes_domain_context_summary():
     """Taxonomy entries include domain_context_summary from matching profiles."""
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks)
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     assert "domain_context_summary" in fraud_entry
@@ -211,8 +194,8 @@ def test_structure_includes_domain_context_summary():
 
 def test_structure_no_summary_when_no_matching_profile():
     """Entries without matching domain context profiles have no summary."""
-    classifications, risk_mappings, related_risks, domain_context = _make_state_data()
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context,
+    risk_mappings, related_risks, domain_context = _make_state_data()
+    taxonomy, _ = structure("swb", risk_mappings, domain_context,
                             related_risks=related_risks)
     disclosure_entry = next(e for e in taxonomy["entries"] if "data-disclosure" in e["id"])
     # No domain context profile for atlas-data-disclosure in _make_state_data
@@ -221,14 +204,9 @@ def test_structure_no_summary_when_no_matching_profile():
 
 def test_structure_summary_with_multiple_axes():
     """Summary correctly aggregates across multiple axes."""
-    classifications = [
-        PolicyClassification(
-            policy_concept="Fraud", concept_definition="d", policy_type="A", justification="j",
-        ),
-    ]
     risk_mappings = [
         PolicyRiskMapping(
-            policy_concept="Fraud", policy_type="A",
+            policy_concept="Fraud",
             matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
         ),
     ]
@@ -252,7 +230,7 @@ def test_structure_summary_with_multiple_axes():
             ],
         ),
     ]
-    taxonomy, _ = structure("swb", classifications, risk_mappings, domain_context)
+    taxonomy, _ = structure("swb", risk_mappings, domain_context)
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     summary = fraud_entry["domain_context_summary"]
     assert summary["axis_count"] == 2

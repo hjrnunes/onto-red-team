@@ -15,7 +15,6 @@ from refiner.evaluate import (
 
 def _sample_events():
     return [
-        {"stage": "classify", "event": "type_distribution", "distribution": {"A": 3, "B": 1}},
         {"stage": "identify_domains", "event": "selected_domains", "domains": ["CCO", "Commons", "FIBO"]},
         {"stage": "identify_domains", "event": "invalid_domain_key", "raw_key": "BOGUS"},
         {"stage": "map_risks", "event": "weak_match", "risk_id": "r1", "distance": 0.52},
@@ -35,7 +34,6 @@ def _sample_events():
 
 def test_aggregate_stage_quality():
     result = aggregate_stage_quality(_sample_events())
-    assert result["classify"]["type_distribution"] == {"A": 3, "B": 1}
     assert result["identify_domains"]["selected_domains"] == ["CCO", "Commons", "FIBO"]
     assert result["identify_domains"]["invalid_domain_keys"] == 1
     assert len(result["map_risks"]["weak_matches"]) == 1
@@ -776,9 +774,8 @@ def _write_minimal_pipeline_outputs(tmp_path):
     report = {
         "model": "test-model", "policy_set": "test.json",
         "timestamp": "2026-04-01T00:00:00Z",
-        "stages_completed": ["classify", "identify_domains", "map_risks", "anchor", "contextualize", "structure"],
+        "stages_completed": ["identify_domains", "map_risks", "anchor", "contextualize", "structure"],
         "events": [
-            {"stage": "classify", "event": "type_distribution", "distribution": {"A": 2}},
             {"stage": "map_risks", "event": "match_count", "policy_concept": "Fraud", "count": 2},
         ],
     }
@@ -951,8 +948,8 @@ def test_format_summary_all_sections():
 
 def test_build_html_report(tmp_path):
     evaluation = {
-        "run": {"policy_set": "test.json", "model": "m", "timestamp": "t", "stages_completed": ["classify"]},
-        "stage_quality": {"classify": {"type_distribution": {"A": 2}}},
+        "run": {"policy_set": "test.json", "model": "m", "timestamp": "t", "stages_completed": ["identify_domains"]},
+        "stage_quality": {"identify_domains": {"selected_domains": ["CCO", "FIBO"]}},
         "coverage": {"policy": [{"policy_concept": "Fraud", "risks_matched": 1, "total_axes": 2,
                                   "axes_with_enumerations": 1, "total_enumerations": 3}]},
     }
@@ -1092,7 +1089,7 @@ def test_format_summary_includes_new_metrics():
 
 def test_run_evaluation_enriched_policies(tmp_path):
     report = {"model": "test", "policy_set": "test", "timestamp": "2026-01-01",
-              "stages_completed": ["classify"], "events": []}
+              "stages_completed": ["identify_domains"], "events": []}
     (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
 
     enriched = {

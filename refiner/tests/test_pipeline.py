@@ -1,7 +1,6 @@
 from unittest.mock import patch, MagicMock
 from refiner.models import (
     Policy,
-    PolicyClassification,
     PolicyRiskMapping,
     RiskMatch,
     RiskVariationAxes,
@@ -17,16 +16,10 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
     policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
     report = RunReport(model="test-model", policy_set="test.json", timestamp="2026-04-01T00:00:00Z")
 
-    classify_result = [
-        PolicyClassification(
-            policy_concept="Fraud", concept_definition="About fraud",
-            policy_type="A", justification="j",
-        ),
-    ]
     domains_result = ["CCO", "Commons", "FIBO"]
     map_result = (
         [PolicyRiskMapping(
-            policy_concept="Fraud", policy_type="A",
+            policy_concept="Fraud",
             matched_risks=[RiskMatch(risk_id="r1", risk_name="R1", relevance="primary", justification="j")],
         )],
         {"r1": {"id": "r1", "name": "R1", "description": "d", "concern": "c"}},
@@ -52,8 +45,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
     # Mock build_generic_safety_uris to return expected URIs for FIBO domain-specific run
     fake_uris = {"http://cso#DangerousInformation", "http://cso#Weapons"}
 
-    with patch("refiner.pipeline.classify", return_value=classify_result) as m_classify, \
-         patch("refiner.pipeline.identify_domains", return_value=domains_result) as m_domains, \
+    with patch("refiner.pipeline.identify_domains", return_value=domains_result) as m_domains, \
          patch("refiner.pipeline.map_risks", return_value=map_result) as m_map, \
          patch("refiner.pipeline.anchor", return_value=anchor_result) as m_anchor, \
          patch("refiner.pipeline.contextualize", return_value=context_result) as m_ctx, \
@@ -61,7 +53,6 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
 
         state = run_pipeline(policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers, report=report)
 
-        assert state.classifications == classify_result
         assert state.selected_domains == domains_result
         assert state.risk_mappings == map_result[0]
         assert state.risk_details == map_result[1]
@@ -71,12 +62,11 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         assert state.vocabulary_contexts == anchor_vocab
         assert state.domain_context == context_result
         assert state.report == report
-        assert report.stages_completed == ["classify", "identify_domains", "map_risks", "anchor", "contextualize"]
+        assert report.stages_completed == ["identify_domains", "map_risks", "anchor", "contextualize"]
 
         # Verify stage calls received correct inputs
-        m_classify.assert_called_once_with(policies, mock_client, mock_config, report=report)
-        m_domains.assert_called_once_with(classify_result, mock_client, mock_config, report=report)
-        m_map.assert_called_once_with(classify_result, mock_client, mock_config, mock_risk_handlers, report=report)
+        m_domains.assert_called_once_with(policies, mock_client, mock_config, report=report)
+        m_map.assert_called_once_with(policies, mock_client, mock_config, mock_risk_handlers, report=report)
         # FIBO is domain-specific, so generic_safety_uris should be passed
         m_anchor.assert_called_once_with(
             map_result[0], map_result[1], mock_client, mock_config, mock_onto_handlers,
@@ -101,40 +91,11 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         )
 
 
-def test_pipeline_until_classify(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
-    policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
-    classify_result = [
-        PolicyClassification(
-            policy_concept="Fraud", concept_definition="About fraud",
-            policy_type="A", justification="j",
-        ),
-    ]
-
-    with patch("refiner.pipeline.classify", return_value=classify_result), \
-         patch("refiner.pipeline.identify_domains") as m_domains:
-
-        state = run_pipeline(
-            policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers,
-            until="classify",
-        )
-
-        assert state.classifications is not None
-        assert state.selected_domains is None
-        m_domains.assert_not_called()
-
-
 def test_pipeline_until_identify_domains(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
-    classify_result = [
-        PolicyClassification(
-            policy_concept="Fraud", concept_definition="About fraud",
-            policy_type="A", justification="j",
-        ),
-    ]
     domains_result = ["CCO", "Commons", "FIBO"]
 
-    with patch("refiner.pipeline.classify", return_value=classify_result), \
-         patch("refiner.pipeline.identify_domains", return_value=domains_result), \
+    with patch("refiner.pipeline.identify_domains", return_value=domains_result), \
          patch("refiner.pipeline.map_risks") as m_map:
 
         state = run_pipeline(
@@ -150,12 +111,6 @@ def test_pipeline_until_identify_domains(mock_client, mock_config, mock_risk_han
 def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     """When domain-specific ontologies selected, build_generic_safety_uris is called."""
     policies = [Policy(policy_concept="Fraud", concept_definition="About fraud")]
-    classify_result = [
-        PolicyClassification(
-            policy_concept="Fraud", concept_definition="About fraud",
-            policy_type="A", justification="j",
-        ),
-    ]
     # FIBO is domain-specific (not in ALWAYS_INCLUDED)
     domains_result = ["CCO", "Commons", "D3FEND", "CSO", "FIBO"]
 
@@ -165,8 +120,7 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
     ]
     mock_onto_handlers["get_subclasses"] = MagicMock(return_value=fake_descendants)
 
-    with patch("refiner.pipeline.classify", return_value=classify_result), \
-         patch("refiner.pipeline.identify_domains", return_value=domains_result), \
+    with patch("refiner.pipeline.identify_domains", return_value=domains_result), \
          patch("refiner.pipeline.map_risks") as m_map, \
          patch("refiner.pipeline.build_generic_safety_uris") as m_build:
 
@@ -182,17 +136,10 @@ def test_pipeline_sets_generic_safety_uris_for_domain_specific(mock_client, mock
 def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_config, mock_risk_handlers, mock_onto_handlers):
     """When only always-included domains selected, build_generic_safety_uris is not called."""
     policies = [Policy(policy_concept="Safety", concept_definition="About safety")]
-    classify_result = [
-        PolicyClassification(
-            policy_concept="Safety", concept_definition="About safety",
-            policy_type="A", justification="j",
-        ),
-    ]
     # Only always-included domains — no domain-specific selection
     domains_result = ["CCO", "Commons", "D3FEND", "CSO"]
 
-    with patch("refiner.pipeline.classify", return_value=classify_result), \
-         patch("refiner.pipeline.identify_domains", return_value=domains_result), \
+    with patch("refiner.pipeline.identify_domains", return_value=domains_result), \
          patch("refiner.pipeline.map_risks") as m_map, \
          patch("refiner.pipeline.build_generic_safety_uris") as m_build:
 

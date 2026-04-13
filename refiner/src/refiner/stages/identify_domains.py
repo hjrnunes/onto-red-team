@@ -4,7 +4,7 @@ from typing import Literal
 import instructor
 from pydantic import BaseModel
 from refiner.llm import LLMConfig
-from refiner.models import PolicyClassification
+from refiner.models import Policy
 from refiner import debug
 
 logger = logging.getLogger(__name__)
@@ -45,21 +45,21 @@ def derive_source_ontology(uri: str) -> str:
 
 
 def identify_domains(
-    classifications: list[PolicyClassification],
+    policies: list[Policy],
     client: instructor.Instructor,
     config: LLMConfig,
     report=None,
 ) -> list[str]:
-    if not classifications:
+    if not policies:
         return list(ALWAYS_INCLUDED)
 
     domain_list = "\n".join(f"- {key}: {desc}" for key, desc in DOMAIN_OPTIONS.items())
     system_content = SYSTEM_PROMPT.format(domain_list=domain_list)
 
     policy_lines = []
-    for c in classifications:
-        policy_lines.append(f"- {c.policy_concept} (Type {c.policy_type}): {c.concept_definition}")
-    user_content = "Classified policies:\n\n" + "\n".join(policy_lines)
+    for p in policies:
+        policy_lines.append(f"- {p.policy_concept}: {p.concept_definition}")
+    user_content = "Policies:\n\n" + "\n".join(policy_lines)
 
     messages = [
         {"role": "system", "content": system_content},

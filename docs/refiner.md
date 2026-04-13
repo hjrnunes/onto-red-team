@@ -1,6 +1,6 @@
 # Refiner Pipeline
 
-6-stage LLM pipeline that transforms client policies into taxonomy YAML + domain context profiles.
+5-stage LLM pipeline that transforms client policies into taxonomy YAML + domain context profiles.
 
 ## Stack
 
@@ -10,17 +10,16 @@
 
 ## Stages
 
-1. **Classify** (`classify.py`) — A/B/C/D policy type classification
-2. **Identify Domains** (`identify_domains.py`) — LLM selects relevant domain ontologies (FIBO/OBO/IOF)
-3. **Map Risks** (`map_risks.py`) — semantic search + LLM ranking of candidate risks; collects ground-truth
+1. **Identify Domains** (`identify_domains.py`) — LLM selects relevant domain ontologies (FIBO/OBO/IOF)
+2. **Map Risks** (`map_risks.py`) — semantic search + LLM ranking of candidate risks; collects ground-truth
    cross-mappings from knowledge graph
-4. **Anchor** (`anchor.py`) — variation axis identification; ontology search filtered by selected domains;
+3. **Anchor** (`anchor.py`) — variation axis identification; ontology search filtered by selected domains;
    restriction/equivalence expansion discovers related candidates
-5. **Contextualize** (`contextualize.py`) — domain context profiles from subclasses (with sibling fallback for leaf
+4. **Contextualize** (`contextualize.py`) — domain context profiles from subclasses (with sibling fallback for leaf
    nodes); disjointness validation filters conflicting enumerations
-6. **Structure** (`structure.py`) — deterministic LinkML-conformant YAML assembly with ground-truth cross-mappings
+5. **Structure** (`structure.py`) — deterministic LinkML-conformant YAML assembly with ground-truth cross-mappings
 
-5 LLM stages + 1 deterministic (structure). Python does retrieval, LLM does reasoning.
+4 LLM stages + 1 deterministic (structure). Python does retrieval, LLM does reasoning.
 
 ## Key Design Patterns
 
@@ -66,7 +65,7 @@ refiner/src/refiner/
   debug.py        # Per-call debug logging + MLflow trace spans
   models.py       # 11 Pydantic models + RunReport dataclass
   llm.py          # Instructor + OpenAI client setup, LLMConfig
-  stages/         # classify, identify_domains, map_risks, anchor, contextualize, structure
+  stages/         # identify_domains, map_risks, anchor, contextualize, structure
 ```
 
 ## CLI

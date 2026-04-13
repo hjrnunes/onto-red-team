@@ -94,10 +94,6 @@ def assess_run(run_dir: Path):
     print_section("PIPELINE EVENTS")
     if report:
         events = report.get("events", [])
-        type_dist = [e for e in events if e.get("event") == "type_distribution"]
-        if type_dist:
-            print(f"Type distribution: {type_dist[0].get('distribution', {})}")
-
         domains = [e for e in events if e.get("event") == "selected_domains"]
         if domains:
             print(f"Selected domains: {domains[0].get('domains', [])}")

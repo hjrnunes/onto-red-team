@@ -193,12 +193,12 @@ def test_extract_tags_with_description():
     from refiner.tracking import _extract_tags
 
     evaluation = {
-        "run": {"timestamp": "2026-04-02T10:00:00Z", "stages_completed": ["classify", "map_risks"]},
+        "run": {"timestamp": "2026-04-02T10:00:00Z", "stages_completed": ["identify_domains", "map_risks"]},
     }
     tags = _extract_tags(evaluation, description="added sibling fallback")
     assert tags["description"] == "added sibling fallback"
     assert tags["timestamp"] == "2026-04-02T10:00:00Z"
-    assert tags["stages_completed"] == "classify,map_risks"
+    assert tags["stages_completed"] == "identify_domains,map_risks"
 
 
 def test_extract_tags_no_description():
@@ -213,7 +213,7 @@ def test_log_run_to_mlflow_new_run(tmp_path):
     # Create minimal evaluation file and artifacts
     evaluation = {
         "run": {"model": "test-model", "policy_set": "test.json",
-                "timestamp": "2026-04-02T10:00:00Z", "stages_completed": ["classify"]},
+                "timestamp": "2026-04-02T10:00:00Z", "stages_completed": ["identify_domains"]},
         "coverage": {"risk_framework": {"total_matched": 5}},
     }
     (tmp_path / "test-evaluation.json").write_text("{}")
@@ -275,7 +275,7 @@ def test_full_flow_evaluate_then_track(tmp_path):
     evaluation = {
         "run": {"model": "gemma2", "policy_set": "generic.json",
                 "timestamp": "2026-04-02T12:00:00Z",
-                "stages_completed": ["classify", "map_risks"]},
+                "stages_completed": ["identify_domains", "map_risks"]},
         "coverage": {"risk_framework": {"total_matched": 8}},
         "prompt_metrics": {
             "lexical_diversity": 0.55,

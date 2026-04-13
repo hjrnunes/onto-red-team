@@ -8,27 +8,24 @@ logger = logging.getLogger(__name__)
 from refiner.llm import LLMConfig
 from refiner.models import (
     Policy,
-    PolicyClassification,
     PolicyDocument,
     PolicyRiskMapping,
     RiskVariationAxes,
     DomainContextProfile,
     RunReport,
 )
-from refiner.stages.classify import classify
 from refiner.stages.identify_domains import identify_domains
 from refiner.stages.map_risks import map_risks
 from refiner.stages.anchor import anchor, build_generic_safety_uris
 from refiner.stages.identify_domains import ALWAYS_INCLUDED
 from refiner.stages.contextualize import contextualize
 
-STAGES = ("classify", "identify_domains", "map_risks", "anchor", "contextualize")
+STAGES = ("identify_domains", "map_risks", "anchor", "contextualize")
 
 
 @dataclass
 class PipelineState:
     policies: list[Policy]
-    classifications: list[PolicyClassification] | None = None
     selected_domains: list[str] | None = None
     risk_mappings: list[PolicyRiskMapping] | None = None
     risk_details: dict[str, dict] | None = None
@@ -69,13 +66,7 @@ def run_pipeline(
             })
 
     t0 = _now()
-    state.classifications = classify(state.policies, client, config, report=report)
-    _stage_done("classify", t0)
-    if until == "classify":
-        return state
-
-    t0 = _now()
-    state.selected_domains = identify_domains(state.classifications, client, config, report=report)
+    state.selected_domains = identify_domains(state.policies, client, config, report=report)
     _stage_done("identify_domains", t0)
 
     # Compute CSO DangerousInformation filter for domain-specific runs
@@ -96,7 +87,7 @@ def run_pipeline(
 
     t0 = _now()
     state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions = map_risks(
-        state.classifications, client, config, risk_handlers, report=report
+        state.policies, client, config, risk_handlers, report=report
     )
     _stage_done("map_risks", t0)
     if until == "map_risks":

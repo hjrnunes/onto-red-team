@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## Gen 10 (current)
 
+### Removed
+
+- **Classify stage** — Removed the A/B/C/D policy type classification stage entirely. The LLM-assigned
+  types (Safety/Confidentiality/Scope/Routing) were inconsistent across models for the same policy set,
+  and the only structural consumer (taxonomy grouping in `structure.py`) was never read by downstream
+  stages (emit, evaluate, redteam). Saves one LLM call per run. `identify_domains` and `map_risks` now
+  take `list[Policy]` directly instead of `list[PolicyClassification]`. Taxonomy groups are now
+  deterministic — grouped by policy concept (from input) rather than LLM-assigned type.
+
+- **`PolicyClassification` model** — Removed from `models.py` along with `policy_type` field from
+  `PolicyRiskMapping`.
+
+- **Type distribution in reports** — Removed `type_distribution` event from pipeline reports,
+  evaluation aggregation, and both HTML report templates.
+
 ### Added
 
 - **AIRO typing in structured output** — Taxonomy entries, groups, and the taxonomy itself now carry

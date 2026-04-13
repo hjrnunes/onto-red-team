@@ -1,6 +1,6 @@
 import pytest
 from refiner.models import (
-    Policy, PolicyClassification, RiskMatch, PolicyRiskMapping,
+    Policy, RiskMatch, PolicyRiskMapping,
     VariationAxis, RiskVariationAxes, AxisEnumeration, DomainContextAxis, DomainContextProfile,
 )
 
@@ -8,22 +8,13 @@ def test_policy_creation():
     p = Policy(policy_concept="Fraud", concept_definition="Prompts about fraud")
     assert p.policy_concept == "Fraud"
 
-def test_policy_classification_valid_types():
-    for t in ("A", "B", "C", "D"):
-        pc = PolicyClassification(policy_concept="X", concept_definition="Y", policy_type=t, justification="reason")
-        assert pc.policy_type == t
-
-def test_policy_classification_invalid_type():
-    with pytest.raises(Exception):
-        PolicyClassification(policy_concept="X", concept_definition="Y", policy_type="Z", justification="reason")
-
 def test_risk_match_valid_relevance():
     for r in ("primary", "supporting", "tangential"):
         rm = RiskMatch(risk_id="r1", risk_name="Risk", relevance=r, justification="j")
         assert rm.relevance == r
 
 def test_policy_risk_mapping():
-    prm = PolicyRiskMapping(policy_concept="Fraud", policy_type="A", matched_risks=[])
+    prm = PolicyRiskMapping(policy_concept="Fraud", matched_risks=[])
     assert prm.matched_risks == []
 
 def test_variation_axis():
@@ -88,18 +79,18 @@ def test_run_report_creation():
 def test_run_report_append_event():
     from refiner.models import RunReport
     report = RunReport(model="m", policy_set="p", timestamp="t")
-    report.events.append({"stage": "classify", "event": "type_distribution", "distribution": {"A": 1}})
+    report.events.append({"stage": "identify_domains", "event": "selected_domains", "domains": ["CCO"]})
     assert len(report.events) == 1
-    assert report.events[0]["stage"] == "classify"
+    assert report.events[0]["stage"] == "identify_domains"
 
 
 def test_run_report_to_dict():
     from refiner.models import RunReport
     report = RunReport(model="m", policy_set="p.json", timestamp="t")
-    report.stages_completed.append("classify")
-    report.events.append({"stage": "classify", "event": "type_distribution", "distribution": {"A": 1}})
+    report.stages_completed.append("identify_domains")
+    report.events.append({"stage": "identify_domains", "event": "selected_domains", "domains": ["CCO"]})
     d = report.to_dict()
     assert d["model"] == "m"
     assert d["policy_set"] == "p.json"
-    assert d["stages_completed"] == ["classify"]
+    assert d["stages_completed"] == ["identify_domains"]
     assert len(d["events"]) == 1

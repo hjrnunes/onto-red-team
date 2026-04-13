@@ -23,9 +23,7 @@ def aggregate_stage_quality(events: list[dict]) -> dict:
             result[stage] = {}
         s = result[stage]
 
-        if etype == "type_distribution":
-            s["type_distribution"] = event["distribution"]
-        elif etype == "selected_domains":
+        if etype == "selected_domains":
             s["selected_domains"] = event["domains"]
         elif etype == "invalid_domain_key":
             s["invalid_domain_keys"] = s.get("invalid_domain_keys", 0) + 1

@@ -185,8 +185,8 @@ def run(
     )
 
     # Create handlers — only load what's needed for the requested stages
-    needs_risk = until not in ("classify", "identify_domains")
-    needs_onto = until not in ("classify", "identify_domains", "map_risks")
+    needs_risk = until not in ("identify_domains",)
+    needs_onto = until not in ("identify_domains", "map_risks")
     if needs_risk:
         if not nexus_base_dir:
             typer.echo("Error: --nexus-base-dir is required (or set NEXUS_BASE_DIR)", err=True)
@@ -268,7 +268,7 @@ def run(
     try:
         client_slug = policy_json.stem
 
-        if state.domain_context is not None and state.classifications is not None and state.risk_mappings is not None:
+        if state.domain_context is not None and state.risk_mappings is not None:
             # Enrich domain context profiles with risk details and cross-mappings
             from refiner.stages.identify_domains import derive_source_ontology
             FRAMEWORK_LABELS = {
@@ -299,7 +299,7 @@ def run(
             # Validate cross-mapping targets against all risk IDs shown to the model
             valid_ids = state.seen_risk_ids
             taxonomy, profiles = structure(
-                client_slug, state.classifications, state.risk_mappings, state.domain_context,
+                client_slug, state.risk_mappings, state.domain_context,
                 related_risks=state.related_risks,
                 valid_risk_ids=valid_ids,
                 report=report,
@@ -325,8 +325,6 @@ def run(
             state_data = {
                 "policies": [p.model_dump() for p in state.policies],
             }
-            if state.classifications:
-                state_data["classifications"] = [c.model_dump() for c in state.classifications]
             if state.selected_domains:
                 state_data["selected_domains"] = state.selected_domains
             if state.risk_mappings:
