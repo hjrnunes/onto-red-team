@@ -76,6 +76,9 @@ def resolve_policy_file(
         policy: str, policy_dir: Path, *, run_dir: Path, prefer_enriched: bool
 ) -> Path:
     if prefer_enriched:
+        policy_doc = run_dir / f"{policy}-policy-document.json"
+        if policy_doc.exists():
+            return policy_doc
         enriched = run_dir / f"{policy}-enriched.json"
         if enriched.exists():
             return enriched
@@ -91,7 +94,7 @@ def build_ingest_cmd(
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "refiner", "ingest", str(policy_file),
-        "--output", str(run_dir / f"{policy}-enriched.json"),
+        "--output", str(run_dir / f"{policy}-policy-document.json"),
         "--base-url", model_url,
         "--model", model_name,
     ]
@@ -136,13 +139,14 @@ def build_refine_cmd(
 
 def build_emit_cmd(
     *, run_dir: Path, policy_file: Path, samples_per_risk: int,
+    policy: str,
     technique_weights: dict[str, float] | None = None,
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "refiner", "emit", str(run_dir),
         "--policies", str(policy_file),
         "--samples-per-risk", str(samples_per_risk),
-        "--output", str(run_dir / "dataset.jsonl"),
+        "--output", str(run_dir / f"{policy}-dataset.jsonl"),
     ]
     if technique_weights:
         import json as _json
@@ -151,26 +155,26 @@ def build_emit_cmd(
 
 
 def build_generate_cmd(
-        *, run_dir: Path, model_name: str, model_url: str, api_key: str
+        *, run_dir: Path, policy: str, model_name: str, model_url: str, api_key: str
 ) -> tuple[list[str], str]:
     cmd = [
-        "uv", "run", "redteam", str(run_dir / "dataset.jsonl"),
+        "uv", "run", "redteam", str(run_dir / f"{policy}-dataset.jsonl"),
         "--model", f"hosted_vllm/{model_name}",
         "--api-base", model_url,
     ]
     if api_key:
         cmd.extend(["--api-key", api_key])
-    cmd.extend(["--concurrency", "5", "--output", str(run_dir / "adversarial_prompts.jsonl")])
+    cmd.extend(["--concurrency", "5", "--output", str(run_dir / f"{policy}-adversarial-prompts.jsonl")])
     return cmd, "redteam"
 
 
 def build_evaluate_cmd(
-        *, run_dir: Path, policy_file: Path, tracking_uri: str, tags: list[str]
+        *, run_dir: Path, policy: str, policy_file: Path, tracking_uri: str, tags: list[str]
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "refiner", "evaluate", str(run_dir),
-        "--emit", str(run_dir / "dataset.jsonl"),
-        "--adversarial", str(run_dir / "adversarial_prompts.jsonl"),
+        "--emit", str(run_dir / f"{policy}-dataset.jsonl"),
+        "--adversarial", str(run_dir / f"{policy}-adversarial-prompts.jsonl"),
         "--policies", str(policy_file),
     ]
     if tracking_uri:
@@ -357,14 +361,15 @@ def _run_policy(
     policy_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
     cmd, cwd = build_emit_cmd(
         run_dir=run_dir, policy_file=policy_file, samples_per_risk=cfg["samples_per_risk"],
-        technique_weights=cfg.get("technique_weights"),
+        policy=policy, technique_weights=cfg.get("technique_weights"),
     )
     _run_stage(cmd, cwd, **stage_kw)
 
     if not skip_generate:
         _progress(_stage_msg("generate"))
         cmd, cwd = build_generate_cmd(
-            run_dir=run_dir, model_name=model_name, model_url=model_url, api_key=api_key,
+            run_dir=run_dir, policy=policy, model_name=model_name,
+            model_url=model_url, api_key=api_key,
         )
         _run_stage(cmd, cwd, **stage_kw)
 
@@ -372,7 +377,7 @@ def _run_policy(
         _progress(_stage_msg("evaluate"))
         policy_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
         cmd, cwd = build_evaluate_cmd(
-            run_dir=run_dir, policy_file=policy_file,
+            run_dir=run_dir, policy=policy, policy_file=policy_file,
             tracking_uri=cfg["tracking_uri"], tags=tags,
         )
         _run_stage(cmd, cwd, **stage_kw)

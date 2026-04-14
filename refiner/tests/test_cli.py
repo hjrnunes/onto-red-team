@@ -252,9 +252,9 @@ def test_cli_run_framework_labels_and_cross_mappings(mock_run, mock_create_clien
 
     policy_file = _make_policy_file(tmp_path)
     state = _make_completed_state()
-    state.related_risks = {
-        "ibm-risk-atlas-r1": [{"id": "owasp-llm-x", "mapping_type": "close"}],
-    }
+    # Framework and cross-mappings now come from the pipeline (contextualize pulls from RiskLandscape)
+    state.domain_context.risks[0].risk_framework = "IBM Risk Atlas"
+    state.domain_context.risks[0].cross_mappings = [{"id": "owasp-llm-x", "mapping_type": "close"}]
     mock_run.return_value = state
     mock_create_client.return_value = MagicMock()
     mock_risk.return_value = {}

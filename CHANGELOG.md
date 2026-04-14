@@ -2,7 +2,69 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 10 (current)
+## Gen 12 (current)
+
+### Added
+
+- **RiskLandscape model** — New Pydantic envelope (`models.py`) that consolidates five scattered
+  `PipelineState` caches (`risk_mappings`, `risk_details`, `related_risks`, `risk_actions`,
+  `seen_risk_ids`) into a single serializable artifact. Contains `RiskDetail` (full risk metadata
+  with cross-mappings and related actions), `WeakMatch` (distance-flagged matches above threshold),
+  `PolicyRiskMapping` references, and `framework_coverage` counts. Serialized as
+  `{slug}-risk-landscape.yaml` alongside the domain context document.
+
+- **KnowledgeBaseRef model** — Provenance tracking for the knowledge graph state used during a run:
+  nexus commit hash, risk count, ontology index hash, per-domain class counts, and indexing
+  timestamp. Attached to both `DomainContextDocument` and `RiskLandscape` as an optional
+  `knowledge_base` field.
+
+- **`build_risk_landscape()` pure function** — New `refiner/stages/build_landscape.py` assembles a
+  `RiskLandscape` from `map_risks()` outputs. Deduplicates risks across policy mappings, detects
+  framework from risk ID prefixes (10 prefix patterns), flags weak matches above 0.6 distance
+  threshold, and computes per-framework coverage counts. No LLM calls — pure data assembly.
+
+- **Export layer** — New `refiner/export.py` wraps `structure()` with a `RiskLandscape`-aware API
+  (`export_taxonomy()`). Extracts `risk_mappings`, `related_risks`, and `valid_risk_ids` from the
+  landscape when provided. Taxonomy generation is now an export/projection of the domain context
+  document, not a pipeline stage. Re-exports `slugify` for CLI use.
+
+- **Independent CLI commands** — Two new commands for stage-level execution:
+  - `refiner map-risks <policy-file>`: PolicyDocument → RiskLandscape YAML (runs identify_domains +
+    map_risks + build_landscape, stops before ontology grounding)
+  - `refiner ground <landscape> <policy-file>`: RiskLandscape + PolicyDocument → DomainContextDocument
+    + taxonomy YAML (runs anchor + contextualize + export from a pre-built landscape)
+
+- **PipelineState resolver properties** — Four `@property` methods (`risk_mappings_resolved`,
+  `risk_details_resolved`, `risk_actions_resolved`, `related_risks_resolved`) that extract data from
+  `risk_landscape` when the legacy cache fields are `None`. Enables backward-compatible access while
+  the canonical source moves to `RiskLandscape`.
+
+### Changed
+
+- **Convergence-divergence diamond pattern** — Pipeline data flow restructured around two hub
+  artifacts: `RiskLandscape` (risk identification convergence) and `DomainContextDocument` (ontology
+  grounding convergence). Everything before `build_landscape` converges into `RiskLandscape`;
+  everything after diverges into domain context and taxonomy projections. Each stage consumes
+  serialized artifacts and produces new serializable artifacts, enabling independent tool extraction.
+
+- **`anchor()` accepts `RiskLandscape`** — Optional `risk_landscape` parameter; when provided,
+  `risk_mappings` and `risk_details` are extracted from it, making the dict parameters optional.
+
+- **`contextualize()` accepts `RiskLandscape`** — Optional `risk_landscape` parameter; when provided,
+  `selected_domains`, `risk_details`, `run_slug`, and `timestamp` are extracted from it.
+
+- **CLI serializes RiskLandscape** — Both full (`run`) and partial (`--until`) execution paths write
+  `{slug}-risk-landscape.yaml`. `PolicySourceRef` attached from `PolicyDocument` context when
+  available.
+
+### Refactored
+
+- **Taxonomy is an export, not a stage** — `structure()` is no longer called directly from the
+  pipeline. `export_taxonomy()` in `refiner/export.py` provides the public API, accepting either
+  a `RiskLandscape` or raw dicts. CLI imports changed from `refiner.stages.structure` to
+  `refiner.export`.
+
+## Gen 10
 
 ### Removed
 

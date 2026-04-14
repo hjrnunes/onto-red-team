@@ -107,6 +107,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             vocabulary_contexts=anchor_vocab,
             run_slug="test-policy",
             timestamp="2026-04-01T00:00:00Z",
+            risk_landscape=state.risk_landscape,
         )
 
 

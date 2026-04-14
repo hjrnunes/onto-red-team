@@ -181,6 +181,7 @@ def run_pipeline(
         vocabulary_contexts=state.vocabulary_contexts,
         run_slug=state.run_slug,
         timestamp=report.timestamp if report else "",
+        risk_landscape=state.risk_landscape,
     )
     _stage_done("contextualize", t0)
     return state

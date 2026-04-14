@@ -347,7 +347,7 @@ def test_cli_ingest_generates_html_report(tmp_path):
         ])
 
     assert result.exit_code == 0
-    assert (tmp_path / "out.html").exists()
-    html = (tmp_path / "out.html").read_text()
+    assert (tmp_path / "test-policy-ingest-report.html").exists()
+    html = (tmp_path / "test-policy-ingest-report.html").read_text()
     assert "TestOrg" in html
     assert "Policy Ingest Report" in html

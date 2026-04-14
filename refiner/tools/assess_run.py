@@ -52,20 +52,20 @@ def print_section(title: str):
 
 def assess_run(run_dir: Path):
     # Discover files
-    report_path = discover_file(run_dir, "-report.yaml")
+    report_path = discover_file(run_dir, "-run-report.yaml")
     taxonomy_path = discover_file(run_dir, "-taxonomy.yaml")
     domain_ctx_path = discover_file(run_dir, "-domain-context.yaml")
     eval_path = discover_file(run_dir, "-evaluation.json")
-    adversarial_path = run_dir / "adversarial_prompts.jsonl"
-    dataset_path = run_dir / "dataset.jsonl"
+    adversarial_path = discover_file(run_dir, "-adversarial-prompts.jsonl")
+    dataset_path = discover_file(run_dir, "-dataset.jsonl")
     debug_dir = run_dir / "debug"
 
     report = load_yaml(report_path) if report_path else None
     taxonomy = load_yaml(taxonomy_path) if taxonomy_path else None
     domain_ctx = load_yaml(domain_ctx_path) if domain_ctx_path else None
     evaluation = load_json(eval_path) if eval_path else None
-    adversarial = load_jsonl(adversarial_path)
-    dataset = load_jsonl(dataset_path)
+    adversarial = load_jsonl(adversarial_path) if adversarial_path else None
+    dataset = load_jsonl(dataset_path) if dataset_path else None
 
     # --- Run metadata ---
     print_section("RUN METADATA")

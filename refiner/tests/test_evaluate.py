@@ -101,7 +101,7 @@ def _sample_domain_context():
 
 
 def test_compute_risk_framework_coverage():
-    risk_ids = ["ibm-risk-atlas-financial-fraud", "owasp-llm-01"]
+    risk_ids = ["atlas-financial-fraud", "owasp-llm-01"]
     result = compute_risk_framework_coverage(risk_ids)
     assert result["total_matched"] == 2
     assert "ibm_risk_atlas" in result["by_framework"]
@@ -792,7 +792,7 @@ def _write_minimal_pipeline_outputs(tmp_path):
             {"stage": "map_risks", "event": "match_count", "policy_concept": "Fraud", "count": 2},
         ],
     }
-    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+    (tmp_path / "test-run-report.yaml").write_text(yaml.dump(report))
     taxonomy = {
         "taxonomies": [{"id": "t1", "name": "T1", "type": "RiskTaxonomy"}],
         "groups": [],
@@ -802,7 +802,7 @@ def _write_minimal_pipeline_outputs(tmp_path):
     dc = {
         "version": "0.1",
         "risks": [
-            {"risk_id": "ibm-risk-atlas-r1", "risk_name": "Risk One", "risk_description": "",
+            {"risk_id": "atlas-r1", "risk_name": "Risk One", "risk_description": "",
              "risk_concern": "", "risk_framework": "", "cross_mappings": []},
         ],
         "policy_contexts": [
@@ -810,7 +810,7 @@ def _write_minimal_pipeline_outputs(tmp_path):
                 "policy_concept": "Fraud",
                 "risk_groundings": [
                     {
-                        "risk_id": "ibm-risk-atlas-r1",
+                        "risk_id": "atlas-r1",
                         "axes": [{"cco_class_uri": "http://ex/P", "cco_class_label": "P", "roles": ["agent"],
                                   "enumerations": [{"class_uri": "http://ex/M", "class_label": "M",
                                                    "source_ontology": "FIBO", "relevance": "high"}]}],
@@ -839,7 +839,7 @@ def test_run_evaluation_with_emit(tmp_path):
     _write_minimal_pipeline_outputs(tmp_path)
     emit_path = tmp_path / "dataset.jsonl"
     row = {
-        "risk_id": "ibm-risk-atlas-r1", "policy_concept": "Fraud",
+        "risk_id": "atlas-r1", "policy_concept": "Fraud",
         "sampled_axes": [
             {"cco_class_uri": "http://ex/P", "cco_class_label": "P",
              "roles": ["agent"], "sampled_uri": "http://ex/M",
@@ -888,7 +888,7 @@ def test_run_evaluation_full(tmp_path):
     # Write emit JSONL
     emit_path = tmp_path / "dataset.jsonl"
     emit_row = {
-        "risk_id": "ibm-risk-atlas-r1", "policy_concept": "Fraud",
+        "risk_id": "atlas-r1", "policy_concept": "Fraud",
         "sampled_axes": [
             {"cco_class_uri": "http://ex/P", "cco_class_label": "P",
              "roles": ["agent"], "sampled_uri": "http://ex/M",
@@ -1016,15 +1016,15 @@ def test_run_evaluation_includes_new_metrics(tmp_path):
     _write_minimal_pipeline_outputs(tmp_path)
 
     # Add selected_domains event to report so domain mismatch can compute
-    report = yaml.safe_load((tmp_path / "test-report.yaml").read_text())
+    report = yaml.safe_load((tmp_path / "test-run-report.yaml").read_text())
     report["events"].append(
         {"stage": "identify_domains", "event": "selected_domains", "domains": ["CCO", "FIBO"]}
     )
-    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+    (tmp_path / "test-run-report.yaml").write_text(yaml.dump(report))
 
     emit_path = tmp_path / "dataset.jsonl"
     emit_row = {
-        "risk_id": "ibm-risk-atlas-r1", "policy_concept": "Fraud",
+        "risk_id": "atlas-r1", "policy_concept": "Fraud",
         "sampled_axes": [
             {"cco_class_uri": "http://ex/P", "cco_class_label": "P",
              "roles": ["agent"], "sampled_uri": "http://ex/M",
@@ -1048,11 +1048,11 @@ def test_run_evaluation_includes_new_metrics(tmp_path):
     ]))
 
     # Add weak_match event
-    report = yaml.safe_load((tmp_path / "test-report.yaml").read_text())
+    report = yaml.safe_load((tmp_path / "test-run-report.yaml").read_text())
     report["events"].append(
-        {"stage": "map_risks", "event": "weak_match", "risk_id": "ibm-risk-atlas-r1", "distance": 0.55}
+        {"stage": "map_risks", "event": "weak_match", "risk_id": "atlas-r1", "distance": 0.55}
     )
-    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+    (tmp_path / "test-run-report.yaml").write_text(yaml.dump(report))
 
     result = run_evaluation(
         tmp_path, emit_path=emit_path, adversarial_path=adv_path, policies_path=policies,
@@ -1117,7 +1117,7 @@ def test_format_summary_includes_new_metrics():
 def test_run_evaluation_enriched_policies(tmp_path):
     report = {"model": "test", "policy_set": "test", "timestamp": "2026-01-01",
               "stages_completed": ["identify_domains"], "events": []}
-    (tmp_path / "test-report.yaml").write_text(yaml.dump(report))
+    (tmp_path / "test-run-report.yaml").write_text(yaml.dump(report))
 
     enriched = {
         "airo_version": "0.2",

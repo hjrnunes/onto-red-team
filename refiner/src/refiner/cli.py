@@ -36,7 +36,7 @@ def _parse_tags(tags: list[str]) -> dict[str, str]:
 @app.command()
 def ingest(
     document: Path = typer.Argument(..., help="Policy document (.md/.txt) or flat JSON (.json)"),
-    output: Path = typer.Option(None, "--output", "-o", help="Output path (default: <stem>-enriched.json)"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output path (default: <stem>-policy-document.json)"),
     base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL", help="LLM API base URL"),
     model: str = typer.Option(None, "--model", envvar="REFINER_MODEL", help="LLM model name"),
     api_key: str = typer.Option("none", "--api-key", envvar="REFINER_API_KEY", help="LLM API key"),
@@ -89,7 +89,7 @@ def ingest(
         report=report,
     )
 
-    out_path = output or document.with_stem(f"{document.stem}-enriched").with_suffix(".json")
+    out_path = output or document.with_stem(f"{document.stem}-policy-document").with_suffix(".json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result.model_dump(), indent=2))
     typer.echo(f"Enriched PolicyDocument written to {out_path}")
@@ -116,7 +116,7 @@ def ingest(
         "input_format": input_format,
         "passes_completed": passes,
     }
-    report_path = build_ingest_report(result, report, out_path.with_suffix(".html"), meta)
+    report_path = build_ingest_report(result, report, out_path.parent / f"{document.stem}-ingest-report.html", meta)
     typer.echo(f"Ingest report written to {report_path}")
 
 
@@ -235,6 +235,10 @@ def run(
 
     # Run pipeline
     client_slug = policy_json.stem
+    for _sfx in ("-policy-document", "-enriched"):
+        if client_slug.endswith(_sfx):
+            client_slug = client_slug[:-len(_sfx)]
+            break
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")
     state = run_pipeline(
         policies, client, config, risk_handlers, onto_handlers,
@@ -295,28 +299,7 @@ def run(
 
     try:
         if state.domain_context is not None and state.risk_mappings is not None:
-            # Enrich domain context document with framework labels and cross-mappings
-            FRAMEWORK_LABELS = {
-                "ibm-risk-atlas": "IBM Risk Atlas",
-                "owasp-llm": "OWASP LLM Top 10",
-                "nist-ai-rmf": "NIST AI RMF",
-                "air-2024": "AIR 2024",
-                "mit-ai-risk": "MIT AI Risk Repository",
-                "ailuminate": "AILuminate",
-                "credo": "Credo",
-                "aiuc": "AIUC-1",
-                "csiro": "CSIRO",
-            }
             doc = state.domain_context
-            for risk in doc.risks:
-                # Framework labels
-                for prefix, label in FRAMEWORK_LABELS.items():
-                    if risk.risk_id.startswith(prefix):
-                        risk.risk_framework = label
-                        break
-                # Cross-mappings
-                if state.related_risks:
-                    risk.cross_mappings = state.related_risks.get(risk.risk_id, [])
 
             # Set policy source from PolicyDocument
             if state.doc_context:
@@ -356,7 +339,7 @@ def run(
             ))
             typer.echo(f"Domain context written to {prof_path}")
 
-            report_path = out / f"{client_slug}-report.yaml"
+            report_path = out / f"{client_slug}-run-report.yaml"
             report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
             typer.echo(f"Report written to {report_path}")
         else:
@@ -384,7 +367,7 @@ def run(
             typer.echo(f"Intermediate state written to {state_path}")
 
             if report.events:
-                report_path = out / f"{client_slug}-report.yaml"
+                report_path = out / f"{client_slug}-run-report.yaml"
                 report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
                 typer.echo(f"Report written to {report_path}")
         md_path = debug.render_markdown()
@@ -494,7 +477,7 @@ def map_risks_cmd(
     typer.echo(f"Risk landscape written to {rl_path}")
 
     report.token_usage = tracker.to_dict()
-    report_path = out / f"{client_slug}-report.yaml"
+    report_path = out / f"{client_slug}-run-report.yaml"
     report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
     typer.echo(f"Report written to {report_path}")
     _echo_token_usage(tracker)
@@ -631,10 +614,17 @@ def ground(
     typer.echo(f"Taxonomy written to {tax_path}")
 
     report.token_usage = tracker.to_dict()
-    report_path = out / f"{client_slug}-report.yaml"
+    report_path = out / f"{client_slug}-run-report.yaml"
     report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
     typer.echo(f"Report written to {report_path}")
     _echo_token_usage(tracker)
+
+
+def _discover_slug(output_dir: Path) -> str:
+    matches = list(output_dir.glob("*-domain-context.yaml"))
+    if matches:
+        return matches[0].name.replace("-domain-context.yaml", "")
+    return "dataset"
 
 
 @app.command()
@@ -643,7 +633,7 @@ def emit(
     policies: Path = typer.Option(..., "--policies", help="Original policy JSON file"),
     samples_per_risk: int = typer.Option(10, "--samples-per-risk", help="Samples per risk (default: 10)"),
     seed: int = typer.Option(None, "--seed", help="Random seed for reproducible sampling"),
-    output: Path = typer.Option(None, "--output", "-o", help="Output JSONL path (default: <output-dir>/dataset.jsonl)"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output JSONL path (default: <output-dir>/<slug>-dataset.jsonl)"),
     technique_weights: str = typer.Option(
         None, "--technique-weights",
         help="JSON string with technique weight overrides, e.g. '{\"pretexting\": 2, \"analytical_reframing\": 1}'",
@@ -657,7 +647,11 @@ def emit(
         typer.echo(f"Error: {policies} does not exist", err=True)
         raise typer.Exit(1)
 
-    out_path = output or (output_dir / "dataset.jsonl")
+    if output:
+        out_path = output
+    else:
+        slug = _discover_slug(output_dir)
+        out_path = output_dir / f"{slug}-dataset.jsonl"
 
     parsed_weights = None
     if technique_weights:

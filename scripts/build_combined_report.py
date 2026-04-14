@@ -64,7 +64,7 @@ def build_combined_report(
     run_dir : Path
         The run directory containing pipeline artifacts.
     output : Path, optional
-        Output HTML file path. Defaults to ``run_dir/combined_report.html``.
+        Output HTML file path. Defaults to ``run_dir/<slug>-combined-report.html``.
     title : str, optional
         Page title. Derived from directory name when omitted.
 
@@ -80,14 +80,14 @@ def build_combined_report(
 
     # Discover artifacts
     eval_json = _discover(run_dir, "*-evaluation.json")
-    adv_prompts = run_dir / "adversarial_prompts.jsonl"
+    adv_prompts = _discover(run_dir, "*-adversarial-prompts.jsonl")
     domain_ctx = _discover(run_dir, "*-domain-context.yaml")
     taxonomy = _discover(run_dir, "*-taxonomy.yaml")
-    enriched_policy = _discover(run_dir, "*-enriched.json")
+    enriched_policy = _discover(run_dir, "*-policy-document.json") or _discover(run_dir, "*-enriched.json")
 
     # Load data
     report_data = _load_json(eval_json)
-    explorer_data = _load_jsonl(adv_prompts if adv_prompts.exists() else None)
+    explorer_data = _load_jsonl(adv_prompts)
     dc_data = _load_yaml(domain_ctx)
     tax_data = _load_yaml(taxonomy)
     policy_data = _load_json(enriched_policy)
@@ -96,7 +96,7 @@ def build_combined_report(
     found = []
     if eval_json:
         found.append(f"evaluation ({eval_json.name})")
-    if adv_prompts.exists():
+    if adv_prompts:
         found.append(f"prompts ({len(explorer_data)} records)")
     if domain_ctx:
         found.append(f"domain context ({len(dc_data.get('profiles', []))} profiles)")
@@ -130,7 +130,12 @@ def build_combined_report(
     html = html.replace("__POLICY_DATA__", json.dumps(policy_data))
 
     # Write output
-    output = Path(output) if output else run_dir / "combined_report.html"
+    if output:
+        output = Path(output)
+    else:
+        dc = _discover(run_dir, "*-domain-context.yaml")
+        slug = dc.name.replace("-domain-context.yaml", "") if dc else "combined"
+        output = run_dir / f"{slug}-combined-report.html"
     output.write_text(html)
     print(f"Written: {output} ({len(found)} data sources)")
     return output
@@ -141,7 +146,7 @@ def main():
         description="Build a combined HTML report from a pipeline run directory.",
     )
     parser.add_argument("run_dir", help="Path to the run directory")
-    parser.add_argument("--output", "-o", help="Output HTML path (default: <run_dir>/combined_report.html)")
+    parser.add_argument("--output", "-o", help="Output HTML path (default: <run_dir>/<slug>-combined-report.html)")
     parser.add_argument("--title", "-t", help="Override page title")
     args = parser.parse_args()
 

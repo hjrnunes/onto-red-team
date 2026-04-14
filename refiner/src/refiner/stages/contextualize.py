@@ -246,14 +246,22 @@ def contextualize(
         seen_risk_ids.add(rva.risk_id)
         risk_names[rva.risk_id] = rva.risk_name
 
+    # Build risk_framework and cross_mappings lookup from RiskLandscape
+    landscape_risks = {}
+    if risk_landscape is not None:
+        landscape_risks = {r.risk_id: r for r in risk_landscape.risks}
+
     risks = []
     for rid in seen_risk_ids:
         details = risk_details.get(rid, {}) if risk_details else {}
+        lr = landscape_risks.get(rid)
         risks.append(RiskSummary(
             risk_id=rid,
             risk_name=risk_names.get(rid, ""),
             risk_description=details.get("description", ""),
             risk_concern=details.get("concern", ""),
+            risk_framework=lr.risk_framework if lr else None,
+            cross_mappings=lr.cross_mappings if lr else [],
         ))
 
     policy_contexts = [

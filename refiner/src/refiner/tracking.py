@@ -6,12 +6,18 @@ from pathlib import Path
 _ARTIFACT_PATTERNS = [
     "*-taxonomy.yaml",
     "*-domain-context.yaml",
-    "*-report.yaml",
+    "*-run-report.yaml",
     "*-evaluation.json",
     "*-evaluation.html",
-    "dataset.jsonl",
-    "adversarial_prompts.jsonl",
-    "adversarial_prompts.html",
+    "*-dataset.jsonl",
+    "*-adversarial-prompts.jsonl",
+    "*-adversarial-prompts.html",
+    "*-policy-document.json",
+    "*-curie-map.json",
+    "*-provenance.jsonl",
+    "*-ingest-report.html",
+    "*-combined-report.html",
+    "*-risk-landscape.yaml",
     "assessment.md",
 ]
 

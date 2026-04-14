@@ -57,7 +57,7 @@ def test_build_risk_landscape_basic():
     assert landscape.selected_domains == selected_domains
     assert len(landscape.risks) == 1
     assert landscape.risks[0].risk_id == "atlas-personal-info"
-    assert landscape.risks[0].risk_framework == "ibm-risk-atlas"
+    assert landscape.risks[0].risk_framework == "IBM Risk Atlas"
     assert landscape.risks[0].related_actions == ["Minimize personal data in prompts"]
     assert landscape.risks[0].cross_mappings == related_risks["atlas-personal-info"]
     assert len(landscape.policy_mappings) == 1
@@ -158,8 +158,8 @@ def test_build_risk_landscape_framework_coverage():
         timestamp="2026-04-14T12:00:00Z",
     )
 
-    assert "ibm-risk-atlas" in landscape.framework_coverage
-    assert "nist-ai-rmf" in landscape.framework_coverage
+    assert "IBM Risk Atlas" in landscape.framework_coverage
+    assert "NIST AI RMF" in landscape.framework_coverage
 
 
 def test_build_risk_landscape_with_policy_source():

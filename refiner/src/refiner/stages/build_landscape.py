@@ -11,16 +11,18 @@ from refiner.models import (
 WEAK_MATCH_THRESHOLD = 0.6
 
 FRAMEWORK_PREFIXES = {
-    "atlas-": "ibm-risk-atlas",
-    "nist-": "nist-ai-rmf",
-    "owasp-": "owasp-llm",
-    "llm0": "owasp-llm",
-    "air-": "air-2024",
-    "mit-ai-risk": "mit-ai-risk",
-    "ailuminate-": "ailuminate",
-    "credo-": "credo",
-    "aiuc-": "aiuc",
-    "csiro-": "csiro",
+    "atlas-": "IBM Risk Atlas",
+    "nist-": "NIST AI RMF",
+    "owasp-": "OWASP LLM Top 10",
+    "llm0": "OWASP LLM Top 10",
+    "ai-risk-taxonomy-": "AIR 2024",
+    "air-": "AIR 2024",
+    "mit-ai-risk": "MIT AI Risk Repository",
+    "ail-": "AILuminate",
+    "credo-": "Credo AI",
+    "aiuc-": "AIUC-1",
+    "csiro-": "CSIRO",
+    "shieldgemma-": "ShieldGemma",
 }
 
 

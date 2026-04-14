@@ -552,7 +552,7 @@ def test_emit_cli_default_output(tmp_path):
         "--seed", "1",
     ])
     assert result.exit_code == 0, result.output
-    default_out = tmp_path / "dataset.jsonl"
+    default_out = tmp_path / "test-dataset.jsonl"
     assert default_out.exists()
 
 

@@ -117,15 +117,18 @@ def aggregate_stage_quality(events: list[dict]) -> dict:
 
 def compute_risk_framework_coverage(matched_risk_ids: list[str]) -> dict:
     KNOWN_PREFIXES = {
-        "ibm-risk-atlas": "ibm_risk_atlas",
-        "owasp-llm": "owasp_llm_top10",
-        "nist-ai-rmf": "nist_ai_rmf",
-        "air-2024": "air_2024",
+        "atlas-": "ibm_risk_atlas",
+        "owasp-": "owasp_llm_top10",
+        "llm0": "owasp_llm_top10",
+        "nist-": "nist_ai_rmf",
+        "ai-risk-taxonomy-": "air_2024",
+        "air-": "air_2024",
         "mit-ai-risk": "mit_ai_risk_repository",
-        "ailuminate": "ailuminate",
-        "credo": "credo",
-        "aiuc": "aiuc1",
-        "csiro": "csiro",
+        "ail-": "ailuminate",
+        "credo-": "credo",
+        "aiuc-": "aiuc1",
+        "csiro-": "csiro",
+        "shieldgemma-": "shieldgemma",
     }
     by_framework: dict[str, int] = defaultdict(int)
     for rid in matched_risk_ids:
@@ -880,7 +883,7 @@ def run_evaluation(
     adversarial_path: Path | None = None,
     policies_path: Path | None = None,
 ) -> dict:
-    report_path = _discover_file(output_dir, "*-report.yaml")
+    report_path = _discover_file(output_dir, "*-run-report.yaml")
     taxonomy_path = _discover_file(output_dir, "*-taxonomy.yaml")
     dc_path = _discover_file(output_dir, "*-domain-context.yaml")
 

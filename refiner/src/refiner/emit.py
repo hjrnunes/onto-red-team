@@ -338,12 +338,17 @@ def emit(
             f.write(json.dumps(row) + "\n")
 
     # Write curie_map sidecar for URI expansion
-    curie_path = output_path.with_suffix(".curie_map.json")
+    slug = output_path.stem.removesuffix("-dataset")
+    if slug != output_path.stem:
+        curie_path = output_path.parent / f"{slug}-curie-map.json"
+        prov_path = output_path.parent / f"{slug}-provenance.jsonl"
+    else:
+        curie_path = output_path.with_suffix(".curie_map.json")
+        prov_path = output_path.parent / "provenance.jsonl"
     with open(curie_path, "w") as f:
         json.dump(CURIE_MAP, f, indent=2)
 
     # Write provenance sidecar
-    prov_path = output_path.parent / "provenance.jsonl"
     write_provenance(dc_path, output_path, prov_path)
 
     logger.info("Wrote %d rows to %s", len(rows), output_path)

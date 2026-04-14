@@ -118,8 +118,13 @@ def test_collect_artifacts_whitelists(tmp_path):
     (tmp_path / "swb-taxonomy.yaml").write_text("x")
     (tmp_path / "swb-evaluation.json").write_text("x")
     (tmp_path / "swb-evaluation.html").write_text("x")
-    (tmp_path / "dataset.jsonl").write_text("x")
-    (tmp_path / "adversarial_prompts.jsonl").write_text("x")
+    (tmp_path / "swb-dataset.jsonl").write_text("x")
+    (tmp_path / "swb-adversarial-prompts.jsonl").write_text("x")
+    (tmp_path / "swb-run-report.yaml").write_text("x")
+    (tmp_path / "swb-policy-document.json").write_text("x")
+    (tmp_path / "swb-curie-map.json").write_text("x")
+    (tmp_path / "swb-provenance.jsonl").write_text("x")
+    (tmp_path / "swb-risk-landscape.yaml").write_text("x")
     (tmp_path / "assessment.md").write_text("x")
     # Create files that should be excluded
     (tmp_path / ".mlflow-run-id").write_text("abc123")
@@ -130,8 +135,13 @@ def test_collect_artifacts_whitelists(tmp_path):
     assert "swb-taxonomy.yaml" in names
     assert "swb-evaluation.json" in names
     assert "swb-evaluation.html" in names
-    assert "dataset.jsonl" in names
-    assert "adversarial_prompts.jsonl" in names
+    assert "swb-dataset.jsonl" in names
+    assert "swb-adversarial-prompts.jsonl" in names
+    assert "swb-run-report.yaml" in names
+    assert "swb-policy-document.json" in names
+    assert "swb-curie-map.json" in names
+    assert "swb-provenance.jsonl" in names
+    assert "swb-risk-landscape.yaml" in names
     assert "assessment.md" in names
     assert ".mlflow-run-id" not in names
     assert "random-file.txt" not in names
