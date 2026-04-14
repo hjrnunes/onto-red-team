@@ -144,12 +144,6 @@ class RiskDetail(BaseModel):
     related_actions: list[str] = []
 
 
-class PolicySourceRef(BaseModel):
-    organization: str = ""
-    domain: str = ""
-    policy_count: int = 0
-
-
 class WeakMatch(BaseModel):
     risk_id: str
     policy_concept: str
