@@ -230,6 +230,7 @@ class DomainContextDocument(BaseModel):
     selected_domains: list[str] = []
     policy_source: PolicySourceRef | None = None
     config: PipelineConfig | None = None
+    knowledge_base: KnowledgeBaseRef | None = None
     risks: list[RiskSummary] = []
     policy_contexts: list[PolicyDomainContext] = []
 

@@ -305,6 +305,22 @@ def test_domain_context_document_roundtrip_json():
     assert len(restored.risks) == 1
 
 
+def test_domain_context_document_has_knowledge_base():
+    from refiner.models import KnowledgeBaseRef
+    dcd = DomainContextDocument(
+        knowledge_base=KnowledgeBaseRef(nexus_commit="abc123"),
+    )
+    d = dcd.model_dump()
+    assert d["knowledge_base"]["nexus_commit"] == "abc123"
+    dcd2 = DomainContextDocument(**d)
+    assert dcd2.knowledge_base.nexus_commit == "abc123"
+
+
+def test_domain_context_document_knowledge_base_defaults_none():
+    dcd = DomainContextDocument()
+    assert dcd.knowledge_base is None
+
+
 # --- KnowledgeBaseRef ---
 
 
