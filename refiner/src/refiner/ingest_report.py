@@ -125,3 +125,19 @@ def build_report_data(
             "summary": _summary(doc, report),
         },
     }
+
+
+def build_ingest_report(
+    doc: PolicyDocument,
+    report: RunReport,
+    output_path: Path,
+    meta: dict,
+) -> Path:
+    """Build self-contained HTML report. Returns path to written file."""
+    data = build_report_data(doc, report, meta)
+    template_path = Path(__file__).parent / "ingest_report_template.html"
+    template = template_path.read_text()
+    html = template.replace("__REPORT_DATA__", json.dumps(data, default=str))
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(html)
+    return output_path

@@ -269,3 +269,38 @@ def test_report_data_includes_stakeholder_groups():
     assert len(groups["users"]) == 1
     assert len(groups["subjects"]) == 1
     assert len(groups["governance"]) == 1
+
+
+from refiner.ingest_report import build_ingest_report
+
+
+def test_build_ingest_report_writes_html(tmp_path):
+    doc = _full_doc()
+    report = _make_report()
+    meta = _make_meta()
+    out = tmp_path / "test-report.html"
+
+    result_path = build_ingest_report(doc, report, out, meta)
+
+    assert result_path == out
+    assert out.exists()
+    html = out.read_text()
+    assert "<!DOCTYPE html>" in html
+    assert "__REPORT_DATA__" not in html
+    assert "Acme Corp" in html
+    assert "Data Privacy" in html
+
+
+def test_build_ingest_report_valid_json_in_html(tmp_path):
+    """The injected JSON must be parseable."""
+    import re
+
+    doc = _full_doc()
+    out = tmp_path / "test-report.html"
+    build_ingest_report(doc, _make_report(), out, _make_meta())
+
+    html = out.read_text()
+    match = re.search(r"const DATA = (.+?);", html, re.DOTALL)
+    assert match is not None
+    parsed = json.loads(match.group(1))
+    assert parsed["document"]["domain"] == "finance"
