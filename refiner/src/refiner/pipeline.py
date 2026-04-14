@@ -42,6 +42,51 @@ class PipelineState:
     report: RunReport | None = None
     doc_context: PolicyDocument | None = None
 
+    @property
+    def risk_mappings_resolved(self) -> list[PolicyRiskMapping] | None:
+        if self.risk_mappings is not None:
+            return self.risk_mappings
+        if self.risk_landscape is not None:
+            return self.risk_landscape.policy_mappings
+        return None
+
+    @property
+    def risk_details_resolved(self) -> dict[str, dict] | None:
+        if self.risk_details is not None:
+            return self.risk_details
+        if self.risk_landscape is not None:
+            return {
+                r.risk_id: {
+                    "id": r.risk_id, "name": r.risk_name,
+                    "description": r.risk_description or "",
+                    "concern": r.risk_concern or "",
+                }
+                for r in self.risk_landscape.risks
+            }
+        return None
+
+    @property
+    def risk_actions_resolved(self) -> dict[str, list[str]] | None:
+        if self.risk_actions is not None:
+            return self.risk_actions
+        if self.risk_landscape is not None:
+            return {
+                r.risk_id: r.related_actions
+                for r in self.risk_landscape.risks if r.related_actions
+            }
+        return None
+
+    @property
+    def related_risks_resolved(self) -> dict[str, list[dict]] | None:
+        if self.related_risks is not None:
+            return self.related_risks
+        if self.risk_landscape is not None:
+            return {
+                r.risk_id: r.cross_mappings
+                for r in self.risk_landscape.risks if r.cross_mappings
+            }
+        return None
+
 
 def run_pipeline(
     policies: list[Policy],

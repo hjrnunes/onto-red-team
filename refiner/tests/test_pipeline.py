@@ -178,3 +178,40 @@ def test_pipeline_state_has_risk_landscape():
     assert state.risk_landscape is None
     state.risk_landscape = RiskLandscape(model="test")
     assert state.risk_landscape.model == "test"
+
+
+def test_pipeline_state_extracts_risk_details_from_landscape():
+    from refiner.pipeline import PipelineState
+    from refiner.models import (
+        RiskLandscape, RiskDetail,
+        PolicyRiskMapping, RiskMatch,
+    )
+
+    landscape = RiskLandscape(
+        risks=[
+            RiskDetail(
+                risk_id="r1", risk_name="Risk One",
+                risk_description="desc", risk_concern="concern",
+                related_actions=["act1"],
+                cross_mappings=[{"id": "x1", "mapping_type": "broad"}],
+            ),
+        ],
+        policy_mappings=[
+            PolicyRiskMapping(
+                policy_concept="P1",
+                matched_risks=[
+                    RiskMatch(risk_id="r1", risk_name="Risk One",
+                              relevance="primary", justification="j"),
+                ],
+            ),
+        ],
+    )
+
+    state = PipelineState(policies=[], risk_landscape=landscape)
+
+    # Old-style access should still work via landscape
+    assert state.risk_mappings_resolved is not None
+    assert len(state.risk_mappings_resolved) == 1
+    assert state.risk_details_resolved["r1"]["name"] == "Risk One"
+    assert state.risk_actions_resolved["r1"] == ["act1"]
+    assert state.related_risks_resolved["r1"] == [{"id": "x1", "mapping_type": "broad"}]
