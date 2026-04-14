@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from refiner.llm import LLMConfig
 from refiner.models import (
     Policy,
+    RiskLandscape,
     RiskVariationAxes,
     DomainContextDocument,
     PolicyDomainContext,
@@ -87,7 +88,22 @@ def contextualize(
     vocabulary_contexts: dict[str, dict] | None = None,
     run_slug: str = "",
     timestamp: str = "",
+    risk_landscape: RiskLandscape | None = None,
 ) -> DomainContextDocument:
+    # Extract fields from RiskLandscape if provided
+    if risk_landscape is not None:
+        selected_domains = selected_domains or risk_landscape.selected_domains
+        risk_details = risk_details or {
+            r.risk_id: {
+                "id": r.risk_id, "name": r.risk_name,
+                "description": r.risk_description or "",
+                "concern": r.risk_concern or "",
+            }
+            for r in risk_landscape.risks
+        }
+        run_slug = run_slug or risk_landscape.run_slug
+        timestamp = timestamp or risk_landscape.timestamp
+
     if not variation_axes:
         return DomainContextDocument()
 

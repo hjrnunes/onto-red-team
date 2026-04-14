@@ -196,3 +196,67 @@ def test_empty_input_returns_empty_document(
     assert isinstance(result, DomainContextDocument)
     assert result.policy_contexts == []
     assert result.risks == []
+
+
+def test_contextualize_accepts_risk_landscape(mock_client, mock_config, mock_onto_handlers):
+    from refiner.models import (
+        RiskLandscape, RiskDetail, PolicyRiskMapping, RiskMatch,
+        RiskVariationAxes, VariationAxis,
+    )
+    from refiner.stages.contextualize import contextualize
+
+    landscape = RiskLandscape(
+        model="test-model",
+        run_slug="test",
+        timestamp="2026-04-14T12:00:00Z",
+        selected_domains=["CCO", "Commons"],
+        risks=[
+            RiskDetail(
+                risk_id="r1", risk_name="Risk One",
+                risk_description="desc", risk_concern="concern",
+            ),
+        ],
+    )
+
+    axes = [
+        RiskVariationAxes(
+            risk_id="r1",
+            risk_name="Risk One",
+            policy_concept="Policy A",
+            axes=[
+                VariationAxis(
+                    cco_class_uri="http://example.org/Class1",
+                    cco_class_label="Class One",
+                    rationale="test",
+                ),
+            ],
+        ),
+    ]
+
+    mock_onto_handlers["get_subclasses"].return_value = []
+
+    from unittest.mock import MagicMock
+    from pydantic import BaseModel
+    from typing import Literal
+
+    class _MockVariation(BaseModel):
+        instance: str
+        relevance: Literal["high", "medium", "low"]
+
+    class _MockResponse(BaseModel):
+        variations: list[_MockVariation]
+
+    mock_client.chat.completions.create.return_value = _MockResponse(
+        variations=[_MockVariation(instance="test instance", relevance="high")]
+    )
+
+    result = contextualize(
+        variation_axes=axes,
+        client=mock_client,
+        config=mock_config,
+        onto_handlers=mock_onto_handlers,
+        risk_landscape=landscape,
+    )
+
+    assert result.selected_domains == ["CCO", "Commons"]
+    assert result.run_slug == "test"
