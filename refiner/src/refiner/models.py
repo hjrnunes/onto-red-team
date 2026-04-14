@@ -126,6 +126,24 @@ class AxisDerivation(BaseModel):
     domain: str = ""
 
 
+class KnowledgeBaseRef(BaseModel):
+    nexus_commit: str = ""
+    nexus_risk_count: int = 0
+    ontology_index_hash: str = ""
+    ontology_domains: dict[str, int] = {}
+    indexed_at: str = ""
+
+
+class RiskDetail(BaseModel):
+    risk_id: str
+    risk_name: str
+    risk_description: str | None = ""
+    risk_concern: str | None = ""
+    risk_framework: str | None = ""
+    cross_mappings: list[dict] = []
+    related_actions: list[str] = []
+
+
 class VariationAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str

@@ -303,3 +303,60 @@ def test_domain_context_document_roundtrip_json():
     assert restored.policy_source.organization == "Acme"
     assert isinstance(restored.config, PipelineConfig)
     assert len(restored.risks) == 1
+
+
+# --- KnowledgeBaseRef ---
+
+
+def test_knowledge_base_ref_round_trip():
+    from refiner.models import KnowledgeBaseRef
+    ref = KnowledgeBaseRef(
+        nexus_commit="abc1234",
+        nexus_risk_count=612,
+        ontology_index_hash="sha256:deadbeef",
+        ontology_domains={"CCO": 5000, "FIBO": 1500, "OBO": 95000},
+        indexed_at="2026-04-14T12:00:00Z",
+    )
+    d = ref.model_dump()
+    assert d["nexus_commit"] == "abc1234"
+    assert d["nexus_risk_count"] == 612
+    assert d["ontology_domains"]["CCO"] == 5000
+    ref2 = KnowledgeBaseRef(**d)
+    assert ref2 == ref
+
+
+def test_knowledge_base_ref_defaults():
+    from refiner.models import KnowledgeBaseRef
+    ref = KnowledgeBaseRef()
+    assert ref.nexus_commit == ""
+    assert ref.nexus_risk_count == 0
+    assert ref.ontology_domains == {}
+
+
+# --- RiskDetail ---
+
+
+def test_risk_detail_round_trip():
+    from refiner.models import RiskDetail
+    detail = RiskDetail(
+        risk_id="atlas-personal-information-in-prompt",
+        risk_name="Personal information",
+        risk_description="Personal information or sensitive personal information...",
+        risk_concern="If personal information is included in the prompt...",
+        risk_framework="ibm-risk-atlas",
+        cross_mappings=[{"id": "nist-data-privacy", "mapping_type": "broad"}],
+        related_actions=["Minimize personal data in prompts"],
+    )
+    d = detail.model_dump()
+    assert d["risk_id"] == "atlas-personal-information-in-prompt"
+    assert d["related_actions"] == ["Minimize personal data in prompts"]
+    detail2 = RiskDetail(**d)
+    assert detail2 == detail
+
+
+def test_risk_detail_defaults():
+    from refiner.models import RiskDetail
+    detail = RiskDetail(risk_id="test", risk_name="Test")
+    assert detail.risk_description == ""
+    assert detail.cross_mappings == []
+    assert detail.related_actions == []
