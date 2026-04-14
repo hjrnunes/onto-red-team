@@ -213,3 +213,59 @@ def test_document_included():
     data = build_report_data(doc, _make_report(), _make_meta())
     assert data["document"]["domain"] == "finance"
     assert len(data["document"]["policies"]) == 1
+
+
+from refiner.ingest_report import group_stakeholders
+
+
+def test_group_stakeholders_full():
+    """Stakeholders are grouped by Lewis et al. categories."""
+    doc = PolicyDocument(
+        organization=Stakeholder(name="RDaSH"),
+        stakeholders=[
+            Stakeholder(name="staff", roles=["airo:AIUser"]),
+            Stakeholder(name="volunteers", roles=["airo:AIUser"]),
+            Stakeholder(name="patients", roles=["airo:AISubject"]),
+            Stakeholder(name="DPO", roles=["data protection"]),
+            Stakeholder(name="Caldicott Guardian", roles=["patient info oversight"]),
+        ],
+    )
+    groups = group_stakeholders(doc)
+    assert groups["organisation"] == {"name": "RDaSH"}
+    assert len(groups["users"]) == 2
+    assert groups["users"][0]["name"] == "staff"
+    assert len(groups["subjects"]) == 1
+    assert groups["subjects"][0]["name"] == "patients"
+    assert len(groups["governance"]) == 2
+    assert groups["governance"][0]["name"] == "DPO"
+
+
+def test_group_stakeholders_empty():
+    doc = PolicyDocument()
+    groups = group_stakeholders(doc)
+    assert groups["organisation"] is None
+    assert groups["users"] == []
+    assert groups["subjects"] == []
+    assert groups["governance"] == []
+
+
+def test_group_stakeholders_mixed_roles():
+    """Stakeholder with both airo:AIUser and governance role goes to governance."""
+    doc = PolicyDocument(
+        stakeholders=[
+            Stakeholder(name="Admin", roles=["airo:AIUser", "system admin"]),
+        ],
+    )
+    groups = group_stakeholders(doc)
+    assert len(groups["governance"]) == 1
+    assert groups["users"] == []
+
+
+def test_report_data_includes_stakeholder_groups():
+    doc = _full_doc()
+    data = build_report_data(doc, _make_report(), _make_meta())
+    groups = data["stakeholder_groups"]
+    assert groups["organisation"]["name"] == "Acme Corp"
+    assert len(groups["users"]) == 1
+    assert len(groups["subjects"]) == 1
+    assert len(groups["governance"]) == 1

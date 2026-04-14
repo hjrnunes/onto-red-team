@@ -61,6 +61,32 @@ def _policy_confidence(doc: PolicyDocument) -> list[dict]:
     return results
 
 
+def group_stakeholders(doc: PolicyDocument) -> dict:
+    """Group stakeholders into Lewis et al. 2021 categories.
+
+    Returns dict with keys: organisation, governance, users, subjects.
+    """
+    result = {
+        "organisation": {"name": doc.organization.name} if doc.organization and doc.organization.name else None,
+        "governance": [],
+        "users": [],
+        "subjects": [],
+    }
+
+    for s in doc.stakeholders:
+        roles_set = set(s.roles)
+        # If any role is outside the standard AIRO set, it's governance
+        non_airo = {r for r in roles_set if r} - _AIRO_ROLES
+        if non_airo:
+            result["governance"].append({"name": s.name, "roles": s.roles})
+        elif "airo:AISubject" in roles_set:
+            result["subjects"].append({"name": s.name, "roles": s.roles})
+        elif "airo:AIUser" in roles_set:
+            result["users"].append({"name": s.name, "roles": s.roles})
+
+    return result
+
+
 def _summary(doc: PolicyDocument, report: RunReport) -> dict:
     """Compute aggregate summary stats."""
     policies_enriched = sum(
@@ -92,6 +118,7 @@ def build_report_data(
     return {
         "meta": meta,
         "document": doc.model_dump(),
+        "stakeholder_groups": group_stakeholders(doc),
         "confidence": {
             "context": _context_confidence(doc),
             "policies": _policy_confidence(doc),
