@@ -153,3 +153,47 @@ def test_anchor_caches_by_risk_id(
     assert len(result) == 2
     # LLM should only be called once (second is cached)
     assert mock_client.chat.completions.create.call_count == 1
+
+
+def test_anchor_accepts_risk_landscape(mock_client, mock_config, mock_onto_handlers, mock_nexus_handlers):
+    from refiner.models import (
+        RiskLandscape, RiskDetail, PolicyRiskMapping, RiskMatch,
+    )
+    from refiner.ontology_seeds import SSSOMIndex
+
+    landscape = RiskLandscape(
+        model="test-model",
+        run_slug="test",
+        selected_domains=["CCO", "Commons"],
+        risks=[
+            RiskDetail(
+                risk_id="r1", risk_name="Risk One",
+                risk_description="desc", related_actions=["action1"],
+            ),
+        ],
+        policy_mappings=[
+            PolicyRiskMapping(
+                policy_concept="Policy A",
+                matched_risks=[
+                    RiskMatch(risk_id="r1", risk_name="Risk One",
+                              relevance="primary", justification="test"),
+                ],
+            ),
+        ],
+    )
+
+    # Mock LLM response
+    mock_client.chat.completions.create.return_value = _AnchorResponse(axes=[])
+
+    # Should work with risk_landscape parameter
+    result, vocab = anchor(
+        risk_landscape=landscape,
+        client=mock_client,
+        config=mock_config,
+        onto_handlers=mock_onto_handlers,
+        nexus_handlers=mock_nexus_handlers,
+        layer1_mappings=SSSOMIndex([]),
+        layer2_mappings=SSSOMIndex([]),
+    )
+    assert isinstance(result, list)
+    assert isinstance(vocab, dict)

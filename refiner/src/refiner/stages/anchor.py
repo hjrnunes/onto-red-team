@@ -7,6 +7,7 @@ from refiner.llm import LLMConfig
 from refiner.models import (
     AxisDerivation,
     PolicyRiskMapping,
+    RiskLandscape,
     RiskVariationAxes,
     VariationAxis,
 )
@@ -479,11 +480,11 @@ def _format_vocabulary_context(vocab_ctx: dict) -> str:
 
 
 def anchor(
-        risk_mappings: list[PolicyRiskMapping],
-        risk_details: dict[str, dict],
-        client: instructor.Instructor,
-        config: LLMConfig,
-        onto_handlers: dict,
+        risk_mappings: list[PolicyRiskMapping] | None = None,
+        risk_details: dict[str, dict] | None = None,
+        client: instructor.Instructor = None,
+        config: LLMConfig = None,
+        onto_handlers: dict = None,
         selected_domains: list[str] | None = None,
         risk_actions: dict[str, list[str]] | None = None,
         related_risks: dict[str, list[dict]] | None = None,
@@ -494,8 +495,30 @@ def anchor(
         generic_safety_uris: set[str] | None = None,
         policies: list | None = None,
         bfo_fallbacks: dict[str, str] | None = None,
+        risk_landscape: RiskLandscape | None = None,
 ) -> tuple[list[RiskVariationAxes], dict[str, dict]]:
     """Returns (variation_axes, vocabulary_contexts_by_risk_id)."""
+    # Extract fields from RiskLandscape if provided
+    if risk_landscape is not None:
+        risk_mappings = risk_mappings or risk_landscape.policy_mappings
+        risk_details = risk_details or {
+            r.risk_id: {
+                "id": r.risk_id, "name": r.risk_name,
+                "description": r.risk_description or "",
+                "concern": r.risk_concern or "",
+            }
+            for r in risk_landscape.risks
+        }
+        selected_domains = selected_domains or risk_landscape.selected_domains
+        risk_actions = risk_actions or {
+            r.risk_id: r.related_actions
+            for r in risk_landscape.risks if r.related_actions
+        }
+        related_risks = related_risks or {
+            r.risk_id: r.cross_mappings
+            for r in risk_landscape.risks if r.cross_mappings
+        }
+
     if not risk_mappings:
         return [], {}
 
