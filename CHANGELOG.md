@@ -36,6 +36,11 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Decomposition propagated to emit and provenance** — `build_prompt()` now includes a
+  "The policy governs this configuration" block with agent/activity/entity when the policy has a
+  decomposition. JSONL output rows carry a `decomposition` field. The PROV-O provenance sidecar
+  includes agent/activity/entity on each prompt triple.
+
 - **Enrichment pass populates PolicyDecomposition** — The ingest enrichment prompt now asks the LLM
   to identify the agent (who acts), activity (what is done), and entity (what is acted upon) for each
   policy. When provided, these are stored as `Policy.decomposition` — an Agent/Activity/Entity triple

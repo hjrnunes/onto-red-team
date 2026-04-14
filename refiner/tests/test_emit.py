@@ -299,6 +299,26 @@ def test_build_prompt_with_boundary_examples():
     assert "patients" in user_msg
 
 
+def test_build_prompt_with_decomposition():
+    from refiner.models import Policy, PolicyDecomposition
+
+    policy = Policy(
+        policy_concept="Clinical Diagnosis",
+        concept_definition="No clinical decisions by AI",
+        decomposition=PolicyDecomposition(
+            agent="AI assistant",
+            activity="diagnose",
+            entity="patient conditions",
+        ),
+    )
+    messages = build_prompt("Clinical Diagnosis", "No clinical decisions by AI", "Misdiagnosis", [], policy=policy)
+    user_msg = messages[1]["content"]
+    assert "Agent: AI assistant" in user_msg
+    assert "Activity: diagnose" in user_msg
+    assert "Entity: patient conditions" in user_msg
+    assert "The policy governs this configuration" in user_msg
+
+
 def test_build_prompt_without_enrichments():
     messages = build_prompt("Fraud", "About fraud", "Financial Fraud", [])
     user_msg = messages[1]["content"]

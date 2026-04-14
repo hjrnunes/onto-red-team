@@ -116,6 +116,12 @@ def write_provenance(
                     "wasDerivedFrom": f"profile:{row.get('risk_id', '')}",
                 }
 
+                decomposition = row.get("decomposition")
+                if decomposition:
+                    for key in ("agent", "activity", "entity"):
+                        if decomposition.get(key):
+                            prompt_triple[key] = decomposition[key]
+
                 sampled = row.get("sampled_axes", [])
                 if sampled:
                     prompt_triple["used"] = [
