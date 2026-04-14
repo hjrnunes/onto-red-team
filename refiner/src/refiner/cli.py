@@ -247,6 +247,15 @@ def run(
     # TODO: thread doc_context into pipeline stages (e.g. identify_domains domain hint)
     state.doc_context = doc_context
 
+    # Attach policy source to risk landscape
+    if state.risk_landscape is not None and doc_context:
+        from refiner.models import PolicySourceRef
+        state.risk_landscape.policy_source = PolicySourceRef(
+            organization=doc_context.organization.name if doc_context.organization else None,
+            domain=doc_context.domain,
+            policy_count=len(doc_context.policies),
+        )
+
     # Output
     out = output_dir or Path(".")
     out.mkdir(parents=True, exist_ok=True)
@@ -329,6 +338,14 @@ def run(
             report.stages_completed.append("structure")
             report.token_usage = tracker.to_dict()
 
+            # Serialize RiskLandscape artifact
+            if state.risk_landscape is not None:
+                rl_path = out / f"{client_slug}-risk-landscape.yaml"
+                rl_path.write_text(yaml.dump(
+                    state.risk_landscape.model_dump(), default_flow_style=False, sort_keys=False,
+                ))
+                typer.echo(f"Risk landscape written to {rl_path}")
+
             tax_path = out / f"{client_slug}-taxonomy.yaml"
             tax_path.write_text(yaml.dump(taxonomy, default_flow_style=False, sort_keys=False))
             typer.echo(f"Taxonomy written to {tax_path}")
@@ -357,6 +374,12 @@ def run(
                 state_data["risk_details"] = state.risk_details
             if state.variation_axes:
                 state_data["variation_axes"] = [a.model_dump() for a in state.variation_axes]
+            if state.risk_landscape:
+                rl_path = out / f"{client_slug}-risk-landscape.yaml"
+                rl_path.write_text(yaml.dump(
+                    state.risk_landscape.model_dump(), default_flow_style=False, sort_keys=False,
+                ))
+                typer.echo(f"Risk landscape written to {rl_path}")
             state_path.write_text(json.dumps(state_data, indent=2))
             typer.echo(f"Intermediate state written to {state_path}")
 

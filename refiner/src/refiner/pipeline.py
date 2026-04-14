@@ -10,6 +10,7 @@ from refiner.models import (
     Policy,
     PolicyDocument,
     PolicyRiskMapping,
+    RiskLandscape,
     RiskVariationAxes,
     DomainContextDocument,
     RunReport,
@@ -19,6 +20,7 @@ from refiner.stages.map_risks import map_risks
 from refiner.stages.anchor import anchor, build_generic_safety_uris
 from refiner.stages.identify_domains import ALWAYS_INCLUDED
 from refiner.stages.contextualize import contextualize
+from refiner.stages.build_landscape import build_risk_landscape
 
 STAGES = ("identify_domains", "map_risks", "anchor", "contextualize")
 
@@ -32,6 +34,7 @@ class PipelineState:
     seen_risk_ids: set[str] | None = None
     related_risks: dict[str, list[dict]] | None = None
     risk_actions: dict[str, list[str]] | None = None
+    risk_landscape: RiskLandscape | None = None
     variation_axes: list[RiskVariationAxes] | None = None
     domain_context: DomainContextDocument | None = None
     run_slug: str = ""
@@ -92,6 +95,16 @@ def run_pipeline(
         state.policies, client, config, risk_handlers, report=report
     )
     _stage_done("map_risks", t0)
+    state.risk_landscape = build_risk_landscape(
+        mappings=state.risk_mappings,
+        risk_details_cache=state.risk_details,
+        related_risks=state.related_risks,
+        risk_actions=state.risk_actions,
+        selected_domains=state.selected_domains,
+        model=config.model,
+        run_slug=run_slug,
+        timestamp=report.timestamp if report else "",
+    )
     if until == "map_risks":
         return state
 

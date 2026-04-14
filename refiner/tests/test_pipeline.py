@@ -169,3 +169,12 @@ def test_pipeline_no_generic_safety_uris_for_generic_only(mock_client, mock_conf
 
         # build_generic_safety_uris should NOT be called (no domain-specific domains)
         m_build.assert_not_called()
+
+
+def test_pipeline_state_has_risk_landscape():
+    from refiner.pipeline import PipelineState
+    from refiner.models import RiskLandscape
+    state = PipelineState(policies=[])
+    assert state.risk_landscape is None
+    state.risk_landscape = RiskLandscape(model="test")
+    assert state.risk_landscape.model == "test"
