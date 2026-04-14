@@ -72,9 +72,9 @@ def build_risk_landscape(
             framework = _detect_framework(rm.risk_id)
             risks.append(RiskDetail(
                 risk_id=rm.risk_id,
-                risk_name=details.get("name", rm.risk_name),
-                risk_description=details.get("description", ""),
-                risk_concern=details.get("concern", ""),
+                risk_name=details.get("name") or rm.risk_name or rm.risk_id,
+                risk_description=details.get("description") or "",
+                risk_concern=details.get("concern") or "",
                 risk_framework=framework,
                 cross_mappings=related_risks.get(rm.risk_id, []),
                 related_actions=risk_actions.get(rm.risk_id, []),
