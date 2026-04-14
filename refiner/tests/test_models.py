@@ -360,3 +360,94 @@ def test_risk_detail_defaults():
     assert detail.risk_description == ""
     assert detail.cross_mappings == []
     assert detail.related_actions == []
+
+
+def test_risk_landscape_round_trip():
+    from refiner.models import (
+        RiskLandscape, RiskDetail, PolicyRiskMapping, RiskMatch,
+        KnowledgeBaseRef, PolicySourceRef,
+    )
+    landscape = RiskLandscape(
+        model="gemma-3-12b-it",
+        timestamp="2026-04-14T12:00:00Z",
+        run_slug="swb-enriched",
+        selected_domains=["CCO", "Commons", "FIBO", "D3FEND", "CSO", "LKIF"],
+        policy_source=PolicySourceRef(organization="South West Bank", domain="banking", policy_count=6),
+        knowledge_base=KnowledgeBaseRef(nexus_commit="abc1234", nexus_risk_count=612),
+        risks=[
+            RiskDetail(
+                risk_id="atlas-personal-information-in-prompt",
+                risk_name="Personal information",
+                risk_description="Personal information...",
+                cross_mappings=[{"id": "nist-data-privacy", "mapping_type": "broad"}],
+                related_actions=["Minimize personal data"],
+            ),
+        ],
+        policy_mappings=[
+            PolicyRiskMapping(
+                policy_concept="Executive Compensation",
+                matched_risks=[
+                    RiskMatch(
+                        risk_id="atlas-personal-information-in-prompt",
+                        risk_name="Personal information",
+                        relevance="primary",
+                        justification="Directly addresses PII concerns",
+                        match_distance=0.234,
+                    ),
+                ],
+            ),
+        ],
+        framework_coverage={"ibm-risk-atlas": 1},
+        weak_matches=[],
+    )
+    d = landscape.model_dump()
+    assert d["version"] == "0.1"
+    assert d["selected_domains"][2] == "FIBO"
+    assert len(d["risks"]) == 1
+    assert d["risks"][0]["related_actions"] == ["Minimize personal data"]
+    assert len(d["policy_mappings"]) == 1
+    landscape2 = RiskLandscape(**d)
+    assert landscape2.risks[0].risk_id == "atlas-personal-information-in-prompt"
+    assert landscape2.policy_mappings[0].matched_risks[0].match_distance == 0.234
+
+
+def test_risk_landscape_yaml_round_trip(tmp_path):
+    import yaml
+    from refiner.models import (
+        RiskLandscape, RiskDetail, PolicyRiskMapping, RiskMatch,
+    )
+    landscape = RiskLandscape(
+        model="test-model",
+        timestamp="2026-04-14T12:00:00Z",
+        run_slug="test",
+        risks=[
+            RiskDetail(risk_id="r1", risk_name="Risk One"),
+        ],
+        policy_mappings=[
+            PolicyRiskMapping(
+                policy_concept="Policy A",
+                matched_risks=[
+                    RiskMatch(risk_id="r1", risk_name="Risk One",
+                              relevance="primary", justification="test"),
+                ],
+            ),
+        ],
+    )
+    path = tmp_path / "risk-landscape.yaml"
+    path.write_text(yaml.dump(landscape.model_dump(), default_flow_style=False, sort_keys=False))
+    loaded = yaml.safe_load(path.read_text())
+    landscape2 = RiskLandscape(**loaded)
+    assert landscape2.risks[0].risk_id == "r1"
+    assert landscape2.policy_mappings[0].policy_concept == "Policy A"
+
+
+def test_risk_landscape_defaults():
+    from refiner.models import RiskLandscape
+    landscape = RiskLandscape()
+    assert landscape.version == "0.1"
+    assert landscape.risks == []
+    assert landscape.policy_mappings == []
+    assert landscape.framework_coverage == {}
+    assert landscape.weak_matches == []
+    assert landscape.selected_domains == []
+    assert landscape.knowledge_base is None

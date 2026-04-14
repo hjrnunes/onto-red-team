@@ -144,6 +144,32 @@ class RiskDetail(BaseModel):
     related_actions: list[str] = []
 
 
+class PolicySourceRef(BaseModel):
+    organization: str = ""
+    domain: str = ""
+    policy_count: int = 0
+
+
+class WeakMatch(BaseModel):
+    risk_id: str
+    policy_concept: str
+    distance: float
+
+
+class RiskLandscape(BaseModel):
+    version: str = "0.1"
+    model: str = ""
+    timestamp: str = ""
+    run_slug: str = ""
+    selected_domains: list[str] = []
+    policy_source: PolicySourceRef | None = None
+    knowledge_base: KnowledgeBaseRef | None = None
+    risks: list[RiskDetail] = []
+    policy_mappings: list[PolicyRiskMapping] = []
+    framework_coverage: dict[str, int] = {}
+    weak_matches: list[WeakMatch] = []
+
+
 class VariationAxis(BaseModel):
     cco_class_uri: str
     cco_class_label: str
