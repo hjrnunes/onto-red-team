@@ -45,12 +45,12 @@ def _make_completed_state():
     return state
 
 
-@patch("refiner.cli.structure")
+@patch("refiner.cli.export_taxonomy")
 @patch("refiner.cli._create_risk_handlers")
 @patch("refiner.cli._create_onto_handlers")
 @patch("refiner.cli.create_client")
 @patch("refiner.cli.run_pipeline")
-def test_cli_run_full_pipeline(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
+def test_cli_run_full_pipeline(mock_run, mock_create_client, mock_onto, mock_risk, mock_export, tmp_path, monkeypatch):
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
     monkeypatch.setenv("NEXUS_BASE_DIR", "/tmp/nexus")
@@ -60,7 +60,7 @@ def test_cli_run_full_pipeline(mock_run, mock_create_client, mock_onto, mock_ris
     mock_create_client.return_value = MagicMock()
     mock_risk.return_value = {}
     mock_onto.return_value = {}
-    mock_structure.return_value = ({"name": "test"}, [])
+    mock_export.return_value = ({"name": "test"}, [])
 
     result = runner.invoke(app, ["run", str(policy_file)])
     assert result.exit_code == 0, result.output
@@ -203,12 +203,12 @@ def _make_enriched_policy_file(tmp_path: Path) -> Path:
     return p
 
 
-@patch("refiner.cli.structure")
+@patch("refiner.cli.export_taxonomy")
 @patch("refiner.cli._create_risk_handlers")
 @patch("refiner.cli._create_onto_handlers")
 @patch("refiner.cli.create_client")
 @patch("refiner.cli.run_pipeline")
-def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
+def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_risk, mock_export, tmp_path, monkeypatch):
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
     monkeypatch.setenv("NEXUS_BASE_DIR", "/tmp/nexus")
@@ -218,7 +218,7 @@ def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_r
     mock_create_client.return_value = MagicMock()
     mock_risk.return_value = {}
     mock_onto.return_value = {}
-    mock_structure.return_value = ({"entries": []}, {"profiles": []})
+    mock_export.return_value = ({"entries": []}, {"profiles": []})
 
     result = runner.invoke(app, [
         "run", str(policy_file), "-o", str(tmp_path),
@@ -239,12 +239,12 @@ def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_r
     assert "policy_contexts" in written
 
 
-@patch("refiner.cli.structure")
+@patch("refiner.cli.export_taxonomy")
 @patch("refiner.cli._create_risk_handlers")
 @patch("refiner.cli._create_onto_handlers")
 @patch("refiner.cli.create_client")
 @patch("refiner.cli.run_pipeline")
-def test_cli_run_framework_labels_and_cross_mappings(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
+def test_cli_run_framework_labels_and_cross_mappings(mock_run, mock_create_client, mock_onto, mock_risk, mock_export, tmp_path, monkeypatch):
     """Framework labels are set on RiskSummary and cross-mappings are populated."""
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
@@ -259,7 +259,7 @@ def test_cli_run_framework_labels_and_cross_mappings(mock_run, mock_create_clien
     mock_create_client.return_value = MagicMock()
     mock_risk.return_value = {}
     mock_onto.return_value = {}
-    mock_structure.return_value = ({"name": "test"}, [])
+    mock_export.return_value = ({"name": "test"}, [])
 
     result = runner.invoke(app, ["run", str(policy_file), "-o", str(tmp_path)])
     assert result.exit_code == 0, result.output
@@ -272,12 +272,12 @@ def test_cli_run_framework_labels_and_cross_mappings(mock_run, mock_create_clien
     assert risk["cross_mappings"] == [{"id": "owasp-llm-x", "mapping_type": "close"}]
 
 
-@patch("refiner.cli.structure")
+@patch("refiner.cli.export_taxonomy")
 @patch("refiner.cli._create_risk_handlers")
 @patch("refiner.cli._create_onto_handlers")
 @patch("refiner.cli.create_client")
 @patch("refiner.cli.run_pipeline")
-def test_cli_run_policy_source_from_enriched(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
+def test_cli_run_policy_source_from_enriched(mock_run, mock_create_client, mock_onto, mock_risk, mock_export, tmp_path, monkeypatch):
     """PolicySourceRef is populated from enriched PolicyDocument."""
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
@@ -288,7 +288,7 @@ def test_cli_run_policy_source_from_enriched(mock_run, mock_create_client, mock_
     mock_create_client.return_value = MagicMock()
     mock_risk.return_value = {}
     mock_onto.return_value = {}
-    mock_structure.return_value = ({"entries": []}, [])
+    mock_export.return_value = ({"entries": []}, [])
 
     result = runner.invoke(app, ["run", str(policy_file), "-o", str(tmp_path)])
     assert result.exit_code == 0, result.output
