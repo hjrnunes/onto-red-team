@@ -252,3 +252,71 @@ def test_structure_summary_with_multiple_axes():
     assert summary["axis_count"] == 2
     assert summary["enumeration_count"] == 3
     assert sorted(summary["source_ontologies"]) == ["CCO", "FIBO"]
+
+
+def test_export_taxonomy_from_risk_landscape():
+    from refiner.export import export_taxonomy
+    from refiner.models import (
+        RiskLandscape, RiskDetail, PolicyRiskMapping, RiskMatch,
+        DomainContextDocument, PolicyDomainContext, RiskGrounding,
+        DomainContextAxis, AxisEnumeration,
+    )
+
+    landscape = RiskLandscape(
+        risks=[
+            RiskDetail(
+                risk_id="r1", risk_name="Risk One",
+                cross_mappings=[{"id": "nist-r1", "mapping_type": "broad"}],
+            ),
+            RiskDetail(
+                risk_id="nist-r1", risk_name="NIST Risk One",
+            ),
+        ],
+        policy_mappings=[
+            PolicyRiskMapping(
+                policy_concept="Policy A",
+                matched_risks=[
+                    RiskMatch(risk_id="r1", risk_name="Risk One",
+                              relevance="primary", justification="test"),
+                ],
+            ),
+        ],
+    )
+
+    dcd = DomainContextDocument(
+        policy_contexts=[
+            PolicyDomainContext(
+                policy_concept="Policy A",
+                risk_groundings=[
+                    RiskGrounding(
+                        risk_id="r1",
+                        axes=[
+                            DomainContextAxis(
+                                cco_class_uri="http://example.org/C1",
+                                cco_class_label="Class One",
+                                enumerations=[
+                                    AxisEnumeration(
+                                        class_uri="http://example.org/E1",
+                                        class_label="Enum One",
+                                        source_ontology="CSO",
+                                        relevance="high",
+                                    ),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
+
+    taxonomy, dc_output = export_taxonomy(
+        client_slug="test",
+        domain_context=dcd,
+        risk_landscape=landscape,
+    )
+
+    assert len(taxonomy["entries"]) == 1
+    assert taxonomy["entries"][0]["name"] == "Risk One"
+    assert "broad_mappings" in taxonomy["entries"][0]
+    assert "nist-r1" in taxonomy["entries"][0]["broad_mappings"]

@@ -10,7 +10,7 @@ from refiner import debug
 from refiner.llm import LLMConfig, TokenTracker, create_client
 from refiner.models import Policy, PolicyDocument, RunReport
 from refiner.pipeline import run_pipeline, STAGES
-from refiner.stages.structure import structure
+from refiner.export import export_taxonomy
 
 app = typer.Typer()
 
@@ -328,11 +328,11 @@ def run(
                 )
 
             # Validate cross-mapping targets against all risk IDs shown to the model
-            valid_ids = state.seen_risk_ids
-            taxonomy, _profiles = structure(
-                client_slug, state.risk_mappings, state.domain_context,
-                related_risks=state.related_risks,
-                valid_risk_ids=valid_ids,
+            taxonomy, _profiles = export_taxonomy(
+                client_slug,
+                domain_context=state.domain_context,
+                risk_landscape=state.risk_landscape,
+                valid_risk_ids=state.seen_risk_ids,
                 report=report,
             )
             report.stages_completed.append("structure")
