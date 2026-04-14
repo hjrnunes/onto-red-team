@@ -746,6 +746,10 @@ def evaluate(
     out_path = output
     if out_path is None:
         slug = evaluation.get("run", {}).get("policy_set", "eval").replace(".json", "")
+        for _sfx in ("-policy-document", "-enriched"):
+            if slug.endswith(_sfx):
+                slug = slug[:-len(_sfx)]
+                break
         out_path = output_dir / f"{slug}-evaluation.json"
 
     out_path.parent.mkdir(parents=True, exist_ok=True)
