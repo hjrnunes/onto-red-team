@@ -217,6 +217,7 @@ def run(
         typer.echo(f"Warning: --search-strategy is deprecated (SSSOM seeds used instead)", err=True)
 
     # Run pipeline
+    client_slug = policy_json.stem
     typer.echo(f"Running pipeline{f' until {until}' if until else ''}...")
     state = run_pipeline(
         policies, client, config, risk_handlers, onto_handlers,
@@ -224,6 +225,7 @@ def run(
         layer1_mappings=layer1_mappings,
         layer2_mappings=layer2_mappings,
         bfo_fallbacks=bfo_fallbacks,
+        run_slug=client_slug,
     )
     # TODO: thread doc_context into pipeline stages (e.g. identify_domains domain hint)
     state.doc_context = doc_context
@@ -266,11 +268,8 @@ def run(
         write_run_id(out, mlflow.active_run().info.run_id)
 
     try:
-        client_slug = policy_json.stem
-
         if state.domain_context is not None and state.risk_mappings is not None:
-            # Enrich domain context profiles with risk details and cross-mappings
-            from refiner.stages.identify_domains import derive_source_ontology
+            # Enrich domain context document with framework labels and cross-mappings
             FRAMEWORK_LABELS = {
                 "ibm-risk-atlas": "IBM Risk Atlas",
                 "owasp-llm": "OWASP LLM Top 10",
@@ -282,23 +281,29 @@ def run(
                 "aiuc": "AIUC-1",
                 "csiro": "CSIRO",
             }
-            for profile in state.domain_context:
-                if state.risk_details:
-                    details = state.risk_details.get(profile.risk_id, {})
-                    profile.risk_description = details.get("description") or ""
-                    profile.risk_concern = details.get("concern") or ""
-                    taxonomy_id = details.get("taxonomy", "")
-                    profile.risk_framework = taxonomy_id
-                    for prefix, label in FRAMEWORK_LABELS.items():
-                        if profile.risk_id.startswith(prefix):
-                            profile.risk_framework = label
-                            break
+            doc = state.domain_context
+            for risk in doc.risks:
+                # Framework labels
+                for prefix, label in FRAMEWORK_LABELS.items():
+                    if risk.risk_id.startswith(prefix):
+                        risk.risk_framework = label
+                        break
+                # Cross-mappings
                 if state.related_risks:
-                    profile.cross_mappings = state.related_risks.get(profile.risk_id, [])
+                    risk.cross_mappings = state.related_risks.get(risk.risk_id, [])
+
+            # Set policy source from PolicyDocument
+            if state.doc_context:
+                from refiner.models import PolicySourceRef
+                doc.policy_source = PolicySourceRef(
+                    organization=state.doc_context.organization.name if state.doc_context.organization else None,
+                    domain=state.doc_context.domain,
+                    policy_count=len(state.doc_context.policies),
+                )
 
             # Validate cross-mapping targets against all risk IDs shown to the model
             valid_ids = state.seen_risk_ids
-            taxonomy, profiles = structure(
+            taxonomy, _profiles = structure(
                 client_slug, state.risk_mappings, state.domain_context,
                 related_risks=state.related_risks,
                 valid_risk_ids=valid_ids,
@@ -312,7 +317,9 @@ def run(
             typer.echo(f"Taxonomy written to {tax_path}")
 
             prof_path = out / f"{client_slug}-domain-context.yaml"
-            prof_path.write_text(yaml.dump(profiles, default_flow_style=False, sort_keys=False))
+            prof_path.write_text(yaml.dump(
+                doc.model_dump(), default_flow_style=False, sort_keys=False,
+            ))
             typer.echo(f"Domain context written to {prof_path}")
 
             report_path = out / f"{client_slug}-report.yaml"

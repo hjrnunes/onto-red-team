@@ -51,8 +51,9 @@ def run_pipeline(
     layer1_mappings=None,
     layer2_mappings=None,
     bfo_fallbacks: dict[str, str] | None = None,
+    run_slug: str = "",
 ) -> PipelineState:
-    state = PipelineState(policies=policies, report=report)
+    state = PipelineState(policies=policies, report=report, run_slug=run_slug)
 
     def _now() -> str:
         return datetime.now(timezone.utc).isoformat()

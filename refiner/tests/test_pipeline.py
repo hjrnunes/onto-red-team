@@ -64,7 +64,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
          patch("refiner.pipeline.contextualize", return_value=context_result) as m_ctx, \
          patch("refiner.pipeline.build_generic_safety_uris", return_value=fake_uris) as m_build:
 
-        state = run_pipeline(policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers, report=report)
+        state = run_pipeline(policies, mock_client, mock_config, mock_risk_handlers, mock_onto_handlers, report=report, run_slug="test-policy")
 
         assert state.selected_domains == domains_result
         assert state.risk_mappings == map_result[0]
@@ -105,7 +105,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             report=report,
             policies=policies,
             vocabulary_contexts=anchor_vocab,
-            run_slug="",
+            run_slug="test-policy",
             timestamp="2026-04-01T00:00:00Z",
         )
 
