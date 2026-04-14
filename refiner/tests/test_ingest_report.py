@@ -304,3 +304,50 @@ def test_build_ingest_report_valid_json_in_html(tmp_path):
     assert match is not None
     parsed = json.loads(match.group(1))
     assert parsed["document"]["domain"] == "finance"
+
+
+from unittest.mock import patch, MagicMock
+from typer.testing import CliRunner
+from refiner.cli import app
+
+
+def test_cli_ingest_generates_html_report(tmp_path):
+    """The ingest CLI command should write an HTML report alongside the JSON."""
+    from refiner.stages.ingest import _SlimContext, _SlimPolicyList, _SlimPolicy
+
+    # Create a minimal markdown policy file
+    policy_file = tmp_path / "test-policy.md"
+    policy_file.write_text("# Test Policy\n\nDo not share PII.")
+
+    mock_context = _SlimContext(
+        organization="TestOrg",
+        domain="testing",
+        purpose=["test"],
+        ai_systems=[],
+        ai_users=["testers"],
+        ai_subjects=[],
+        governing_regulations=[],
+        named_entities=[],
+    )
+    mock_policies = _SlimPolicyList(
+        policies=[_SlimPolicy(policy_concept="PII", concept_definition="No PII")]
+    )
+
+    mock_client = MagicMock()
+    mock_client.chat.completions.create.side_effect = [mock_context, mock_policies]
+
+    with patch("refiner.cli.create_client", return_value=mock_client):
+        runner = CliRunner()
+        result = runner.invoke(app, [
+            "ingest", str(policy_file),
+            "--base-url", "http://localhost:8000/v1",
+            "--model", "test-model",
+            "--skip-enrichment",
+            "--output", str(tmp_path / "out.json"),
+        ])
+
+    assert result.exit_code == 0
+    assert (tmp_path / "out.html").exists()
+    html = (tmp_path / "out.html").read_text()
+    assert "TestOrg" in html
+    assert "Policy Ingest Report" in html

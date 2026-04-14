@@ -102,6 +102,23 @@ def ingest(
     if md_path:
         typer.echo(f"Debug markdown written to {md_path}")
 
+    # Generate ingest report HTML
+    from refiner.ingest_report import build_ingest_report
+    passes = ["context"]
+    if not until or until != "context":
+        passes.append("policies")
+    if not until and not skip_enrichment:
+        passes.append("enrichment")
+    meta = {
+        "model": config.model,
+        "source_document": document.name,
+        "timestamp": report.timestamp,
+        "input_format": input_format,
+        "passes_completed": passes,
+    }
+    report_path = build_ingest_report(result, report, out_path.with_suffix(".html"), meta)
+    typer.echo(f"Ingest report written to {report_path}")
+
 
 def _create_risk_handlers(nexus_base_dir: str, nexus_chroma_dir: Path) -> dict:
     from nexus_mcp.server import create_tool_handlers
