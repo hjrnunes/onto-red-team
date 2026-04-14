@@ -21,7 +21,7 @@ def _context_confidence(doc: PolicyDocument) -> dict:
         ctx["stakeholders"] = "red"
     else:
         has_governance = any(
-            role not in _AIRO_ROLES
+            role and role not in _AIRO_ROLES
             for s in doc.stakeholders
             for role in s.roles
         )
