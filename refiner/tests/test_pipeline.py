@@ -5,7 +5,9 @@ from refiner.models import (
     RiskMatch,
     RiskVariationAxes,
     VariationAxis,
-    DomainContextProfile,
+    DomainContextDocument,
+    PolicyDomainContext,
+    RiskGrounding,
     DomainContextAxis,
     RunReport,
 )
@@ -35,12 +37,23 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
     ]
     anchor_vocab = {"r1": {"stakeholders": [{"concept": "eu-aiact:AISubject", "label": "AI Subject"}]}}
     anchor_result = (anchor_axes, anchor_vocab)
-    context_result = [
-        DomainContextProfile(
-            risk_id="r1", risk_name="R1", policy_concept="Fraud",
-            axes=[DomainContextAxis(cco_class_uri="http://ex/P", cco_class_label="P", roles=["agent"], enumerations=[])],
-        ),
-    ]
+    context_result = DomainContextDocument(
+        model="test-model",
+        policy_contexts=[
+            PolicyDomainContext(
+                policy_concept="Fraud",
+                risk_groundings=[
+                    RiskGrounding(
+                        risk_id="r1",
+                        axes=[DomainContextAxis(
+                            cco_class_uri="http://ex/P", cco_class_label="P",
+                            enumerations=[],
+                        )],
+                    ),
+                ],
+            ),
+        ],
+    )
 
     # Mock build_generic_safety_uris to return expected URIs for FIBO domain-specific run
     fake_uris = {"http://cso#DangerousInformation", "http://cso#Weapons"}
@@ -61,6 +74,10 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         assert state.variation_axes == anchor_axes
         assert state.vocabulary_contexts == anchor_vocab
         assert state.domain_context == context_result
+        assert isinstance(state.domain_context, DomainContextDocument)
+        assert len(state.domain_context.policy_contexts) == 1
+        assert state.domain_context.policy_contexts[0].policy_concept == "Fraud"
+        assert state.domain_context.policy_contexts[0].risk_groundings[0].risk_id == "r1"
         assert state.report == report
         assert report.stages_completed == ["identify_domains", "map_risks", "anchor", "contextualize"]
 
@@ -88,6 +105,8 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
             report=report,
             policies=policies,
             vocabulary_contexts=anchor_vocab,
+            run_slug="",
+            timestamp="2026-04-01T00:00:00Z",
         )
 
 

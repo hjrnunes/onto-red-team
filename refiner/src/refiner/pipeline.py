@@ -11,7 +11,7 @@ from refiner.models import (
     PolicyDocument,
     PolicyRiskMapping,
     RiskVariationAxes,
-    DomainContextProfile,
+    DomainContextDocument,
     RunReport,
 )
 from refiner.stages.identify_domains import identify_domains
@@ -33,7 +33,8 @@ class PipelineState:
     related_risks: dict[str, list[dict]] | None = None
     risk_actions: dict[str, list[str]] | None = None
     variation_axes: list[RiskVariationAxes] | None = None
-    domain_context: list[DomainContextProfile] | None = None
+    domain_context: DomainContextDocument | None = None
+    run_slug: str = ""
     vocabulary_contexts: dict[str, dict] = field(default_factory=dict)
     report: RunReport | None = None
     doc_context: PolicyDocument | None = None
@@ -119,6 +120,8 @@ def run_pipeline(
         report=report,
         policies=policies,
         vocabulary_contexts=state.vocabulary_contexts,
+        run_slug=state.run_slug,
+        timestamp=report.timestamp if report else "",
     )
     _stage_done("contextualize", t0)
     return state
