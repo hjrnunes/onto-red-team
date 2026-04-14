@@ -10,6 +10,7 @@ from refiner.evaluate import (
     compute_semantic_diversity, compute_similarity_edges, compute_sibling_relevance,
     compute_candidate_expansion_effectiveness, compute_query_source_contribution,
     compute_technique_diversity,
+    _flatten_to_profiles,
 )
 
 
@@ -54,31 +55,43 @@ def test_aggregate_stage_quality_empty():
 
 def _sample_domain_context():
     return {
-        "profiles": [
+        "version": "0.1",
+        "risks": [
+            {"risk_id": "r1", "risk_name": "Risk One", "risk_description": "",
+             "risk_concern": "", "risk_framework": "", "cross_mappings": []},
+            {"risk_id": "r2", "risk_name": "Risk Two", "risk_description": "",
+             "risk_concern": "", "risk_framework": "", "cross_mappings": []},
+        ],
+        "policy_contexts": [
             {
-                "risk_id": "r1", "risk_name": "Risk One", "policy_concept": "Fraud",
-                "axes": [
+                "policy_concept": "Fraud",
+                "risk_groundings": [
                     {
-                        "cco_class_uri": "http://ex/Person", "cco_class_label": "Person",
-                        "roles": ["agent"],
-                        "enumerations": [
-                            {"class_uri": "http://ex/Manager", "class_label": "Manager",
-                             "source_ontology": "FIBO", "relevance": "high"},
-                            {"class_uri": "http://ex/Employee", "class_label": "Employee",
-                             "source_ontology": "CCO", "relevance": "medium"},
+                        "risk_id": "r1",
+                        "axes": [
+                            {
+                                "cco_class_uri": "http://ex/Person", "cco_class_label": "Person",
+                                "roles": ["agent"],
+                                "enumerations": [
+                                    {"class_uri": "http://ex/Manager", "class_label": "Manager",
+                                     "source_ontology": "FIBO", "relevance": "high"},
+                                    {"class_uri": "http://ex/Employee", "class_label": "Employee",
+                                     "source_ontology": "CCO", "relevance": "medium"},
+                                ],
+                            },
                         ],
                     },
-                ],
-            },
-            {
-                "risk_id": "r2", "risk_name": "Risk Two", "policy_concept": "Fraud",
-                "axes": [
                     {
-                        "cco_class_uri": "http://ex/Instrument", "cco_class_label": "Instrument",
-                        "roles": ["instrument"],
-                        "enumerations": [
-                            {"class_uri": "http://ex/Bond", "class_label": "Bond",
-                             "source_ontology": "FIBO", "relevance": "high"},
+                        "risk_id": "r2",
+                        "axes": [
+                            {
+                                "cco_class_uri": "http://ex/Instrument", "cco_class_label": "Instrument",
+                                "roles": ["instrument"],
+                                "enumerations": [
+                                    {"class_uri": "http://ex/Bond", "class_label": "Bond",
+                                     "source_ontology": "FIBO", "relevance": "high"},
+                                ],
+                            },
                         ],
                     },
                 ],
@@ -97,7 +110,7 @@ def test_compute_risk_framework_coverage():
 
 def test_compute_policy_coverage():
     dc = _sample_domain_context()
-    result = compute_policy_coverage(dc["profiles"])
+    result = compute_policy_coverage(_flatten_to_profiles(dc))
     assert len(result) == 1
     fraud = result[0]
     assert fraud["policy_concept"] == "Fraud"
@@ -109,7 +122,7 @@ def test_compute_policy_coverage():
 def test_compute_policy_coverage_with_zero_match():
     dc = _sample_domain_context()
     all_policies = {"Fraud": "About fraud", "Violence": "About violence"}
-    result = compute_policy_coverage(dc["profiles"], all_policies=all_policies)
+    result = compute_policy_coverage(_flatten_to_profiles(dc), all_policies=all_policies)
     concepts = {r["policy_concept"] for r in result}
     assert "Violence" in concepts
     violence = [r for r in result if r["policy_concept"] == "Violence"][0]
@@ -118,7 +131,7 @@ def test_compute_policy_coverage_with_zero_match():
 
 def test_compute_ontological_coverage():
     dc = _sample_domain_context()
-    result = compute_ontological_coverage(dc["profiles"])
+    result = compute_ontological_coverage(_flatten_to_profiles(dc))
     assert result["unique_axis_classes"] == 2
     assert result["unique_enumeration_uris"] == 3
     assert "FIBO" in result["by_source_ontology"]
@@ -195,7 +208,7 @@ def _sample_adversarial_rows():
 
 
 def test_compute_generation_metrics():
-    dc_profiles = _sample_domain_context()["profiles"]
+    dc_profiles = _flatten_to_profiles(_sample_domain_context())
     rows = _sample_emit_rows()
     result = compute_generation_metrics(rows, dc_profiles)
     assert "axis_diversity" in result
@@ -245,7 +258,7 @@ def test_compute_adversarial_metrics_hard_red_flag():
 def test_single_value_axis_dominance_mixed():
     """Axes with 1 enumeration should be counted as single-value."""
     dc = _sample_domain_context()
-    result = compute_single_value_axis_dominance(dc["profiles"])
+    result = compute_single_value_axis_dominance(_flatten_to_profiles(dc))
     # r1 has 1 axis with 2 enums, r2 has 1 axis with 1 enum
     assert result["total_axes"] == 2
     assert result["single_value_axes"] == 1
@@ -786,12 +799,26 @@ def _write_minimal_pipeline_outputs(tmp_path):
         "entries": [{"id": "e1", "name": "Risk One", "exact_mappings": ["ibm-risk-atlas-r2"]}],
     }
     (tmp_path / "test-taxonomy.yaml").write_text(yaml.dump(taxonomy))
-    dc = {"profiles": [
-        {"risk_id": "ibm-risk-atlas-r1", "risk_name": "Risk One", "policy_concept": "Fraud",
-         "axes": [{"cco_class_uri": "http://ex/P", "cco_class_label": "P", "roles": ["agent"],
-                   "enumerations": [{"class_uri": "http://ex/M", "class_label": "M",
-                                    "source_ontology": "FIBO", "relevance": "high"}]}]},
-    ]}
+    dc = {
+        "version": "0.1",
+        "risks": [
+            {"risk_id": "ibm-risk-atlas-r1", "risk_name": "Risk One", "risk_description": "",
+             "risk_concern": "", "risk_framework": "", "cross_mappings": []},
+        ],
+        "policy_contexts": [
+            {
+                "policy_concept": "Fraud",
+                "risk_groundings": [
+                    {
+                        "risk_id": "ibm-risk-atlas-r1",
+                        "axes": [{"cco_class_uri": "http://ex/P", "cco_class_label": "P", "roles": ["agent"],
+                                  "enumerations": [{"class_uri": "http://ex/M", "class_label": "M",
+                                                   "source_ontology": "FIBO", "relevance": "high"}]}],
+                    },
+                ],
+            },
+        ],
+    }
     (tmp_path / "test-domain-context.yaml").write_text(yaml.dump(dc))
 
 
@@ -1287,7 +1314,7 @@ def test_technique_diversity_per_risk():
 
 def test_generation_metrics_includes_technique_distribution():
     """compute_generation_metrics should include technique_distribution."""
-    dc_profiles = _sample_domain_context()["profiles"]
+    dc_profiles = _flatten_to_profiles(_sample_domain_context())
     rows = _sample_emit_rows()
     result = compute_generation_metrics(rows, dc_profiles)
     assert "technique_distribution" in result

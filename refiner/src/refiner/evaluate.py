@@ -9,6 +9,26 @@ from pathlib import Path
 import yaml
 
 
+def _flatten_to_profiles(dc_data: dict) -> list[dict]:
+    """Flatten DomainContextDocument dict into profile-like dicts for metrics."""
+    risk_by_id = {r["risk_id"]: r for r in dc_data.get("risks", [])}
+    profiles = []
+    for pc in dc_data.get("policy_contexts", []):
+        for rg in pc.get("risk_groundings", []):
+            risk = risk_by_id.get(rg.get("risk_id", ""), {})
+            profiles.append({
+                "risk_id": rg.get("risk_id", ""),
+                "risk_name": risk.get("risk_name", ""),
+                "policy_concept": pc.get("policy_concept", ""),
+                "axes": rg.get("axes", []),
+                "risk_description": risk.get("risk_description", ""),
+                "risk_concern": risk.get("risk_concern", ""),
+                "risk_framework": risk.get("risk_framework", ""),
+                "cross_mappings": risk.get("cross_mappings", []),
+            })
+    return profiles
+
+
 def aggregate_stage_quality(events: list[dict]) -> dict:
     """Aggregate raw pipeline events into per-stage quality summaries."""
     if not events:
@@ -894,7 +914,13 @@ def run_evaluation(
                 for p in raw_policies.get("policies", [])
             }
 
-    profiles = dc_data.get("profiles", [])
+    profiles = _flatten_to_profiles(dc_data)
+    if dc_data:
+        result["envelope"] = {
+            "version": dc_data.get("version", ""),
+            "model": dc_data.get("model", ""),
+            "selected_domains": dc_data.get("selected_domains", []),
+        }
     emit_rows = None
     if emit_path and emit_path.exists():
         emit_rows = [json.loads(line) for line in emit_path.read_text().strip().split("\n") if line]
