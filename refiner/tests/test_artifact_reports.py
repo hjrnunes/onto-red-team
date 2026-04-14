@@ -1,7 +1,4 @@
-import json
 from pathlib import Path
-
-import yaml
 
 from refiner.artifact_reports import (
     build_risk_landscape_report,

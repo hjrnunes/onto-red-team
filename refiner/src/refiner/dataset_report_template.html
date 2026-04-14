@@ -80,7 +80,7 @@
                 <span class="font-semibold text-indigo-600" x-text="count"></span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-indigo-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(...Object.values(data.summary.policies)) * 100) + '%'"></div>
+                <div class="bg-indigo-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.policies)) * 100) + '%'"></div>
               </div>
             </div>
           </template>
@@ -98,7 +98,7 @@
                 <span class="font-semibold text-blue-600" x-text="count"></span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-blue-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(...Object.values(data.summary.techniques)) * 100) + '%'"></div>
+                <div class="bg-blue-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.techniques)) * 100) + '%'"></div>
               </div>
             </div>
           </template>
@@ -116,7 +116,7 @@
                 <span class="font-semibold text-amber-600" x-text="count"></span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-amber-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(...Object.values(data.summary.risks)) * 100) + '%'"></div>
+                <div class="bg-amber-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.risks)) * 100) + '%'"></div>
               </div>
             </div>
           </template>
@@ -134,7 +134,7 @@
                 <span class="font-semibold text-green-600" x-text="count"></span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-green-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(...Object.values(data.summary.frameworks)) * 100) + '%'"></div>
+                <div class="bg-green-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.frameworks)) * 100) + '%'"></div>
               </div>
             </div>
           </template>
@@ -152,7 +152,7 @@
                 <span class="font-semibold text-purple-600" x-text="count"></span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-purple-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(...Object.values(data.summary.ontologies)) * 100) + '%'"></div>
+                <div class="bg-purple-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.ontologies)) * 100) + '%'"></div>
               </div>
             </div>
           </template>
@@ -170,7 +170,7 @@
                 <span class="font-semibold text-pink-600" x-text="count"></span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-pink-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(...Object.values(data.summary.roles)) * 100) + '%'"></div>
+                <div class="bg-pink-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.roles)) * 100) + '%'"></div>
               </div>
             </div>
           </template>
@@ -188,7 +188,7 @@
                 <span class="font-semibold text-teal-600" x-text="count"></span>
               </div>
               <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-teal-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(...Object.values(data.summary.relevance)) * 100) + '%'"></div>
+                <div class="bg-teal-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.relevance)) * 100) + '%'"></div>
               </div>
             </div>
           </template>
