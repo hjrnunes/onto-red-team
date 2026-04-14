@@ -125,6 +125,11 @@ def test_collect_artifacts_whitelists(tmp_path):
     (tmp_path / "swb-curie-map.json").write_text("x")
     (tmp_path / "swb-provenance.jsonl").write_text("x")
     (tmp_path / "swb-risk-landscape.yaml").write_text("x")
+    (tmp_path / "swb-risk-landscape.html").write_text("x")
+    (tmp_path / "swb-domain-context.html").write_text("x")
+    (tmp_path / "swb-taxonomy.html").write_text("x")
+    (tmp_path / "swb-run-report.html").write_text("x")
+    (tmp_path / "swb-dataset.html").write_text("x")
     (tmp_path / "assessment.md").write_text("x")
     # Create files that should be excluded
     (tmp_path / ".mlflow-run-id").write_text("abc123")
@@ -142,6 +147,11 @@ def test_collect_artifacts_whitelists(tmp_path):
     assert "swb-curie-map.json" in names
     assert "swb-provenance.jsonl" in names
     assert "swb-risk-landscape.yaml" in names
+    assert "swb-risk-landscape.html" in names
+    assert "swb-domain-context.html" in names
+    assert "swb-taxonomy.html" in names
+    assert "swb-run-report.html" in names
+    assert "swb-dataset.html" in names
     assert "assessment.md" in names
     assert ".mlflow-run-id" not in names
     assert "random-file.txt" not in names
