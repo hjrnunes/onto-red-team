@@ -18,3 +18,4 @@ mlflow-artifacts/
 .DS_Store
 .idea/
 *.iml
+.worktrees/
