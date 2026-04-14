@@ -7,7 +7,10 @@ from refiner.llm import LLMConfig
 from refiner.models import (
     Policy,
     RiskVariationAxes,
-    DomainContextProfile,
+    DomainContextDocument,
+    PolicyDomainContext,
+    RiskGrounding,
+    RiskSummary,
     DomainContextAxis,
     AxisEnumeration,
     RunReport,
@@ -82,32 +85,32 @@ def contextualize(
     report: RunReport | None = None,
     policies: list[Policy] | None = None,
     vocabulary_contexts: dict[str, dict] | None = None,
-) -> list[DomainContextProfile]:
+    run_slug: str = "",
+    timestamp: str = "",
+) -> DomainContextDocument:
     if not variation_axes:
-        return []
+        return DomainContextDocument()
 
-    results: list[DomainContextProfile] = []
     context_cache: dict[str, list[DomainContextAxis]] = {}  # risk_id -> cached axes
+    policy_groundings: dict[str, list[RiskGrounding]] = {}
+    seen_risk_ids: set[str] = set()
+    risk_names: dict[str, str] = {}
 
     for rva in variation_axes:
         if rva.risk_id in context_cache:
             logger.debug("Cache hit for risk_id=%s, reusing context", rva.risk_id)
-            results.append(DomainContextProfile(
-                risk_id=rva.risk_id,
-                risk_name=rva.risk_name,
-                policy_concept=rva.policy_concept,
-                axes=context_cache[rva.risk_id],
-            ))
+            grounding = RiskGrounding(risk_id=rva.risk_id, axes=context_cache[rva.risk_id])
+            policy_groundings.setdefault(rva.policy_concept, []).append(grounding)
+            seen_risk_ids.add(rva.risk_id)
+            risk_names[rva.risk_id] = rva.risk_name
             continue
 
         if not rva.axes:
             context_cache[rva.risk_id] = []
-            results.append(DomainContextProfile(
-                risk_id=rva.risk_id,
-                risk_name=rva.risk_name,
-                policy_concept=rva.policy_concept,
-                axes=[],
-            ))
+            grounding = RiskGrounding(risk_id=rva.risk_id, axes=[])
+            policy_groundings.setdefault(rva.policy_concept, []).append(grounding)
+            seen_risk_ids.add(rva.risk_id)
+            risk_names[rva.risk_id] = rva.risk_name
             continue
 
         details = risk_details.get(rva.risk_id, {}) if risk_details else {}
@@ -222,11 +225,31 @@ def contextualize(
 
         context_cache[rva.risk_id] = populated_axes
 
-        results.append(DomainContextProfile(
-            risk_id=rva.risk_id,
-            risk_name=rva.risk_name,
-            policy_concept=rva.policy_concept,
-            axes=populated_axes,
+        grounding = RiskGrounding(risk_id=rva.risk_id, axes=context_cache[rva.risk_id])
+        policy_groundings.setdefault(rva.policy_concept, []).append(grounding)
+        seen_risk_ids.add(rva.risk_id)
+        risk_names[rva.risk_id] = rva.risk_name
+
+    risks = []
+    for rid in seen_risk_ids:
+        details = risk_details.get(rid, {}) if risk_details else {}
+        risks.append(RiskSummary(
+            risk_id=rid,
+            risk_name=risk_names.get(rid, ""),
+            risk_description=details.get("description", ""),
+            risk_concern=details.get("concern", ""),
         ))
 
-    return results
+    policy_contexts = [
+        PolicyDomainContext(policy_concept=pc, risk_groundings=groundings)
+        for pc, groundings in policy_groundings.items()
+    ]
+
+    return DomainContextDocument(
+        model=config.model,
+        timestamp=timestamp,
+        run_slug=run_slug,
+        selected_domains=selected_domains or [],
+        risks=risks,
+        policy_contexts=policy_contexts,
+    )

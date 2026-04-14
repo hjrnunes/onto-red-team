@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import MagicMock
 from refiner.models import (
-    RiskVariationAxes, VariationAxis, DomainContextProfile
+    RiskVariationAxes, VariationAxis, DomainContextDocument
 )
 from refiner.stages.contextualize import contextualize, _Variation, _ContextResponse
 
@@ -82,9 +82,14 @@ def test_generates_variations(
         risk_details=sample_risk_details,
         policies=sample_policies,
     )
-    assert len(result) == 1
-    assert len(result[0].axes[0].enumerations) == 2
-    assert result[0].axes[0].enumerations[0].provenance == "generated"
+    assert isinstance(result, DomainContextDocument)
+    assert len(result.policy_contexts) == 1
+    assert result.policy_contexts[0].policy_concept == "Do not disclose biometric data"
+    assert len(result.policy_contexts[0].risk_groundings) == 1
+    grounding = result.policy_contexts[0].risk_groundings[0]
+    assert grounding.risk_id == "atlas-bio"
+    assert len(grounding.axes[0].enumerations) == 2
+    assert grounding.axes[0].enumerations[0].provenance == "generated"
 
 
 def test_caches_by_risk_id(
@@ -115,8 +120,33 @@ def test_caches_by_risk_id(
         risk_details=sample_risk_details,
         policies=sample_policies,
     )
-    assert len(result) == 2
+    # Two policy concepts -> two PolicyDomainContext entries
+    assert len(result.policy_contexts) == 2
+    # But only one LLM call (cache hit on second)
     assert mock_client.chat.completions.create.call_count == 1
+    # Both share the same risk grounding axes
+    axes_a = result.policy_contexts[0].risk_groundings[0].axes
+    axes_b = result.policy_contexts[1].risk_groundings[0].axes
+    assert axes_a == axes_b
+
+
+def test_risks_populated_from_risk_details(
+    mock_client, mock_config, mock_onto_handlers,
+    sample_axes, sample_risk_details, sample_policies
+):
+    mock_client.chat.completions.create.return_value = _ContextResponse(
+        variations=[_Variation(instance="Test", relevance="high")]
+    )
+    result = contextualize(
+        sample_axes, mock_client, mock_config, mock_onto_handlers,
+        risk_details=sample_risk_details,
+        policies=sample_policies,
+    )
+    assert len(result.risks) == 1
+    assert result.risks[0].risk_id == "atlas-bio"
+    assert result.risks[0].risk_name == "Biometric exposure"
+    assert result.risks[0].risk_description == "Risk of biometric data exposure"
+    assert result.risks[0].risk_concern == "Biometric identifiers leaked"
 
 
 def test_includes_vocabulary_context_in_prompt(
@@ -141,7 +171,7 @@ def test_includes_vocabulary_context_in_prompt(
     assert "AI Subject" in user_msg["content"]
 
 
-def test_empty_axes_returns_empty_profile(
+def test_empty_axes_returns_grounding_with_empty_axes(
     mock_client, mock_config, mock_onto_handlers
 ):
     axes = [RiskVariationAxes(
@@ -151,6 +181,18 @@ def test_empty_axes_returns_empty_profile(
     result = contextualize(
         axes, mock_client, mock_config, mock_onto_handlers,
     )
-    assert len(result) == 1
-    assert result[0].axes == []
+    assert isinstance(result, DomainContextDocument)
+    assert len(result.policy_contexts) == 1
+    assert result.policy_contexts[0].risk_groundings[0].axes == []
     assert mock_client.chat.completions.create.call_count == 0
+
+
+def test_empty_input_returns_empty_document(
+    mock_client, mock_config, mock_onto_handlers
+):
+    result = contextualize(
+        [], mock_client, mock_config, mock_onto_handlers,
+    )
+    assert isinstance(result, DomainContextDocument)
+    assert result.policy_contexts == []
+    assert result.risks == []

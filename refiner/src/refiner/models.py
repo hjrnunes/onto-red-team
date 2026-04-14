@@ -73,6 +73,37 @@ class PolicyDocument(BaseModel):
         return v
 
 
+class VocabularyContext(BaseModel):
+    stakeholders: list[dict] = []
+    data_sensitivity: list[dict] = []
+    rights: list[dict] = []
+    justifications: list[dict] = []
+    sector_purposes: list[dict] = []
+    risk_concepts: list[dict] = []
+    prohibited_practices: list[dict] = []
+
+
+class PolicySourceRef(BaseModel):
+    organization: str | None = None
+    domain: str | None = None
+    policy_count: int = 0
+
+
+class PipelineConfig(BaseModel):
+    weak_match_threshold: float = 0.4
+    max_axes_per_risk: int = 3
+    enumerations_per_axis: int = 8
+
+
+class RiskSummary(BaseModel):
+    risk_id: str
+    risk_name: str
+    risk_description: str | None = ""
+    risk_concern: str | None = ""
+    risk_framework: str | None = ""
+    cross_mappings: list[dict] = []
+
+
 class RiskMatch(BaseModel):
     risk_id: str
     risk_name: str
@@ -129,22 +160,40 @@ class DomainContextAxis(BaseModel):
     bfo_category: str = ""
     vocabulary_concept: str = ""
     vocabulary_label: str = ""
-    vocabulary_context: dict = {}
+    vocabulary_context: VocabularyContext = VocabularyContext()
     derivation: AxisDerivation | None = None
     enumerations: list[AxisEnumeration]
     # Kept for backward compatibility with emit stage
     roles: list[str] = []
 
+    @field_validator("vocabulary_context", mode="before")
+    @classmethod
+    def _coerce_vocabulary_context(cls, v):
+        if isinstance(v, dict):
+            return VocabularyContext(**v)
+        return v
 
-class DomainContextProfile(BaseModel):
+
+class RiskGrounding(BaseModel):
     risk_id: str
-    risk_name: str
-    policy_concept: str
     axes: list[DomainContextAxis]
-    risk_description: str | None = ""
-    risk_concern: str | None = ""
-    risk_framework: str | None = ""
-    cross_mappings: list[dict] = []
+
+
+class PolicyDomainContext(BaseModel):
+    policy_concept: str
+    risk_groundings: list[RiskGrounding]
+
+
+class DomainContextDocument(BaseModel):
+    version: str = "0.1"
+    model: str = ""
+    timestamp: str = ""
+    run_slug: str = ""
+    selected_domains: list[str] = []
+    policy_source: PolicySourceRef | None = None
+    config: PipelineConfig | None = None
+    risks: list[RiskSummary] = []
+    policy_contexts: list[PolicyDomainContext] = []
 
 
 class SampledAxis(BaseModel):

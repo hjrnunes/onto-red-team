@@ -2,7 +2,10 @@ import json
 
 import yaml
 
-from refiner.models import AxisEnumeration, DomainContextProfile, DomainContextAxis, SampledAxis, Stakeholder
+from refiner.models import (
+    AxisEnumeration, DomainContextDocument, DomainContextAxis, PolicyDomainContext,
+    RiskGrounding, RiskSummary, SampledAxis, Stakeholder,
+)
 from refiner.emit import relevance_weights, sample_axes, build_prompt, load_domain_context, load_policies
 
 
@@ -39,28 +42,38 @@ def test_relevance_weights_single():
     assert weights == [1.0]
 
 
-def _make_profile():
-    return DomainContextProfile(
-        risk_id="r1",
-        risk_name="Risk One",
-        policy_concept="Fraud",
-        axes=[
-            DomainContextAxis(
-                cco_class_uri="http://example.org/Person",
-                cco_class_label="Person",
-                roles=["agent"],
-                enumerations=[
-                    _enum("high"),
-                    AxisEnumeration(class_uri="http://example.org/Manager", class_label="Manager", source_ontology="FIBO", relevance="medium"),
-                ],
-            ),
-            DomainContextAxis(
-                cco_class_uri="http://example.org/Instrument",
-                cco_class_label="Instrument",
-                roles=["instrument"],
-                enumerations=[
-                    AxisEnumeration(class_uri="http://example.org/Bond", class_label="Bond", source_ontology="FIBO", relevance="high"),
-                ],
+def _make_axes():
+    """Build test axes used by _make_doc and standalone tests."""
+    return [
+        DomainContextAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            roles=["agent"],
+            enumerations=[
+                _enum("high"),
+                AxisEnumeration(class_uri="http://example.org/Manager", class_label="Manager", source_ontology="FIBO", relevance="medium"),
+            ],
+        ),
+        DomainContextAxis(
+            cco_class_uri="http://example.org/Instrument",
+            cco_class_label="Instrument",
+            roles=["instrument"],
+            enumerations=[
+                AxisEnumeration(class_uri="http://example.org/Bond", class_label="Bond", source_ontology="FIBO", relevance="high"),
+            ],
+        ),
+    ]
+
+
+def _make_doc():
+    """Build a minimal DomainContextDocument for tests."""
+    axes = _make_axes()
+    return DomainContextDocument(
+        risks=[RiskSummary(risk_id="r1", risk_name="Risk One")],
+        policy_contexts=[
+            PolicyDomainContext(
+                policy_concept="Fraud",
+                risk_groundings=[RiskGrounding(risk_id="r1", axes=axes)],
             ),
         ],
     )
@@ -69,8 +82,8 @@ def _make_profile():
 def test_sample_axes_returns_sampled_axes():
     import random
     random.seed(42)
-    profile = _make_profile()
-    samples = sample_axes(profile, n=5)
+    axes = _make_axes()
+    samples = sample_axes(axes, n=5)
     assert len(samples) > 0
     for sample in samples:
         assert len(sample) == 2  # two axes
@@ -81,40 +94,34 @@ def test_sample_axes_returns_sampled_axes():
 
 def test_sample_axes_deduplicates():
     # One enumeration per axis → only 1 unique combination possible
-    profile = DomainContextProfile(
-        risk_id="r1", risk_name="R", policy_concept="P",
-        axes=[
-            DomainContextAxis(
-                cco_class_uri="http://example.org/A",
-                cco_class_label="A",
-                roles=["agent"],
-                enumerations=[_enum("high")],
-            ),
-        ],
-    )
-    samples = sample_axes(profile, n=10)
+    axes = [
+        DomainContextAxis(
+            cco_class_uri="http://example.org/A",
+            cco_class_label="A",
+            roles=["agent"],
+            enumerations=[_enum("high")],
+        ),
+    ]
+    samples = sample_axes(axes, n=10)
     assert len(samples) == 1
 
 
 def test_sample_axes_skips_empty_axes():
-    profile = DomainContextProfile(
-        risk_id="r1", risk_name="R", policy_concept="P",
-        axes=[
-            DomainContextAxis(
-                cco_class_uri="http://example.org/A",
-                cco_class_label="A",
-                roles=["agent"],
-                enumerations=[_enum("high")],
-            ),
-            DomainContextAxis(
-                cco_class_uri="http://example.org/B",
-                cco_class_label="B",
-                roles=["object"],
-                enumerations=[],  # empty — should be skipped
-            ),
-        ],
-    )
-    samples = sample_axes(profile, n=5)
+    axes = [
+        DomainContextAxis(
+            cco_class_uri="http://example.org/A",
+            cco_class_label="A",
+            roles=["agent"],
+            enumerations=[_enum("high")],
+        ),
+        DomainContextAxis(
+            cco_class_uri="http://example.org/B",
+            cco_class_label="B",
+            roles=["object"],
+            enumerations=[],  # empty — should be skipped
+        ),
+    ]
+    samples = sample_axes(axes, n=5)
     for sample in samples:
         assert len(sample) == 1  # only the non-empty axis
         assert sample[0].roles == ["agent"]
@@ -122,11 +129,11 @@ def test_sample_axes_skips_empty_axes():
 
 def test_sample_axes_reproducible_with_seed():
     import random
-    profile = _make_profile()
+    axes = _make_axes()
     random.seed(99)
-    samples_a = sample_axes(profile, n=5)
+    samples_a = sample_axes(axes, n=5)
     random.seed(99)
-    samples_b = sample_axes(profile, n=5)
+    samples_b = sample_axes(axes, n=5)
     assert samples_a == samples_b
 
 
@@ -206,19 +213,25 @@ def test_build_prompt_user_message_has_axes():
 
 
 def test_load_domain_context(tmp_path):
-    profiles_data = {
-        "profiles": [
+    doc_data = {
+        "version": "0.1",
+        "risks": [
+            {"risk_id": "r1", "risk_name": "Test Risk"},
+        ],
+        "policy_contexts": [
             {
-                "risk_id": "r1",
-                "risk_name": "Risk One",
                 "policy_concept": "Fraud",
-                "axes": [
+                "risk_groundings": [
                     {
-                        "cco_class_uri": "http://example.org/Person",
-                        "cco_class_label": "Person",
-                        "roles": ["agent"],
-                        "enumerations": [
-                            {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
+                        "risk_id": "r1",
+                        "axes": [
+                            {
+                                "cco_class_uri": "http://example.org/Person",
+                                "cco_class_label": "Person",
+                                "enumerations": [
+                                    {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
+                                ],
+                            },
                         ],
                     },
                 ],
@@ -226,11 +239,13 @@ def test_load_domain_context(tmp_path):
         ],
     }
     p = tmp_path / "test-domain-context.yaml"
-    p.write_text(yaml.dump(profiles_data))
+    p.write_text(yaml.dump(doc_data))
     result = load_domain_context(p)
-    assert len(result) == 1
-    assert result[0].risk_id == "r1"
-    assert result[0].axes[0].enumerations[0].class_label == "Manager"
+    assert isinstance(result, DomainContextDocument)
+    assert len(result.risks) == 1
+    assert result.risks[0].risk_id == "r1"
+    assert len(result.policy_contexts) == 1
+    assert result.policy_contexts[0].risk_groundings[0].axes[0].enumerations[0].class_label == "Manager"
 
 
 def test_load_policies(tmp_path):
@@ -331,20 +346,27 @@ from refiner.emit import emit
 
 def _write_test_files(tmp_path):
     """Write domain context YAML and policy JSON for testing."""
-    profiles_data = {
-        "profiles": [
+    doc_data = {
+        "version": "0.1",
+        "risks": [
+            {"risk_id": "r1", "risk_name": "Risk One"},
+        ],
+        "policy_contexts": [
             {
-                "risk_id": "r1",
-                "risk_name": "Risk One",
                 "policy_concept": "Fraud",
-                "axes": [
+                "risk_groundings": [
                     {
-                        "cco_class_uri": "http://example.org/Person",
-                        "cco_class_label": "Person",
-                        "roles": ["agent"],
-                        "enumerations": [
-                            {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
-                            {"class_uri": "http://example.org/Employee", "class_label": "Employee", "source_ontology": "CCO", "relevance": "medium"},
+                        "risk_id": "r1",
+                        "axes": [
+                            {
+                                "cco_class_uri": "http://example.org/Person",
+                                "cco_class_label": "Person",
+                                "roles": ["agent"],
+                                "enumerations": [
+                                    {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
+                                    {"class_uri": "http://example.org/Employee", "class_label": "Employee", "source_ontology": "CCO", "relevance": "medium"},
+                                ],
+                            },
                         ],
                     },
                 ],
@@ -352,7 +374,7 @@ def _write_test_files(tmp_path):
         ],
     }
     dc_path = tmp_path / "test-domain-context.yaml"
-    dc_path.write_text(yaml.dump(profiles_data))
+    dc_path.write_text(yaml.dump(doc_data))
 
     policies = [{"policy_concept": "Fraud", "concept_definition": "About fraud"}]
     pol_path = tmp_path / "policies.json"
@@ -415,8 +437,8 @@ def test_emit_fails_no_domain_context(tmp_path):
 
 
 def test_emit_fails_multiple_domain_context(tmp_path):
-    (tmp_path / "a-domain-context.yaml").write_text("profiles: []")
-    (tmp_path / "b-domain-context.yaml").write_text("profiles: []")
+    (tmp_path / "a-domain-context.yaml").write_text("version: '0.1'\nrisks: []\npolicy_contexts: []")
+    (tmp_path / "b-domain-context.yaml").write_text("version: '0.1'\nrisks: []\npolicy_contexts: []")
     pol_path = tmp_path / "policies.json"
     pol_path.write_text('[{"policy_concept": "X", "concept_definition": "Y"}]')
     out_path = tmp_path / "dataset.jsonl"
@@ -426,18 +448,20 @@ def test_emit_fails_multiple_domain_context(tmp_path):
 
 
 def test_emit_skips_risk_with_no_axes(tmp_path):
-    profiles_data = {
-        "profiles": [
+    doc_data = {
+        "version": "0.1",
+        "risks": [{"risk_id": "r1", "risk_name": "Risk One"}],
+        "policy_contexts": [
             {
-                "risk_id": "r1",
-                "risk_name": "Risk One",
                 "policy_concept": "Fraud",
-                "axes": [],  # no axes
+                "risk_groundings": [
+                    {"risk_id": "r1", "axes": []},  # no axes
+                ],
             },
         ],
     }
     dc_path = tmp_path / "test-domain-context.yaml"
-    dc_path.write_text(yaml.dump(profiles_data))
+    dc_path.write_text(yaml.dump(doc_data))
     pol_path = tmp_path / "policies.json"
     pol_path.write_text('[{"policy_concept": "Fraud", "concept_definition": "About fraud"}]')
     out_path = tmp_path / "dataset.jsonl"
@@ -448,7 +472,7 @@ def test_emit_skips_risk_with_no_axes(tmp_path):
 
 def test_emit_empty_profiles(tmp_path):
     dc_path = tmp_path / "test-domain-context.yaml"
-    dc_path.write_text(yaml.dump({"profiles": []}))
+    dc_path.write_text(yaml.dump({"version": "0.1", "risks": [], "policy_contexts": []}))
     pol_path = tmp_path / "policies.json"
     pol_path.write_text('[{"policy_concept": "X", "concept_definition": "Y"}]')
     out_path = tmp_path / "dataset.jsonl"
@@ -457,23 +481,28 @@ def test_emit_empty_profiles(tmp_path):
 
 
 def test_emit_skips_missing_policy_concept(tmp_path):
-    profiles_data = {
-        "profiles": [
+    doc_data = {
+        "version": "0.1",
+        "risks": [{"risk_id": "r1", "risk_name": "Risk One"}],
+        "policy_contexts": [
             {
-                "risk_id": "r1",
-                "risk_name": "Risk One",
                 "policy_concept": "Unknown",
-                "axes": [
+                "risk_groundings": [
                     {
-                        "cco_class_uri": "http://example.org/A",
-                        "cco_class_label": "A",
-                        "roles": ["agent"],
-                        "enumerations": [
+                        "risk_id": "r1",
+                        "axes": [
                             {
-                                "class_uri": "http://example.org/E1",
-                                "class_label": "E1",
-                                "source_ontology": "X",
-                                "relevance": "high",
+                                "cco_class_uri": "http://example.org/A",
+                                "cco_class_label": "A",
+                                "roles": ["agent"],
+                                "enumerations": [
+                                    {
+                                        "class_uri": "http://example.org/E1",
+                                        "class_label": "E1",
+                                        "source_ontology": "X",
+                                        "relevance": "high",
+                                    },
+                                ],
                             },
                         ],
                     },
@@ -482,7 +511,7 @@ def test_emit_skips_missing_policy_concept(tmp_path):
         ],
     }
     dc_path = tmp_path / "test-domain-context.yaml"
-    dc_path.write_text(yaml.dump(profiles_data))
+    dc_path.write_text(yaml.dump(doc_data))
     pol_path = tmp_path / "policies.json"
     pol_path.write_text('[{"policy_concept": "Fraud", "concept_definition": "About fraud"}]')
     out_path = tmp_path / "dataset.jsonl"
@@ -664,18 +693,15 @@ def test_sample_axes_propagates_bfo_category():
     """bfo_category from DomainContextAxis should flow to SampledAxis."""
     import random
     random.seed(42)
-    profile = DomainContextProfile(
-        risk_id="r1", risk_name="R", policy_concept="P",
-        axes=[
-            DomainContextAxis(
-                cco_class_uri="http://example.org/A",
-                cco_class_label="A",
-                bfo_category="Role",
-                enumerations=[_enum("high")],
-            ),
-        ],
-    )
-    samples = sample_axes(profile, n=1)
+    axes = [
+        DomainContextAxis(
+            cco_class_uri="http://example.org/A",
+            cco_class_label="A",
+            bfo_category="Role",
+            enumerations=[_enum("high")],
+        ),
+    ]
+    samples = sample_axes(axes, n=1)
     assert len(samples) == 1
     assert samples[0][0].bfo_category == "Role"
 
@@ -684,17 +710,14 @@ def test_sample_axes_propagates_empty_bfo_category():
     """Empty bfo_category should also propagate cleanly."""
     import random
     random.seed(42)
-    profile = DomainContextProfile(
-        risk_id="r1", risk_name="R", policy_concept="P",
-        axes=[
-            DomainContextAxis(
-                cco_class_uri="http://example.org/A",
-                cco_class_label="A",
-                enumerations=[_enum("high")],
-            ),
-        ],
-    )
-    samples = sample_axes(profile, n=1)
+    axes = [
+        DomainContextAxis(
+            cco_class_uri="http://example.org/A",
+            cco_class_label="A",
+            enumerations=[_enum("high")],
+        ),
+    ]
+    samples = sample_axes(axes, n=1)
     assert samples[0][0].bfo_category == ""
 
 
@@ -819,25 +842,22 @@ def test_emit_with_custom_technique_weights(tmp_path):
 
 def test_sample_axes_caps_at_combinatorial_space():
     """When space is smaller than n, return at most space samples."""
-    profile = DomainContextProfile(
-        risk_id="r1", risk_name="R", policy_concept="P",
-        axes=[
-            DomainContextAxis(
-                cco_class_uri="http://example.org/A",
-                cco_class_label="A",
-                roles=["agent"],
-                enumerations=[_enum("high"), _enum("medium")],
-            ),
-            DomainContextAxis(
-                cco_class_uri="http://example.org/B",
-                cco_class_label="B",
-                roles=["object"],
-                enumerations=[_enum("high")],
-            ),
-        ],
-    )
+    axes = [
+        DomainContextAxis(
+            cco_class_uri="http://example.org/A",
+            cco_class_label="A",
+            roles=["agent"],
+            enumerations=[_enum("high"), _enum("medium")],
+        ),
+        DomainContextAxis(
+            cco_class_uri="http://example.org/B",
+            cco_class_label="B",
+            roles=["object"],
+            enumerations=[_enum("high")],
+        ),
+    ]
     # Space is 2 * 1 = 2, requesting 100 should return at most 2
     import random
     random.seed(42)
-    samples = sample_axes(profile, n=100)
+    samples = sample_axes(axes, n=100)
     assert len(samples) <= 2

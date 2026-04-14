@@ -16,14 +16,14 @@ from pathlib import Path
 
 import yaml
 
-from refiner.models import DomainContextProfile
+from refiner.models import DomainContextDocument
 
 logger = logging.getLogger(__name__)
 
 
-def _load_profiles(domain_context_path: Path) -> list[DomainContextProfile]:
+def _load_document(domain_context_path: Path) -> DomainContextDocument:
     raw = yaml.safe_load(domain_context_path.read_text())
-    return [DomainContextProfile(**p) for p in raw["profiles"]]
+    return DomainContextDocument(**raw)
 
 
 def write_provenance(
@@ -33,72 +33,78 @@ def write_provenance(
     model: str = "",
 ) -> None:
     """Write provenance.jsonl from domain-context YAML and dataset JSONL."""
-    profiles = _load_profiles(domain_context_path)
+    doc = _load_document(domain_context_path)
     triples: list[dict] = []
 
-    # --- Profile-level provenance (risk → axes → enumerations) ---
-    for profile in profiles:
-        profile_id = f"profile:{profile.risk_id}"
+    # Build risk lookup for name resolution
+    risk_by_id = {r.risk_id: r for r in doc.risks}
 
-        triples.append({
-            "entity": profile_id,
-            "type": "DomainContextProfile",
-            "risk_id": profile.risk_id,
-            "risk_name": profile.risk_name,
-            "policy_concept": profile.policy_concept,
-            "wasGeneratedBy": "contextualize",
-            "wasAssociatedWith": model,
-        })
+    # --- Document-level provenance (policy_contexts → risk_groundings → axes → enumerations) ---
+    for pc in doc.policy_contexts:
+        for grounding in pc.risk_groundings:
+            risk = risk_by_id.get(grounding.risk_id)
+            risk_name = risk.risk_name if risk else ""
+            grounding_id = f"grounding:{grounding.risk_id}"
 
-        for axis in profile.axes:
-            axis_id = f"axis:{profile.risk_id}:{axis.cco_class_uri}"
-
-            axis_triple: dict = {
-                "entity": axis_id,
-                "type": "DomainContextAxis",
-                "cco_class_uri": axis.cco_class_uri,
-                "cco_class_label": axis.cco_class_label,
-                "bfo_category": axis.bfo_category,
-                "wasGeneratedBy": "anchor",
+            triples.append({
+                "entity": grounding_id,
+                "type": "RiskGrounding",
+                "risk_id": grounding.risk_id,
+                "risk_name": risk_name,
+                "policy_concept": pc.policy_concept,
+                "wasGeneratedBy": "contextualize",
                 "wasAssociatedWith": model,
-                "partOf": profile_id,
-            }
+            })
 
-            if axis.vocabulary_concept:
-                axis_triple["wasDerivedFrom"] = axis.vocabulary_concept
-                axis_triple["vocabulary_label"] = axis.vocabulary_label
+            for axis in grounding.axes:
+                axis_id = f"axis:{grounding.risk_id}:{axis.cco_class_uri}"
 
-            if axis.derivation:
-                d = axis.derivation
-                axis_triple["derivation_source"] = d.source
-                if d.seed_uri:
-                    axis_triple["derivation_seed"] = d.seed_uri
-                if d.path:
-                    axis_triple["derivation_path"] = d.path
-                if d.effective_confidence:
-                    axis_triple["derivation_confidence"] = d.effective_confidence
-                if d.best_distance is not None:
-                    axis_triple["derivation_distance"] = d.best_distance
-                if d.domain:
-                    axis_triple["derivation_domain"] = d.domain
-
-            triples.append(axis_triple)
-
-            for enum in axis.enumerations:
-                enum_id = f"enum:{profile.risk_id}:{enum.class_uri}"
-                enum_triple: dict = {
-                    "entity": enum_id,
-                    "type": "AxisEnumeration",
-                    "class_uri": enum.class_uri,
-                    "class_label": enum.class_label,
-                    "source_ontology": enum.source_ontology,
-                    "provenance": enum.provenance,
-                    "relevance": enum.relevance,
-                    "partOf": axis_id,
+                axis_triple: dict = {
+                    "entity": axis_id,
+                    "type": "DomainContextAxis",
+                    "cco_class_uri": axis.cco_class_uri,
+                    "cco_class_label": axis.cco_class_label,
+                    "bfo_category": axis.bfo_category,
+                    "wasGeneratedBy": "anchor",
+                    "wasAssociatedWith": model,
+                    "partOf": grounding_id,
                 }
-                if enum.generated_by:
-                    enum_triple["wasAssociatedWith"] = enum.generated_by
-                triples.append(enum_triple)
+
+                if axis.vocabulary_concept:
+                    axis_triple["wasDerivedFrom"] = axis.vocabulary_concept
+                    axis_triple["vocabulary_label"] = axis.vocabulary_label
+
+                if axis.derivation:
+                    d = axis.derivation
+                    axis_triple["derivation_source"] = d.source
+                    if d.seed_uri:
+                        axis_triple["derivation_seed"] = d.seed_uri
+                    if d.path:
+                        axis_triple["derivation_path"] = d.path
+                    if d.effective_confidence:
+                        axis_triple["derivation_confidence"] = d.effective_confidence
+                    if d.best_distance is not None:
+                        axis_triple["derivation_distance"] = d.best_distance
+                    if d.domain:
+                        axis_triple["derivation_domain"] = d.domain
+
+                triples.append(axis_triple)
+
+                for enum in axis.enumerations:
+                    enum_id = f"enum:{grounding.risk_id}:{enum.class_uri}"
+                    enum_triple: dict = {
+                        "entity": enum_id,
+                        "type": "AxisEnumeration",
+                        "class_uri": enum.class_uri,
+                        "class_label": enum.class_label,
+                        "source_ontology": enum.source_ontology,
+                        "provenance": enum.provenance,
+                        "relevance": enum.relevance,
+                        "partOf": axis_id,
+                    }
+                    if enum.generated_by:
+                        enum_triple["wasAssociatedWith"] = enum.generated_by
+                    triples.append(enum_triple)
 
     # --- Prompt-level provenance (sampled axes → prompts) ---
     if dataset_path.exists():
@@ -113,7 +119,7 @@ def write_provenance(
                     "risk_id": row.get("risk_id", ""),
                     "policy_concept": row.get("policy_concept", ""),
                     "technique": row.get("technique", ""),
-                    "wasDerivedFrom": f"profile:{row.get('risk_id', '')}",
+                    "wasDerivedFrom": f"grounding:{row.get('risk_id', '')}",
                 }
 
                 decomposition = row.get("decomposition")

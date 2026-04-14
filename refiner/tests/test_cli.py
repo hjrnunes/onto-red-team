@@ -6,7 +6,8 @@ from refiner.cli import app
 from refiner.models import (
     Policy,
     PolicyRiskMapping,
-    DomainContextProfile,
+    DomainContextDocument,
+    RiskSummary,
 )
 from refiner.pipeline import PipelineState
 
@@ -33,7 +34,13 @@ def _make_completed_state():
         ],
         risk_details={},
         variation_axes=[],
-        domain_context=[],
+        domain_context=DomainContextDocument(
+            model="test-model",
+            risks=[
+                RiskSummary(risk_id="ibm-risk-atlas-r1", risk_name="R1"),
+            ],
+            policy_contexts=[],
+        ),
     )
     return state
 
@@ -58,6 +65,9 @@ def test_cli_run_full_pipeline(mock_run, mock_create_client, mock_onto, mock_ris
     result = runner.invoke(app, ["run", str(policy_file)])
     assert result.exit_code == 0, result.output
     mock_run.assert_called_once()
+    # Verify run_slug is passed
+    call_kwargs = mock_run.call_args.kwargs
+    assert call_kwargs.get("run_slug") == "test"
 
 
 @patch("refiner.cli._create_risk_handlers")
@@ -218,6 +228,77 @@ def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_r
     policies = call_args[0][0]
     assert len(policies) == 1
     assert policies[0].policy_concept == "Fraud"
+
+    # Verify domain context YAML uses document envelope
+    import yaml
+    prof_path = tmp_path / "enriched-domain-context.yaml"
+    assert prof_path.exists(), f"Expected {prof_path} to exist"
+    written = yaml.safe_load(prof_path.read_text())
+    assert "version" in written
+    assert "risks" in written
+    assert "policy_contexts" in written
+
+
+@patch("refiner.cli.structure")
+@patch("refiner.cli._create_risk_handlers")
+@patch("refiner.cli._create_onto_handlers")
+@patch("refiner.cli.create_client")
+@patch("refiner.cli.run_pipeline")
+def test_cli_run_framework_labels_and_cross_mappings(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
+    """Framework labels are set on RiskSummary and cross-mappings are populated."""
+    monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
+    monkeypatch.setenv("REFINER_MODEL", "test-model")
+    monkeypatch.setenv("NEXUS_BASE_DIR", "/tmp/nexus")
+
+    policy_file = _make_policy_file(tmp_path)
+    state = _make_completed_state()
+    state.related_risks = {
+        "ibm-risk-atlas-r1": [{"id": "owasp-llm-x", "mapping_type": "close"}],
+    }
+    mock_run.return_value = state
+    mock_create_client.return_value = MagicMock()
+    mock_risk.return_value = {}
+    mock_onto.return_value = {}
+    mock_structure.return_value = ({"name": "test"}, [])
+
+    result = runner.invoke(app, ["run", str(policy_file), "-o", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+
+    import yaml
+    prof_path = tmp_path / "test-domain-context.yaml"
+    written = yaml.safe_load(prof_path.read_text())
+    risk = written["risks"][0]
+    assert risk["risk_framework"] == "IBM Risk Atlas"
+    assert risk["cross_mappings"] == [{"id": "owasp-llm-x", "mapping_type": "close"}]
+
+
+@patch("refiner.cli.structure")
+@patch("refiner.cli._create_risk_handlers")
+@patch("refiner.cli._create_onto_handlers")
+@patch("refiner.cli.create_client")
+@patch("refiner.cli.run_pipeline")
+def test_cli_run_policy_source_from_enriched(mock_run, mock_create_client, mock_onto, mock_risk, mock_structure, tmp_path, monkeypatch):
+    """PolicySourceRef is populated from enriched PolicyDocument."""
+    monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
+    monkeypatch.setenv("REFINER_MODEL", "test-model")
+    monkeypatch.setenv("NEXUS_BASE_DIR", "/tmp/nexus")
+
+    policy_file = _make_enriched_policy_file(tmp_path)
+    mock_run.return_value = _make_completed_state()
+    mock_create_client.return_value = MagicMock()
+    mock_risk.return_value = {}
+    mock_onto.return_value = {}
+    mock_structure.return_value = ({"entries": []}, [])
+
+    result = runner.invoke(app, ["run", str(policy_file), "-o", str(tmp_path)])
+    assert result.exit_code == 0, result.output
+
+    import yaml
+    prof_path = tmp_path / "enriched-domain-context.yaml"
+    written = yaml.safe_load(prof_path.read_text())
+    assert written["policy_source"]["organization"] == "Test Org"
+    assert written["policy_source"]["domain"] == "healthcare"
+    assert written["policy_source"]["policy_count"] == 1
 
 
 @patch("refiner.cli.create_client")
