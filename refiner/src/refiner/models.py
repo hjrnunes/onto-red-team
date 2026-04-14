@@ -174,17 +174,6 @@ class DomainContextAxis(BaseModel):
         return v
 
 
-class DomainContextProfile(BaseModel):
-    risk_id: str
-    risk_name: str
-    policy_concept: str
-    axes: list[DomainContextAxis]
-    risk_description: str | None = ""
-    risk_concern: str | None = ""
-    risk_framework: str | None = ""
-    cross_mappings: list[dict] = []
-
-
 class RiskGrounding(BaseModel):
     risk_id: str
     axes: list[DomainContextAxis]

@@ -1,7 +1,7 @@
 import pytest
 from refiner.models import (
     Policy, RiskMatch, PolicyRiskMapping,
-    VariationAxis, RiskVariationAxes, AxisEnumeration, DomainContextAxis, DomainContextProfile,
+    VariationAxis, RiskVariationAxes, AxisEnumeration, DomainContextAxis,
     VocabularyContext, PolicySourceRef, PipelineConfig, RiskSummary,
     RiskGrounding, PolicyDomainContext, DomainContextDocument,
 )
@@ -31,14 +31,6 @@ def test_axis_enumeration_valid_relevance():
     for r in ("high", "medium", "low"):
         ae = AxisEnumeration(class_uri="http://example.org/C", class_label="Class", source_ontology="CCO", relevance=r)
         assert ae.relevance == r
-
-def test_domain_context_profile():
-    dcp = DomainContextProfile(
-        risk_id="r1", risk_name="Fraud", policy_concept="Fraud",
-        axes=[DomainContextAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"], enumerations=[])],
-    )
-    assert len(dcp.axes) == 1
-
 
 def test_sampled_axis_creation():
     from refiner.models import SampledAxis
