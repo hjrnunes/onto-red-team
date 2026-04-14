@@ -1,0 +1,127 @@
+# Advisory Report: {{ client | upper }} ({{ domain | capitalize }})
+
+Generated: {{ timestamp }} | Source: {{ source_label }}
+
+---
+
+## Executive Summary
+
+- **{{ summary.total_risks }} risks** identified from client policies
+- **{{ summary.amplified_risks }} amplified risks** via cross-framework mappings
+- **{{ summary.fully_covered }} fully covered** by existing probes + guardrails
+- **{{ summary.partial_gaps }} partial gaps** — probes or guardrails exist but not both
+- **{{ summary.no_coverage }} uncovered risks** — require custom tooling or manual review
+
+{% if summary.no_coverage > 0 -%}
+**Action required:** {{ summary.no_coverage }} risk(s) have no automated probes or guardrails.
+{%- else -%}
+All identified risks have at least partial probe and guardrail coverage.
+{%- endif %}
+
+---
+
+## Coverage Matrix
+
+| Risk | Policy | Probes | Guardrails | Benchmarks | Status |
+|------|--------|--------|------------|------------|--------|
+{% for risk in risks -%}
+| {{ risk.risk_name }} | {{ risk.policy_concept }} | {{ risk.coverage.probes | length }} | {{ risk.coverage.guardrails | length }} | {{ risk.coverage.benchmarks | length }} | {{ risk.status }} |
+{% endfor %}
+
+---
+
+## Gap Analysis
+
+{% if uncovered_risks %}
+### Uncovered Risks
+
+These risks have no AIROO probes or guardrails mapped. They require custom tooling or manual review.
+
+{% for risk in uncovered_risks -%}
+**{{ risk.risk_name }}** (`{{ risk.risk_id }}`)
+- Policy: {{ risk.policy_concept }}
+- Attack dimensions: {{ risk.attack_dimensions | length }} ({{ risk.dimension_labels }})
+- *Recommendation: custom NeMo rail or Granite Guardian fine-tune targeting {{ risk.dimension_labels }}*
+
+{% endfor %}
+{% endif %}
+{% if partial_risks %}
+### Partial Gaps
+
+These risks have some coverage but not complete probe + guardrail pairing.
+
+{% for risk in partial_risks -%}
+**{{ risk.risk_name }}** (`{{ risk.risk_id }}`)
+- Has probes: {{ "yes" if risk.coverage.gaps.has_probes else "no" }}
+- Has guardrails: {{ "yes" if risk.coverage.gaps.has_guardrails else "no" }}
+- Has benchmarks: {{ "yes" if risk.coverage.gaps.has_benchmarks else "no" }}
+{% if risk.coverage.gaps.uncovered_dimensions -%}
+- Uncovered attack dimensions: {{ risk.coverage.gaps.uncovered_dimensions | join(", ") }}
+{% endif %}
+
+{% endfor %}
+{% endif %}
+{% if uncovered_dimensions %}
+### Uncovered Attack Dimensions
+
+Attack dimensions from the refiner that no probe specifically targets, even when the parent risk has generic coverage.
+
+| Risk | Dimension | Term Count |
+|------|-----------|------------|
+{% for dim in uncovered_dimensions -%}
+| {{ dim.risk_name }} | {{ dim.dimension }} | {{ dim.term_count }} |
+{% endfor %}
+
+{% endif %}
+---
+
+## Generated Configurations
+
+### Garak Scan Configuration
+
+- File: `garak.yaml`
+- Probes: {{ total_probes }} across {{ probe_dimension_count }} dimensions
+{% for group in probe_groups -%}
+- **{{ group.dimension }}**: {{ group.probes | length }} probe(s)
+  {% for probe in group.probes -%}
+  - `{{ probe.probe_id }}` — {{ probe.risk_name }} [{{ probe.mapping_source }}]
+  {% endfor %}
+{% endfor %}
+
+### NeMo Guardrails Configuration
+
+- Files: `nemo/config.yml` + `nemo/rails.co`
+- Input rails: {{ input_rail_count }}
+- Output rails: {{ output_rail_count }}
+{% for rail in nemo_rails -%}
+- `{{ rail.flow_name }}` ({{ rail.position }}) — {{ rail.risk_id }} [{{ rail.mapping_source }}]
+{% endfor %}
+
+---
+
+## Lineage
+
+Each recommendation traces back through:
+
+1. **Policy concept** → refiner risk ID → Atlas Nexus cross-mapping
+2. **AIROO dimension** → specific probe/guardrail with mapping source
+3. **Refiner attack dimension** → CCO class → domain ontology terms
+
+{% for risk in risks -%}
+### {{ risk.risk_name }}
+
+- Source: policy concept "{{ risk.policy_concept }}"
+{% if risk.alternative_framings -%}
+- Cross-mappings: {{ risk.alternative_framings | map(attribute='risk_id') | join(', ') }}
+{% endif -%}
+{% if risk.coverage.probes -%}
+- Probes: {{ risk.coverage.probes | map(attribute='probe_id') | join(', ') }}
+{% endif -%}
+{% if risk.coverage.guardrails -%}
+- Guardrails: {{ risk.coverage.guardrails | map(attribute='guardrail_id') | join(', ') }}
+{% endif -%}
+{% if risk.attack_dimensions -%}
+- Attack dimensions: {{ risk.attack_dimensions | map(attribute='cco_class') | join(', ') }}
+{% endif %}
+
+{% endfor %}
