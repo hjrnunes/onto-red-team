@@ -1,0 +1,85 @@
+curie_map:
+  airo: https://w3id.org/airo#
+  cco: https://www.commoncoreontologies.org/
+  cso: http://taxonomy-refiner.io/ontologies/cso#
+  fibo: https://spec.edmcouncil.org/fibo/ontology/
+  lkif: http://www.estrellaproject.org/lkif-core/
+taxonomies:
+- id: client-test
+  name: Client TEST Policy Taxonomy
+  type: RiskTaxonomy
+  class_uri: airo:RiskConcept
+groups:
+- id: client-test-fraud
+  name: Fraud
+  type: RiskGroup
+  class_uri: airo:RiskConcept
+  isDefinedByTaxonomy: client-test
+- id: client-test-data-privacy
+  name: Data Privacy
+  type: RiskGroup
+  class_uri: airo:RiskConcept
+  isDefinedByTaxonomy: client-test
+entries:
+- id: client-test-social-engineering
+  name: Social engineering
+  type: Risk
+  class_uri: airo:Risk
+  isDefinedByTaxonomy: client-test
+  isPartOf: client-test-fraud
+  tag: social-engineering
+  related_mappings:
+  - atlas-social-engineering
+  - atlas-prompt-injection
+  - granite-jailbreak
+  domain_context_summary:
+    axis_count: 2
+    enumeration_count: 16
+    source_ontologies:
+    - generated
+    axes:
+    - class: Person
+      uri: https://www.commoncoreontologies.org/ont00001262
+      roles: []
+      enumeration_count: 8
+    - class: Act of Deceptive Communication
+      uri: https://www.commoncoreontologies.org/ont00000971
+      roles: []
+      enumeration_count: 8
+- id: client-test-pii-exposure
+  name: PII exposure
+  type: Risk
+  class_uri: airo:Risk
+  isDefinedByTaxonomy: client-test
+  isPartOf: client-test-data-privacy
+  tag: pii-exposure
+  related_mappings:
+  - atlas-exposing-personal-information
+  - nist-data-privacy
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 8
+    source_ontologies:
+    - generated
+    axes:
+    - class: Financial Data Exposure
+      uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+      roles: []
+      enumeration_count: 8
+- id: client-test-novel-risk
+  name: Novel domain-specific risk
+  type: Risk
+  class_uri: airo:Risk
+  isDefinedByTaxonomy: client-test
+  isPartOf: client-test-fraud
+  tag: novel-risk
+  domain_context_summary:
+    axis_count: 1
+    enumeration_count: 6
+    source_ontologies:
+    - generated
+    axes:
+    - class: Organization
+      uri: https://www.commoncoreontologies.org/ont00001180
+      roles: []
+      enumeration_count: 6

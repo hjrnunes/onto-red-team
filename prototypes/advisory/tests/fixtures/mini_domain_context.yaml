@@ -1,0 +1,121 @@
+profiles:
+- risk_id: client-test-social-engineering
+  risk_name: Social engineering
+  policy_concept: Fraud
+  axes:
+  - cco_class_uri: https://www.commoncoreontologies.org/ont00001262
+    cco_class_label: Person
+    bfo_category: Agent
+    vocabulary_concept: eu-aiact:AISubject
+    vocabulary_label: AI Subject
+    vocabulary_context:
+      stakeholders:
+      - concept_id: eu-aiact:AISubject
+        label: AI Subject
+        confidence: 0.95
+      data_sensitivity: []
+      rights: []
+      justifications: []
+      sector_purposes: []
+      risk_concepts: []
+      prohibited_practices: []
+    enumerations:
+    - class_uri: generated:bank_customer
+      class_label: Bank customer
+      source_ontology: generated
+      relevance: high
+      provenance: generated
+    - class_uri: generated:loan_officer
+      class_label: Loan officer
+      source_ontology: generated
+      relevance: high
+      provenance: generated
+    - class_uri: generated:financial_advisor
+      class_label: Financial advisor
+      source_ontology: generated
+      relevance: high
+      provenance: generated
+  - cco_class_uri: https://www.commoncoreontologies.org/ont00000971
+    cco_class_label: Act of Deceptive Communication
+    bfo_category: Process
+    vocabulary_concept: risk:SocialEngineering
+    vocabulary_label: Social Engineering
+    vocabulary_context:
+      stakeholders: []
+      data_sensitivity: []
+      rights: []
+      justifications: []
+      sector_purposes: []
+      risk_concepts:
+      - concept_id: risk:SocialEngineering
+        label: Social Engineering
+        confidence: 0.9
+      prohibited_practices: []
+    enumerations:
+    - class_uri: generated:phishing_email
+      class_label: Phishing email
+      source_ontology: generated
+      relevance: high
+      provenance: generated
+    - class_uri: generated:pretexting_call
+      class_label: Pretexting call
+      source_ontology: generated
+      relevance: high
+      provenance: generated
+- risk_id: client-test-pii-exposure
+  risk_name: PII exposure
+  policy_concept: Data Privacy
+  axes:
+  - cco_class_uri: http://taxonomy-refiner.io/ontologies/cso#FinancialDataExposure
+    cco_class_label: Financial Data Exposure
+    bfo_category: InformationContentEntity
+    vocabulary_concept: pd:Financial
+    vocabulary_label: Financial
+    vocabulary_context:
+      stakeholders:
+      - concept_id: eu-aiact:AISubject
+        label: AI Subject
+        confidence: 0.95
+      data_sensitivity:
+      - concept_id: pd:Financial
+        label: Financial
+        confidence: 0.85
+      rights: []
+      justifications: []
+      sector_purposes: []
+      risk_concepts: []
+      prohibited_practices: []
+    enumerations:
+    - class_uri: generated:account_number
+      class_label: Account number
+      source_ontology: generated
+      relevance: high
+      provenance: generated
+    - class_uri: generated:credit_card_number
+      class_label: Credit card number
+      source_ontology: generated
+      relevance: high
+      provenance: generated
+- risk_id: client-test-novel-risk
+  risk_name: Novel domain-specific risk
+  policy_concept: Fraud
+  axes:
+  - cco_class_uri: https://www.commoncoreontologies.org/ont00001180
+    cco_class_label: Organization
+    bfo_category: Agent
+    vocabulary_concept: cco:Organization
+    vocabulary_label: Organization
+    vocabulary_context:
+      stakeholders: []
+      data_sensitivity: []
+      rights: []
+      justifications: []
+      sector_purposes: []
+      risk_concepts: []
+      prohibited_practices: []
+    enumerations:
+    - class_uri: generated:shell_company
+      class_label: Shell company
+      source_ontology: generated
+      relevance: high
+      provenance: generated
