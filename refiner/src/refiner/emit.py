@@ -11,9 +11,12 @@ from refiner.provenance import write_provenance
 from refiner.models import (
     AxisEnumeration,
     DomainContextAxis,
-    DomainContextProfile,
+    DomainContextDocument,
     Policy,
     PolicyDocument,
+    PolicyDomainContext,
+    RiskGrounding,
+    RiskSummary,
     SampledAxis,
 )
 
@@ -46,11 +49,11 @@ def relevance_weights(enumerations: list[AxisEnumeration]) -> list[float]:
 
 
 def sample_axes(
-    profile: DomainContextProfile,
+    axes: list[DomainContextAxis],
     n: int,
 ) -> list[list[SampledAxis]]:
     # Filter to axes with enumerations
-    usable_axes = [a for a in profile.axes if a.enumerations]
+    usable_axes = [a for a in axes if a.enumerations]
     if not usable_axes:
         return []
 
@@ -211,9 +214,9 @@ Respond with JSON: {{"prompt": "..."}}"""
     ]
 
 
-def load_domain_context(path: Path) -> list[DomainContextProfile]:
+def load_domain_context(path: Path) -> DomainContextDocument:
     raw = yaml.safe_load(path.read_text())
-    return [DomainContextProfile(**p) for p in raw["profiles"]]
+    return DomainContextDocument(**raw)
 
 
 def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyDocument | None]:
@@ -254,68 +257,80 @@ def emit(
     technique_weights: dict[str, float] | None = None,
 ) -> None:
     dc_path = _discover_domain_context(output_dir)
-    profiles = load_domain_context(dc_path)
+    doc = load_domain_context(dc_path)
     policy_map, doc_context = load_policies(policies_path)
 
     if seed is not None:
         random.seed(seed)
 
     weights = technique_weights or DEFAULT_WEIGHTS
-    logger.info("Loaded %d profiles from %s", len(profiles), dc_path.name)
+    logger.info("Loaded %d policy_contexts from %s", len(doc.policy_contexts), dc_path.name)
+
+    # Build risk lookup
+    risk_by_id = {r.risk_id: r for r in doc.risks}
 
     rows: list[dict] = []
-    for profile in profiles:
-        policy = policy_map.get(profile.policy_concept)
+    for pc in doc.policy_contexts:
+        policy = policy_map.get(pc.policy_concept)
         if policy is None:
-            policy = _fuzzy_match_policy(profile.policy_concept, policy_map)
+            policy = _fuzzy_match_policy(pc.policy_concept, policy_map)
             if policy is not None:
                 logger.info(
                     "Fuzzy-matched policy_concept '%s' to '%s'",
-                    profile.policy_concept, policy.policy_concept,
+                    pc.policy_concept, policy.policy_concept,
                 )
             else:
                 logger.warning(
-                    "Skipping risk %s — policy_concept '%s' not found in policies",
-                    profile.risk_id, profile.policy_concept,
+                    "Skipping policy_concept '%s' — not found in policies",
+                    pc.policy_concept,
                 )
                 continue
-        samples = sample_axes(profile, n=samples_per_risk)
-        if not samples:
-            logger.warning("Skipping risk %s — no usable axes", profile.risk_id)
-            continue
 
-        for sampled in samples:
-            frame = select_frame(
-                weights,
-                risk_name=profile.risk_name,
-                risk_description=profile.risk_description or "",
-            )
-            prompt = build_prompt(
-                profile.policy_concept,
-                policy.concept_definition,
-                profile.risk_name,
-                sampled,
-                policy=policy,
-                doc_context=doc_context,
-                frame=frame,
-            )
-            row = {
-                "generation_prompt": prompt,
-                "policy_concept": profile.policy_concept,
-                "concept_definition": policy.concept_definition,
-                "decomposition": policy.decomposition.model_dump() if policy.decomposition else None,
-                "risk_id": profile.risk_id,
-                "risk_name": profile.risk_name,
-                "risk_description": profile.risk_description,
-                "risk_concern": profile.risk_concern,
-                "risk_framework": profile.risk_framework,
-                "cross_mappings": profile.cross_mappings,
-                "technique": frame.name,
-                "technique_description": frame.description,
-                "sampled_axes": [sa.model_dump() for sa in sampled],
-                "domain_context_axes": [a.model_dump() for a in profile.axes],
-            }
-            rows.append(row)
+        for grounding in pc.risk_groundings:
+            risk = risk_by_id.get(grounding.risk_id)
+            risk_name = risk.risk_name if risk else ""
+            risk_description = risk.risk_description if risk else ""
+            risk_concern = risk.risk_concern if risk else ""
+            risk_framework = risk.risk_framework if risk else ""
+            cross_mappings = risk.cross_mappings if risk else []
+
+            samples = sample_axes(grounding.axes, n=samples_per_risk)
+            if not samples:
+                logger.warning("Skipping risk %s — no usable axes", grounding.risk_id)
+                continue
+
+            for sampled in samples:
+                frame = select_frame(
+                    weights,
+                    risk_name=risk_name,
+                    risk_description=risk_description or "",
+                )
+                prompt = build_prompt(
+                    pc.policy_concept,
+                    policy.concept_definition,
+                    risk_name,
+                    sampled,
+                    policy=policy,
+                    doc_context=doc_context,
+                    frame=frame,
+                )
+                row = {
+                    "generation_prompt": prompt,
+                    "policy_concept": pc.policy_concept,
+                    "concept_definition": policy.concept_definition,
+                    "decomposition": policy.decomposition.model_dump() if policy.decomposition else None,
+                    "risk_id": grounding.risk_id,
+                    "risk_name": risk_name,
+                    "risk_description": risk_description,
+                    "risk_concern": risk_concern,
+                    "risk_framework": risk_framework,
+                    "cross_mappings": cross_mappings,
+                    "technique": frame.name,
+                    "technique_description": frame.description,
+                    "sampled_axes": [sa.model_dump() for sa in sampled],
+                    "domain_context_axes": [a.model_dump() for a in grounding.axes],
+                }
+                rows.append(row)
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
