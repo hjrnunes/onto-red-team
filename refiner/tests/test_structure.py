@@ -3,7 +3,9 @@ from refiner.models import (
     Policy,
     PolicyRiskMapping,
     RiskMatch,
-    DomainContextProfile,
+    DomainContextDocument,
+    PolicyDomainContext,
+    RiskGrounding,
     DomainContextAxis,
     AxisEnumeration,
     RunReport,
@@ -40,19 +42,26 @@ def _make_state_data():
             {"id": "owasp-fraud", "mapping_type": "close"},
         ],
     }
-    domain_context = [
-        DomainContextProfile(
-            risk_id="atlas-fraud", risk_name="Fraud", policy_concept="Fraud",
-            axes=[
-                DomainContextAxis(
-                    cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
-                    enumerations=[
-                        AxisEnumeration(class_uri="http://example.org/Employee", class_label="Employee", source_ontology="CCO", relevance="high"),
-                    ],
-                ),
-            ],
-        ),
-    ]
+    domain_context = DomainContextDocument(
+        policy_contexts=[
+            PolicyDomainContext(
+                policy_concept="Fraud",
+                risk_groundings=[
+                    RiskGrounding(
+                        risk_id="atlas-fraud",
+                        axes=[
+                            DomainContextAxis(
+                                cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
+                                enumerations=[
+                                    AxisEnumeration(class_uri="http://example.org/Employee", class_label="Employee", source_ontology="CCO", relevance="high"),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
     return risk_mappings, related_risks, domain_context
 
 
@@ -123,10 +132,10 @@ def test_structure_no_cross_mappings_when_related_risks_none():
 
 def test_structure_profiles_output():
     risk_mappings, related_risks, domain_context = _make_state_data()
-    _, profiles = structure("swb", risk_mappings, domain_context,
-                            related_risks=related_risks)
-    assert len(profiles["profiles"]) == 1
-    assert profiles["profiles"][0]["risk_id"] == "atlas-fraud"
+    _, dc_output = structure("swb", risk_mappings, domain_context,
+                             related_risks=related_risks)
+    assert len(dc_output["policy_contexts"]) == 1
+    assert dc_output["policy_contexts"][0]["risk_groundings"][0]["risk_id"] == "atlas-fraud"
 
 
 def test_structure_deduplicates_entries_by_id():
@@ -147,7 +156,7 @@ def test_structure_deduplicates_entries_by_id():
             {"id": "nist-fraud", "mapping_type": "related"},
         ],
     }
-    domain_context = []
+    domain_context = DomainContextDocument()
     taxonomy, _ = structure("test", risk_mappings, domain_context,
                             related_risks=related_risks)
     fraud_entries = [e for e in taxonomy["entries"] if "fraud" in e["id"]]
@@ -210,26 +219,33 @@ def test_structure_summary_with_multiple_axes():
             matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
         ),
     ]
-    domain_context = [
-        DomainContextProfile(
-            risk_id="atlas-fraud", risk_name="Fraud", policy_concept="Fraud",
-            axes=[
-                DomainContextAxis(
-                    cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
-                    enumerations=[
-                        AxisEnumeration(class_uri="http://example.org/E1", class_label="E1", source_ontology="CCO", relevance="high"),
-                        AxisEnumeration(class_uri="http://example.org/E2", class_label="E2", source_ontology="CCO", relevance="medium"),
-                    ],
-                ),
-                DomainContextAxis(
-                    cco_class_uri="http://example.org/Instrument", cco_class_label="Instrument", roles=["instrument"],
-                    enumerations=[
-                        AxisEnumeration(class_uri="http://example.org/E3", class_label="E3", source_ontology="FIBO", relevance="high"),
-                    ],
-                ),
-            ],
-        ),
-    ]
+    domain_context = DomainContextDocument(
+        policy_contexts=[
+            PolicyDomainContext(
+                policy_concept="Fraud",
+                risk_groundings=[
+                    RiskGrounding(
+                        risk_id="atlas-fraud",
+                        axes=[
+                            DomainContextAxis(
+                                cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
+                                enumerations=[
+                                    AxisEnumeration(class_uri="http://example.org/E1", class_label="E1", source_ontology="CCO", relevance="high"),
+                                    AxisEnumeration(class_uri="http://example.org/E2", class_label="E2", source_ontology="CCO", relevance="medium"),
+                                ],
+                            ),
+                            DomainContextAxis(
+                                cco_class_uri="http://example.org/Instrument", cco_class_label="Instrument", roles=["instrument"],
+                                enumerations=[
+                                    AxisEnumeration(class_uri="http://example.org/E3", class_label="E3", source_ontology="FIBO", relevance="high"),
+                                ],
+                            ),
+                        ],
+                    ),
+                ],
+            ),
+        ],
+    )
     taxonomy, _ = structure("swb", risk_mappings, domain_context)
     fraud_entry = next(e for e in taxonomy["entries"] if "fraud" in e["id"])
     summary = fraud_entry["domain_context_summary"]

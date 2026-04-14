@@ -4,7 +4,7 @@ import re
 from refiner.curie_registry import CURIE_MAP
 from refiner.models import (
     PolicyRiskMapping,
-    DomainContextProfile,
+    DomainContextDocument,
     RunReport,
 )
 
@@ -22,18 +22,19 @@ def slugify(text: str) -> str:
 def structure(
     client_slug: str,
     risk_mappings: list[PolicyRiskMapping],
-    domain_context: list[DomainContextProfile],
+    domain_context: DomainContextDocument,
     related_risks: dict[str, list[dict]] | None = None,
     valid_risk_ids: set[str] | None = None,
     report: RunReport | None = None,
 ) -> tuple[dict, dict]:
     taxonomy_id = f"client-{client_slug}"
 
-    # Build lookup from risk_id to domain context profile
-    dc_by_risk_id: dict[str, DomainContextProfile] = {}
-    for p in domain_context:
-        if p.risk_id not in dc_by_risk_id:
-            dc_by_risk_id[p.risk_id] = p
+    # Build lookup from risk_id to axes across all policy contexts
+    dc_axes_by_risk_id: dict[str, list] = {}
+    for pc in domain_context.policy_contexts:
+        for rg in pc.risk_groundings:
+            if rg.risk_id not in dc_axes_by_risk_id:
+                dc_axes_by_risk_id[rg.risk_id] = rg.axes
 
     # Build groups from policy concepts present in risk mappings
     policy_concepts_present = dict.fromkeys(m.policy_concept for m in risk_mappings)
@@ -86,12 +87,12 @@ def structure(
 
             # Attach domain context summary (only on first encounter of this entry)
             if "domain_context_summary" not in entry:
-                profile = dc_by_risk_id.get(rm.risk_id)
-                if profile and profile.axes:
+                axes = dc_axes_by_risk_id.get(rm.risk_id, [])
+                if axes:
                     axes_summary = []
                     all_ontologies: set[str] = set()
                     total_enums = 0
-                    for axis in profile.axes:
+                    for axis in axes:
                         enum_count = len(axis.enumerations)
                         total_enums += enum_count
                         for e in axis.enumerations:
@@ -124,9 +125,6 @@ def structure(
         "entries": entries,
     }
 
-    # Build domain context profiles output
-    profiles = {
-        "profiles": [p.model_dump() for p in domain_context],
-    }
+    dc_output = domain_context.model_dump()
 
-    return taxonomy, profiles
+    return taxonomy, dc_output
