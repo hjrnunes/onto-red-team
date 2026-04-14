@@ -2,6 +2,8 @@ import pytest
 from refiner.models import (
     Policy, RiskMatch, PolicyRiskMapping,
     VariationAxis, RiskVariationAxes, AxisEnumeration, DomainContextAxis, DomainContextProfile,
+    VocabularyContext, PolicySourceRef, PipelineConfig, RiskSummary,
+    RiskGrounding, PolicyDomainContext, DomainContextDocument,
 )
 
 def test_policy_creation():
@@ -94,3 +96,218 @@ def test_run_report_to_dict():
     assert d["policy_set"] == "p.json"
     assert d["stages_completed"] == ["identify_domains"]
     assert len(d["events"]) == 1
+
+
+# --- VocabularyContext ---
+
+
+def test_vocabulary_context_defaults():
+    vc = VocabularyContext()
+    assert vc.stakeholders == []
+    assert vc.data_sensitivity == []
+    assert vc.rights == []
+    assert vc.justifications == []
+    assert vc.sector_purposes == []
+    assert vc.risk_concepts == []
+    assert vc.prohibited_practices == []
+
+
+def test_vocabulary_context_with_data():
+    vc = VocabularyContext(
+        stakeholders=[{"uri": "http://example.org/Patient", "label": "Patient"}],
+        risk_concepts=[{"uri": "http://example.org/Bias", "label": "Bias"}],
+    )
+    assert len(vc.stakeholders) == 1
+    assert vc.stakeholders[0]["label"] == "Patient"
+    assert len(vc.risk_concepts) == 1
+
+
+# --- PolicySourceRef ---
+
+
+def test_policy_source_ref_defaults():
+    ps = PolicySourceRef()
+    assert ps.organization is None
+    assert ps.domain is None
+    assert ps.policy_count == 0
+
+
+def test_policy_source_ref_with_values():
+    ps = PolicySourceRef(organization="Acme Corp", domain="healthcare", policy_count=5)
+    assert ps.organization == "Acme Corp"
+    assert ps.domain == "healthcare"
+    assert ps.policy_count == 5
+
+
+# --- PipelineConfig ---
+
+
+def test_pipeline_config_defaults():
+    pc = PipelineConfig()
+    assert pc.weak_match_threshold == 0.4
+    assert pc.max_axes_per_risk == 3
+    assert pc.enumerations_per_axis == 8
+
+
+def test_pipeline_config_custom():
+    pc = PipelineConfig(weak_match_threshold=0.5, max_axes_per_risk=5, enumerations_per_axis=12)
+    assert pc.weak_match_threshold == 0.5
+    assert pc.max_axes_per_risk == 5
+    assert pc.enumerations_per_axis == 12
+
+
+# --- RiskSummary ---
+
+
+def test_risk_summary_minimal():
+    rs = RiskSummary(risk_id="r1", risk_name="Bias Risk")
+    assert rs.risk_id == "r1"
+    assert rs.risk_name == "Bias Risk"
+    assert rs.risk_description == ""
+    assert rs.risk_concern == ""
+    assert rs.risk_framework == ""
+    assert rs.cross_mappings == []
+
+
+def test_risk_summary_full():
+    rs = RiskSummary(
+        risk_id="r1", risk_name="Bias Risk",
+        risk_description="Systematic bias", risk_concern="Fairness",
+        risk_framework="NIST", cross_mappings=[{"id": "m1", "name": "Mapped"}],
+    )
+    assert rs.risk_description == "Systematic bias"
+    assert len(rs.cross_mappings) == 1
+
+
+# --- DomainContextAxis with typed vocabulary_context ---
+
+
+def test_domain_context_axis_typed_vocabulary_context():
+    dca = DomainContextAxis(
+        cco_class_uri="http://example.org/Person",
+        cco_class_label="Person",
+        vocabulary_context=VocabularyContext(
+            stakeholders=[{"uri": "http://example.org/Patient", "label": "Patient"}],
+        ),
+        enumerations=[],
+    )
+    assert isinstance(dca.vocabulary_context, VocabularyContext)
+    assert len(dca.vocabulary_context.stakeholders) == 1
+
+
+def test_domain_context_axis_coerces_dict_to_vocabulary_context():
+    dca = DomainContextAxis(
+        cco_class_uri="http://example.org/Person",
+        cco_class_label="Person",
+        vocabulary_context={"stakeholders": [{"uri": "http://example.org/Patient", "label": "Patient"}]},
+        enumerations=[],
+    )
+    assert isinstance(dca.vocabulary_context, VocabularyContext)
+    assert len(dca.vocabulary_context.stakeholders) == 1
+
+
+def test_domain_context_axis_empty_dict_coerces_to_default_vocabulary_context():
+    dca = DomainContextAxis(
+        cco_class_uri="http://example.org/Person",
+        cco_class_label="Person",
+        vocabulary_context={},
+        enumerations=[],
+    )
+    assert isinstance(dca.vocabulary_context, VocabularyContext)
+    assert dca.vocabulary_context.stakeholders == []
+
+
+def test_domain_context_axis_default_vocabulary_context():
+    dca = DomainContextAxis(
+        cco_class_uri="http://example.org/Person",
+        cco_class_label="Person",
+        enumerations=[],
+    )
+    assert isinstance(dca.vocabulary_context, VocabularyContext)
+
+
+# --- RiskGrounding ---
+
+
+def test_risk_grounding():
+    axis = DomainContextAxis(
+        cco_class_uri="http://example.org/Person",
+        cco_class_label="Person",
+        enumerations=[],
+    )
+    rg = RiskGrounding(risk_id="r1", axes=[axis])
+    assert rg.risk_id == "r1"
+    assert len(rg.axes) == 1
+
+
+# --- PolicyDomainContext ---
+
+
+def test_policy_domain_context():
+    rg = RiskGrounding(risk_id="r1", axes=[])
+    pdc = PolicyDomainContext(policy_concept="Fraud Prevention", risk_groundings=[rg])
+    assert pdc.policy_concept == "Fraud Prevention"
+    assert len(pdc.risk_groundings) == 1
+
+
+# --- DomainContextDocument ---
+
+
+def test_domain_context_document_defaults():
+    doc = DomainContextDocument()
+    assert doc.version == "0.1"
+    assert doc.model == ""
+    assert doc.timestamp == ""
+    assert doc.run_slug == ""
+    assert doc.selected_domains == []
+    assert doc.policy_source is None
+    assert doc.config is None
+    assert doc.risks == []
+    assert doc.policy_contexts == []
+
+
+def test_domain_context_document_full():
+    doc = DomainContextDocument(
+        version="0.1",
+        model="phi-4",
+        timestamp="2026-04-14T00:00:00Z",
+        run_slug="test-run",
+        selected_domains=["CCO", "FIBO"],
+        policy_source=PolicySourceRef(organization="Acme", domain="finance", policy_count=3),
+        config=PipelineConfig(weak_match_threshold=0.3),
+        risks=[RiskSummary(risk_id="r1", risk_name="Bias")],
+        policy_contexts=[
+            PolicyDomainContext(
+                policy_concept="Fair Lending",
+                risk_groundings=[
+                    RiskGrounding(risk_id="r1", axes=[]),
+                ],
+            ),
+        ],
+    )
+    assert doc.model == "phi-4"
+    assert doc.policy_source.organization == "Acme"
+    assert doc.config.weak_match_threshold == 0.3
+    assert len(doc.risks) == 1
+    assert len(doc.policy_contexts) == 1
+    assert doc.policy_contexts[0].risk_groundings[0].risk_id == "r1"
+
+
+def test_domain_context_document_roundtrip_json():
+    doc = DomainContextDocument(
+        version="0.1",
+        model="phi-4",
+        timestamp="2026-04-14T00:00:00Z",
+        run_slug="test-run",
+        selected_domains=["CCO"],
+        policy_source=PolicySourceRef(organization="Acme"),
+        config=PipelineConfig(),
+        risks=[RiskSummary(risk_id="r1", risk_name="Bias")],
+        policy_contexts=[],
+    )
+    json_str = doc.model_dump_json()
+    restored = DomainContextDocument.model_validate_json(json_str)
+    assert restored.model == "phi-4"
+    assert restored.policy_source.organization == "Acme"
+    assert isinstance(restored.config, PipelineConfig)
+    assert len(restored.risks) == 1
