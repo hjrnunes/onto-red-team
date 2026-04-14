@@ -105,9 +105,9 @@ def ingest(
     # Generate ingest report HTML
     from refiner.ingest_report import build_ingest_report
     passes = ["context"]
-    if not until or until != "context":
+    if until != "context":
         passes.append("policies")
-    if not until and not skip_enrichment:
+    if until not in ("context", "policies") and not skip_enrichment:
         passes.append("enrichment")
     meta = {
         "model": config.model,
