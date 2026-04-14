@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Risk Landscape Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+
+    /* Tooltip */
+    .tip {
+      position: relative;
+      cursor: help;
+      border-bottom: 1px dotted #9ca3af;
+    }
+    .tip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.4;
+      padding: 6px 10px;
+      border-radius: 6px;
+      white-space: normal;
+      width: max-content;
+      max-width: 320px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 50;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .tip:hover::after { opacity: 1; }
+    /* Info icon */
+    .tip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #6b7280;
+      font-size: 10px;
+      font-weight: 700;
+      font-style: normal;
+      line-height: 1;
+      margin-left: 4px;
+      flex-shrink: 0;
+      cursor: help;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="reportApp()" x-cloak>
+
+  <!-- Header -->
+  <header class="bg-gray-900 text-white px-6 py-4 shadow-lg">
+    <div class="max-w-screen-xl mx-auto">
+      <h1 class="text-2xl font-bold tracking-tight">Risk Landscape Report</h1>
+      <p class="text-gray-400 text-sm mt-0.5">
+        <span x-text="data.run_slug || '?'"></span>
+        &mdash; <span x-text="data.model || '?'"></span>
+        &mdash; <span x-text="data.timestamp || '?'"></span>
+      </p>
+    </div>
+  </header>
+
+  <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+    <!-- Run Info -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Run Info</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+        <div>
+          <span class="text-gray-400">Model</span>
+          <p class="font-medium text-gray-800" x-text="data.model || '?'"></p>
+        </div>
+        <div>
+          <span class="text-gray-400">Run Slug</span>
+          <p class="font-medium text-gray-800" x-text="data.run_slug || '?'"></p>
+        </div>
+        <div>
+          <span class="text-gray-400">Timestamp</span>
+          <p class="font-medium text-gray-800" x-text="data.timestamp || '?'"></p>
+        </div>
+        <div>
+          <span class="text-gray-400">Selected Domains</span>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <template x-for="d in data.selected_domains || []" :key="d">
+              <span class="px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800" x-text="d"></span>
+            </template>
+          </div>
+        </div>
+      </div>
+      <template x-if="data.policy_source">
+        <div class="mt-4 pt-4 border-t border-gray-200">
+          <span class="text-gray-400 text-sm">Policy Source</span>
+          <p class="text-sm text-gray-800 mt-1">
+            <span class="font-medium" x-text="data.policy_source.organization"></span>
+            &middot; <span x-text="data.policy_source.domain"></span>
+            &middot; <span class="font-mono" x-text="data.policy_source.policy_count"></span> policies
+          </p>
+        </div>
+      </template>
+    </section>
+
+    <!-- Overview Cards -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Overview</h2>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="text-center p-4 bg-gray-50 rounded-lg">
+          <p class="text-3xl font-bold text-indigo-600" x-text="(data.risks || []).length"></p>
+          <p class="text-xs text-gray-400 mt-1">Total Risks</p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-lg">
+          <p class="text-3xl font-bold text-green-600" x-text="Object.keys(data.framework_coverage || {}).length"></p>
+          <p class="text-xs text-gray-400 mt-1">Frameworks</p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-lg">
+          <p class="text-3xl font-bold text-teal-600" x-text="(data.policy_mappings || []).length"></p>
+          <p class="text-xs text-gray-400 mt-1">Policy Mappings</p>
+        </div>
+        <div class="text-center p-4 bg-gray-50 rounded-lg">
+          <p class="text-3xl font-bold"
+             :class="(data.weak_matches || []).length > 0 ? 'text-amber-600' : 'text-green-600'"
+             x-text="(data.weak_matches || []).length"></p>
+          <p class="text-xs text-gray-400 mt-1">Weak Matches</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Framework Coverage -->
+    <section x-show="Object.keys(data.framework_coverage || {}).length" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="Distribution of risks across different risk frameworks (IBM Risk Atlas, NIST AI RMF, OWASP, etc.). Higher counts indicate broader coverage from that framework.">Framework Coverage</span>
+        <span class="tip-icon tip" data-tip="Distribution of risks across different risk frameworks.">i</span>
+      </h2>
+      <div class="space-y-2">
+        <template x-for="[fw, count] in Object.entries(data.framework_coverage || {}).sort((a, b) => b[1] - a[1])" :key="fw">
+          <div class="flex items-center gap-3">
+            <div class="flex-1 bg-gray-100 rounded-lg overflow-hidden">
+              <div class="flex items-center justify-between px-3 py-2"
+                   :class="count > 10 ? 'bg-indigo-100' : count > 5 ? 'bg-indigo-50' : 'bg-gray-50'"
+                   :style="`width: ${Math.max((count / Math.max(...Object.values(data.framework_coverage || {}))) * 100, 10)}%`">
+                <span class="text-sm font-medium text-gray-700" x-text="fw"></span>
+                <span class="text-sm font-mono font-semibold text-gray-900" x-text="count"></span>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- Risk Registry -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="Complete registry of all risks matched from the knowledge graph, with their descriptions, cross-mappings, and related actions.">Risk Registry</span>
+        <span class="tip-icon tip" data-tip="Complete registry of all matched risks.">i</span>
+      </h2>
+      <div class="space-y-2">
+        <template x-for="(risk, idx) in data.risks || []" :key="risk.risk_id">
+          <div class="border border-gray-200 rounded-lg"
+               x-data="{ expanded: false }">
+            <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+                 @click="expanded = !expanded">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <span class="font-mono text-sm text-gray-700" x-text="risk.risk_id"></span>
+                  <span class="font-semibold text-gray-900" x-text="risk.risk_name"></span>
+                  <span class="px-2 py-0.5 rounded text-xs"
+                        :class="frameworkColor(risk.risk_framework)"
+                        x-text="risk.risk_framework"></span>
+                </div>
+                <template x-if="!expanded && risk.cross_mappings?.length">
+                  <div class="flex flex-wrap gap-1 mt-1">
+                    <template x-for="cm in risk.cross_mappings.slice(0, 3)" :key="cm.id">
+                      <span class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600" x-text="cm.id"></span>
+                    </template>
+                    <span x-show="risk.cross_mappings.length > 3"
+                          class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
+                          x-text="`+${risk.cross_mappings.length - 3} more`"></span>
+                  </div>
+                </template>
+              </div>
+              <svg class="w-5 h-5 text-gray-400 transition-transform"
+                   :class="expanded ? 'rotate-180' : ''"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div x-show="expanded" class="px-3 pb-3 pt-0 space-y-3 border-t border-gray-100">
+              <div>
+                <p class="text-xs text-gray-400 uppercase mb-1">Description</p>
+                <p class="text-sm text-gray-700" x-text="risk.risk_description"></p>
+              </div>
+              <template x-if="risk.risk_concern">
+                <div>
+                  <p class="text-xs text-gray-400 uppercase mb-1">Concern</p>
+                  <p class="text-sm text-gray-700" x-text="risk.risk_concern"></p>
+                </div>
+              </template>
+              <template x-if="risk.cross_mappings?.length">
+                <div>
+                  <p class="text-xs text-gray-400 uppercase mb-1">Cross-Mappings</p>
+                  <div class="flex flex-wrap gap-1">
+                    <template x-for="cm in risk.cross_mappings" :key="cm.id">
+                      <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
+                        <span class="font-mono" x-text="cm.id"></span>
+                        <span class="text-gray-400" x-text="`(${cm.mapping_type})`"></span>
+                      </span>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <template x-if="risk.related_actions?.length">
+                <div>
+                  <p class="text-xs text-gray-400 uppercase mb-1">Related Actions</p>
+                  <ul class="text-sm text-gray-700 list-disc list-inside space-y-0.5">
+                    <template x-for="action in risk.related_actions" :key="action">
+                      <li x-text="action"></li>
+                    </template>
+                  </ul>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- Policy Mappings -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="Risks matched to each policy concept, showing relevance level, match quality (distance), and justification.">Policy Mappings</span>
+        <span class="tip-icon tip" data-tip="Risks matched to each policy concept with quality metrics.">i</span>
+      </h2>
+      <div class="space-y-3">
+        <template x-for="pm in data.policy_mappings || []" :key="pm.policy_concept">
+          <div class="border border-gray-200 rounded-lg"
+               x-data="{ expanded: false }">
+            <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+                 @click="expanded = !expanded">
+              <div class="flex items-center gap-3">
+                <span class="font-semibold text-gray-900" x-text="pm.policy_concept"></span>
+                <span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600"
+                      x-text="`${pm.matched_risks?.length || 0} risks`"></span>
+              </div>
+              <svg class="w-5 h-5 text-gray-400 transition-transform"
+                   :class="expanded ? 'rotate-180' : ''"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div x-show="expanded" class="px-3 pb-3 pt-0 border-t border-gray-100">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
+                      <th class="pb-2 pr-3">Risk ID</th>
+                      <th class="pb-2 pr-3">Risk Name</th>
+                      <th class="pb-2 pr-3">Relevance</th>
+                      <th class="pb-2 pr-3">Distance</th>
+                      <th class="pb-2">Justification</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="mr in pm.matched_risks || []" :key="mr.risk_id">
+                      <tr class="border-b border-gray-100">
+                        <td class="py-2 pr-3 font-mono text-xs" x-text="mr.risk_id"></td>
+                        <td class="py-2 pr-3 font-medium" x-text="mr.risk_name"></td>
+                        <td class="py-2 pr-3">
+                          <span class="px-2 py-0.5 rounded text-xs"
+                                :class="{
+                                  'bg-green-100 text-green-800': mr.relevance === 'primary',
+                                  'bg-blue-100 text-blue-800': mr.relevance === 'secondary',
+                                  'bg-gray-100 text-gray-600': mr.relevance !== 'primary' && mr.relevance !== 'secondary'
+                                }"
+                                x-text="mr.relevance"></span>
+                        </td>
+                        <td class="py-2 pr-3">
+                          <span class="px-2 py-0.5 rounded text-xs font-mono"
+                                :class="{
+                                  'bg-green-100 text-green-800': mr.match_distance < 0.3,
+                                  'bg-amber-100 text-amber-800': mr.match_distance >= 0.3 && mr.match_distance <= 0.5,
+                                  'bg-red-100 text-red-800': mr.match_distance > 0.5
+                                }"
+                                x-text="mr.match_distance?.toFixed(3) || '?'"></span>
+                        </td>
+                        <td class="py-2 text-gray-600" x-text="mr.justification"></td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
+    <!-- Weak Matches -->
+    <section x-show="(data.weak_matches || []).length > 0" class="bg-amber-50 rounded-xl shadow-sm border border-amber-200 p-5">
+      <h2 class="text-sm font-semibold text-amber-900 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="Risks with semantic search distance > 0.4. High distance indicates the match may be tenuous and the risk may not genuinely apply to the policy concept.">Weak Matches</span>
+        <span class="tip-icon tip" data-tip="High-distance matches that may not genuinely apply.">i</span>
+      </h2>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="text-left text-xs text-amber-900 uppercase border-b border-amber-200">
+              <th class="pb-2 pr-3">Risk ID</th>
+              <th class="pb-2 pr-3">Policy Concept</th>
+              <th class="pb-2 text-right">Distance</th>
+            </tr>
+          </thead>
+          <tbody>
+            <template x-for="wm in data.weak_matches || []" :key="`${wm.risk_id}-${wm.policy_concept}`">
+              <tr class="border-b border-amber-100">
+                <td class="py-2 pr-3 font-mono text-xs text-amber-900" x-text="wm.risk_id"></td>
+                <td class="py-2 pr-3 text-amber-900" x-text="wm.policy_concept"></td>
+                <td class="py-2 text-right font-mono font-semibold text-amber-700" x-text="wm.distance?.toFixed(3) || '?'"></td>
+              </tr>
+            </template>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+  </div>
+
+<script>
+const DATA = __REPORT_DATA__;
+
+function reportApp() {
+  return {
+    data: DATA,
+
+    frameworkColor(framework) {
+      const colors = {
+        'IBM Risk Atlas': 'bg-blue-100 text-blue-800',
+        'NIST AI RMF': 'bg-green-100 text-green-800',
+        'OWASP LLM Top 10': 'bg-red-100 text-red-800',
+        'AIR 2024': 'bg-purple-100 text-purple-800',
+        'MIT AI Risk Repository': 'bg-yellow-100 text-yellow-800',
+      };
+      return colors[framework] || 'bg-gray-100 text-gray-800';
+    }
+  };
+}
+</script>
+</body>
+</html>
