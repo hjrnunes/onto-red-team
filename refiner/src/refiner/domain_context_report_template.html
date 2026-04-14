@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Context Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .tip {
+            position: relative;
+            cursor: help;
+        }
+        .tip:hover::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 0.5rem;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            white-space: nowrap;
+            z-index: 1000;
+            margin-bottom: 0.25rem;
+        }
+        .tip-icon {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            border-radius: 50%;
+            background: #6b7280;
+            color: white;
+            text-align: center;
+            font-size: 0.75rem;
+            line-height: 1rem;
+            margin-left: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="reportApp()" x-cloak>
+    <header class="bg-gray-900 text-white px-6 py-4 shadow-lg">
+        <h1 class="text-3xl font-bold">Domain Context Report</h1>
+        <p class="text-gray-400 mt-1" x-text="`${data.run_slug} — ${data.model} — ${data.timestamp}`"></p>
+    </header>
+
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+        <!-- Run Info -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Run Information</h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Model</div>
+                    <div class="font-mono text-sm" x-text="data.model"></div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Run Slug</div>
+                    <div class="font-mono text-sm" x-text="data.run_slug"></div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Timestamp</div>
+                    <div class="font-mono text-sm" x-text="data.timestamp"></div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="text-xs text-gray-500 uppercase tracking-wide mb-2">Selected Domains</div>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="domain in data.selected_domains" :key="domain">
+                        <span class="px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-medium" x-text="domain"></span>
+                    </template>
+                </div>
+            </div>
+            <template x-if="data.policy_source">
+                <div class="mt-4">
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Policy Source</div>
+                    <div class="text-sm">
+                        <span x-text="data.policy_source.organization"></span>
+                        <span class="text-gray-400 mx-2">•</span>
+                        <span x-text="data.policy_source.domain"></span>
+                        <span class="text-gray-400 mx-2">•</span>
+                        <span x-text="`${data.policy_source.policy_count} policies`"></span>
+                    </div>
+                </div>
+            </template>
+        </section>
+
+        <!-- Overview Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Risks</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="data.risks.length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Policy Contexts</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="data.policy_contexts.length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Axes</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="totalAxes"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Total Enumerations</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="totalEnumerations"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Domains</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="data.selected_domains.length"></div>
+            </div>
+        </section>
+
+        <!-- Risks Summary Table -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Risks Summary</h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Risk ID</th>
+                            <th class="text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Risk Name</th>
+                            <th class="text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Framework</th>
+                            <th class="text-right py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide">Cross-Mappings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="risk in data.risks" :key="risk.risk_id">
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-2 px-3 font-mono text-xs" x-text="risk.risk_id"></td>
+                                <td class="py-2 px-3" x-text="risk.risk_name"></td>
+                                <td class="py-2 px-3">
+                                    <span class="px-2 py-1 rounded text-xs font-medium" :class="getFrameworkBadgeClass(risk.risk_framework)" x-text="risk.risk_framework"></span>
+                                </td>
+                                <td class="py-2 px-3 text-right" x-text="risk.cross_mappings.length"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Policy Contexts -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Policy Contexts</h2>
+            <div class="space-y-4">
+                <template x-for="(context, ctxIdx) in data.policy_contexts" :key="ctxIdx">
+                    <div class="border border-gray-200 rounded-lg">
+                        <div class="bg-gray-50 px-4 py-3 cursor-pointer flex justify-between items-center" @click="toggleContext(ctxIdx)">
+                            <h3 class="font-semibold text-gray-900" x-text="context.policy_concept"></h3>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform" :class="{'rotate-180': expandedContexts[ctxIdx]}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div x-show="expandedContexts[ctxIdx]" x-collapse class="p-4 space-y-6">
+                            <template x-for="(grounding, gIdx) in context.risk_groundings" :key="gIdx">
+                                <div class="border-l-4 border-indigo-300 pl-4">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="font-mono text-xs text-gray-500" x-text="grounding.risk_id"></span>
+                                        <span class="text-sm font-medium" x-text="getRiskName(grounding.risk_id)"></span>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <template x-for="(axis, axisIdx) in grounding.axes" :key="axisIdx">
+                                            <div class="bg-gray-50 rounded-lg p-4">
+                                                <!-- Axis Header -->
+                                                <div class="flex items-center gap-2 mb-3">
+                                                    <span class="font-bold text-gray-900" x-text="axis.cco_class_label"></span>
+                                                    <span class="px-2 py-1 bg-teal-100 text-teal-800 rounded text-xs font-medium" x-text="axis.bfo_category"></span>
+                                                    <template x-for="role in axis.roles" :key="role">
+                                                        <span class="px-2 py-1 rounded text-xs font-medium" :class="getRoleBadgeClass(role)" x-text="role"></span>
+                                                    </template>
+                                                </div>
+
+                                                <!-- Vocabulary Context -->
+                                                <template x-if="axis.vocabulary_label">
+                                                    <div class="mb-3 text-sm">
+                                                        <span class="text-gray-600">Vocabulary:</span>
+                                                        <span class="font-medium ml-1" x-text="axis.vocabulary_label"></span>
+                                                        <span class="font-mono text-xs text-gray-500 ml-1" x-text="`(${axis.vocabulary_concept})`"></span>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Derivation Info -->
+                                                <template x-if="axis.derivation">
+                                                    <div class="text-xs text-gray-500 mb-3 space-x-2">
+                                                        <span>Source: <span class="font-medium" x-text="axis.derivation.source"></span></span>
+                                                        <span>•</span>
+                                                        <span>Domain: <span class="font-medium" x-text="axis.derivation.domain"></span></span>
+                                                        <span>•</span>
+                                                        <span>Confidence: <span class="font-medium" x-text="(axis.derivation.effective_confidence * 100).toFixed(0) + '%'"></span></span>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Enumerations Table -->
+                                                <template x-if="axis.enumerations && axis.enumerations.length > 0">
+                                                    <div class="overflow-x-auto">
+                                                        <table class="w-full text-sm">
+                                                            <thead>
+                                                                <tr class="border-b border-gray-300">
+                                                                    <th class="text-left py-2 px-2 text-xs font-semibold text-gray-600">Class</th>
+                                                                    <th class="text-left py-2 px-2 text-xs font-semibold text-gray-600">Ontology</th>
+                                                                    <th class="text-left py-2 px-2 text-xs font-semibold text-gray-600">Relevance</th>
+                                                                    <th class="text-left py-2 px-2 text-xs font-semibold text-gray-600">Provenance</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <template x-for="(enum_item, enumIdx) in axis.enumerations" :key="enumIdx">
+                                                                    <tr class="border-b border-gray-200 hover:bg-white">
+                                                                        <td class="py-2 px-2" x-text="enum_item.class_label"></td>
+                                                                        <td class="py-2 px-2">
+                                                                            <span class="px-2 py-1 bg-gray-100 text-gray-800 rounded text-xs font-medium" x-text="enum_item.source_ontology"></span>
+                                                                        </td>
+                                                                        <td class="py-2 px-2">
+                                                                            <span class="px-2 py-1 rounded text-xs font-medium" :class="getRelevanceBadgeClass(enum_item.relevance)" x-text="enum_item.relevance"></span>
+                                                                        </td>
+                                                                        <td class="py-2 px-2">
+                                                                            <span class="px-2 py-1 rounded text-xs font-medium" :class="getProvenanceBadgeClass(enum_item.provenance)" x-text="enum_item.provenance"></span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </template>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const DATA = __REPORT_DATA__;
+        function reportApp() {
+            return {
+                data: DATA,
+                expandedContexts: {},
+
+                get totalAxes() {
+                    let count = 0;
+                    for (const context of this.data.policy_contexts) {
+                        for (const grounding of context.risk_groundings) {
+                            count += grounding.axes.length;
+                        }
+                    }
+                    return count;
+                },
+
+                get totalEnumerations() {
+                    let count = 0;
+                    for (const context of this.data.policy_contexts) {
+                        for (const grounding of context.risk_groundings) {
+                            for (const axis of grounding.axes) {
+                                if (axis.enumerations) {
+                                    count += axis.enumerations.length;
+                                }
+                            }
+                        }
+                    }
+                    return count;
+                },
+
+                toggleContext(idx) {
+                    this.expandedContexts[idx] = !this.expandedContexts[idx];
+                },
+
+                getRiskName(riskId) {
+                    const risk = this.data.risks.find(r => r.risk_id === riskId);
+                    return risk ? risk.risk_name : riskId;
+                },
+
+                getFrameworkBadgeClass(framework) {
+                    const mapping = {
+                        'IBM Risk Atlas': 'bg-blue-100 text-blue-800',
+                        'NIST AI RMF': 'bg-green-100 text-green-800',
+                        'OWASP LLM Top 10': 'bg-red-100 text-red-800',
+                        'AIR 2024': 'bg-purple-100 text-purple-800'
+                    };
+                    return mapping[framework] || 'bg-gray-100 text-gray-800';
+                },
+
+                getRoleBadgeClass(role) {
+                    const mapping = {
+                        'agent': 'bg-pink-100 text-pink-800',
+                        'instrument': 'bg-blue-100 text-blue-800',
+                        'object': 'bg-green-100 text-green-800'
+                    };
+                    return mapping[role] || 'bg-gray-100 text-gray-800';
+                },
+
+                getRelevanceBadgeClass(relevance) {
+                    const mapping = {
+                        'high': 'bg-green-100 text-green-800',
+                        'medium': 'bg-amber-100 text-amber-800',
+                        'low': 'bg-red-100 text-red-800'
+                    };
+                    return mapping[relevance] || 'bg-gray-100 text-gray-800';
+                },
+
+                getProvenanceBadgeClass(provenance) {
+                    const mapping = {
+                        'subclass': 'bg-blue-100 text-blue-800',
+                        'equivalent': 'bg-purple-100 text-purple-800'
+                    };
+                    return mapping[provenance] || 'bg-gray-100 text-gray-800';
+                }
+            };
+        }
+    </script>
+</body>
+</html>
