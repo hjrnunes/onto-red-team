@@ -177,42 +177,6 @@
         </div>
       </div>
 
-      <!-- Ontologies Distribution -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 tip" data-tip="Source ontologies for enumeration values used in prompts. Shows which knowledge sources are driving domain context.">Ontologies<span class="tip-icon" data-tip="CCO = Common Core, FIBO = Finance, OBO = Biomedical, CSO = Cybersecurity, D3FEND = Defense, LKIF = Legal, IOF = Manufacturing, generated = LLM-created.">i</span></h2>
-        <div class="space-y-2">
-          <template x-for="[key, count] in Object.entries(data.summary.ontologies).sort((a, b) => b[1] - a[1])" :key="key">
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-gray-700" x-text="key"></span>
-                <span class="font-semibold text-purple-600" x-text="count"></span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-purple-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.ontologies)) * 100) + '%'"></div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-
-      <!-- Roles Distribution -->
-      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 tip" data-tip="Semantic roles assigned to axes in generated prompts: agent, object, instrument, location, temporal.">Roles<span class="tip-icon" data-tip="Derived from BFO/CCO superclass chain. Agent = who acts, Object = what is acted upon, Instrument = tool/method, Location = where, Temporal = when.">i</span></h2>
-        <div class="space-y-2">
-          <template x-for="[key, count] in Object.entries(data.summary.roles).sort((a, b) => b[1] - a[1])" :key="key">
-            <div>
-              <div class="flex justify-between text-sm mb-1">
-                <span class="text-gray-700" x-text="key"></span>
-                <span class="font-semibold text-pink-600" x-text="count"></span>
-              </div>
-              <div class="w-full bg-gray-200 rounded-full h-2">
-                <div class="bg-pink-500 h-2 rounded-full" :style="'width: ' + (count / Math.max(1, ...Object.values(data.summary.roles)) * 100) + '%'"></div>
-              </div>
-            </div>
-          </template>
-        </div>
-      </div>
-
       <!-- Relevance Distribution -->
       <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
         <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3 tip" data-tip="Relevance distribution of sampled enumeration values. High-relevance values are sampled 3x more often.">Relevance<span class="tip-icon" data-tip="High = directly relevant to the risk scenario, Medium = tangentially related, Low = contextual/background. Distribution should skew toward high.">i</span></h2>
