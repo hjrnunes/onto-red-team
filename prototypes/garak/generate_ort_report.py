@@ -566,6 +566,121 @@ def cross_framework_reach(
     return result
 
 
+def cross_framework_pack_data(
+    mapping: dict,
+    intent_asr: dict[str, float],
+) -> list[dict]:
+    """Hierarchy for circle packing: Group → Tested Risk → Mapped Risks.
+
+    Returns flat list in stratify format (id/parent) with metadata.
+    """
+    intent_map = mapping.get("intent_map", {})
+    nodes: list[dict] = []
+
+    nodes.append({
+        "id": "root", "parent": None, "name": "Tests",
+        "depth": 0, "size": None, "asr": None,
+        "tested": False, "framework": "", "mapping_type": "",
+    })
+
+    groups: dict[str, list[tuple[str, dict]]] = defaultdict(list)
+    for intent_id, info in intent_map.items():
+        groups[info.get("risk_group", "Unknown")].append((intent_id, info))
+
+    for group_name, risks in sorted(groups.items()):
+        gid = f"g:{group_name}"
+        nodes.append({
+            "id": gid, "parent": "root", "name": group_name,
+            "depth": 1, "size": None, "asr": None,
+            "tested": False, "framework": "", "mapping_type": "",
+        })
+
+        for intent_id, info in risks:
+            rid = info["nexus_risk_id"]
+            asr = intent_asr.get(intent_id, 0.0)
+            nid = f"r:{rid}"
+            nodes.append({
+                "id": nid, "parent": gid, "name": info["risk_name"],
+                "depth": 2, "size": None, "asr": asr,
+                "tested": True, "framework": info["risk_framework"],
+                "mapping_type": "",
+            })
+
+            for cm in info.get("cross_mappings", []):
+                mid = f"m:{rid}:{cm['id']}"
+                nodes.append({
+                    "id": mid, "parent": nid, "name": cm["name"],
+                    "depth": 3, "size": 1, "asr": asr,
+                    "tested": False, "framework": cm["taxonomy"],
+                    "mapping_type": cm["mapping_type"],
+                })
+
+    return nodes
+
+
+def cross_framework_bundle_data(
+    mapping: dict,
+    intent_asr: dict[str, float],
+) -> dict:
+    """Hierarchy (by framework) + edges for edge bundling.
+
+    Nodes arranged by framework; edges are the cross-mappings between
+    tested risks and mapped risks across frameworks.
+    """
+    intent_map = mapping.get("intent_map", {})
+
+    fw_risks: dict[str, dict[str, dict]] = defaultdict(dict)
+    edges: list[dict] = []
+
+    for intent_id, info in intent_map.items():
+        rid = info["nexus_risk_id"]
+        fw = info["risk_framework"]
+        asr = intent_asr.get(intent_id, 0.0)
+
+        fw_risks[fw][rid] = {
+            "name": info["risk_name"], "tested": True, "asr": asr,
+        }
+
+        for cm in info.get("cross_mappings", []):
+            mapped_id = cm["id"]
+            mapped_fw = cm["taxonomy"]
+            if mapped_id not in fw_risks[mapped_fw]:
+                fw_risks[mapped_fw][mapped_id] = {
+                    "name": cm["name"], "tested": False, "asr": 0.0,
+                }
+
+            edges.append({
+                "source": f"{fw}|{rid}",
+                "target": f"{mapped_fw}|{mapped_id}",
+                "type": cm["mapping_type"],
+                "asr": asr,
+            })
+
+    # Build hierarchy: root → frameworks → risks
+    nodes: list[dict] = [
+        {"id": "root", "parent": None, "name": "Frameworks",
+         "tested": False, "asr": 0},
+    ]
+    for fw in sorted(fw_risks.keys()):
+        fw_id = fw
+        nodes.append({
+            "id": fw_id, "parent": "root", "name": fw,
+            "tested": False, "asr": 0,
+        })
+
+        for rid, rinfo in sorted(
+            fw_risks[fw].items(), key=lambda x: x[1]["name"]
+        ):
+            node_id = f"{fw}|{rid}"
+            nodes.append({
+                "id": node_id, "parent": fw_id,
+                "name": rinfo["name"], "tested": rinfo["tested"],
+                "asr": rinfo["asr"],
+            })
+
+    return {"nodes": nodes, "edges": edges}
+
+
 def behavior_chart_data(attempts: list[dict]) -> list[dict]:
     """Per-attempt data for behavior-by-probe and behavior-by-intent charts.
 
@@ -672,6 +787,10 @@ def render_report(
     pc_stats = policy_concept_stats(attempts, stubs, policy_texts)
     cf_reach = cross_framework_reach(cf_matrix)
 
+    # Cross-framework visualizations
+    cf_pack = cross_framework_pack_data(mapping, i_asr)
+    cf_bundle = cross_framework_bundle_data(mapping, i_asr)
+
     # ORT-specific chart data
     rg_chart = risk_group_chart_data(rg_stats)
     cf_chart = cross_framework_chart_data(cf_matrix)
@@ -703,6 +822,9 @@ def render_report(
         technique_stats=tech_stats,
         policy_concept_stats=pc_stats,
         cross_framework_reach=cf_reach,
+        # Cross-framework visualizations
+        cf_pack_data=cf_pack,
+        cf_bundle_data=cf_bundle,
         # ORT-specific charts
         risk_group_chart_data=rg_chart,
         cross_framework_chart_data=cf_chart,
