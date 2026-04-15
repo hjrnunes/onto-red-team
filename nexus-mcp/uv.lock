@@ -16,6 +16,10 @@ resolution-markers = [
     "python_full_version < '3.12' and sys_platform != 'emscripten' and sys_platform != 'win32'",
 ]
 
+[options]
+exclude-newer = "2026-04-07T20:02:38.120427Z"
+exclude-newer-span = "P7D"
+
 [[package]]
 name = "ai-atlas-nexus"
 version = "1.2.1"

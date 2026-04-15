@@ -1,0 +1,11 @@
+version: '0.1'
+model: test-model
+timestamp: ''
+run_slug: ''
+selected_domains: []
+policy_source: null
+knowledge_base: null
+risks: []
+policy_mappings: []
+framework_coverage: {}
+weak_matches: []

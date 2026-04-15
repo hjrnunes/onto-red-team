@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domain Context Report</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        [x-cloak] { display: none !important; }
+        .tip {
+            position: relative;
+            cursor: help;
+        }
+        .tip::after {
+            content: attr(data-tip);
+            position: absolute;
+            bottom: calc(100% + 6px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: #f9fafb;
+            font-size: 12px;
+            font-weight: 400;
+            line-height: 1.4;
+            padding: 6px 10px;
+            border-radius: 6px;
+            white-space: normal;
+            width: max-content;
+            max-width: 320px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.15s;
+            z-index: 50;
+            text-transform: none;
+            letter-spacing: normal;
+        }
+        .tip:hover::after { opacity: 1; }
+        .tip-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #e5e7eb;
+            color: #6b7280;
+            font-size: 10px;
+            font-weight: 700;
+            font-style: normal;
+            line-height: 1;
+            margin-left: 4px;
+            flex-shrink: 0;
+            cursor: help;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="reportApp()" x-cloak>
+    <header class="bg-gray-900 text-white px-6 py-4 shadow-lg">
+        <h1 class="text-3xl font-bold">Domain Context Report</h1>
+        <p class="text-gray-400 mt-1" x-text="`${data.run_slug} — ${data.model} — ${data.timestamp}`"></p>
+    </header>
+
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+        <!-- Reading Guide -->
+        <section class="bg-blue-50 rounded-xl border border-blue-200 p-5" x-data="{ showGuide: false }">
+            <div class="flex items-center justify-between cursor-pointer" @click="showGuide = !showGuide">
+                <h2 class="text-sm font-semibold text-blue-900 uppercase tracking-wide">Reading Guide</h2>
+                <svg class="w-5 h-5 text-blue-700 transition-transform" :class="{'rotate-180': showGuide}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+            <div x-show="showGuide" class="mt-4 space-y-3 text-sm text-gray-700">
+                <p><strong>What is domain context?</strong> Domain context provides the ontological variation dimensions for each risk-policy mapping. It defines the axes along which red-team prompts can be varied (agent types, data types, processes, etc.) and enumerates concrete values from the knowledge graph for each axis.</p>
+                <p><strong>What are axes?</strong> Each axis is a CCO or domain ontology class that represents one dimension of prompt variation. For example, "Person" might be an axis, allowing prompts to vary across different types of people (executives, analysts, customers). Axes are tagged with BFO categories (Object, Process, Quality, etc.) and semantic roles (agent, instrument, object) that determine how they're used in prompt generation.</p>
+                <p><strong>What are enumerations?</strong> Enumerations are the concrete values for each axis, drawn from the ontology. For a "Person" axis, enumerations might include "Software Engineer", "Medical Doctor", "Financial Analyst". Each enumeration has a relevance score (high/medium/low) assigned by the LLM - high-relevance values are sampled 3x more often during prompt generation.</p>
+                <p><strong>How are they discovered?</strong> Axes and enumerations come from multiple sources: structural (ontology hierarchy and axioms), search (semantic similarity), and generated (LLM-created with policy context when ontology coverage is insufficient). The provenance field tracks the discovery method for each enumeration.</p>
+                <p><strong>How to use this report:</strong> Expand each policy concept to see its risk groundings. Each grounding shows the variation axes for one risk. Review the axes to understand what dimensions are available, and check enumerations to see if the ontology provides sufficient coverage for your domain.</p>
+            </div>
+        </section>
+
+        <!-- Run Info -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3" data-tip="Configuration for the pipeline run that produced this domain context — model, ontology domains, and policy source.">Run Information<span class="tip-icon" data-tip="Each run uses a specific LLM and set of ontology domains to generate domain context.">i</span></h2>
+            <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Model</div>
+                    <div class="font-mono text-sm" x-text="data.model"></div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Run Slug</div>
+                    <div class="font-mono text-sm" x-text="data.run_slug"></div>
+                </div>
+                <div>
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Timestamp</div>
+                    <div class="font-mono text-sm" x-text="data.timestamp"></div>
+                </div>
+            </div>
+            <div class="mt-4">
+                <div class="text-xs text-gray-500 uppercase tracking-wide mb-2">Selected Domains</div>
+                <div class="flex flex-wrap gap-2">
+                    <template x-for="domain in data.selected_domains" :key="domain">
+                        <span class="tip px-2 py-1 bg-indigo-100 text-indigo-800 rounded text-xs font-medium" data-tip="Ontology domain selected for this run" x-text="domain"></span>
+                    </template>
+                </div>
+            </div>
+            <template x-if="data.policy_source">
+                <div class="mt-4">
+                    <div class="text-xs text-gray-500 uppercase tracking-wide mb-1">Policy Source</div>
+                    <div class="text-sm">
+                        <span x-text="data.policy_source.organization"></span>
+                        <span class="text-gray-400 mx-2">•</span>
+                        <span x-text="data.policy_source.domain"></span>
+                        <span class="text-gray-400 mx-2">•</span>
+                        <span x-text="`${data.policy_source.policy_count} policies`"></span>
+                    </div>
+                </div>
+            </template>
+        </section>
+
+        <!-- Overview Cards -->
+        <section class="grid grid-cols-1 md:grid-cols-5 gap-4">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Unique AI safety risks matched from the knowledge graph across all policy concepts.">Total Risks</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="data.risks.length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Number of policy concepts that have domain context generated. Each contains risk groundings with variation axes.">Policy Contexts</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="data.policy_contexts.length"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Total variation axes across all risk groundings. Each axis is a CCO/domain ontology class defining one dimension of prompt diversity.">Total Axes</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="totalAxes"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Total enumeration values (concrete ontology subclasses) available for sampling. More = more diverse prompt generation.">Total Enumerations</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="totalEnumerations"></div>
+            </div>
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+                <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Number of ontology domains active for this run. Always includes CCO, Commons, D3FEND, CSO, LKIF.">Domains</div>
+                <div class="text-3xl font-bold text-gray-900" x-text="data.selected_domains.length"></div>
+            </div>
+        </section>
+
+        <!-- Risks Summary Table -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3" data-tip="All AI safety risks matched from the knowledge graph, with their source frameworks and cross-framework mappings.">Risks Summary<span class="tip-icon" data-tip="Risks are matched from 10+ integrated standards frameworks using semantic search and LLM re-ranking.">i</span></h2>
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-gray-200">
+                            <th class="tip text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Identifier from the source risk framework (e.g. atlas-bias-001, credo-risk-005).">Risk ID</th>
+                            <th class="tip text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Human-readable name of the risk from the source framework.">Risk Name</th>
+                            <th class="tip text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Which AI safety standards framework this risk comes from (IBM Risk Atlas, NIST AI RMF, OWASP, etc.).">Framework</th>
+                            <th class="tip text-right py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Number of ground-truth links to equivalent/related risks in other frameworks.">Cross-Mappings</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template x-for="risk in data.risks" :key="risk.risk_id">
+                            <tr class="border-b border-gray-100 hover:bg-gray-50">
+                                <td class="py-2 px-3"><span class="tip font-mono text-xs" data-tip="Risk identifier from the source framework" x-text="risk.risk_id"></span></td>
+                                <td class="py-2 px-3" x-text="risk.risk_name"></td>
+                                <td class="py-2 px-3">
+                                    <span class="tip px-2 py-1 rounded text-xs font-medium" :class="getFrameworkBadgeClass(risk.risk_framework)" data-tip="Source risk framework" x-text="risk.risk_framework"></span>
+                                </td>
+                                <td class="py-2 px-3 text-right" x-text="risk.cross_mappings.length"></td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Policy Contexts -->
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3" data-tip="Domain context organized by policy concept. Each policy concept contains risk groundings with variation axes and ontology enumerations for prompt generation.">Policy Contexts<span class="tip-icon" data-tip="Expand each policy to see its risk groundings — the axes define the dimensions of prompt variation, and enumerations provide specific domain values.">i</span></h2>
+            <div class="space-y-4">
+                <template x-for="(context, ctxIdx) in data.policy_contexts" :key="ctxIdx">
+                    <div class="border border-gray-200 rounded-lg">
+                        <div class="bg-gray-50 px-4 py-3 cursor-pointer flex justify-between items-center" @click="toggleContext(ctxIdx)">
+                            <h3 class="font-semibold text-gray-900" x-text="context.policy_concept"></h3>
+                            <svg class="w-5 h-5 text-gray-500 transition-transform" :class="{'rotate-180': expandedContexts[ctxIdx]}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                            </svg>
+                        </div>
+                        <div x-show="expandedContexts[ctxIdx]" class="p-4 space-y-6">
+                            <template x-for="(grounding, gIdx) in context.risk_groundings" :key="gIdx">
+                                <div class="border-l-4 border-indigo-300 pl-4">
+                                    <div class="flex items-center gap-2 mb-3">
+                                        <span class="font-mono text-xs text-gray-500" x-text="grounding.risk_id"></span>
+                                        <span class="text-sm font-medium" x-text="getRiskName(grounding.risk_id)"></span>
+                                    </div>
+                                    <div class="space-y-4">
+                                        <template x-for="(axis, axisIdx) in grounding.axes" :key="axisIdx">
+                                            <div class="bg-gray-50 rounded-lg p-4">
+                                                <!-- Axis Header -->
+                                                <div class="flex items-center gap-2 mb-3">
+                                                    <span class="tip font-bold text-gray-900" data-tip="CCO class — the ontological anchor for this variation axis" x-text="axis.cco_class_label"></span>
+                                                    <span class="tip px-2 py-1 bg-teal-100 text-teal-800 rounded text-xs font-medium" data-tip="BFO/CCO category — top-level classification from the Basic Formal Ontology. Determines which semantic roles are available (e.g. Object → agent/object, Process → agent/instrument)." x-text="axis.bfo_category"></span>
+                                                    <template x-for="role in axis.roles" :key="role">
+                                                        <span class="tip px-2 py-1 rounded text-xs font-medium" :class="getRoleBadgeClass(role)" :data-tip="getRoleTip(role)" x-text="role"></span>
+                                                    </template>
+                                                </div>
+
+                                                <!-- Vocabulary Context -->
+                                                <template x-if="axis.vocabulary_label">
+                                                    <div class="mb-3 text-sm">
+                                                        <span class="tip text-gray-600" data-tip="CCO vocabulary concept mapped to this axis. Provides a standardized concept label from the Common Core Ontologies.">Vocabulary:</span>
+                                                        <span class="font-medium ml-1" x-text="axis.vocabulary_label"></span>
+                                                        <span class="font-mono text-xs text-gray-500 ml-1" x-text="`(${axis.vocabulary_concept})`"></span>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Derivation Info -->
+                                                <template x-if="axis.derivation">
+                                                    <div class="text-xs text-gray-500 mb-3 space-x-2">
+                                                        <span><span class="tip" data-tip="How this axis was discovered: 'structural' = from ontology hierarchy (subclass/equivalent/restriction), 'search' = via semantic similarity search, 'seed' = directly from the risk.">Source:</span> <span class="font-medium" x-text="axis.derivation.source"></span></span>
+                                                        <span x-show="axis.derivation.domain">•</span>
+                                                        <span x-show="axis.derivation.domain"><span class="tip" data-tip="Source ontology domain for this axis class (e.g. CCO, FIBO, OBO).">Domain:</span> <span class="font-medium" x-text="axis.derivation.domain"></span></span>
+                                                        <span>•</span>
+                                                        <span>
+                                                            <span class="tip" :data-tip="axis.derivation.effective_confidence > 0 ? 'Structural confidence (0-100%) — combines vocabulary mapping and path length. Higher = more reliable axis.' : 'Search similarity (0-100%) — derived from semantic distance. Higher = closer match to the risk concept.'">Confidence:</span>
+                                                            <span class="font-medium" x-text="confidenceDisplay(axis.derivation)"></span>
+                                                        </span>
+                                                    </div>
+                                                </template>
+
+                                                <!-- Enumerations Table -->
+                                                <template x-if="axis.enumerations && axis.enumerations.length > 0">
+                                                    <div class="overflow-x-auto">
+                                                        <table class="w-full text-sm">
+                                                            <thead>
+                                                                <tr class="border-b border-gray-300">
+                                                                    <th class="tip text-left py-2 px-2 text-xs font-semibold text-gray-600" data-tip="Concrete values for this variation axis — either ontology subclasses or LLM-generated instances. Sampled into prompts during generation.">Enumeration</th>
+                                                                    <th class="tip text-left py-2 px-2 text-xs font-semibold text-gray-600" data-tip="Where this value came from and how it was found. Ontology-sourced values show the ontology name and discovery method (subclass, sibling, search). LLM-generated values were created when ontology coverage was insufficient.">Origin</th>
+                                                                    <th class="tip text-left py-2 px-2 text-xs font-semibold text-gray-600" data-tip="How important this enumeration is for the risk context. High-relevance values are sampled 3x more often than low. Assigned by the LLM.">Relevance</th>
+                                                                </tr>
+                                                            </thead>
+                                                            <tbody>
+                                                                <template x-for="(enum_item, enumIdx) in axis.enumerations" :key="enumIdx">
+                                                                    <tr class="border-b border-gray-200 hover:bg-white">
+                                                                        <td class="py-2 px-2" x-text="enum_item.class_label"></td>
+                                                                        <td class="py-2 px-2">
+                                                                            <span class="tip px-2 py-1 rounded text-xs font-medium"
+                                                                                :class="getOriginBadgeClass(enum_item)"
+                                                                                :data-tip="getOriginTip(enum_item)"
+                                                                                x-text="getOriginLabel(enum_item)"></span>
+                                                                        </td>
+                                                                        <td class="py-2 px-2">
+                                                                            <span class="tip px-2 py-1 rounded text-xs font-medium" :class="getRelevanceBadgeClass(enum_item.relevance)" data-tip="Relevance — how important this enumeration is for the risk scenario" x-text="enum_item.relevance"></span>
+                                                                        </td>
+                                                                    </tr>
+                                                                </template>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </template>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const DATA = {"version": "0.1", "model": "test-model", "timestamp": "", "run_slug": "", "selected_domains": [], "policy_source": null, "config": null, "knowledge_base": null, "risks": [{"risk_id": "ibm-risk-atlas-r1", "risk_name": "R1", "risk_description": "", "risk_concern": "", "risk_framework": "", "cross_mappings": []}], "policy_contexts": []};
+        function reportApp() {
+            return {
+                data: DATA,
+                expandedContexts: {},
+
+                get totalAxes() {
+                    let count = 0;
+                    for (const context of this.data.policy_contexts) {
+                        for (const grounding of context.risk_groundings) {
+                            count += grounding.axes.length;
+                        }
+                    }
+                    return count;
+                },
+
+                get totalEnumerations() {
+                    let count = 0;
+                    for (const context of this.data.policy_contexts) {
+                        for (const grounding of context.risk_groundings) {
+                            for (const axis of grounding.axes) {
+                                if (axis.enumerations) {
+                                    count += axis.enumerations.length;
+                                }
+                            }
+                        }
+                    }
+                    return count;
+                },
+
+                toggleContext(idx) {
+                    this.expandedContexts[idx] = !this.expandedContexts[idx];
+                },
+
+                getRiskName(riskId) {
+                    const risk = this.data.risks.find(r => r.risk_id === riskId);
+                    return risk ? risk.risk_name : riskId;
+                },
+
+                getFrameworkBadgeClass(framework) {
+                    const mapping = {
+                        'IBM Risk Atlas': 'bg-blue-100 text-blue-800',
+                        'NIST AI RMF': 'bg-green-100 text-green-800',
+                        'OWASP LLM Top 10': 'bg-red-100 text-red-800',
+                        'AIR 2024': 'bg-purple-100 text-purple-800'
+                    };
+                    return mapping[framework] || 'bg-gray-100 text-gray-800';
+                },
+
+                getRoleBadgeClass(role) {
+                    const mapping = {
+                        'agent': 'bg-pink-100 text-pink-800',
+                        'instrument': 'bg-blue-100 text-blue-800',
+                        'object': 'bg-green-100 text-green-800'
+                    };
+                    return mapping[role] || 'bg-gray-100 text-gray-800';
+                },
+
+                getRelevanceBadgeClass(relevance) {
+                    const mapping = {
+                        'high': 'bg-green-100 text-green-800',
+                        'medium': 'bg-amber-100 text-amber-800',
+                        'low': 'bg-red-100 text-red-800'
+                    };
+                    return mapping[relevance] || 'bg-gray-100 text-gray-800';
+                },
+
+                confidenceDisplay(derivation) {
+                    if (derivation.effective_confidence > 0) {
+                        return (derivation.effective_confidence * 100).toFixed(0) + '%';
+                    }
+                    if (derivation.best_distance != null) {
+                        return ((1 - derivation.best_distance) * 100).toFixed(0) + '% (search)';
+                    }
+                    return 'N/A';
+                },
+
+                getRoleTip(role) {
+                    const tips = {
+                        'agent': 'Agent — the actor or entity performing or causing the action',
+                        'instrument': 'Instrument — the tool or means used to carry out the action',
+                        'object': 'Object — the entity being acted upon or affected',
+                    };
+                    return tips[role] || role;
+                },
+
+                getOriginLabel(item) {
+                    if (item.source_ontology === 'generated') return 'LLM-generated';
+                    if (item.source_ontology === item.provenance) return item.source_ontology;
+                    return item.source_ontology + ' · ' + item.provenance;
+                },
+
+                getOriginBadgeClass(item) {
+                    if (item.source_ontology === 'generated') return 'bg-amber-100 text-amber-800';
+                    const mapping = {
+                        'subclass': 'bg-blue-100 text-blue-800',
+                        'equivalent': 'bg-purple-100 text-purple-800',
+                        'sibling': 'bg-orange-100 text-orange-800',
+                        'search': 'bg-teal-100 text-teal-800',
+                    };
+                    return mapping[item.provenance] || 'bg-gray-100 text-gray-800';
+                },
+
+                getOriginTip(item) {
+                    if (item.source_ontology === 'generated') {
+                        const model = item.generated_by ? ' by ' + item.generated_by : '';
+                        return 'LLM-generated' + model + ' — created when ontology coverage is insufficient for this axis';
+                    }
+                    const provTips = {
+                        'subclass': 'subclass of the axis class in ' + item.source_ontology,
+                        'equivalent': 'equivalent class via OWL axiom in ' + item.source_ontology,
+                        'restriction': 'derived from OWL restriction in ' + item.source_ontology,
+                        'search': 'found via semantic search in ' + item.source_ontology,
+                        'sibling': 'sibling fallback (leaf node) in ' + item.source_ontology,
+                    };
+                    return provTips[item.provenance] || item.source_ontology + ' · ' + item.provenance;
+                }
+            };
+        }
+    </script>
+</body>
+</html>
