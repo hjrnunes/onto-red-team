@@ -176,17 +176,17 @@
         <template x-for="(risk, idx) in data.risks || []" :key="risk.risk_id">
           <div class="border border-gray-200 rounded-lg"
                x-data="{ expanded: false }">
-            <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+            <div class="flex items-start justify-between p-3 cursor-pointer hover:bg-gray-50"
                  @click="expanded = !expanded">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="tip font-mono text-sm text-gray-700" data-tip="Risk identifier from the source framework" x-text="risk.risk_id"></span>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">
                   <span class="font-semibold text-gray-900" x-text="risk.risk_name"></span>
-                  <span class="tip px-2 py-0.5 rounded text-xs"
+                  <span class="tip px-2 py-0.5 rounded text-xs shrink-0"
                         :class="frameworkColor(risk.risk_framework)"
                         data-tip="Source risk framework"
                         x-text="risk.risk_framework"></span>
                 </div>
+                <div class="font-mono text-xs text-gray-500 break-all" x-text="risk.risk_id"></div>
                 <template x-if="!expanded && risk.cross_mappings?.length">
                   <div class="flex flex-wrap gap-1 mt-1">
                     <template x-for="cm in risk.cross_mappings.slice(0, 3)" :key="cm.id">

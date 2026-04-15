@@ -1663,15 +1663,15 @@
         <div class="space-y-2">
           <template x-for="(risk, idx) in (riskLandscape.risks || [])" :key="risk.risk_id">
             <div class="border border-gray-200 rounded-lg" x-data="{ expanded: false }">
-              <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50" @click="expanded = !expanded">
-                <div class="flex-1">
-                  <div class="flex items-center gap-2 mb-1">
-                    <span class="font-mono text-sm text-gray-700" x-text="risk.risk_id"></span>
+              <div class="flex items-start justify-between p-3 cursor-pointer hover:bg-gray-50" @click="expanded = !expanded">
+                <div class="flex-1 min-w-0">
+                  <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">
                     <span class="font-semibold text-gray-900" x-text="risk.risk_name"></span>
-                    <span class="px-2 py-0.5 rounded text-xs"
+                    <span class="px-2 py-0.5 rounded text-xs shrink-0"
                       :class="rlFrameworkColor(risk.risk_framework)"
                       x-text="risk.risk_framework"></span>
                   </div>
+                  <div class="font-mono text-xs text-gray-500 break-all" x-text="risk.risk_id"></div>
                   <template x-if="!expanded && risk.cross_mappings?.length">
                     <div class="flex flex-wrap gap-1 mt-1">
                       <template x-for="cm in risk.cross_mappings.slice(0, 3)" :key="cm.id">
@@ -1922,9 +1922,9 @@
 
       <!-- Profiles -->
       <template x-for="(profile, pi) in filteredProfiles" :key="pi">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" x-data="{ open: false }">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200" x-data="{ open: false }">
           <!-- Profile header -->
-          <div @click="open = !open" class="px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-start justify-between gap-4">
+          <div @click="open = !open" class="px-5 py-4 cursor-pointer hover:bg-gray-50 transition-colors flex items-start justify-between gap-4 rounded-t-xl">
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2 mb-1">
                 <h3 class="text-sm font-semibold text-gray-800" x-text="profile.risk_name"></h3>
@@ -2179,8 +2179,8 @@
           </h2>
           <div class="space-y-2">
             <template x-for="entry in (taxonomy.entries || [])" :key="entry.id">
-              <div class="border border-gray-200 rounded-lg overflow-hidden" x-data="{expanded: false}">
-                <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50" @click="expanded = !expanded">
+              <div class="border border-gray-200 rounded-lg" x-data="{expanded: false}">
+                <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50 rounded-t-lg" @click="expanded = !expanded">
                   <div class="flex items-center gap-2 flex-1">
                     <span class="font-semibold text-gray-900" x-text="entry.name"></span>
                     <span class="tip px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700" data-tip="LinkML class type for this entry" x-text="entry.type"></span>
