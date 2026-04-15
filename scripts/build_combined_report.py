@@ -21,6 +21,12 @@ from pathlib import Path
 
 import yaml
 
+# Add refiner to path so we can import from it
+sys.path.insert(0, str(Path(__file__).parent / "../refiner/src"))
+
+from refiner.ingest_report import build_report_data
+from refiner.models import PolicyDocument, RunReport
+
 
 TEMPLATE = Path(__file__).parent / "../refiner/src/refiner/combined_report_template.html"
 
@@ -81,16 +87,36 @@ def build_combined_report(
     # Discover artifacts
     eval_json = _discover(run_dir, "*-evaluation.json")
     adv_prompts = _discover(run_dir, "*-adversarial-prompts.jsonl")
+    risk_landscape = _discover(run_dir, "*-risk-landscape.yaml")
     domain_ctx = _discover(run_dir, "*-domain-context.yaml")
-    taxonomy = _discover(run_dir, "*-taxonomy.yaml")
+    taxonomy = _discover(run_dir, "*-taxonomy.json") or _discover(run_dir, "*-taxonomy.yaml")
     enriched_policy = _discover(run_dir, "*-policy-document.json") or _discover(run_dir, "*-enriched.json")
 
     # Load data
     report_data = _load_json(eval_json)
     explorer_data = _load_jsonl(adv_prompts)
+    rl_data = _load_yaml(risk_landscape)
     dc_data = _load_yaml(domain_ctx)
-    tax_data = _load_yaml(taxonomy)
-    policy_data = _load_json(enriched_policy)
+    tax_data = _load_json(taxonomy) if taxonomy and taxonomy.suffix == ".json" else _load_yaml(taxonomy)
+
+    # Enrich policy data with confidence scores, stakeholder groups, and summary
+    run_report_yaml = _discover(run_dir, "*-run-report.yaml")
+    if enriched_policy:
+        raw_policy = _load_json(enriched_policy)
+        rr_data = _load_yaml(run_report_yaml)
+        doc = PolicyDocument(**raw_policy)
+        rr = RunReport(
+            model=rr_data.get("model", ""),
+            policy_set=rr_data.get("policy_set", ""),
+            timestamp=rr_data.get("timestamp", ""),
+            stages_completed=rr_data.get("stages_completed", []),
+            events=rr_data.get("events", []),
+            token_usage=rr_data.get("token_usage"),
+        )
+        meta = {"model": rr.model, "policy_set": rr.policy_set, "timestamp": rr.timestamp}
+        policy_data = build_report_data(doc, rr, meta)
+    else:
+        policy_data = {}
 
     # Report what was found
     found = []
@@ -98,8 +124,10 @@ def build_combined_report(
         found.append(f"evaluation ({eval_json.name})")
     if adv_prompts:
         found.append(f"prompts ({len(explorer_data)} records)")
+    if risk_landscape:
+        found.append(f"risk landscape ({len(rl_data.get('risks', []))} risks)")
     if domain_ctx:
-        found.append(f"domain context ({len(dc_data.get('profiles', []))} profiles)")
+        found.append(f"domain context ({len(dc_data.get('policy_contexts', []))} policy contexts)")
     if taxonomy:
         found.append(f"taxonomy ({len(tax_data.get('entries', []))} entries)")
     if enriched_policy:
@@ -120,11 +148,32 @@ def build_combined_report(
     # Build title
     title = title or _title_from_dir(run_dir)
 
+    # Transform domain context: flatten policy_contexts[].risk_groundings[]
+    # into profiles[] for the combined template
+    if "policy_contexts" in dc_data and "profiles" not in dc_data:
+        risks_by_id = {r["risk_id"]: r for r in dc_data.get("risks", [])}
+        profiles = []
+        for ctx in dc_data.get("policy_contexts", []):
+            for grounding in ctx.get("risk_groundings", []):
+                risk_meta = risks_by_id.get(grounding["risk_id"], {})
+                profiles.append({
+                    "risk_id": grounding["risk_id"],
+                    "risk_name": risk_meta.get("risk_name", grounding["risk_id"]),
+                    "risk_description": risk_meta.get("risk_description"),
+                    "risk_concern": risk_meta.get("risk_concern"),
+                    "risk_framework": risk_meta.get("risk_framework"),
+                    "policy_concept": ctx.get("policy_concept"),
+                    "axes": grounding.get("axes", []),
+                    "cross_mappings": risk_meta.get("cross_mappings", []),
+                })
+        dc_data["profiles"] = profiles
+
     # Substitute placeholders
     html = template
     html = html.replace("__REPORT_TITLE__", title)
     html = html.replace("__REPORT_DATA__", json.dumps(report_data))
     html = html.replace("__EXPLORER_DATA__", json.dumps(explorer_data, separators=(",", ":")))
+    html = html.replace("__RISK_LANDSCAPE_DATA__", json.dumps(rl_data))
     html = html.replace("__DOMAIN_CONTEXT_DATA__", json.dumps(dc_data))
     html = html.replace("__TAXONOMY_DATA__", json.dumps(tax_data))
     html = html.replace("__POLICY_DATA__", json.dumps(policy_data))
