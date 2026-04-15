@@ -61,42 +61,42 @@ INTENT_REKEY: dict[str, str] = {
 
 INTENT_TO_RISK: dict[str, dict[str, str]] = {
     "S001regulatorycompliance": {
-        "risk_id": "credo-risk-023",
+        "nexus_risk_id": "credo-risk-023",
         "risk_name": "Regulatory compliance",
         "risk_framework": "Credo AI",
     },
     "S002dataprivacy": {
-        "risk_id": "nist-data-privacy",
+        "nexus_risk_id": "nist-data-privacy",
         "risk_name": "Data Privacy",
         "risk_framework": "NIST AI RMF",
     },
     "S003nondisclosure": {
-        "risk_id": "atlas-non-disclosure",
+        "nexus_risk_id": "atlas-non-disclosure",
         "risk_name": "Non-disclosure",
         "risk_framework": "IBM Risk Atlas",
     },
     "S004personalinformation": {
-        "risk_id": "atlas-personal-information-in-data",
+        "nexus_risk_id": "atlas-personal-information-in-data",
         "risk_name": "Personal information in data",
         "risk_framework": "IBM Risk Atlas",
     },
     "S005sensitiveinfo": {
-        "risk_id": "credo-risk-037",
+        "nexus_risk_id": "credo-risk-037",
         "risk_name": "Compromised sensitive information",
         "risk_framework": "Credo AI",
     },
     "S006accountability": {
-        "risk_id": "atlas-accountability-agentic",
+        "nexus_risk_id": "atlas-accountability-agentic",
         "risk_name": "Accountability of AI agent actions",
         "risk_framework": "IBM Risk Atlas",
     },
     "S007privacycompromise": {
-        "risk_id": "mit-ai-risk-subdomain-2.1",
+        "nexus_risk_id": "mit-ai-risk-subdomain-2.1",
         "risk_name": "Compromise of privacy",
         "risk_framework": "MIT AI Risk Repository",
     },
     "S008governancefailure": {
-        "risk_id": "mit-ai-risk-subdomain-6.5",
+        "nexus_risk_id": "mit-ai-risk-subdomain-6.5",
         "risk_name": "Governance failure",
         "risk_framework": "MIT AI Risk Repository",
     },
@@ -161,7 +161,8 @@ def load_adversarial_prompts(path: Path) -> list[dict]:
     entries: list[dict] = []
     with open(path) as f:
         for line in f:
-            entries.append(json.loads(line))
+            if line.strip():
+                entries.append(json.loads(line))
 
     # Group by (risk_id, technique) to assign sequential indices
     group_counters: dict[tuple[str, str], int] = defaultdict(int)
@@ -251,16 +252,23 @@ def rekey_report(report_path: Path, prompts: list[dict]) -> list[dict]:
 
                 entry["intent"] = new_intent
 
-                # Update notes.stub.intent
-                if "notes" in entry and "stub" in entry["notes"]:
-                    entry["notes"]["stub"]["intent"] = new_intent
+                # Ensure notes.stub exists
+                notes = entry.get("notes", {})
+                if not isinstance(notes, dict):
+                    notes = {}
+                if "stub" not in notes:
+                    notes["stub"] = {}
+                if not isinstance(notes["stub"], dict):
+                    notes["stub"] = {}
+                notes["stub"]["intent"] = new_intent
+                entry["notes"] = notes
 
-                    # Assign a stub ID by cycling through available stubs
-                    if risk_info:
-                        risk_id = risk_info["risk_id"]
-                        if risk_id in stub_cycles:
-                            stub = next(stub_cycles[risk_id])
-                            entry["notes"]["stub"]["id"] = stub["stub_id"]
+                # Assign a stub ID by cycling through available stubs
+                if risk_info:
+                    risk_id = risk_info["nexus_risk_id"]
+                    if risk_id in stub_cycles:
+                        stub = next(stub_cycles[risk_id])
+                        notes["stub"]["id"] = stub["stub_id"]
 
             elif entry_type == "eval_intent":
                 old_intent = entry.get("intent", "")
@@ -295,9 +303,9 @@ def build_intent_mapping(cross_mappings: dict[str, list[dict]]) -> dict:
     """Build the ort_intent_mapping.json structure."""
     intent_map: dict[str, dict] = {}
     for intent_id, risk_info in INTENT_TO_RISK.items():
-        risk_id = risk_info["risk_id"]
+        risk_id = risk_info["nexus_risk_id"]
         intent_map[intent_id] = {
-            "risk_id": risk_id,
+            "nexus_risk_id": risk_id,
             "risk_name": risk_info["risk_name"],
             "risk_framework": risk_info["risk_framework"],
             "risk_group": RISK_TO_GROUP.get(risk_id, "Unknown"),
@@ -312,11 +320,12 @@ def build_intent_mapping(cross_mappings: dict[str, list[dict]]) -> dict:
             "domain": "healthcare",
         },
         "curie_map": {
-            "atlas": "https://www.ibm.com/docs/en/watsonx/saas?topic=risks/",
-            "credo": "https://www.credo.ai/risk-catalog/",
-            "nist": "https://airc.nist.gov/AI_RMF/",
-            "mit": "https://airisk.mit.edu/",
-            "granite-guardian": "https://github.com/ibm-granite/granite-guardian/",
+            "airo": "https://w3id.org/airo#",
+            "cco": "https://www.commoncoreontologies.org/",
+            "obo": "http://purl.obolibrary.org/obo/",
+            "d3fend": "http://d3fend.mitre.org/ontologies/d3fend.owl#",
+            "cso": "http://taxonomy-refiner.io/ontologies/cso#",
+            "lkif": "http://www.estrellaproject.org/lkif-core/",
         },
         "intent_map": intent_map,
     }
@@ -393,7 +402,7 @@ def main() -> None:
     for p in prompts:
         stub_entries.append(
             {
-                "stub_id": p["stub_id"],
+                "id": p["stub_id"],
                 "risk_id": p["risk_id"],
                 "risk_name": p.get("risk_name", ""),
                 "risk_framework": p.get("risk_framework", ""),
@@ -403,7 +412,9 @@ def main() -> None:
                 "prompt": p.get("prompt", ""),
                 "sampled_axes": [
                     {
+                        "cco_class_uri": ax.get("cco_class_uri", ""),
                         "cco_class_label": ax.get("cco_class_label", ""),
+                        "bfo_category": ax.get("bfo_category", ""),
                         "sampled_label": ax.get("sampled_label", ""),
                         "source_ontology": ax.get("source_ontology", ""),
                         "relevance": ax.get("relevance", ""),
@@ -433,7 +444,7 @@ def main() -> None:
     print("\n  Intent distribution (attempts):")
     for intent, count in sorted(intent_dist.items()):
         risk_info = INTENT_TO_RISK.get(intent, {})
-        risk_id = risk_info.get("risk_id", "?")
+        risk_id = risk_info.get("nexus_risk_id", "?")
         print(f"    {intent}: {count} -> {risk_id}")
 
     print(f"\nOutputs written to {OUTPUT_DIR}")
