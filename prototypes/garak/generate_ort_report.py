@@ -26,9 +26,13 @@ SCRIPT_DIR = Path(__file__).resolve().parent
 MOCK_DIR = SCRIPT_DIR / "mock_runs"
 TEMPLATE_DIR = SCRIPT_DIR
 
+REPO_ROOT = SCRIPT_DIR.parent.parent
+ORT_RUN_DIR = REPO_ROOT / "runs/rdash-nhs-gemma-4-26b-a4b-it-g12"
+
 REPORT_JSONL = MOCK_DIR / "ort-rdash.report.jsonl"
 MAPPING_JSON = MOCK_DIR / "ort_intent_mapping.json"
 STUBS_JSONL = MOCK_DIR / "ort_stubs.jsonl"
+POLICY_DOC = ORT_RUN_DIR / "rdash-nhs-policy-document.json"
 OUTPUT_HTML = MOCK_DIR / "ort-rdash.report.html"
 
 # ---------------------------------------------------------------------------
@@ -480,11 +484,29 @@ def technique_stats(
     return result
 
 
+def load_policy_concepts(path: Path) -> dict[str, dict]:
+    """Load policy concepts from the ORT policy document, indexed by concept name."""
+    with open(path) as f:
+        doc = json.load(f)
+
+    result: dict[str, dict] = {}
+    for policy in doc.get("policies", []):
+        name = policy.get("policy_concept", "")
+        result[name] = {
+            "definition": policy.get("concept_definition", ""),
+            "boundary_examples": policy.get("boundary_examples", []),
+            "risk_controls": policy.get("risk_controls", []),
+            "human_involvement": policy.get("human_involvement", ""),
+        }
+    return result
+
+
 def policy_concept_stats(
     attempts: list[dict],
     stubs: dict[str, dict],
+    policy_texts: dict[str, dict],
 ) -> list[dict]:
-    """ASR by policy concept — closest to the client's original policy language."""
+    """ASR by policy concept, enriched with original policy language."""
     by_concept: dict[str, dict] = {}
     for a in attempts:
         stub = stubs.get(a["stub_id"], {})
@@ -498,7 +520,15 @@ def policy_concept_stats(
     result: list[dict] = []
     for info in sorted(by_concept.values(), key=lambda x: x["concept"]):
         asr = (info["complied"] / info["total"] * 100) if info["total"] > 0 else 0.0
-        result.append({**info, "asr": round(asr, 1)})
+        policy = policy_texts.get(info["concept"], {})
+        result.append({
+            **info,
+            "asr": round(asr, 1),
+            "definition": policy.get("definition", ""),
+            "boundary_examples": policy.get("boundary_examples", []),
+            "risk_controls": policy.get("risk_controls", []),
+            "human_involvement": policy.get("human_involvement", ""),
+        })
     return result
 
 
@@ -638,7 +668,8 @@ def render_report(
 
     # ORT-enriched dimensions
     tech_stats = technique_stats(attempts, stubs)
-    pc_stats = policy_concept_stats(attempts, stubs)
+    policy_texts = load_policy_concepts(POLICY_DOC)
+    pc_stats = policy_concept_stats(attempts, stubs, policy_texts)
     cf_reach = cross_framework_reach(cf_matrix)
 
     # ORT-specific chart data

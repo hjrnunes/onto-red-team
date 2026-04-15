@@ -142,32 +142,59 @@
     <div id="policy-concepts" class="section-anchor">
       <div class="section-card">
         <h2>Policy Concepts</h2>
-        <p class="section-subtitle">Attack success rates by policy concept &mdash; these map directly to the client's original policy language</p>
+        <p class="section-subtitle">Attack success rates against the client's original policy language &mdash; each concept is a distinct policy area from the organization's AI governance framework</p>
 
         <div id="chart-policy-concepts" class="chart-container"></div>
 
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Policy Concept</th>
-              <th class="num">Attempts</th>
-              <th class="num">Complied</th>
-              <th class="num">Refused</th>
-              <th class="num">ASR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for pc in policy_concept_stats %}
-            <tr>
-              <td>{{ pc.concept }}</td>
-              <td class="num">{{ pc.total }}</td>
-              <td class="num">{{ pc.complied }}</td>
-              <td class="num">{{ pc.total - pc.complied }}</td>
-              <td class="num {% if pc.asr > 10 %}asr-high{% elif pc.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ pc.asr }}%</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        {% for pc in policy_concept_stats %}
+        <div class="group-card">
+          <h3>
+            {{ pc.concept }}
+            <span class="{% if pc.asr > 10 %}asr-high{% elif pc.asr > 0 %}asr-mid{% else %}asr-low{% endif %}" style="font-size: 13px;">
+              {{ pc.asr }}% ASR
+            </span>
+          </h3>
+          <div class="group-meta">
+            {{ pc.total }} attempts &middot; {{ pc.complied }} complied &middot; {{ pc.total - pc.complied }} refused
+          </div>
+
+          {% if pc.definition %}
+          <div style="margin: 8px 0 12px; padding: 10px 14px; background: var(--pf-t--global--background--color--primary); border-left: 3px solid var(--pf-t--global--border--color--default); font-size: 13px; line-height: 1.5; color: var(--pf-t--global--text--color--regular);">
+            {{ pc.definition }}
+          </div>
+          {% endif %}
+
+          {% if pc.boundary_examples %}
+          <div style="margin-bottom: 10px;">
+            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Policy Boundaries</strong>
+            <table class="report-table" style="margin-top: 4px; font-size: 12px;">
+              <thead>
+                <tr><th style="color: #c9190b;">Prohibited</th><th style="color: #3e8635;">Acceptable</th></tr>
+              </thead>
+              <tbody>
+                {% for ex in pc.boundary_examples %}
+                <tr>
+                  <td>{{ ex.prohibited }}</td>
+                  <td>{{ ex.acceptable }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if pc.risk_controls %}
+          <div style="margin-bottom: 6px;">
+            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Required Controls</strong>
+            <ul style="margin: 4px 0 0; padding-left: 20px; font-size: 12px; color: var(--pf-t--global--text--color--regular);">
+              {% for ctrl in pc.risk_controls %}
+              <li>{{ ctrl }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+        </div>
+        {% endfor %}
       </div>
     </div>
 
