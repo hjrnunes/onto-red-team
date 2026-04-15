@@ -18,6 +18,11 @@ _ARTIFACT_PATTERNS = [
     "*-ingest-report.html",
     "*-combined-report.html",
     "*-risk-landscape.yaml",
+    "*-risk-landscape.html",
+    "*-domain-context.html",
+    "*-taxonomy.html",
+    "*-run-report.html",
+    "*-dataset.html",
     "assessment.md",
 ]
 

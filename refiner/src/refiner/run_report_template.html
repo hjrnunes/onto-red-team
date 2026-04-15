@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Report</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <style>
+    [x-cloak] { display: none !important; }
+    .tip {
+      position: relative;
+      display: inline-block;
+      cursor: help;
+    }
+    .tip .tip-icon {
+      display: inline-block;
+      width: 1rem;
+      height: 1rem;
+      border-radius: 50%;
+      background: #6b7280;
+      color: white;
+      text-align: center;
+      font-size: 0.75rem;
+      line-height: 1rem;
+    }
+    .tip:hover::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 0.5rem;
+      background: #1f2937;
+      color: white;
+      border-radius: 0.375rem;
+      white-space: nowrap;
+      font-size: 0.875rem;
+      z-index: 10;
+      margin-bottom: 0.25rem;
+    }
+  </style>
+</head>
+<body class="bg-gray-100 min-h-screen" x-data="reportApp()" x-cloak>
+  <header class="bg-gray-900 text-white px-6 py-4 shadow-lg">
+    <h1 class="text-2xl font-bold">Run Report</h1>
+    <p class="text-gray-400 text-sm mt-1" x-text="`${data.policy_set} — ${data.model} — ${data.timestamp}`"></p>
+  </header>
+
+  <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+    <!-- Overview Section -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="Summary of the pipeline run configuration — model used, policy set processed, and stages completed.">Overview</span>
+        <span class="tip-icon tip" data-tip="Summary of the pipeline run configuration — model used, policy set processed, and stages completed.">i</span>
+      </h2>
+      <div class="space-y-3">
+        <div class="grid grid-cols-3 gap-4 text-sm">
+          <div>
+            <span class="text-gray-500 tip" data-tip="The LLM used for all pipeline stages (risk matching, domain context, prompt generation).">Model:</span>
+            <span class="ml-2 font-medium" x-text="data.model"></span>
+          </div>
+          <div>
+            <span class="text-gray-500 tip" data-tip="The content policy document processed in this run.">Policy Set:</span>
+            <span class="ml-2 font-medium" x-text="data.policy_set"></span>
+          </div>
+          <div>
+            <span class="text-gray-500 tip" data-tip="When this pipeline run completed.">Timestamp:</span>
+            <span class="ml-2 font-medium" x-text="data.timestamp"></span>
+          </div>
+        </div>
+        <div>
+          <div class="text-gray-500 text-sm mb-2 tip" data-tip="Pipeline stages completed in order. Full pipeline: identify_domains → map_risks → anchor → contextualize → structure.">Stages Completed:</div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <template x-for="(stage, idx) in data.stages_completed" :key="idx">
+              <div class="flex items-center gap-2">
+                <span
+                  class="tip px-3 py-1 rounded-full text-xs font-medium"
+                  :class="{
+                    'bg-indigo-100 text-indigo-700': stage === 'identify_domains',
+                    'bg-blue-100 text-blue-700': stage === 'map_risks',
+                    'bg-green-100 text-green-700': stage === 'anchor',
+                    'bg-emerald-100 text-emerald-700': stage === 'contextualize',
+                    'bg-purple-100 text-purple-700': stage === 'structure'
+                  }"
+                  :data-tip="stageTip(stage)"
+                  x-text="stage"
+                ></span>
+                <span
+                  x-show="idx < data.stages_completed.length - 1"
+                  class="text-gray-400"
+                >→</span>
+              </div>
+            </template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Token Usage Section -->
+    <section x-show="data.token_usage" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="LLM API token consumption for this run. Higher counts indicate more complex processing or larger policy documents.">Token Usage</span>
+        <span class="tip-icon tip" data-tip="LLM API token consumption for this run. Higher counts indicate more complex processing or larger policy documents.">i</span>
+      </h2>
+      <div class="grid grid-cols-4 gap-4 text-sm">
+        <div>
+          <span class="text-gray-500 tip" data-tip="Input tokens sent to the LLM across all API calls in this run.">Prompt Tokens:</span>
+          <span class="ml-2 font-medium" x-text="data.token_usage?.prompt_tokens || 0"></span>
+        </div>
+        <div>
+          <span class="text-gray-500 tip" data-tip="Output tokens generated by the LLM across all calls.">Completion Tokens:</span>
+          <span class="ml-2 font-medium" x-text="data.token_usage?.completion_tokens || 0"></span>
+        </div>
+        <div>
+          <span class="text-gray-500 tip" data-tip="Total token consumption (prompt + completion). Use for cost estimation.">Total Tokens:</span>
+          <span class="ml-2 font-medium" x-text="data.token_usage?.total_tokens || 0"></span>
+        </div>
+        <div>
+          <span class="text-gray-500 tip" data-tip="Number of separate LLM API calls made during the pipeline run.">Calls:</span>
+          <span class="ml-2 font-medium" x-text="data.token_usage?.calls || 0"></span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Pipeline Events Section -->
+    <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="Raw diagnostic events emitted during each pipeline stage. These trace decisions, filtering, and fallbacks the pipeline made.">Pipeline Events</span>
+        <span class="tip-icon tip" data-tip="Raw diagnostic events emitted during each pipeline stage. These trace decisions, filtering, and fallbacks the pipeline made.">i</span>
+      </h2>
+      <div class="space-y-4">
+        <template x-for="[stageName, events] in Object.entries(stages)" :key="stageName">
+          <div
+            class="border-l-4 pl-4 py-2"
+            :class="{
+              'border-indigo-500': stageName === 'identify_domains',
+              'border-blue-500': stageName === 'map_risks',
+              'border-green-500': stageName === 'anchor',
+              'border-emerald-500': stageName === 'contextualize',
+              'border-purple-500': stageName === 'structure'
+            }"
+          >
+            <h3 class="font-semibold text-gray-700 mb-2">
+              <span class="tip" :data-tip="stageTip(stageName)" x-text="stageName"></span>
+            </h3>
+            <div class="space-y-2">
+              <template x-for="(event, idx) in events" :key="idx">
+                <div class="text-sm">
+                  <!-- identify_domains events -->
+                  <template x-if="event.event === 'selected_domains'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Domain ontologies the LLM selected as relevant. Always-included: CCO, Commons, D3FEND, CSO, LKIF. Selectable: FIBO (finance), OBO (biomedical), IOF (manufacturing).">Selected Domains:</span>
+                      <div class="flex gap-2 mt-1 flex-wrap">
+                        <template x-for="domain in event.domains" :key="domain">
+                          <span class="px-2 py-1 bg-indigo-100 text-indigo-700 rounded text-xs" x-text="domain"></span>
+                        </template>
+                      </div>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'invalid_domain_keys'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="LLM returned domain keys that don't match any known ontology. Silently dropped. High counts indicate hallucination.">Invalid Domain Keys:</span>
+                      <span class="ml-2 text-red-600 font-medium" x-text="event.count"></span>
+                    </div>
+                  </template>
+
+                  <!-- map_risks events -->
+                  <template x-if="event.event === 'match_count'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Number of risks matched to this policy concept from the knowledge graph.">Match Count:</span>
+                      <span class="ml-2 font-medium" x-text="event.policy_concept"></span>
+                      <span class="ml-1 text-gray-400">—</span>
+                      <span class="ml-1 font-medium" x-text="event.count"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'weak_match'">
+                    <div class="text-amber-600">
+                      <span class="text-gray-500 tip" data-tip="Risk matched with semantic distance > 0.4. May not genuinely apply to the policy concept.">Weak Match:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                      <span class="ml-1 text-gray-400">—</span>
+                      <span class="ml-1" x-text="`distance: ${event.distance}`"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'invalid_risk_indices'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="LLM returned out-of-range risk indices. Indicates the model isn't following the numbered-choice format.">Invalid Risk Indices:</span>
+                      <span class="ml-2 text-red-600 font-medium" x-text="event.count"></span>
+                    </div>
+                  </template>
+
+                  <!-- anchor events -->
+                  <template x-if="event.event === 'candidate_tiers'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Ontology candidate sources by tier: seeds (from risk), structural (subclass/equivalent), search_connected (search + ontology links), search_only (pure search), merged (final count).">Candidate Tiers:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                      <span class="ml-2 text-xs text-gray-500">
+                        seeds:<span class="ml-1 font-medium" x-text="event.seeds"></span>
+                        structural:<span class="ml-1 font-medium" x-text="event.structural"></span>
+                        search_connected:<span class="ml-1 font-medium" x-text="event.search_connected"></span>
+                        search_only:<span class="ml-1 font-medium" x-text="event.search_only"></span>
+                        merged:<span class="ml-1 font-medium" x-text="event.merged"></span>
+                      </span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'domain_filtered'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Candidates filtered by domain relevance. Filtered = from irrelevant ontologies, kept = passed domain filter.">Domain Filtered:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                      <span class="ml-2 text-red-600 text-xs" x-text="`filtered: ${event.total_filtered}`"></span>
+                      <span class="ml-2 text-green-600 text-xs" x-text="`kept: ${event.total_kept}`"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'role_derivation'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="How semantic role was assigned. Deterministic derivation from BFO/CCO superclass chain is preferred over LLM assignment.">Role Derivation:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                      <span class="ml-1 text-gray-400">—</span>
+                      <span class="ml-1" x-text="event.role"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'cache_hit'">
+                    <div class="text-green-600">
+                      <span class="text-gray-500 tip" data-tip="Risk's variation axes reused from a prior policy's LLM call (same risk matched from multiple policies). Saves LLM calls.">Cache Hit:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                    </div>
+                  </template>
+
+                  <!-- contextualize events -->
+                  <template x-if="event.event === 'variations_generated'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Number of variation enumerations generated for this risk-axis combination.">Variations Generated:</span>
+                      <span class="ml-2 font-medium font-mono text-xs" x-text="event.risk_id"></span>
+                      <span class="ml-1 text-gray-400">—</span>
+                      <span class="ml-1 text-xs text-gray-500" x-text="event.axis_uri"></span>
+                      <span class="ml-2 font-semibold text-emerald-700" x-text="`×${event.count}`"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'sibling_fallback'">
+                    <div class="text-amber-600">
+                      <span class="text-gray-500 tip" data-tip="Subclass lookup returned empty (leaf node), so sibling classes were used instead.">Sibling Fallback:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                      <span class="ml-1 text-gray-400">—</span>
+                      <span class="ml-1" x-text="`axis: ${event.axis}`"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'empty_enumerations'">
+                    <div class="text-red-600">
+                      <span class="text-gray-500 tip" data-tip="Both subclass and sibling lookups returned empty. This axis has no concrete values.">Empty Enumerations:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                      <span class="ml-1 text-gray-400">—</span>
+                      <span class="ml-1" x-text="`axis: ${event.axis}`"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'self_references_filtered'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Enumerations pointing back to the axis's own class were removed (redundant).">Self References Filtered:</span>
+                      <span class="ml-2 font-medium" x-text="event.count"></span>
+                    </div>
+                  </template>
+                  <template x-if="event.event === 'disjoint_filtered'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Enumerations removed because they are disjoint from the axis class in the ontology.">Disjoint Filtered:</span>
+                      <span class="ml-2 font-medium" x-text="event.count"></span>
+                    </div>
+                  </template>
+
+                  <!-- stage lifecycle events -->
+                  <template x-if="event.event === 'stage_completed'">
+                    <div class="text-green-600">
+                      <span class="text-gray-500 tip" data-tip="Stage finished processing successfully.">Stage Completed:</span>
+                      <span class="ml-2 font-medium" x-text="event.stage"></span>
+                    </div>
+                  </template>
+
+                  <!-- structure events -->
+                  <template x-if="event.event === 'cross_mappings_filtered'">
+                    <div>
+                      <span class="text-gray-500 tip" data-tip="Cross-mapping targets not found in the search index. Known limitation: uses search results, not full knowledge graph.">Cross Mappings Filtered:</span>
+                      <span class="ml-2 font-medium" x-text="event.risk_id"></span>
+                      <span class="ml-1 text-gray-400">—</span>
+                      <span class="ml-1" x-text="`count: ${event.count}`"></span>
+                    </div>
+                  </template>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const DATA = __REPORT_DATA__;
+    function reportApp() {
+      const stages = {};
+      for (const ev of DATA.events || []) {
+        if (!stages[ev.stage]) stages[ev.stage] = [];
+        stages[ev.stage].push(ev);
+      }
+      return {
+        data: DATA,
+        stages,
+
+        stageTip(stage) {
+          const tips = {
+            'identify_domains': 'Select ontology domains relevant to the policies. Always includes CCO, Commons, D3FEND, CSO, LKIF; may add FIBO, OBO, IOF based on policy content.',
+            'map_risks': 'Match each policy concept to known AI safety risks from the knowledge graph (600+ risks across 10 frameworks). Uses semantic search with LLM re-ranking.',
+            'anchor': 'Find ontological anchors (CCO/domain classes) for each risk and enumerate subclasses. Assigns semantic roles (agent, object, instrument) from BFO/CCO hierarchy.',
+            'contextualize': 'Generate domain-specific variation values for each axis. Applies sibling fallback for leaf nodes, filters self-references and disjoint classes.',
+            'structure': 'Build the final enriched taxonomy with cross-framework mappings and domain context summaries.',
+          };
+          return tips[stage] || 'Pipeline stage';
+        }
+      };
+    }
+  </script>
+</body>
+</html>

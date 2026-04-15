@@ -237,6 +237,15 @@
                   <dd class="font-mono text-amber-600" x-text="info.empty_enumerations"></dd>
                 </div>
               </template>
+              <!-- variations_generated -->
+              <template x-if="info.variations_generated">
+                <div class="flex justify-between">
+                  <dt class="text-gray-400">
+                    <span class="tip" data-tip="Total variation enumerations generated across all risk axes in the contextualize stage.">Variations generated</span>
+                  </dt>
+                  <dd class="font-mono text-emerald-600" x-text="info.variations_generated"></dd>
+                </div>
+              </template>
               <!-- self_references_filtered -->
               <template x-if="info.self_references_filtered">
                 <div class="flex justify-between">

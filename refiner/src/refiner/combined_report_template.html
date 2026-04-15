@@ -33,6 +33,11 @@
       font-size: 10px; font-weight: 700; font-style: normal; line-height: 1;
       margin-left: 4px; flex-shrink: 0; cursor: help; vertical-align: middle;
     }
+    .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; }
+    .dot-green { background: #22c55e; }
+    .dot-amber { background: #f59e0b; }
+    .dot-red { background: #ef4444; }
+    .flow-arrow { color: #9ca3af; font-size: 1.25rem; line-height: 1; }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen" x-data="app()" x-cloak>
@@ -45,7 +50,7 @@
           <h1 class="text-2xl font-bold tracking-tight">__REPORT_TITLE__</h1>
           <p class="text-gray-400 text-xs mt-0.5">Red-team prompt generation pipeline report</p>
           <p class="text-gray-400 text-sm mt-0.5">
-            <span x-text="data.run?.policy_set || policy?.organization?.name || ''"></span>
+            <span x-text="data.run?.policy_set || policy?.document?.organization?.name || ''"></span>
             <template x-if="data.run?.model">
               <span> &mdash; <span x-text="data.run.model"></span></span>
             </template>
@@ -76,6 +81,295 @@
       </nav>
     </div>
   </header>
+
+
+  <!-- ═══════════════ TAB: OVERVIEW ═══════════════ -->
+  <div x-show="tab === 'overview'">
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+      <!-- Pipeline Flow Diagram -->
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-5">Pipeline Stages</h2>
+        <div class="flex items-stretch gap-0 overflow-x-auto pb-2">
+
+          <!-- Stage 1: Ingest -->
+          <button @click="tab = 'policy'" class="flex-1 min-w-[180px] group cursor-pointer">
+            <div class="rounded-xl border-2 p-4 transition-all h-full flex flex-col"
+              :class="policy?.document?.organization?.name ? 'border-indigo-300 bg-indigo-50 hover:border-indigo-500 hover:shadow-md' : 'border-gray-200 bg-gray-50 opacity-60'">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                  :class="policy?.document?.organization?.name ? 'bg-indigo-600 text-white' : 'bg-gray-300 text-gray-500'">1</span>
+                <h3 class="font-semibold text-gray-900">Ingest</h3>
+              </div>
+              <p class="text-xs text-gray-500 mb-3 flex-1">Parse content policy into structured concepts with boundary examples</p>
+              <div x-show="policy?.document?.organization?.name" class="space-y-1">
+                <div class="text-xs text-gray-600">
+                  <span class="font-semibold text-indigo-700" x-text="policy.document?.policies?.length || 0"></span> policies
+                </div>
+                <div class="text-xs text-gray-600">
+                  <span class="font-semibold text-indigo-700" x-text="policy.confidence?.summary?.boundary_pairs_total || 0"></span> boundary pairs
+                </div>
+              </div>
+              <div x-show="!policy?.document?.organization?.name" class="text-xs text-gray-400 italic">Not available</div>
+              <div class="mt-3 text-[10px] font-medium text-indigo-600 opacity-0 group-hover:opacity-100 transition-opacity">View Policy &rarr;</div>
+            </div>
+          </button>
+
+          <div class="flex items-center px-1 text-gray-300 text-2xl shrink-0">&rarr;</div>
+
+          <!-- Stage 2: Refine -->
+          <div class="flex-1 min-w-[180px] flex flex-col gap-2">
+            <button @click="tab = 'risk_landscape'" class="group cursor-pointer flex-1">
+              <div class="rounded-xl border-2 p-4 transition-all h-full flex flex-col"
+                :class="(riskLandscape.risks || []).length ? 'border-emerald-300 bg-emerald-50 hover:border-emerald-500 hover:shadow-md' : 'border-gray-200 bg-gray-50 opacity-60'">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                    :class="(riskLandscape.risks || []).length ? 'bg-emerald-600 text-white' : 'bg-gray-300 text-gray-500'">2</span>
+                  <h3 class="font-semibold text-gray-900">Refine</h3>
+                </div>
+                <p class="text-xs text-gray-500 mb-3 flex-1">Match risks, anchor to ontologies, enumerate domain variations</p>
+                <div x-show="(riskLandscape.risks || []).length" class="space-y-1">
+                  <div class="text-xs text-gray-600">
+                    <span class="font-semibold text-emerald-700" x-text="(riskLandscape.risks || []).length"></span> risks &middot;
+                    <span class="font-semibold text-emerald-700" x-text="Object.keys(riskLandscape.framework_coverage || {}).length"></span> frameworks
+                  </div>
+                  <div class="text-xs text-gray-600">
+                    <span class="font-semibold text-emerald-700" x-text="dcTotalAxes"></span> axes &middot;
+                    <span class="font-semibold text-emerald-700" x-text="dcTotalEnumerations"></span> enums
+                  </div>
+                </div>
+                <div x-show="!(riskLandscape.risks || []).length" class="text-xs text-gray-400 italic">Not available</div>
+                <div class="mt-3 text-[10px] font-medium text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity">View Risk Landscape &rarr;</div>
+              </div>
+            </button>
+            <button @click="tab = 'domain_context'" class="group cursor-pointer">
+              <div class="rounded-lg border border-gray-200 px-3 py-2 transition-all flex items-center gap-2 whitespace-nowrap"
+                :class="(domainContext.policy_contexts || []).length ? 'bg-white hover:border-emerald-400 hover:shadow-sm' : 'bg-gray-50 opacity-60'">
+                <span class="text-[11px] text-gray-500">Context</span>
+                <span class="text-[11px] font-semibold text-emerald-700" x-text="dcTotalAxes"></span>
+                <span class="text-[11px] text-gray-400">axes</span>
+                <span class="text-[11px] text-gray-300">&middot;</span>
+                <span class="text-[11px] font-semibold text-emerald-700" x-text="dcTotalEnumerations"></span>
+                <span class="text-[11px] text-gray-400">enums</span>
+                <span class="text-[10px] font-medium text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">&rarr;</span>
+              </div>
+            </button>
+            <button @click="tab = 'taxonomy'" class="group cursor-pointer">
+              <div class="rounded-lg border border-gray-200 px-3 py-2 transition-all flex items-center gap-2 whitespace-nowrap"
+                :class="(taxonomy.entries || []).length ? 'bg-white hover:border-emerald-400 hover:shadow-sm' : 'bg-gray-50 opacity-60'">
+                <span class="text-[11px] text-gray-500">Taxonomy</span>
+                <span class="text-[11px] font-semibold text-emerald-700" x-text="(taxonomy.entries || []).length"></span>
+                <span class="text-[11px] text-gray-400">entries</span>
+                <span class="text-[11px] text-gray-300">&middot;</span>
+                <span class="text-[11px] font-semibold text-emerald-700" x-text="(taxonomy.groups || []).length"></span>
+                <span class="text-[11px] text-gray-400">groups</span>
+                <span class="text-[10px] font-medium text-emerald-600 opacity-0 group-hover:opacity-100 transition-opacity ml-auto">&rarr;</span>
+              </div>
+            </button>
+          </div>
+
+          <div class="flex items-center px-1 text-gray-300 text-2xl shrink-0">&rarr;</div>
+
+          <!-- Stage 3: Emit -->
+          <button @click="tab = 'explorer'" class="flex-1 min-w-[180px] group cursor-pointer">
+            <div class="rounded-xl border-2 p-4 transition-all h-full flex flex-col"
+              :class="totalRecords > 0 ? 'border-amber-300 bg-amber-50 hover:border-amber-500 hover:shadow-md' : 'border-gray-200 bg-gray-50 opacity-60'">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                  :class="totalRecords > 0 ? 'bg-amber-600 text-white' : 'bg-gray-300 text-gray-500'">3</span>
+                <h3 class="font-semibold text-gray-900">Emit</h3>
+              </div>
+              <p class="text-xs text-gray-500 mb-3 flex-1">Generate adversarial test prompts from domain context</p>
+              <div x-show="totalRecords > 0" class="space-y-1">
+                <div class="text-xs text-gray-600">
+                  <span class="font-semibold text-amber-700" x-text="totalRecords"></span> prompts generated
+                </div>
+                <div class="text-xs text-gray-600">
+                  <span class="font-semibold text-amber-700" x-text="filteredWithPrompts"></span> with content
+                </div>
+              </div>
+              <div x-show="totalRecords === 0" class="text-xs text-gray-400 italic">Not available</div>
+              <div class="mt-3 text-[10px] font-medium text-amber-600 opacity-0 group-hover:opacity-100 transition-opacity">View Dataset &rarr;</div>
+            </div>
+          </button>
+
+          <div class="flex items-center px-1 text-gray-300 text-2xl shrink-0">&rarr;</div>
+
+          <!-- Stage 4: Evaluate -->
+          <button @click="tab = 'evaluation'" class="flex-1 min-w-[180px] group cursor-pointer">
+            <div class="rounded-xl border-2 p-4 transition-all h-full flex flex-col"
+              :class="data.coverage ? 'border-blue-300 bg-blue-50 hover:border-blue-500 hover:shadow-md' : 'border-gray-200 bg-gray-50 opacity-60'">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold"
+                  :class="data.coverage ? 'bg-blue-600 text-white' : 'bg-gray-300 text-gray-500'">4</span>
+                <h3 class="font-semibold text-gray-900">Evaluate</h3>
+              </div>
+              <p class="text-xs text-gray-500 mb-3 flex-1">Quality metrics, red flags, and coverage analysis</p>
+              <div x-show="data.coverage" class="space-y-1">
+                <div class="text-xs text-gray-600">
+                  Fidelity: <span class="font-semibold text-blue-700" x-text="qualitySummary.full"></span> full
+                  <span x-show="qualitySummary.improvised > 0" class="text-red-600">&middot; <span class="font-semibold" x-text="qualitySummary.improvised"></span> improv</span>
+                </div>
+                <div class="text-xs text-gray-600">
+                  <span class="font-semibold text-blue-700" x-text="Math.round((data.prompt_metrics?.axis_fidelity?.mean || 0) * 100) + '%'"></span> avg axis fidelity
+                </div>
+              </div>
+              <div x-show="!data.coverage" class="text-xs text-gray-400 italic">Not available</div>
+              <div class="mt-3 text-[10px] font-medium text-blue-600 opacity-0 group-hover:opacity-100 transition-opacity">View Evaluation &rarr;</div>
+            </div>
+          </button>
+
+        </div>
+      </section>
+
+      <!-- Run Configuration -->
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Run Configuration</h2>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+          <div>
+            <span class="text-xs text-gray-400 uppercase block mb-1">Model</span>
+            <span class="font-mono font-medium text-gray-900" x-text="data.run?.model || policy?.meta?.model || '?'"></span>
+          </div>
+          <div>
+            <span class="text-xs text-gray-400 uppercase block mb-1">Policy Set</span>
+            <span class="font-medium text-gray-900" x-text="data.run?.policy_set || policy?.meta?.policy_set || '?'"></span>
+          </div>
+          <div>
+            <span class="text-xs text-gray-400 uppercase block mb-1">Timestamp</span>
+            <span class="font-mono text-gray-900" x-text="data.run?.timestamp || policy?.meta?.timestamp || '?'"></span>
+          </div>
+          <div>
+            <span class="text-xs text-gray-400 uppercase block mb-1">Selected Domains</span>
+            <div class="flex flex-wrap gap-1 mt-0.5">
+              <template x-for="d in (domainContext.selected_domains || data.envelope?.selected_domains || [])" :key="d">
+                <span class="px-1.5 py-0.5 rounded text-[10px] bg-indigo-100 text-indigo-700 font-medium" x-text="d"></span>
+              </template>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Artifacts Table -->
+      <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Data Artifacts</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-gray-200">
+                <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Stage</th>
+                <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Artifact</th>
+                <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Key Metric</th>
+                <th class="text-left py-2 px-3 text-xs font-semibold text-gray-500 uppercase">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" @click="tab = 'policy'">
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs font-medium bg-indigo-100 text-indigo-700">Ingest</span></td>
+                <td class="py-2.5 px-3 text-gray-700">Policy Document</td>
+                <td class="py-2.5 px-3 text-gray-600">
+                  <span x-text="(policy.document?.policies?.length || 0) + ' policies, ' + (policy.confidence?.summary?.boundary_pairs_total || 0) + ' boundary pairs'"></span>
+                </td>
+                <td class="py-2.5 px-3">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    :class="policy?.document?.organization?.name ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'"
+                    x-text="policy?.document?.organization?.name ? 'Available' : 'Missing'"></span>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" @click="tab = 'risk_landscape'">
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Refine</span></td>
+                <td class="py-2.5 px-3 text-gray-700">Risk Landscape</td>
+                <td class="py-2.5 px-3 text-gray-600">
+                  <span x-text="(riskLandscape.risks || []).length + ' risks, ' + Object.keys(riskLandscape.framework_coverage || {}).length + ' frameworks, ' + (riskLandscape.weak_matches || []).length + ' weak'"></span>
+                </td>
+                <td class="py-2.5 px-3">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    :class="(riskLandscape.risks || []).length ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'"
+                    x-text="(riskLandscape.risks || []).length ? 'Available' : 'Missing'"></span>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" @click="tab = 'domain_context'">
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Refine</span></td>
+                <td class="py-2.5 px-3 text-gray-700">Domain Context</td>
+                <td class="py-2.5 px-3 text-gray-600">
+                  <span x-text="(domainContext.risks || []).length + ' risks, ' + dcTotalAxes + ' axes, ' + dcTotalEnumerations + ' enumerations'"></span>
+                </td>
+                <td class="py-2.5 px-3">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    :class="(domainContext.profiles || []).length ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'"
+                    x-text="(domainContext.profiles || []).length ? 'Available' : 'Missing'"></span>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" @click="tab = 'taxonomy'">
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-700">Refine</span></td>
+                <td class="py-2.5 px-3 text-gray-700">Enriched Taxonomy</td>
+                <td class="py-2.5 px-3 text-gray-600">
+                  <span x-text="(taxonomy.entries || []).length + ' entries, ' + (taxonomy.groups || []).length + ' groups'"></span>
+                </td>
+                <td class="py-2.5 px-3">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    :class="(taxonomy.entries || []).length ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'"
+                    x-text="(taxonomy.entries || []).length ? 'Available' : 'Missing'"></span>
+                </td>
+              </tr>
+              <tr class="border-b border-gray-100 hover:bg-gray-50 cursor-pointer" @click="tab = 'explorer'">
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs font-medium bg-amber-100 text-amber-700">Emit</span></td>
+                <td class="py-2.5 px-3 text-gray-700">Adversarial Prompts</td>
+                <td class="py-2.5 px-3 text-gray-600">
+                  <span x-text="totalRecords + ' records, ' + filteredWithPrompts + ' with prompts'"></span>
+                </td>
+                <td class="py-2.5 px-3">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    :class="totalRecords > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'"
+                    x-text="totalRecords > 0 ? 'Available' : 'Missing'"></span>
+                </td>
+              </tr>
+              <tr class="hover:bg-gray-50 cursor-pointer" @click="tab = 'evaluation'">
+                <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-700">Evaluate</span></td>
+                <td class="py-2.5 px-3 text-gray-700">Quality Evaluation</td>
+                <td class="py-2.5 px-3 text-gray-600">
+                  <span x-text="data.coverage ? (qualitySummary.full + ' full / ' + qualitySummary.partial + ' partial / ' + qualitySummary.improvised + ' improvised') : ''"></span>
+                </td>
+                <td class="py-2.5 px-3">
+                  <span class="px-2 py-0.5 rounded text-xs font-medium"
+                    :class="data.coverage ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-400'"
+                    x-text="data.coverage ? 'Available' : 'Missing'"></span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Quick Stats -->
+      <section class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div class="text-2xl font-bold text-indigo-600" x-text="policy.document?.policies?.length || 0"></div>
+          <div class="tip text-xs text-gray-400 mt-1" data-tip="Policy concepts extracted from the input document by the ingest stage.">Policies</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div class="text-2xl font-bold text-emerald-600" x-text="(domainContext.risks || []).length"></div>
+          <div class="tip text-xs text-gray-400 mt-1" data-tip="Unique AI safety risks matched from 10+ standards frameworks.">Risks</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div class="text-2xl font-bold text-emerald-600" x-text="dcTotalAxes"></div>
+          <div class="tip text-xs text-gray-400 mt-1" data-tip="Ontology-anchored variation dimensions for prompt generation.">Axes</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div class="text-2xl font-bold text-emerald-600" x-text="dcTotalEnumerations"></div>
+          <div class="tip text-xs text-gray-400 mt-1" data-tip="Concrete domain values available for sampling into prompts.">Enumerations</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div class="text-2xl font-bold text-amber-600" x-text="totalRecords"></div>
+          <div class="tip text-xs text-gray-400 mt-1" data-tip="Total adversarial test prompts generated by the emit stage.">Prompts</div>
+        </div>
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-4 text-center">
+          <div class="text-2xl font-bold" :class="qualitySummary.improvised > 0 ? 'text-red-600' : 'text-blue-600'" x-text="Math.round((data.prompt_metrics?.axis_fidelity?.mean || 0) * 100) + '%'"></div>
+          <div class="tip text-xs text-gray-400 mt-1" data-tip="Average axis fidelity — how well generated prompts reflect the sampled ontology values.">Fidelity</div>
+        </div>
+      </section>
+
+    </div>
+  </div>
 
 
   <!-- ═══════════════ TAB: EVALUATION ═══════════════ -->
@@ -151,7 +445,7 @@
                     <dt class="text-gray-400 text-xs uppercase"><span class="tip" data-tip="Domain ontologies selected as relevant for this policy. The pipeline always includes CCO, Commons, D3FEND, CSO, and LKIF; additional domains (FIBO, OBO, IOF) are selected based on policy content.">Selected Domains</span></dt>
                     <dd class="flex flex-wrap gap-1 mt-1">
                       <template x-for="d in info.selected_domains" :key="d">
-                        <span class="px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800" x-text="d"></span>
+                        <span class="tip px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800" data-tip="Ontology domain selected for this run" x-text="d"></span>
                       </template>
                     </dd>
                   </div>
@@ -238,6 +532,12 @@
                   <div class="flex justify-between">
                     <dt class="text-gray-400"><span class="tip" data-tip="Axes where both subclass and sibling lookups returned nothing. These axes can't vary across prompts — they contribute no diversity.">Empty enumerations</span></dt>
                     <dd class="font-mono text-amber-600" x-text="info.empty_enumerations"></dd>
+                  </div>
+                </template>
+                <template x-if="info.variations_generated">
+                  <div class="flex justify-between">
+                    <dt class="text-gray-400"><span class="tip" data-tip="Total variation enumerations generated across all risk axes in the contextualize stage.">Variations generated</span></dt>
+                    <dd class="font-mono text-emerald-600" x-text="info.variations_generated"></dd>
                   </div>
                 </template>
                 <template x-if="info.self_references_filtered">
@@ -1143,6 +1443,258 @@
   </div>
 
 
+  <!-- ═══════════════ TAB: RISK LANDSCAPE ═══════════════ -->
+  <div x-show="tab === 'risk_landscape'">
+    <div class="max-w-screen-xl mx-auto p-6 space-y-6">
+
+      <!-- Tab intro -->
+      <div x-show="(riskLandscape.risks || []).length" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900" x-data="{ helpOpen: false }">
+        <div class="flex items-center justify-between">
+          <p>Risks matched from the knowledge graph for each policy concept, with match quality and cross-framework links.</p>
+          <button @click="helpOpen = !helpOpen" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-4 whitespace-nowrap">
+            <span x-text="helpOpen ? 'Hide guide' : 'Reading guide'"></span>
+          </button>
+        </div>
+        <div x-show="helpOpen" x-collapse class="mt-3 text-xs text-blue-800 space-y-2 border-t border-blue-200 pt-3">
+          <p>The risk landscape maps each policy concept to known AI safety risks from 10+ standards frameworks (IBM Risk Atlas, NIST AI RMF, OWASP, MITRE ATLAS, etc.) using semantic search with LLM re-ranking.</p>
+          <ul class="list-disc ml-4 space-y-1">
+            <li><strong>Risk Registry</strong> — all matched risks with descriptions, cross-mappings, and related mitigation actions</li>
+            <li><strong>Policy Mappings</strong> — which risks were matched to each policy concept, with relevance level and semantic distance</li>
+            <li><strong>Distance</strong> — semantic search distance (0-1). &lt;0.3 = strong match, 0.3-0.5 = moderate, &gt;0.5 = weak</li>
+            <li><strong>Weak Matches</strong> — risks with distance &gt;0.4 that may not genuinely apply</li>
+          </ul>
+        </div>
+      </div>
+
+      <template x-if="!(riskLandscape.risks || []).length">
+        <div class="text-center py-16 text-gray-400">
+          <p class="text-lg">No risk landscape data available.</p>
+          <p class="text-sm mt-1">Run the refine stage to generate the risk landscape.</p>
+        </div>
+      </template>
+
+      <!-- Overview Cards -->
+      <template x-if="(riskLandscape.risks || []).length">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+            <span class="tip" data-tip="High-level counts of risks matched, frameworks covered, policy-risk mappings, and match quality concerns.">Overview</span>
+            <span class="tip-icon" data-tip="High-level counts of risks matched, frameworks covered, policy-risk mappings, and match quality concerns.">i</span>
+          </h2>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div class="tip text-center p-4 bg-gray-50 rounded-lg" data-tip="Total unique AI safety risks matched from the knowledge graph.">
+              <p class="text-3xl font-bold text-indigo-600" x-text="(riskLandscape.risks || []).length"></p>
+              <p class="text-xs text-gray-400 mt-1">Total Risks</p>
+            </div>
+            <div class="tip text-center p-4 bg-gray-50 rounded-lg" data-tip="Number of distinct risk standards frameworks represented.">
+              <p class="text-3xl font-bold text-green-600" x-text="Object.keys(riskLandscape.framework_coverage || {}).length"></p>
+              <p class="text-xs text-gray-400 mt-1">Frameworks</p>
+            </div>
+            <div class="tip text-center p-4 bg-gray-50 rounded-lg" data-tip="Number of policy concepts that have at least one risk matched.">
+              <p class="text-3xl font-bold text-teal-600" x-text="(riskLandscape.policy_mappings || []).length"></p>
+              <p class="text-xs text-gray-400 mt-1">Policy Mappings</p>
+            </div>
+            <div class="tip text-center p-4 bg-gray-50 rounded-lg" data-tip="Risks matched with semantic distance > 0.4. Zero is ideal.">
+              <p class="text-3xl font-bold"
+                :class="(riskLandscape.weak_matches || []).length > 0 ? 'text-amber-600' : 'text-green-600'"
+                x-text="(riskLandscape.weak_matches || []).length"></p>
+              <p class="text-xs text-gray-400 mt-1">Weak Matches</p>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <!-- Framework Coverage -->
+      <section x-show="Object.keys(riskLandscape.framework_coverage || {}).length" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="Distribution of risks across different risk frameworks. Higher counts indicate broader coverage from that framework.">Framework Coverage</span>
+          <span class="tip-icon" data-tip="Distribution of risks across different risk frameworks.">i</span>
+        </h2>
+        <div class="space-y-2">
+          <template x-for="[fw, count] in Object.entries(riskLandscape.framework_coverage || {}).sort((a, b) => b[1] - a[1])" :key="fw">
+            <div class="flex items-center gap-3">
+              <div class="flex-1 bg-gray-200 rounded-lg overflow-hidden">
+                <div class="flex items-center justify-between px-3 py-2 rounded-lg"
+                  :class="rlFrameworkBarColor(fw)"
+                  :style="`width: ${Math.max((count / Math.max(...Object.values(riskLandscape.framework_coverage || {}))) * 100, 10)}%`">
+                  <span class="text-sm font-medium" x-text="fw"></span>
+                  <span class="text-sm font-mono font-semibold" x-text="count"></span>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- Risk Registry -->
+      <section x-show="(riskLandscape.risks || []).length" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="Complete registry of all risks matched from the knowledge graph, with descriptions, cross-mappings, and related actions.">Risk Registry</span>
+          <span class="tip-icon" data-tip="Complete registry of all matched risks.">i</span>
+        </h2>
+        <div class="space-y-2">
+          <template x-for="(risk, idx) in (riskLandscape.risks || [])" :key="risk.risk_id">
+            <div class="border border-gray-200 rounded-lg" x-data="{ expanded: false }">
+              <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50" @click="expanded = !expanded">
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-mono text-sm text-gray-700" x-text="risk.risk_id"></span>
+                    <span class="font-semibold text-gray-900" x-text="risk.risk_name"></span>
+                    <span class="px-2 py-0.5 rounded text-xs"
+                      :class="rlFrameworkColor(risk.risk_framework)"
+                      x-text="risk.risk_framework"></span>
+                  </div>
+                  <template x-if="!expanded && risk.cross_mappings?.length">
+                    <div class="flex flex-wrap gap-1 mt-1">
+                      <template x-for="cm in risk.cross_mappings.slice(0, 3)" :key="cm.id">
+                        <span class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600" x-text="cm.id"></span>
+                      </template>
+                      <span x-show="risk.cross_mappings.length > 3"
+                        class="px-1.5 py-0.5 rounded text-[10px] bg-gray-100 text-gray-600"
+                        x-text="`+${risk.cross_mappings.length - 3} more`"></span>
+                    </div>
+                  </template>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transition-transform" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+              <div x-show="expanded" class="px-3 pb-3 pt-0 space-y-3 border-t border-gray-100">
+                <div>
+                  <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Full description of this risk from the source framework.">Description</p>
+                  <p class="text-sm text-gray-700" x-text="risk.risk_description"></p>
+                </div>
+                <template x-if="risk.risk_concern">
+                  <div>
+                    <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Specific concern or impact this risk poses to AI systems.">Concern</p>
+                    <p class="text-sm text-gray-700" x-text="risk.risk_concern"></p>
+                  </div>
+                </template>
+                <template x-if="risk.cross_mappings?.length">
+                  <div>
+                    <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Ground-truth links to equivalent or related risks in other frameworks. From the knowledge graph, not LLM-generated.">Cross-Mappings</p>
+                    <div class="flex flex-wrap gap-1">
+                      <template x-for="cm in risk.cross_mappings" :key="cm.id">
+                        <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-gray-100 text-gray-700">
+                          <span class="font-mono" x-text="cm.id"></span>
+                          <span class="text-gray-400" x-text="`(${cm.mapping_type})`"></span>
+                        </span>
+                      </template>
+                    </div>
+                  </div>
+                </template>
+                <template x-if="risk.related_actions?.length">
+                  <div>
+                    <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Mitigation actions or controls associated with this risk from the source framework.">Related Actions</p>
+                    <ul class="text-sm text-gray-700 list-disc list-inside space-y-0.5">
+                      <template x-for="action in risk.related_actions" :key="action">
+                        <li x-text="action"></li>
+                      </template>
+                    </ul>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- Policy Mappings -->
+      <section x-show="(riskLandscape.policy_mappings || []).length" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="Risks matched to each policy concept, showing relevance level, match quality (distance), and justification.">Policy Mappings</span>
+          <span class="tip-icon" data-tip="Risks matched to each policy concept with quality metrics.">i</span>
+        </h2>
+        <div class="space-y-3">
+          <template x-for="pm in (riskLandscape.policy_mappings || [])" :key="pm.policy_concept">
+            <div class="border border-gray-200 rounded-lg" x-data="{ expanded: false }">
+              <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50" @click="expanded = !expanded">
+                <div class="flex items-center gap-3">
+                  <span class="font-semibold text-gray-900" x-text="pm.policy_concept"></span>
+                  <span class="px-2 py-0.5 rounded text-xs bg-gray-100 text-gray-600" x-text="`${pm.matched_risks?.length || 0} risks`"></span>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transition-transform" :class="expanded ? 'rotate-180' : ''" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+              </div>
+              <div x-show="expanded" class="px-3 pb-3 pt-0 border-t border-gray-100">
+                <div class="overflow-x-auto">
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
+                        <th class="tip pb-2 pr-3" data-tip="Identifier from the source risk framework.">Risk ID</th>
+                        <th class="tip pb-2 pr-3" data-tip="Human-readable name of the matched risk.">Risk Name</th>
+                        <th class="tip pb-2 pr-3" data-tip="Primary = direct match, Secondary = related.">Relevance</th>
+                        <th class="tip pb-2 pr-3" data-tip="Semantic search distance (0-1). Lower is better. <0.3 strong, 0.3-0.5 moderate, >0.5 weak.">Distance</th>
+                        <th class="tip pb-2" data-tip="LLM-generated explanation of why this risk was matched.">Justification</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <template x-for="mr in (pm.matched_risks || [])" :key="mr.risk_id">
+                        <tr class="border-b border-gray-100">
+                          <td class="py-2 pr-3 font-mono text-xs" x-text="mr.risk_id"></td>
+                          <td class="py-2 pr-3 font-medium" x-text="mr.risk_name"></td>
+                          <td class="py-2 pr-3">
+                            <span class="px-2 py-0.5 rounded text-xs"
+                              :class="{
+                                'bg-green-100 text-green-800': mr.relevance === 'primary',
+                                'bg-blue-100 text-blue-800': mr.relevance === 'secondary',
+                                'bg-gray-100 text-gray-600': mr.relevance !== 'primary' && mr.relevance !== 'secondary'
+                              }"
+                              x-text="mr.relevance"></span>
+                          </td>
+                          <td class="py-2 pr-3">
+                            <span class="px-2 py-0.5 rounded text-xs font-mono"
+                              :class="{
+                                'bg-green-100 text-green-800': mr.match_distance < 0.3,
+                                'bg-amber-100 text-amber-800': mr.match_distance >= 0.3 && mr.match_distance <= 0.5,
+                                'bg-red-100 text-red-800': mr.match_distance > 0.5
+                              }"
+                              x-text="mr.match_distance?.toFixed(3) || '?'"></span>
+                          </td>
+                          <td class="py-2 text-gray-600" x-text="mr.justification"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </section>
+
+      <!-- Weak Matches -->
+      <section x-show="(riskLandscape.weak_matches || []).length > 0" class="bg-amber-50 rounded-xl shadow-sm border border-amber-200 p-5">
+        <h2 class="text-sm font-semibold text-amber-900 uppercase tracking-wide mb-3">
+          <span class="tip" data-tip="Risks with semantic search distance > 0.4. High distance indicates the match may be tenuous.">Weak Matches</span>
+          <span class="tip-icon" data-tip="High-distance matches that may not genuinely apply.">i</span>
+        </h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="text-left text-xs text-amber-900 uppercase border-b border-amber-200">
+                <th class="tip pb-2 pr-3" data-tip="Risk identifier from the source framework.">Risk ID</th>
+                <th class="tip pb-2 pr-3" data-tip="The policy concept this risk was matched to with high distance.">Policy Concept</th>
+                <th class="tip pb-2 text-right" data-tip="Semantic search distance. Values >0.4 are considered weak.">Distance</th>
+              </tr>
+            </thead>
+            <tbody>
+              <template x-for="wm in (riskLandscape.weak_matches || [])" :key="`${wm.risk_id}-${wm.policy_concept}`">
+                <tr class="border-b border-amber-100">
+                  <td class="py-2 pr-3 font-mono text-xs text-amber-900" x-text="wm.risk_id"></td>
+                  <td class="py-2 pr-3 text-amber-900" x-text="wm.policy_concept"></td>
+                  <td class="py-2 text-right font-mono font-semibold text-amber-700" x-text="wm.distance?.toFixed(3) || '?'"></td>
+                </tr>
+              </template>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+
   <!-- ═══════════════ TAB: DOMAIN CONTEXT ═══════════════ -->
   <div x-show="tab === 'domain_context'">
     <div class="max-w-screen-xl mx-auto p-6 space-y-6">
@@ -1150,19 +1702,16 @@
       <!-- Tab intro -->
       <div x-show="(domainContext.profiles || []).length" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900" x-data="{ helpOpen: false }">
         <div class="flex items-center justify-between">
-          <p>Domain context profiles generated for each matched risk. These drive prompt diversity.</p>
+          <p>Domain context provides the ontological variation dimensions for each risk-policy mapping.</p>
           <button @click="helpOpen = !helpOpen" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-4 whitespace-nowrap">
             <span x-text="helpOpen ? 'Hide guide' : 'Reading guide'"></span>
           </button>
         </div>
         <div x-show="helpOpen" x-collapse class="mt-3 text-xs text-blue-800 space-y-2 border-t border-blue-200 pt-3">
-          <p>Each <strong>profile</strong> represents one matched AI safety risk. It contains:</p>
-          <ul class="list-disc ml-4 space-y-1">
-            <li><strong>Variation axes</strong> — ontology classes that define dimensions of variation (e.g. "Information Content Entity", "Agent"). Each axis has a semantic role (agent, object, instrument, etc.)</li>
-            <li><strong>Enumerations</strong> — specific values within each axis (e.g. under "Agent": "Software Developer", "Data Analyst"). These are subclasses from the ontology. Colored dots show relevance: <span class="text-green-700">green</span> = high, <span class="text-yellow-600">yellow</span> = medium, <span class="text-red-600">red</span> = low</li>
-            <li><strong>Cross-framework mappings</strong> — links to equivalent risks in other standards (e.g. NIST risk mapped to MITRE ATLAS technique)</li>
-          </ul>
-          <p>During prompt generation, one value is randomly sampled from each axis (weighted by relevance) to create a unique scenario. More axes with more enumerations = more diverse prompts.</p>
+          <p><strong>What are axes?</strong> Each axis is a CCO or domain ontology class that represents one dimension of prompt variation. Axes are tagged with BFO categories and semantic roles (agent, instrument, object) that determine how they're used in prompt generation.</p>
+          <p><strong>What are enumerations?</strong> Concrete values for each axis, drawn from the ontology or LLM-generated. Each has a relevance score (high/medium/low) — high-relevance values are sampled 3x more often during prompt generation.</p>
+          <p><strong>Origin column:</strong> Shows where each enumeration came from — an ontology name with discovery method (subclass, sibling, search), or "LLM-generated" when ontology coverage was insufficient.</p>
+          <p><strong>Cross-framework mappings</strong> — ground-truth links to equivalent risks in other standards (from the knowledge graph, not LLM).</p>
         </div>
       </div>
 
@@ -1185,6 +1734,63 @@
         <span class="text-sm text-gray-400"><span class="font-semibold text-gray-600" x-text="filteredProfiles.length"></span> profiles</span>
       </div>
 
+      <!-- Overview Cards -->
+      <template x-if="(domainContext.risks || []).length">
+        <section class="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Unique AI safety risks matched from the knowledge graph across all policy concepts.">Total Risks</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="(domainContext.risks || []).length"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Number of policy concepts that have domain context generated. Each contains risk groundings with variation axes.">Policy Contexts</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="(domainContext.policy_contexts || []).length"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Total variation axes across all risk groundings. Each axis is a CCO/domain ontology class defining one dimension of prompt diversity.">Total Axes</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="dcTotalAxes"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Total enumeration values (concrete ontology subclasses) available for sampling. More = more diverse prompt generation.">Total Enumerations</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="dcTotalEnumerations"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Number of ontology domains active for this run. Always includes CCO, Commons, D3FEND, CSO, LKIF.">Domains</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="(domainContext.selected_domains || []).length"></div>
+          </div>
+        </section>
+      </template>
+
+      <!-- Risks Summary Table -->
+      <template x-if="(domainContext.risks || []).length">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3" data-tip="All AI safety risks matched from the knowledge graph, with their source frameworks and cross-framework mappings.">Risks Summary<span class="tip-icon" data-tip="Risks are matched from 10+ integrated standards frameworks using semantic search and LLM re-ranking.">i</span></h2>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="tip text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Identifier from the source risk framework.">Risk ID</th>
+                  <th class="tip text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Human-readable name of the risk.">Risk Name</th>
+                  <th class="tip text-left py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Which AI safety standards framework this risk comes from.">Framework</th>
+                  <th class="tip text-right py-2 px-3 text-xs font-semibold text-gray-600 uppercase tracking-wide" data-tip="Number of ground-truth links to equivalent/related risks in other frameworks.">Cross-Mappings</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="risk in (domainContext.risks || [])" :key="risk.risk_id">
+                  <tr class="border-b border-gray-100 hover:bg-gray-50">
+                    <td class="py-2 px-3"><span class="font-mono text-xs" x-text="risk.risk_id"></span></td>
+                    <td class="py-2 px-3" x-text="risk.risk_name"></td>
+                    <td class="py-2 px-3">
+                      <span class="px-2 py-1 rounded text-xs font-medium" :class="dcFrameworkBadgeClass(risk.risk_framework)" x-text="risk.risk_framework"></span>
+                    </td>
+                    <td class="py-2 px-3 text-right" x-text="(risk.cross_mappings || []).length"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </template>
+
       <!-- Profiles -->
       <template x-for="(profile, pi) in filteredProfiles" :key="pi">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden" x-data="{ open: false }">
@@ -1193,8 +1799,8 @@
             <div class="flex-1 min-w-0">
               <div class="flex flex-wrap items-center gap-2 mb-1">
                 <h3 class="text-sm font-semibold text-gray-800" x-text="profile.risk_name"></h3>
-                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" x-text="profile.policy_concept"></span>
-                <span x-show="profile.risk_framework" class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800" x-text="profile.risk_framework"></span>
+                <span class="tip inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold bg-indigo-100 text-indigo-800" data-tip="Policy concept this risk was matched to" x-text="profile.policy_concept"></span>
+                <span x-show="profile.risk_framework" class="tip inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800" data-tip="Source risk framework" x-text="profile.risk_framework"></span>
               </div>
               <p class="text-xs font-mono text-gray-400" x-text="profile.risk_id"></p>
               <p x-show="profile.risk_description" class="text-sm text-gray-600 mt-1 line-clamp-3" x-text="profile.risk_description"></p>
@@ -1214,11 +1820,11 @@
 
               <!-- Risk description (full) -->
               <div x-show="profile.risk_description">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Description</p>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 tip" data-tip="Full description of this risk from the source framework.">Description</p>
                 <p class="text-sm text-gray-800 leading-relaxed" x-text="profile.risk_description"></p>
               </div>
               <div x-show="profile.risk_concern">
-                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Concern</p>
+                <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 tip" data-tip="Specific concern or impact this risk poses to AI systems.">Concern</p>
                 <p class="text-sm text-gray-800 leading-relaxed" x-text="profile.risk_concern"></p>
               </div>
 
@@ -1229,32 +1835,72 @@
                 </p>
                 <div class="space-y-3">
                   <template x-for="(axis, ai) in (profile.axes || [])" :key="ai">
-                    <div class="rounded-lg border border-gray-200 overflow-hidden">
-                      <div class="bg-gray-50 px-3 py-2 flex items-center gap-2 border-b border-gray-200">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                      <!-- Axis Header -->
+                      <div class="flex items-center gap-2 mb-3">
+                        <span class="tip font-bold text-gray-900" data-tip="CCO class — the ontological anchor for this variation axis" x-text="axis.cco_class_label"></span>
+                        <span x-show="axis.bfo_category" class="tip px-2 py-1 bg-teal-100 text-teal-800 rounded text-xs font-medium" data-tip="BFO/CCO category — top-level classification from the Basic Formal Ontology." x-text="axis.bfo_category"></span>
                         <template x-for="r in (axis.roles || [])" :key="r">
-                          <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold" :class="roleColor(r)" x-text="r"></span>
-                        </template>
-                        <span class="text-sm font-medium text-gray-800" x-text="axis.cco_class_label"></span>
-                        <span class="text-xs text-gray-400 truncate" x-text="axis.cco_class_uri"></span>
-                      </div>
-                      <div class="p-2">
-                        <template x-if="(axis.enumerations || []).length">
-                          <div class="flex flex-wrap gap-1.5">
-                            <template x-for="(en, ei) in (axis.enumerations || [])" :key="ei">
-                              <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs border bg-white border-gray-200 text-gray-600">
-                                <span x-text="en.class_label"></span>
-                                <span class="inline-block w-1.5 h-1.5 rounded-full shrink-0"
-                                  :class="{'bg-green-500': en.relevance==='high', 'bg-yellow-400': en.relevance==='medium', 'bg-red-400': en.relevance==='low'}"></span>
-                                <span class="text-[10px] opacity-60" x-text="en.source_ontology"></span>
-                                <span x-show="en.provenance === 'sibling'" class="text-[9px] px-1 rounded bg-amber-200 text-amber-700 font-medium">sib</span>
-                              </span>
-                            </template>
-                          </div>
-                        </template>
-                        <template x-if="!(axis.enumerations || []).length">
-                          <span class="text-xs text-gray-400 italic px-2 py-1">no enumerations</span>
+                          <span class="tip px-2 py-1 rounded text-xs font-medium" :class="roleColor(r)" :data-tip="dcRoleTip(r)" x-text="r"></span>
                         </template>
                       </div>
+
+                      <!-- Vocabulary Context -->
+                      <template x-if="axis.vocabulary_label">
+                        <div class="mb-3 text-sm">
+                          <span class="tip text-gray-600" data-tip="CCO vocabulary concept mapped to this axis. Provides a standardized concept label from the Common Core Ontologies.">Vocabulary:</span>
+                          <span class="font-medium ml-1" x-text="axis.vocabulary_label"></span>
+                          <span class="font-mono text-xs text-gray-500 ml-1" x-text="`(${axis.vocabulary_concept})`"></span>
+                        </div>
+                      </template>
+
+                      <!-- Derivation Info -->
+                      <template x-if="axis.derivation">
+                        <div class="text-xs text-gray-500 mb-3 space-x-2">
+                          <span><span class="tip" data-tip="How this axis was discovered: 'structural' = from ontology hierarchy, 'search' = via semantic similarity search, 'seed' = directly from the risk.">Source:</span> <span class="font-medium" x-text="axis.derivation.source"></span></span>
+                          <span x-show="axis.derivation.domain">•</span>
+                          <span x-show="axis.derivation.domain"><span class="tip" data-tip="Source ontology domain for this axis class.">Domain:</span> <span class="font-medium" x-text="axis.derivation.domain"></span></span>
+                          <span>•</span>
+                          <span>
+                            <span class="tip" :data-tip="axis.derivation.effective_confidence > 0 ? 'Structural confidence (0-100%) — combines vocabulary mapping and path length.' : 'Search similarity (0-100%) — derived from semantic distance.'">Confidence:</span>
+                            <span class="font-medium" x-text="dcConfidenceDisplay(axis.derivation)"></span>
+                          </span>
+                        </div>
+                      </template>
+
+                      <!-- Enumerations Table -->
+                      <template x-if="(axis.enumerations || []).length">
+                        <div class="overflow-x-auto">
+                          <table class="w-full text-sm">
+                            <thead>
+                              <tr class="border-b border-gray-300">
+                                <th class="tip text-left py-2 px-2 text-xs font-semibold text-gray-600" data-tip="Concrete values for this variation axis — either ontology subclasses or LLM-generated instances.">Enumeration</th>
+                                <th class="tip text-left py-2 px-2 text-xs font-semibold text-gray-600" data-tip="Where this value came from and how it was found.">Origin</th>
+                                <th class="tip text-left py-2 px-2 text-xs font-semibold text-gray-600" data-tip="How important this enumeration is for the risk context. High-relevance values are sampled 3x more often.">Relevance</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <template x-for="(en, ei) in (axis.enumerations || [])" :key="ei">
+                                <tr class="border-b border-gray-200 hover:bg-white">
+                                  <td class="py-2 px-2" x-text="en.class_label"></td>
+                                  <td class="py-2 px-2">
+                                    <span class="tip px-2 py-1 rounded text-xs font-medium"
+                                      :class="dcOriginBadgeClass(en)"
+                                      :data-tip="dcOriginTip(en)"
+                                      x-text="dcOriginLabel(en)"></span>
+                                  </td>
+                                  <td class="py-2 px-2">
+                                    <span class="tip px-2 py-1 rounded text-xs font-medium" :class="dcRelevanceBadgeClass(en.relevance)" data-tip="Relevance — how important this enumeration is for the risk scenario" x-text="en.relevance"></span>
+                                  </td>
+                                </tr>
+                              </template>
+                            </tbody>
+                          </table>
+                        </div>
+                      </template>
+                      <template x-if="!(axis.enumerations || []).length">
+                        <span class="text-xs text-gray-400 italic px-2 py-1">no enumerations</span>
+                      </template>
                     </div>
                   </template>
                 </div>
@@ -1283,13 +1929,7 @@
         </div>
       </template>
 
-      <!-- Legend -->
-      <div x-show="(domainContext.profiles || []).length" class="flex items-center gap-4 text-[10px] text-gray-400 px-2">
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-green-500"></span> high</span>
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-yellow-400"></span> medium</span>
-        <span class="flex items-center gap-1"><span class="w-1.5 h-1.5 rounded-full bg-red-400"></span> low</span>
-        <span class="ml-2 px-1.5 py-0.5 rounded bg-amber-200 text-amber-700 text-[9px] font-medium">sib = sibling fallback</span>
-      </div>
+      <!-- (legend removed — table columns are self-documenting) -->
     </div>
   </div>
 
@@ -1324,97 +1964,176 @@
         </div>
       </template>
 
-      <!-- Taxonomy header -->
-      <template x-if="(taxonomy.taxonomies || []).length">
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-          <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Taxonomy</h2>
-          <template x-for="tax in taxonomy.taxonomies" :key="tax.id">
-            <div class="flex items-center gap-3">
-              <span class="text-lg font-semibold text-gray-800" x-text="tax.name"></span>
-              <span class="px-2 py-0.5 rounded text-xs bg-indigo-100 text-indigo-800 font-medium" x-text="tax.type"></span>
-              <span class="text-xs font-mono text-gray-400" x-text="tax.id"></span>
-            </div>
-          </template>
-          <div class="mt-3 flex gap-4 text-sm text-gray-500">
-            <span><span class="font-semibold text-gray-700" x-text="(taxonomy.groups || []).length"></span> groups</span>
-            <span><span class="font-semibold text-gray-700" x-text="(taxonomy.entries || []).length"></span> entries</span>
+      <!-- Overview cards -->
+      <template x-if="(taxonomy.entries || []).length">
+        <section class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Number of taxonomy definitions in the output.">Taxonomies</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="(taxonomy.taxonomies || []).length"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Broad risk categories grouping related entries.">Groups</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="(taxonomy.groups || []).length"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="Individual risks, each mapped to standards frameworks.">Entries</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="(taxonomy.entries || []).length"></div>
+          </div>
+          <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+            <div class="tip text-xs text-gray-500 uppercase tracking-wide mb-1" data-tip="CURIE namespace prefixes used in cross-framework mapping IDs.">CURIE Prefixes</div>
+            <div class="text-3xl font-bold text-gray-900" x-text="Object.keys(taxonomy.curie_map || {}).length"></div>
           </div>
         </section>
       </template>
 
-      <!-- Groups + Entries -->
-      <template x-for="group in (taxonomy.groups || [])" :key="group.id">
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div class="bg-gray-50 px-5 py-3 border-b border-gray-200">
-            <h3 class="text-sm font-semibold text-gray-700" x-text="group.name"></h3>
-            <p class="text-xs font-mono text-gray-400 mt-0.5" x-text="group.id"></p>
+      <!-- CURIE Map -->
+      <template x-if="Object.keys(taxonomy.curie_map || {}).length">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5" x-data="{ curieOpen: false }">
+          <div class="flex items-center justify-between cursor-pointer" @click="curieOpen = !curieOpen">
+            <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="CURIE (Compact URI) prefixes used in mapping identifiers. Expand to see the full namespace URIs.">CURIE Map</h2>
+            <svg class="w-5 h-5 text-gray-500 transition-transform" :class="{'rotate-180': curieOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+            </svg>
           </div>
-          <div class="divide-y divide-gray-100">
-            <template x-for="entry in taxonomyEntriesForGroup(group.id)" :key="entry.id">
-              <div class="px-5 py-4" x-data="{ expanded: false }">
-                <div @click="expanded = !expanded" class="cursor-pointer flex items-start justify-between gap-3">
-                  <div class="flex-1 min-w-0">
-                    <div class="flex items-center gap-2 mb-1">
-                      <span class="text-sm font-semibold text-gray-800" x-text="entry.name"></span>
-                      <span x-show="entry.tag" class="px-2 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-500" x-text="entry.tag"></span>
-                    </div>
-                    <!-- Mappings summary -->
-                    <div class="flex flex-wrap gap-1 mt-1">
-                      <template x-for="mt in ['exact_mappings', 'close_mappings', 'related_mappings', 'broad_mappings', 'narrow_mappings']" :key="mt">
-                        <template x-if="(entry[mt] || []).length">
-                          <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px]"
-                            :class="mappingTypeColor(mt.replace('_mappings', ''))">
-                            <span x-text="mt.replace('_mappings', '')"></span>
-                            <span class="font-mono font-semibold" x-text="entry[mt].length"></span>
-                          </span>
-                        </template>
-                      </template>
-                    </div>
-                  </div>
-                  <div class="flex items-center gap-3 shrink-0">
-                    <template x-if="entry.domain_context_summary">
-                      <div class="text-right text-xs text-gray-400">
-                        <span class="font-semibold text-gray-600" x-text="entry.domain_context_summary.axis_count"></span> axes &middot;
-                        <span class="font-semibold text-gray-600" x-text="entry.domain_context_summary.enumeration_count"></span> enums
-                      </div>
-                    </template>
-                    <span class="text-gray-400 text-xs transition-transform" :class="expanded ? 'rotate-90' : ''">&#x25B6;</span>
-                  </div>
-                </div>
+          <div x-show="curieOpen" x-collapse class="mt-3">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="border-b border-gray-200">
+                  <th class="text-left py-2 px-2 text-xs font-semibold text-gray-600">Prefix</th>
+                  <th class="text-left py-2 px-2 text-xs font-semibold text-gray-600">Namespace URI</th>
+                </tr>
+              </thead>
+              <tbody>
+                <template x-for="[prefix, uri] in Object.entries(taxonomy.curie_map || {})" :key="prefix">
+                  <tr class="border-b border-gray-100">
+                    <td class="py-1.5 px-2 font-mono text-xs font-semibold text-indigo-700" x-text="prefix"></td>
+                    <td class="py-1.5 px-2 font-mono text-xs text-gray-500 truncate" x-text="uri"></td>
+                  </tr>
+                </template>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </template>
 
-                <!-- Expanded details -->
-                <div x-show="expanded" x-collapse class="mt-3 space-y-3">
-                  <!-- Mapping IDs -->
-                  <template x-for="mt in ['exact_mappings', 'close_mappings', 'related_mappings', 'broad_mappings', 'narrow_mappings']" :key="'detail-' + mt">
-                    <div x-show="(entry[mt] || []).length">
-                      <p class="text-[10px] font-semibold text-gray-400 uppercase mb-1" x-text="mt.replace('_', ' ')"></p>
-                      <div class="flex flex-wrap gap-1">
-                        <template x-for="mid in (entry[mt] || [])" :key="mid">
-                          <span class="px-1.5 py-0.5 rounded text-[10px] font-mono bg-gray-100 text-gray-600" x-text="mid"></span>
-                        </template>
-                      </div>
+      <!-- Groups -->
+      <template x-if="(taxonomy.groups || []).length">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3" data-tip="Risk groups organize entries into broad categories. Each group belongs to a specific taxonomy.">
+            Groups
+            <span class="tip-icon" data-tip="Groups are containers — the real content is in the entries within each group.">i</span>
+          </h2>
+          <div class="space-y-4">
+            <template x-for="tax in (taxonomy.taxonomies || [])" :key="tax.id">
+              <div>
+                <h3 class="font-semibold text-gray-700 mb-2" x-text="tax.name"></h3>
+                <div class="space-y-2 ml-4">
+                  <template x-for="group in (taxonomy.groups || []).filter(g => g.isDefinedByTaxonomy === tax.id)" :key="group.id">
+                    <div class="flex items-center gap-2">
+                      <span class="text-gray-900" x-text="group.name"></span>
+                      <span class="tip px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700" data-tip="LinkML class type for this group" x-text="group.type"></span>
                     </div>
                   </template>
+                </div>
+              </div>
+            </template>
+          </div>
+        </section>
+      </template>
 
-                  <!-- Domain context summary -->
-                  <div x-show="entry.domain_context_summary" class="border border-gray-200 rounded-lg p-3">
-                    <p class="text-[10px] font-semibold text-gray-400 uppercase mb-2">Domain Context Summary</p>
-                    <div class="flex flex-wrap gap-3 mb-2 text-xs text-gray-600">
-                      <span><span class="font-semibold" x-text="entry.domain_context_summary?.axis_count"></span> axes</span>
-                      <span><span class="font-semibold" x-text="entry.domain_context_summary?.enumeration_count"></span> enumerations</span>
-                      <span>from <span class="font-semibold" x-text="(entry.domain_context_summary?.source_ontologies || []).join(', ')"></span></span>
-                    </div>
-                    <div class="space-y-1">
-                      <template x-for="ax in (entry.domain_context_summary?.axes || [])" :key="ax.uri">
-                        <div class="flex items-center gap-2 text-xs bg-gray-50 rounded px-2 py-1">
-                          <template x-for="r in (ax.roles || [])" :key="r">
-                            <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold" :class="roleColor(r)" x-text="r"></span>
-                          </template>
-                          <span class="font-medium text-gray-700" x-text="ax.class"></span>
-                          <span class="text-gray-400 font-mono truncate" x-text="ax.uri"></span>
-                          <span class="ml-auto font-mono text-gray-500" x-text="ax.enumeration_count + ' enums'"></span>
+      <!-- Entries -->
+      <template x-if="(taxonomy.entries || []).length">
+        <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3" data-tip="Individual risk entries with cross-framework mappings and domain context summaries. Each entry represents one risk in the taxonomy.">
+            Entries
+            <span class="tip-icon" data-tip="Expand an entry to see its cross-mappings (links to other frameworks) and domain context (ontology axes and enumerations for prompt generation).">i</span>
+          </h2>
+          <div class="space-y-2">
+            <template x-for="entry in (taxonomy.entries || [])" :key="entry.id">
+              <div class="border border-gray-200 rounded-lg overflow-hidden" x-data="{expanded: false}">
+                <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50" @click="expanded = !expanded">
+                  <div class="flex items-center gap-2 flex-1">
+                    <span class="font-semibold text-gray-900" x-text="entry.name"></span>
+                    <span class="tip px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700" data-tip="LinkML class type for this entry" x-text="entry.type"></span>
+                    <span class="tip px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-700" data-tip="Parent taxonomy this entry belongs to" x-text="entry.isDefinedByTaxonomy"></span>
+                  </div>
+                  <svg class="w-5 h-5 text-gray-400 transition-transform flex-shrink-0" :class="{'rotate-180': expanded}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                  </svg>
+                </div>
+                <div x-show="expanded">
+                  <div class="px-3 pb-3 space-y-4 bg-gray-50">
+                    <!-- Cross-mappings -->
+                    <div x-show="entry.broad_mappings?.length || entry.related_mappings?.length || entry.exact_mappings?.length || entry.narrow_mappings?.length">
+                      <h4 class="tip text-xs font-semibold text-gray-600 uppercase mb-2" data-tip="Links to equivalent or related risks in other AI safety frameworks. Ground-truth from the knowledge graph.">Cross-mappings</h4>
+                      <div class="space-y-1.5">
+                        <div x-show="entry.broad_mappings?.length">
+                          <span class="text-xs font-medium text-gray-500">Broad:</span>
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            <template x-for="mapping in entry.broad_mappings" :key="mapping">
+                              <span class="tip px-2 py-0.5 text-xs font-mono rounded bg-blue-100 text-blue-700" data-tip="Broad mapping — this entry is more specific than the mapped concept" x-text="mapping"></span>
+                            </template>
+                          </div>
                         </div>
-                      </template>
+                        <div x-show="entry.related_mappings?.length">
+                          <span class="text-xs font-medium text-gray-500">Related:</span>
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            <template x-for="mapping in entry.related_mappings" :key="mapping">
+                              <span class="tip px-2 py-0.5 text-xs font-mono rounded bg-purple-100 text-purple-700" data-tip="Related mapping — this entry is thematically connected to the mapped concept" x-text="mapping"></span>
+                            </template>
+                          </div>
+                        </div>
+                        <div x-show="entry.exact_mappings?.length">
+                          <span class="text-xs font-medium text-gray-500">Exact:</span>
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            <template x-for="mapping in entry.exact_mappings" :key="mapping">
+                              <span class="tip px-2 py-0.5 text-xs font-mono rounded bg-green-100 text-green-700" data-tip="Exact mapping — this entry is semantically equivalent to the mapped concept" x-text="mapping"></span>
+                            </template>
+                          </div>
+                        </div>
+                        <div x-show="entry.narrow_mappings?.length">
+                          <span class="text-xs font-medium text-gray-500">Narrow:</span>
+                          <div class="flex flex-wrap gap-1 mt-1">
+                            <template x-for="mapping in entry.narrow_mappings" :key="mapping">
+                              <span class="tip px-2 py-0.5 text-xs font-mono rounded bg-amber-100 text-amber-700" data-tip="Narrow mapping — this entry is more general than the mapped concept" x-text="mapping"></span>
+                            </template>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <!-- Domain Context Summary -->
+                    <div x-show="entry.domain_context_summary">
+                      <h4 class="tip text-xs font-semibold text-gray-600 uppercase mb-2" data-tip="Ontological variation axes and enumerations assigned to this risk for prompt generation. More axes with more enumerations = more diverse prompts.">Domain Context</h4>
+                      <div class="flex flex-wrap gap-2 mb-3">
+                        <span class="tip px-2 py-0.5 text-xs font-medium rounded bg-indigo-100 text-indigo-700" data-tip="Number of variation axes (ontology classes) for this risk.">
+                          <span x-text="entry.domain_context_summary?.axis_count"></span> axes
+                        </span>
+                        <span class="tip px-2 py-0.5 text-xs font-medium rounded bg-indigo-100 text-indigo-700" data-tip="Total enumeration values (concrete ontology subclasses) across all axes.">
+                          <span x-text="entry.domain_context_summary?.enumeration_count"></span> enumerations
+                        </span>
+                        <template x-for="ontology in (entry.domain_context_summary?.source_ontologies || [])" :key="ontology">
+                          <span class="tip px-2 py-0.5 text-xs font-medium rounded bg-gray-200 text-gray-700" data-tip="Source ontology contributing enumerations" x-text="ontology"></span>
+                        </template>
+                      </div>
+
+                      <!-- Per-axis details -->
+                      <div x-show="entry.domain_context_summary?.axes?.length" class="space-y-2">
+                        <template x-for="axis in (entry.domain_context_summary?.axes || [])" :key="axis.uri">
+                          <div class="bg-white rounded border border-gray-200 p-2">
+                            <div class="font-medium text-sm text-gray-900" x-text="axis.class"></div>
+                            <div class="text-xs font-mono text-gray-500 mt-0.5" x-text="axis.uri"></div>
+                            <div class="flex flex-wrap gap-1 mt-2">
+                              <template x-for="role in (axis.roles || [])" :key="role">
+                                <span class="tip px-1.5 py-0.5 text-xs font-medium rounded bg-teal-100 text-teal-700" :data-tip="role === 'agent' ? 'Agent — the actor performing the action' : role === 'instrument' ? 'Instrument — the tool used' : role === 'object' ? 'Object — the entity being acted upon' : role" x-text="role"></span>
+                              </template>
+                              <span class="tip px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600" data-tip="Concrete ontology values available for sampling under this axis.">
+                                <span x-text="axis.enumeration_count"></span> enumerations
+                              </span>
+                            </div>
+                          </div>
+                        </template>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1433,7 +2152,7 @@
     <div class="max-w-screen-xl mx-auto p-6 space-y-6">
 
       <!-- Tab intro -->
-      <div x-show="policy?.organization?.name" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900" x-data="{ helpOpen: false }">
+      <div x-show="policy?.document?.organization?.name" class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900" x-data="{ helpOpen: false }">
         <div class="flex items-center justify-between">
           <p>The enriched policy document extracted from the input, with structured concepts and boundary examples.</p>
           <button @click="helpOpen = !helpOpen" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-4 whitespace-nowrap">
@@ -1441,140 +2160,346 @@
           </button>
         </div>
         <div x-show="helpOpen" x-collapse class="mt-3 text-xs text-blue-800 space-y-2 border-t border-blue-200 pt-3">
-          <p>The policy defines what the AI system should and should not do. It's structured as:</p>
+          <p>The ingest stage parses a content policy document and extracts structured information:</p>
           <ul class="list-disc ml-4 space-y-1">
-            <li><strong>Organization context</strong> — who operates the AI, in what domain, under what regulations</li>
-            <li><strong>Policy concepts</strong> — individual rules (e.g. "No hate speech", "No medical advice"). Each has a definition and boundary examples</li>
-            <li><strong>Boundary examples</strong> — pairs of prohibited vs. acceptable requests that clarify the policy line. These help the LLM generate prompts that land near the boundary</li>
-            <li><strong>Acceptable uses</strong> — explicitly permitted activities, even when they touch on sensitive topics</li>
-            <li><strong>Risk controls</strong> — mitigations the organization has in place</li>
+            <li><strong>Context</strong> — organization, domain, purpose, governed systems, and regulations</li>
+            <li><strong>Stakeholders</strong> — who governs, uses, and is affected by the AI system</li>
+            <li><strong>Policy concepts</strong> — individual rules with definitions, boundary examples, and controls</li>
+            <li><strong>Confidence labels</strong> — color-coded tags on each policy header: <span class="px-1 rounded text-[10px] bg-green-100 text-green-800">green</span> = high confidence, <span class="px-1 rounded text-[10px] bg-amber-100 text-amber-800">amber</span> = partial, <span class="px-1 rounded text-[10px] bg-red-100 text-red-800">red</span> = not found</li>
           </ul>
+          <p>Boundary examples are particularly important — they calibrate the red-team prompt generator to produce prompts that land near the policy boundary.</p>
         </div>
       </div>
 
-      <template x-if="!policy?.organization?.name">
+      <template x-if="!policy?.document?.organization?.name">
         <div class="text-center py-16 text-gray-400">
           <p class="text-lg">No enriched policy data available.</p>
           <p class="text-sm mt-1">Run the ingest stage to produce the enriched policy.</p>
         </div>
       </template>
 
-      <!-- Organization context -->
-      <section x-show="policy?.organization?.name" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-4">
-          <span class="tip" data-tip="Metadata about the organization operating the AI system. Extracted from the policy document during the ingest stage.">Organization Context</span>
-        </h2>
+      <!-- Context Summary -->
+      <section x-show="policy?.document?.organization?.name" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex items-center gap-1 mb-3">
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Key metadata extracted from the policy document: organization, domain, purpose, governed AI systems, and applicable regulations.">Context Summary</h2>
+          <span class="tip-icon" data-tip="Each field has a confidence indicator (green/amber/red dot) showing how confidently the LLM identified this information.">i</span>
+        </div>
+        <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-3 text-xs text-blue-800">
+          <strong>Confidence indicators:</strong> green = high confidence, amber = medium confidence, red = low confidence or not identified
+        </div>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
-            <p class="text-xs text-gray-400 uppercase mb-1">Organization</p>
-            <p class="text-sm font-medium text-gray-800" x-text="policy?.organization?.name || '?'"></p>
+
+          <!-- Organisation & Domain -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="dot" :class="'dot-' + policy.confidence?.context?.organization"></span>
+              <h3 class="tip text-sm font-semibold text-gray-700" data-tip="The organization that operates the AI system. Identified from the policy document header or context.">Organisation</h3>
+            </div>
+            <p class="text-gray-800 font-medium" x-text="policy.document?.organization?.name || 'Not identified'"></p>
+            <div class="flex items-center gap-2 mt-3">
+              <span class="dot" :class="'dot-' + policy.confidence?.context?.domain"></span>
+              <span class="tip text-xs text-gray-400 uppercase" data-tip="Business domain or industry sector (e.g. banking, healthcare, government).">Domain</span>
+            </div>
+            <p class="text-gray-700 text-sm" x-text="policy.document?.domain || 'Not identified'"></p>
           </div>
-          <div>
-            <p class="text-xs text-gray-400 uppercase mb-1">Domain</p>
-            <p class="text-sm font-medium text-gray-800" x-text="policy?.domain || '?'"></p>
-          </div>
-          <div x-show="policy?.airo_version">
-            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="Version of the AI Risk Ontology (AIRO) schema used to structure this policy.">AIRO Version</p>
-            <p class="text-sm font-mono text-gray-800" x-text="policy?.airo_version"></p>
-          </div>
-          <div x-show="(policy?.purpose || []).length">
-            <p class="text-xs text-gray-400 uppercase mb-1">Purpose</p>
-            <ul class="text-sm text-gray-700 space-y-0.5">
-              <template x-for="p in (policy?.purpose || [])" :key="p">
-                <li class="flex items-start gap-1.5"><span class="text-gray-300 mt-0.5">&bull;</span> <span x-text="p"></span></li>
+
+          <!-- Purpose -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="dot" :class="'dot-' + policy.confidence?.context?.purpose"></span>
+              <h3 class="tip text-sm font-semibold text-gray-700" data-tip="Stated purposes of the AI system as described in the policy document.">Purpose</h3>
+            </div>
+            <ul class="text-sm text-gray-700 space-y-1">
+              <template x-for="p in (policy.document?.purpose || [])" :key="p">
+                <li class="flex items-start gap-1.5">
+                  <span class="text-gray-400 mt-0.5">&#8226;</span>
+                  <span x-text="p"></span>
+                </li>
               </template>
             </ul>
+            <p x-show="!(policy.document?.purpose?.length)" class="text-sm text-gray-400 italic">None identified</p>
           </div>
-          <div x-show="(policy?.governed_systems || []).length">
-            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="AI systems covered by this policy (e.g. chatbots, code assistants, content generators). May include purpose and AI Act risk level.">Governed Systems</p>
-            <div class="flex flex-wrap gap-1">
-              <template x-for="gs in (policy?.governed_systems || [])" :key="gs.name">
-                <span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800 tip"
-                  :data-tip="gs.risk_level ? 'Risk level: ' + gs.risk_level : ''"
+
+          <!-- Governed Systems -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="dot" :class="'dot-' + policy.confidence?.context?.governed_systems"></span>
+              <h3 class="tip text-sm font-semibold text-gray-700" data-tip="AI systems explicitly covered by this policy (e.g. chatbots, recommendation engines, content generators).">Governed AI Systems</h3>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <template x-for="gs in (policy.document?.governed_systems || [])" :key="gs.name">
+                <span class="tip px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800"
+                  :data-tip="gs.risk_level ? 'Risk level: ' + gs.risk_level : 'AI system governed by these policies'"
                   x-text="gs.name"></span>
               </template>
             </div>
+            <p x-show="!(policy.document?.governed_systems?.length)" class="text-sm text-gray-400 italic">None identified</p>
           </div>
-          <div x-show="(policy?.stakeholders || []).length">
-            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="People, groups, and named entities involved in or affected by the AI system. Roles indicate their relationship (e.g. airo:AIUser, airo:AISubject).">Stakeholders</p>
-            <div class="flex flex-wrap gap-1">
-              <template x-for="sh in (policy?.stakeholders || [])" :key="sh.name">
-                <span class="px-2 py-0.5 rounded text-xs bg-teal-100 text-teal-800 tip"
-                  :data-tip="(sh.roles || []).join(', ')"
-                  x-text="sh.name"></span>
+
+          <!-- Regulations -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="dot" :class="'dot-' + policy.confidence?.context?.regulations"></span>
+              <h3 class="tip text-sm font-semibold text-gray-700" data-tip="Laws, regulations, and standards the policy references (e.g. EU AI Act, GDPR, NIST AI RMF).">Regulations</h3>
+            </div>
+            <div class="space-y-1">
+              <template x-for="r in (policy.document?.regulations || [])" :key="r.name">
+                <div class="text-sm">
+                  <span class="font-medium text-gray-700" x-text="r.name"></span>
+                  <span x-show="r.jurisdiction" class="text-gray-400 text-xs ml-1" x-text="'(' + r.jurisdiction + ')'"></span>
+                  <template x-if="!r.jurisdiction && !r.reference">
+                    <span class="tip text-amber-500 text-xs ml-1" data-tip="Neither jurisdiction nor reference could be extracted.">(incomplete)</span>
+                  </template>
+                </div>
               </template>
             </div>
+            <p x-show="!(policy.document?.regulations?.length)" class="text-sm text-gray-400 italic">None identified</p>
           </div>
-          <div x-show="(policy?.regulations || []).length">
-            <p class="text-xs text-gray-400 uppercase mb-1 tip" data-tip="Regulations and standards governing AI system use.">Regulations</p>
-            <div class="flex flex-wrap gap-1">
-              <template x-for="reg in (policy?.regulations || [])" :key="reg.name">
-                <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800 tip"
-                  :data-tip="reg.jurisdiction || ''"
-                  x-text="reg.name"></span>
+
+        </div>
+      </section>
+
+      <!-- Stakeholders (Lewis et al. framing) -->
+      <section x-show="policy?.document?.organization?.name" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="dot" :class="'dot-' + policy.confidence?.context?.stakeholders"></span>
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Stakeholder groups identified in the policy, organized by Lewis et al. framing: Organisation, Governance, Users, and Subjects.">Stakeholders</h2>
+          <span class="tip-icon" data-tip="Stakeholder identification follows the Lewis et al. taxonomy: who governs the AI, who uses it, and who is affected by it.">i</span>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+
+          <!-- Organisation -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="The organization operating or deploying the AI system.">Organisation</h3>
+            <p class="font-medium text-gray-800" x-text="policy.stakeholder_groups?.organisation?.name || 'Not identified'"></p>
+          </div>
+
+          <!-- Governance -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="Stakeholders responsible for oversight, compliance, and risk management of the AI system.">Governance</h3>
+            <div class="space-y-2">
+              <template x-for="s in (policy.stakeholder_groups?.governance || [])" :key="s.name">
+                <div>
+                  <span class="text-sm font-medium text-gray-800" x-text="s.name"></span>
+                  <div class="flex flex-wrap gap-1 mt-0.5">
+                    <template x-for="r in s.roles" :key="r">
+                      <span class="tip px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-800" data-tip="Governance role" x-text="r"></span>
+                    </template>
+                  </div>
+                </div>
               </template>
             </div>
+            <p x-show="!(policy.stakeholder_groups?.governance?.length)" class="text-sm text-gray-400 italic">None identified</p>
           </div>
+
+          <!-- Users -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="People who directly interact with or operate the AI system.">Users</h3>
+            <div class="flex flex-wrap gap-1.5">
+              <template x-for="s in (policy.stakeholder_groups?.users || [])" :key="s.name">
+                <span class="tip px-2 py-0.5 rounded text-xs bg-teal-100 text-teal-800" data-tip="AI system user / operator" x-text="s.name"></span>
+              </template>
+            </div>
+            <p x-show="!(policy.stakeholder_groups?.users?.length)" class="text-sm text-gray-400 italic">None identified</p>
+          </div>
+
+          <!-- Subjects -->
+          <div class="border border-gray-200 rounded-lg p-4">
+            <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="People or entities affected by the AI system's decisions or outputs, who may not directly interact with it.">Subjects</h3>
+            <div class="flex flex-wrap gap-1.5">
+              <template x-for="s in (policy.stakeholder_groups?.subjects || [])" :key="s.name">
+                <span class="tip px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" data-tip="AI system subject — person or entity affected" x-text="s.name"></span>
+              </template>
+            </div>
+            <p x-show="!(policy.stakeholder_groups?.subjects?.length)" class="text-sm text-gray-400 italic">None identified</p>
+          </div>
+
         </div>
       </section>
 
       <!-- Policy concepts -->
-      <template x-for="(pol, pi) in (policy?.policies || [])" :key="pi">
-        <section class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-          <div class="px-5 py-4 border-b border-gray-200 bg-indigo-50">
-            <h3 class="text-sm font-semibold text-indigo-900" x-text="pol.policy_concept"></h3>
-            <p class="text-sm text-indigo-800 mt-1 leading-relaxed" x-text="pol.concept_definition"></p>
-          </div>
-          <div class="px-5 py-4 space-y-4">
+      <section x-show="policy?.document?.organization?.name" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex items-center gap-1 mb-3">
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Individual policy concepts extracted from the document, with definitions, boundary examples, acceptable uses, risk controls, and human involvement requirements.">
+            Policies
+            <span class="text-gray-400 font-normal" x-text="'(' + (policy.document?.policies?.length || 0) + ')'"></span>
+          </h2>
+          <span class="tip-icon" data-tip="Each policy concept defines one rule the AI system should follow. Boundary examples show the line between prohibited and acceptable behavior.">i</span>
+        </div>
+        <div class="space-y-4">
+          <template x-for="(pol, pi) in (policy.document?.policies || [])" :key="pi">
+            <div class="border border-gray-200 rounded-lg" x-data="{ open: true }">
 
-            <!-- Boundary examples -->
-            <div x-show="(pol.boundary_examples || []).length">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Boundary Examples</p>
-              <div class="space-y-2">
-                <template x-for="(be, bi) in (pol.boundary_examples || [])" :key="bi">
-                  <div class="grid grid-cols-2 gap-2 text-xs">
-                    <div class="bg-red-50 rounded-lg p-3 border border-red-100">
-                      <p class="text-[10px] font-semibold text-red-500 uppercase mb-1">Prohibited</p>
-                      <p class="text-red-800" x-text="be.prohibited"></p>
-                    </div>
-                    <div class="bg-green-50 rounded-lg p-3 border border-green-100">
-                      <p class="text-[10px] font-semibold text-green-500 uppercase mb-1">Acceptable</p>
-                      <p class="text-green-800" x-text="be.acceptable"></p>
-                    </div>
+              <!-- Policy header -->
+              <button @click="open = !open"
+                class="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 rounded-t-lg">
+                <div class="flex items-center gap-3 flex-wrap">
+                  <span class="font-semibold text-gray-800" x-text="pol.policy_concept"></span>
+                  <!-- Confidence labels -->
+                  <div class="flex gap-1.5 flex-wrap">
+                    <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      :class="policyConfLabel(policy.confidence?.policies?.[pi]?.boundary_examples)"
+                      data-tip="Boundary examples — paired prohibited/acceptable behavior examples. Green = good pairs, Red = none found.">Boundaries</span>
+                    <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      :class="policyConfLabel(policy.confidence?.policies?.[pi]?.acceptable_uses)"
+                      data-tip="Acceptable uses — explicitly permitted activities. Green = identified, Amber = partial, Red = none.">Uses</span>
+                    <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      :class="policyConfLabel(policy.confidence?.policies?.[pi]?.risk_controls)"
+                      data-tip="Risk controls — safeguards in place. Green = identified, Amber = partial, Red = none.">Controls</span>
+                    <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      :class="policyConfLabel(policy.confidence?.policies?.[pi]?.human_involvement)"
+                      data-tip="Human involvement — oversight requirements. Green = identified, Amber = partial, Red = none.">Human</span>
+                    <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                      :class="policyConfLabel(policy.confidence?.policies?.[pi]?.decomposition)"
+                      data-tip="Decomposition — agent/activity/entity breakdown. Green = all three, Amber = partial, Red = not decomposed.">Decomp</span>
                   </div>
-                </template>
+                </div>
+                <svg class="w-5 h-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''"
+                  fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              <!-- Policy body -->
+              <div x-show="open" class="p-4 pt-0 space-y-4">
+
+                <!-- Definition -->
+                <div>
+                  <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Natural language definition of what this policy concept covers and how it should be applied.">Definition</h4>
+                  <p class="text-sm text-gray-700 leading-relaxed" x-text="pol.concept_definition"></p>
+                </div>
+
+                <!-- Boundary Examples -->
+                <div x-show="pol.boundary_examples?.length">
+                  <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Paired examples showing the line between prohibited and acceptable behavior. These calibrate the red-team prompt generator.">Boundary Examples</h4>
+                  <table class="w-full text-sm">
+                    <thead>
+                      <tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
+                        <th class="tip pb-2 pr-3 w-1/2" data-tip="Example of behavior that violates this policy — the kind of request the red-team prompts should emulate.">Prohibited</th>
+                        <th class="tip pb-2 w-1/2" data-tip="Example of similar but permitted behavior — helps calibrate the boundary between allowed and prohibited.">Acceptable</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <template x-for="be in pol.boundary_examples" :key="be.prohibited">
+                        <tr class="border-b border-gray-100">
+                          <td class="py-2 px-3 text-red-700 bg-red-50" x-text="be.prohibited"></td>
+                          <td class="py-2 px-3 text-green-700 bg-green-50" x-text="be.acceptable"></td>
+                        </tr>
+                      </template>
+                    </tbody>
+                  </table>
+                </div>
+
+                <!-- Acceptable Uses -->
+                <div x-show="pol.acceptable_uses?.length">
+                  <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Activities explicitly permitted by this policy, even when they touch on sensitive topics.">Acceptable Uses</h4>
+                  <ul class="text-sm text-gray-700 space-y-1">
+                    <template x-for="au in pol.acceptable_uses" :key="au">
+                      <li class="flex items-start gap-1.5">
+                        <span class="text-green-500 mt-0.5">&#10003;</span>
+                        <span x-text="au"></span>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+
+                <!-- Risk Controls -->
+                <div x-show="pol.risk_controls?.length">
+                  <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Safeguards or mitigations the organization has in place for this policy area.">Risk Controls</h4>
+                  <ul class="text-sm text-gray-700 space-y-1">
+                    <template x-for="rc in pol.risk_controls" :key="rc">
+                      <li class="flex items-start gap-1.5">
+                        <span class="text-blue-500 mt-0.5">&#9632;</span>
+                        <span x-text="rc"></span>
+                      </li>
+                    </template>
+                  </ul>
+                </div>
+
+                <!-- Human Involvement -->
+                <div x-show="pol.human_involvement">
+                  <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Human oversight requirements for this policy area (e.g. human-in-the-loop review, escalation procedures).">Human Involvement</h4>
+                  <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
+                    <p class="text-sm text-indigo-800" x-text="pol.human_involvement"></p>
+                  </div>
+                </div>
+
+                <!-- Decomposition: Agent -> Activity -> Entity -->
+                <div x-show="pol.decomposition">
+                  <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Agent → Activity → Entity breakdown of the policy concept into semantic components.">Decomposition</h4>
+                  <div class="flex items-center gap-2 text-sm">
+                    <template x-if="pol.decomposition?.agent">
+                      <div class="text-center">
+                        <span class="px-2 py-1 rounded bg-teal-100 text-teal-800 font-medium inline-block" x-text="pol.decomposition.agent"></span>
+                        <div class="text-[10px] text-gray-400 uppercase mt-0.5">Agent</div>
+                      </div>
+                    </template>
+                    <span x-show="pol.decomposition?.agent && pol.decomposition?.activity" class="flow-arrow self-start mt-1.5">&rarr;</span>
+                    <template x-if="pol.decomposition?.activity">
+                      <div class="text-center">
+                        <span class="px-2 py-1 rounded bg-blue-100 text-blue-800 font-medium inline-block" x-text="pol.decomposition.activity"></span>
+                        <div class="text-[10px] text-gray-400 uppercase mt-0.5">Activity</div>
+                      </div>
+                    </template>
+                    <span x-show="pol.decomposition?.activity && pol.decomposition?.entity" class="flow-arrow self-start mt-1.5">&rarr;</span>
+                    <template x-if="pol.decomposition?.entity">
+                      <div class="text-center">
+                        <span class="px-2 py-1 rounded bg-amber-100 text-amber-800 font-medium inline-block" x-text="pol.decomposition.entity"></span>
+                        <div class="text-[10px] text-gray-400 uppercase mt-0.5">Entity</div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+
               </div>
             </div>
+          </template>
+        </div>
+      </section>
 
-            <!-- Acceptable uses -->
-            <div x-show="(pol.acceptable_uses || []).length">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Acceptable Uses</p>
-              <ul class="text-sm text-gray-700 space-y-0.5">
-                <template x-for="u in (pol.acceptable_uses || [])" :key="u">
-                  <li class="flex items-start gap-1.5"><span class="text-green-400 mt-0.5">&bull;</span> <span x-text="u"></span></li>
-                </template>
-              </ul>
-            </div>
-
-            <!-- Risk controls -->
-            <div x-show="(pol.risk_controls || []).length">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Risk Controls</p>
-              <ul class="text-sm text-gray-700 space-y-0.5">
-                <template x-for="c in (pol.risk_controls || [])" :key="c">
-                  <li class="flex items-start gap-1.5"><span class="text-amber-400 mt-0.5">&bull;</span> <span x-text="c"></span></li>
-                </template>
-              </ul>
-            </div>
-
-            <!-- Human involvement -->
-            <div x-show="pol.human_involvement">
-              <p class="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">Human Involvement</p>
-              <p class="text-sm text-gray-700" x-text="pol.human_involvement"></p>
-            </div>
-
+      <!-- Coverage Summary -->
+      <section x-show="policy?.document?.organization?.name" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
+        <div class="flex items-center gap-1 mb-3">
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Summary statistics about the ingest results: how many policies were extracted, how many were enriched, boundary pairs count, and quality indicators.">Coverage Summary</h2>
+          <span class="tip-icon" data-tip="High enrichment rates and many boundary pairs indicate a well-structured policy. Zero-pair policies may need manual review.">i</span>
+        </div>
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Total number of policy concepts successfully parsed from the document.">
+            <p class="text-2xl font-bold text-indigo-600" x-text="policy.confidence?.summary?.policies_total || 0"></p>
+            <p class="text-xs text-gray-400">Policies Extracted</p>
           </div>
-        </section>
-      </template>
+          <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Policies with at least boundary examples, acceptable uses, or risk controls identified.">
+            <p class="text-2xl font-bold text-green-600" x-text="policy.confidence?.summary?.policies_enriched || 0"></p>
+            <p class="text-xs text-gray-400">Policies Enriched</p>
+          </div>
+          <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Total prohibited/acceptable example pairs across all policies. More pairs = better calibration for prompt generation.">
+            <p class="text-2xl font-bold text-teal-600" x-text="policy.confidence?.summary?.boundary_pairs_total || 0"></p>
+            <p class="text-xs text-gray-400">Boundary Pairs</p>
+          </div>
+          <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Policies with no boundary examples. These may produce lower-quality prompts since the generator lacks prohibited/acceptable calibration. Zero is ideal.">
+            <p class="text-2xl font-bold"
+              :class="(policy.confidence?.summary?.policies_with_zero_pairs || 0) > 0 ? 'text-red-600' : 'text-green-600'"
+              x-text="policy.confidence?.summary?.policies_with_zero_pairs || 0"></p>
+            <p class="text-xs text-gray-400">Zero-Pair Policies</p>
+          </div>
+        </div>
+
+        <!-- Weak Inferences -->
+        <div x-show="policy.confidence?.summary?.weak_inferences?.length" class="mt-4">
+          <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="Fields where the LLM had low confidence in its extraction. May need manual review.">Weak Inferences</h3>
+          <div class="flex flex-wrap gap-2">
+            <template x-for="wi in (policy.confidence?.summary?.weak_inferences || [])" :key="wi">
+              <span class="tip px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" data-tip="Field with low-confidence inference — may need manual review" x-text="wi"></span>
+            </template>
+          </div>
+        </div>
+
+        <!-- Source Info -->
+        <div class="mt-4 text-xs text-gray-400">
+          Model: <span x-text="policy.meta?.model || '?'"></span>
+          <span x-show="policy.meta?.policy_set"> &middot; Policy Set: <span x-text="policy.meta?.policy_set"></span></span>
+        </div>
+      </section>
 
     </div>
   </div>
@@ -2299,6 +3224,7 @@ function renderSimilarityNetwork(selector, legendSelector, graphData, explorerRa
 
 const REPORT_DATA = __REPORT_DATA__;
 const EXPLORER_RAW = __EXPLORER_DATA__;
+const RISK_LANDSCAPE = __RISK_LANDSCAPE_DATA__;
 const DOMAIN_CONTEXT = __DOMAIN_CONTEXT_DATA__;
 const TAXONOMY = __TAXONOMY_DATA__;
 const POLICY = __POLICY_DATA__;
@@ -2319,14 +3245,16 @@ function app() {
 
   return {
     // --- Tab state ---
-    tab: 'evaluation',
+    tab: 'overview',
     tabs: [
-      { id: 'evaluation', label: 'Evaluation' },
-      { id: 'visualizations', label: 'Visualizations' },
-      { id: 'explorer', label: 'Dataset Explorer' },
+      { id: 'overview', label: 'Overview' },
+      { id: 'policy', label: 'Policy' },
+      { id: 'risk_landscape', label: 'Risk Landscape' },
       { id: 'domain_context', label: 'Domain Context' },
       { id: 'taxonomy', label: 'Taxonomy' },
-      { id: 'policy', label: 'Policy' },
+      { id: 'explorer', label: 'Dataset Explorer' },
+      { id: 'evaluation', label: 'Evaluation' },
+      { id: 'visualizations', label: 'Visualizations' },
     ],
 
     // --- Evaluation data ---
@@ -2438,6 +3366,19 @@ function app() {
       return record.sampled_axes.some(sa => sa.cco_class_uri === dcAxis.cco_class_uri && sa.sampled_uri === enumeration.class_uri);
     },
 
+    // --- Risk landscape ---
+    riskLandscape: RISK_LANDSCAPE,
+
+    rlFrameworkColor(framework) {
+      const m = { 'IBM Risk Atlas': 'bg-blue-100 text-blue-800', 'NIST AI RMF': 'bg-green-100 text-green-800', 'OWASP LLM Top 10': 'bg-red-100 text-red-800', 'AIR 2024': 'bg-purple-100 text-purple-800', 'MIT AI Risk Repository': 'bg-yellow-100 text-yellow-800' };
+      return m[framework] || 'bg-gray-100 text-gray-800';
+    },
+
+    rlFrameworkBarColor(framework) {
+      const m = { 'IBM Risk Atlas': 'bg-blue-200 text-blue-900', 'NIST AI RMF': 'bg-green-200 text-green-900', 'OWASP LLM Top 10': 'bg-red-200 text-red-900', 'AIR 2024': 'bg-purple-200 text-purple-900', 'MIT AI Risk Repository': 'bg-yellow-200 text-yellow-900' };
+      return m[framework] || 'bg-gray-300 text-gray-900';
+    },
+
     // --- Domain context ---
     domainContext: DOMAIN_CONTEXT,
     dcFilter: '',
@@ -2449,15 +3390,81 @@ function app() {
       return profiles.filter(p => p.policy_concept === this.dcFilter);
     },
 
+    dcConfidenceDisplay(derivation) {
+      if (derivation.effective_confidence > 0) return (derivation.effective_confidence * 100).toFixed(0) + '%';
+      if (derivation.best_distance != null) return ((1 - derivation.best_distance) * 100).toFixed(0) + '% (search)';
+      return 'N/A';
+    },
+
+    dcRoleTip(role) {
+      const tips = { 'agent': 'Agent — the actor performing or causing the action', 'instrument': 'Instrument — the tool or means used', 'object': 'Object — the entity being acted upon' };
+      return tips[role] || role;
+    },
+
+    dcOriginLabel(item) {
+      if (item.source_ontology === 'generated') return 'LLM-generated';
+      if (item.source_ontology === item.provenance) return item.source_ontology;
+      return item.source_ontology + ' · ' + item.provenance;
+    },
+
+    dcOriginBadgeClass(item) {
+      if (item.source_ontology === 'generated') return 'bg-amber-100 text-amber-800';
+      const m = { 'subclass': 'bg-blue-100 text-blue-800', 'equivalent': 'bg-purple-100 text-purple-800', 'sibling': 'bg-orange-100 text-orange-800', 'search': 'bg-teal-100 text-teal-800' };
+      return m[item.provenance] || 'bg-gray-100 text-gray-800';
+    },
+
+    dcOriginTip(item) {
+      if (item.source_ontology === 'generated') {
+        const model = item.generated_by ? ' by ' + item.generated_by : '';
+        return 'LLM-generated' + model + ' — created when ontology coverage is insufficient';
+      }
+      const tips = { 'subclass': 'subclass of axis class in ', 'equivalent': 'equivalent class in ', 'restriction': 'OWL restriction in ', 'search': 'found via search in ', 'sibling': 'sibling fallback in ' };
+      return (tips[item.provenance] || '') + item.source_ontology;
+    },
+
+    dcRelevanceBadgeClass(rel) {
+      const m = { 'high': 'bg-green-100 text-green-800', 'medium': 'bg-amber-100 text-amber-800', 'low': 'bg-red-100 text-red-800' };
+      return m[rel] || 'bg-gray-100 text-gray-800';
+    },
+
+    dcFrameworkBadgeClass(framework) {
+      const m = { 'IBM Risk Atlas': 'bg-blue-100 text-blue-800', 'NIST AI RMF': 'bg-green-100 text-green-800', 'OWASP LLM Top 10': 'bg-red-100 text-red-800', 'AIR 2024': 'bg-purple-100 text-purple-800' };
+      return m[framework] || 'bg-gray-100 text-gray-800';
+    },
+
+    get dcTotalAxes() {
+      let count = 0;
+      for (const ctx of (this.domainContext.policy_contexts || [])) {
+        for (const g of (ctx.risk_groundings || [])) {
+          count += (g.axes || []).length;
+        }
+      }
+      return count;
+    },
+
+    get dcTotalEnumerations() {
+      let count = 0;
+      for (const ctx of (this.domainContext.policy_contexts || [])) {
+        for (const g of (ctx.risk_groundings || [])) {
+          for (const axis of (g.axes || [])) {
+            count += (axis.enumerations || []).length;
+          }
+        }
+      }
+      return count;
+    },
+
     // --- Taxonomy ---
     taxonomy: TAXONOMY,
 
-    taxonomyEntriesForGroup(groupId) {
-      return (this.taxonomy.entries || []).filter(e => e.isPartOf === groupId);
-    },
 
     // --- Policy ---
     policy: POLICY,
+
+    policyConfLabel(level) {
+      const m = { green: 'bg-green-100 text-green-800', amber: 'bg-amber-100 text-amber-800', red: 'bg-red-100 text-red-800' };
+      return m[level] || m.red;
+    },
 
     // --- Visualizations ---
     _vizInitialized: false,

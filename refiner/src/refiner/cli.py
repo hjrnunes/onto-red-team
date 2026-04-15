@@ -328,20 +328,34 @@ def run(
                     state.risk_landscape.model_dump(), default_flow_style=False, sort_keys=False,
                 ))
                 typer.echo(f"Risk landscape written to {rl_path}")
+                from refiner.artifact_reports import build_risk_landscape_report
+                build_risk_landscape_report(
+                    state.risk_landscape.model_dump(),
+                    out / f"{client_slug}-risk-landscape.html",
+                )
 
             tax_path = out / f"{client_slug}-taxonomy.yaml"
             tax_path.write_text(yaml.dump(taxonomy, default_flow_style=False, sort_keys=False))
             typer.echo(f"Taxonomy written to {tax_path}")
+            from refiner.artifact_reports import build_taxonomy_report
+            build_taxonomy_report(taxonomy, out / f"{client_slug}-taxonomy.html")
 
             prof_path = out / f"{client_slug}-domain-context.yaml"
             prof_path.write_text(yaml.dump(
                 doc.model_dump(), default_flow_style=False, sort_keys=False,
             ))
             typer.echo(f"Domain context written to {prof_path}")
+            from refiner.artifact_reports import build_domain_context_report
+            build_domain_context_report(
+                doc.model_dump(),
+                out / f"{client_slug}-domain-context.html",
+            )
 
             report_path = out / f"{client_slug}-run-report.yaml"
             report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
             typer.echo(f"Report written to {report_path}")
+            from refiner.artifact_reports import build_run_report_html
+            build_run_report_html(report.to_dict(), out / f"{client_slug}-run-report.html")
         else:
             report.token_usage = tracker.to_dict()
             # Partial run — dump intermediate state as JSON
@@ -363,6 +377,11 @@ def run(
                     state.risk_landscape.model_dump(), default_flow_style=False, sort_keys=False,
                 ))
                 typer.echo(f"Risk landscape written to {rl_path}")
+                from refiner.artifact_reports import build_risk_landscape_report
+                build_risk_landscape_report(
+                    state.risk_landscape.model_dump(),
+                    out / f"{client_slug}-risk-landscape.html",
+                )
             state_path.write_text(json.dumps(state_data, indent=2))
             typer.echo(f"Intermediate state written to {state_path}")
 
@@ -370,6 +389,8 @@ def run(
                 report_path = out / f"{client_slug}-run-report.yaml"
                 report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
                 typer.echo(f"Report written to {report_path}")
+                from refiner.artifact_reports import build_run_report_html
+                build_run_report_html(report.to_dict(), out / f"{client_slug}-run-report.html")
         md_path = debug.render_markdown()
         if md_path:
             typer.echo(f"Debug markdown written to {md_path}")
@@ -475,11 +496,15 @@ def map_risks_cmd(
         landscape.model_dump(), default_flow_style=False, sort_keys=False,
     ))
     typer.echo(f"Risk landscape written to {rl_path}")
+    from refiner.artifact_reports import build_risk_landscape_report
+    build_risk_landscape_report(landscape.model_dump(), out / f"{client_slug}-risk-landscape.html")
 
     report.token_usage = tracker.to_dict()
     report_path = out / f"{client_slug}-run-report.yaml"
     report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
     typer.echo(f"Report written to {report_path}")
+    from refiner.artifact_reports import build_run_report_html
+    build_run_report_html(report.to_dict(), out / f"{client_slug}-run-report.html")
     _echo_token_usage(tracker)
 
 
@@ -601,6 +626,8 @@ def ground(
         dcd.model_dump(), default_flow_style=False, sort_keys=False,
     ))
     typer.echo(f"Domain context written to {dcd_path}")
+    from refiner.artifact_reports import build_domain_context_report
+    build_domain_context_report(dcd.model_dump(), out / f"{client_slug}-domain-context.html")
 
     # Export taxonomy
     taxonomy, _ = export_taxonomy(
@@ -612,11 +639,15 @@ def ground(
     tax_path = out / f"{client_slug}-taxonomy.yaml"
     tax_path.write_text(yaml.dump(taxonomy, default_flow_style=False, sort_keys=False))
     typer.echo(f"Taxonomy written to {tax_path}")
+    from refiner.artifact_reports import build_taxonomy_report
+    build_taxonomy_report(taxonomy, out / f"{client_slug}-taxonomy.html")
 
     report.token_usage = tracker.to_dict()
     report_path = out / f"{client_slug}-run-report.yaml"
     report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
     typer.echo(f"Report written to {report_path}")
+    from refiner.artifact_reports import build_run_report_html
+    build_run_report_html(report.to_dict(), out / f"{client_slug}-run-report.html")
     _echo_token_usage(tracker)
 
 
@@ -665,6 +696,12 @@ def emit(
     do_emit(output_dir, policies, samples_per_risk, out_path, seed=seed,
             technique_weights=parsed_weights)
     typer.echo(f"Dataset written to {out_path}")
+
+    # Build dataset HTML report
+    rows = [json.loads(line) for line in out_path.read_text().strip().split("\n") if line.strip()]
+    from refiner.artifact_reports import build_dataset_report
+    build_dataset_report(rows, out_path.with_suffix(".html"))
+    typer.echo(f"Dataset report written to {out_path.with_suffix('.html')}")
 
 
 @app.command()

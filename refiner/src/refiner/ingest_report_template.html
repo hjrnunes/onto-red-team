@@ -13,6 +13,53 @@
     .dot-amber { background: #f59e0b; }
     .dot-red { background: #ef4444; }
     .flow-arrow { color: #9ca3af; font-size: 1.25rem; line-height: 1; }
+    /* Tooltip */
+    .tip {
+      position: relative;
+      cursor: help;
+    }
+    .tip::after {
+      content: attr(data-tip);
+      position: absolute;
+      bottom: calc(100% + 6px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1f2937;
+      color: #f9fafb;
+      font-size: 12px;
+      font-weight: 400;
+      line-height: 1.4;
+      padding: 6px 10px;
+      border-radius: 6px;
+      white-space: normal;
+      width: max-content;
+      max-width: 320px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s;
+      z-index: 50;
+      text-transform: none;
+      letter-spacing: normal;
+    }
+    .tip:hover::after { opacity: 1; }
+    .tip-icon {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #e5e7eb;
+      color: #6b7280;
+      font-size: 10px;
+      font-weight: 700;
+      font-style: normal;
+      line-height: 1;
+      margin-left: 4px;
+      flex-shrink: 0;
+      cursor: help;
+      vertical-align: middle;
+    }
   </style>
 </head>
 <body class="bg-gray-100 min-h-screen" x-data="reportApp()" x-cloak>
@@ -32,21 +79,47 @@
 
   <div class="max-w-screen-xl mx-auto p-6 space-y-6">
 
+    <!-- Reading Guide -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-900" x-data="{ helpOpen: false }">
+      <div class="flex items-center justify-between">
+        <p>Policy document analysis results from the ingest stage.</p>
+        <button @click="helpOpen = !helpOpen" class="text-blue-600 hover:text-blue-800 text-xs font-medium ml-4 whitespace-nowrap">
+          <span x-text="helpOpen ? 'Hide guide' : 'Reading guide'"></span>
+        </button>
+      </div>
+      <div x-show="helpOpen" class="mt-3 text-xs text-blue-800 space-y-2 border-t border-blue-200 pt-3">
+        <p>The ingest stage parses a content policy document and extracts structured information:</p>
+        <ul class="list-disc ml-4 space-y-1">
+          <li><strong>Context</strong> — organization, domain, purpose, governed systems, and regulations</li>
+          <li><strong>Stakeholders</strong> — who governs, uses, and is affected by the AI system (Lewis et al. framing)</li>
+          <li><strong>Policy concepts</strong> — individual rules with definitions, boundary examples (prohibited vs. acceptable), and controls</li>
+          <li><strong>Confidence labels</strong> — color-coded tags on each policy header: <span class="px-1 rounded text-[10px] bg-green-100 text-green-800">green</span> = high confidence, <span class="px-1 rounded text-[10px] bg-amber-100 text-amber-800">amber</span> = partial, <span class="px-1 rounded text-[10px] bg-red-100 text-red-800">red</span> = not found. Amber/red items may need manual review</li>
+        </ul>
+        <p>Boundary examples are particularly important — they calibrate the red-team prompt generator to produce prompts that land near the policy boundary.</p>
+      </div>
+    </div>
+
     <!-- 2. Context Summary -->
     <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Context Summary</h2>
+      <div class="flex items-center gap-1 mb-3">
+        <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Key metadata extracted from the policy document: organization, domain, purpose, governed AI systems, and applicable regulations.">Context Summary</h2>
+        <span class="tip-icon" data-tip="Each field has a confidence indicator (green/amber/red dot) showing how confidently the LLM identified this information.">i</span>
+      </div>
+      <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-3 text-xs text-blue-800">
+        <strong>Confidence indicators:</strong> 🟢 green = high confidence, 🟠 amber = medium confidence, 🔴 red = low confidence or not identified
+      </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
         <!-- Organisation & Domain -->
         <div class="border border-gray-200 rounded-lg p-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="dot" :class="'dot-' + data.confidence?.context?.organization"></span>
-            <h3 class="text-sm font-semibold text-gray-700">Organisation</h3>
+            <h3 class="tip text-sm font-semibold text-gray-700" data-tip="The organization that operates the AI system. Identified from the policy document header or context.">Organisation</h3>
           </div>
           <p class="text-gray-800 font-medium" x-text="data.document?.organization?.name || 'Not identified'"></p>
           <div class="flex items-center gap-2 mt-3">
             <span class="dot" :class="'dot-' + data.confidence?.context?.domain"></span>
-            <span class="text-xs text-gray-400 uppercase">Domain</span>
+            <span class="tip text-xs text-gray-400 uppercase" data-tip="Business domain or industry sector (e.g. banking, healthcare, government).">Domain</span>
           </div>
           <p class="text-gray-700 text-sm" x-text="data.document?.domain || 'Not identified'"></p>
         </div>
@@ -55,7 +128,7 @@
         <div class="border border-gray-200 rounded-lg p-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="dot" :class="'dot-' + data.confidence?.context?.purpose"></span>
-            <h3 class="text-sm font-semibold text-gray-700">Purpose</h3>
+            <h3 class="tip text-sm font-semibold text-gray-700" data-tip="Stated purposes of the AI system as described in the policy document.">Purpose</h3>
           </div>
           <ul class="text-sm text-gray-700 space-y-1">
             <template x-for="p in data.document?.purpose || []" :key="p">
@@ -72,11 +145,11 @@
         <div class="border border-gray-200 rounded-lg p-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="dot" :class="'dot-' + data.confidence?.context?.governed_systems"></span>
-            <h3 class="text-sm font-semibold text-gray-700">Governed AI Systems</h3>
+            <h3 class="tip text-sm font-semibold text-gray-700" data-tip="AI systems explicitly covered by this policy (e.g. chatbots, recommendation engines, content generators).">Governed AI Systems</h3>
           </div>
           <div class="flex flex-wrap gap-2">
             <template x-for="gs in data.document?.governed_systems || []" :key="gs.name">
-              <span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800" x-text="gs.name"></span>
+              <span class="tip px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800" data-tip="AI system governed by these policies" x-text="gs.name"></span>
             </template>
           </div>
           <p x-show="!(data.document?.governed_systems?.length)" class="text-sm text-gray-400 italic">None identified</p>
@@ -86,7 +159,7 @@
         <div class="border border-gray-200 rounded-lg p-4">
           <div class="flex items-center gap-2 mb-2">
             <span class="dot" :class="'dot-' + data.confidence?.context?.regulations"></span>
-            <h3 class="text-sm font-semibold text-gray-700">Regulations</h3>
+            <h3 class="tip text-sm font-semibold text-gray-700" data-tip="Laws, regulations, and standards the policy references (e.g. EU AI Act, GDPR, NIST AI RMF).">Regulations</h3>
           </div>
           <div class="space-y-1">
             <template x-for="r in data.document?.regulations || []" :key="r.name">
@@ -94,7 +167,7 @@
                 <span class="font-medium text-gray-700" x-text="r.name"></span>
                 <span x-show="r.jurisdiction" class="text-gray-400 text-xs ml-1" x-text="'(' + r.jurisdiction + ')'"></span>
                 <template x-if="!r.jurisdiction && !r.reference">
-                  <span class="text-amber-500 text-xs ml-1">(incomplete)</span>
+                  <span class="tip text-amber-500 text-xs ml-1" data-tip="Neither jurisdiction nor reference could be extracted. The LLM identified the regulation name but couldn't find where it applies or a document reference.">(incomplete)</span>
                 </template>
               </div>
             </template>
@@ -109,26 +182,27 @@
     <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
       <div class="flex items-center gap-2 mb-3">
         <span class="dot" :class="'dot-' + data.confidence?.context?.stakeholders"></span>
-        <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide">Stakeholders</h2>
+        <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Stakeholder groups identified in the policy, organized by Lewis et al. framing: Organisation, Governance, Users, and Subjects.">Stakeholders</h2>
+        <span class="tip-icon" data-tip="Stakeholder identification follows the Lewis et al. taxonomy: who governs the AI, who uses it, and who is affected by it.">i</span>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
 
         <!-- Organisation -->
         <div class="border border-gray-200 rounded-lg p-4">
-          <h3 class="text-xs text-gray-400 uppercase tracking-wide mb-2">Organisation</h3>
+          <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="The organization operating or deploying the AI system.">Organisation</h3>
           <p class="font-medium text-gray-800" x-text="data.stakeholder_groups?.organisation?.name || 'Not identified'"></p>
         </div>
 
         <!-- Governance -->
         <div class="border border-gray-200 rounded-lg p-4">
-          <h3 class="text-xs text-gray-400 uppercase tracking-wide mb-2">Governance</h3>
+          <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="Stakeholders responsible for oversight, compliance, and risk management of the AI system.">Governance</h3>
           <div class="space-y-2">
             <template x-for="s in data.stakeholder_groups?.governance || []" :key="s.name">
               <div>
                 <span class="text-sm font-medium text-gray-800" x-text="s.name"></span>
                 <div class="flex flex-wrap gap-1 mt-0.5">
                   <template x-for="r in s.roles" :key="r">
-                    <span class="px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-800" x-text="r"></span>
+                    <span class="tip px-1.5 py-0.5 rounded text-[10px] bg-purple-100 text-purple-800" data-tip="Governance role" x-text="r"></span>
                   </template>
                 </div>
               </div>
@@ -139,10 +213,10 @@
 
         <!-- Users -->
         <div class="border border-gray-200 rounded-lg p-4">
-          <h3 class="text-xs text-gray-400 uppercase tracking-wide mb-2">Users</h3>
+          <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="People who directly interact with or operate the AI system.">Users</h3>
           <div class="flex flex-wrap gap-1.5">
             <template x-for="s in data.stakeholder_groups?.users || []" :key="s.name">
-              <span class="px-2 py-0.5 rounded text-xs bg-teal-100 text-teal-800" x-text="s.name"></span>
+              <span class="tip px-2 py-0.5 rounded text-xs bg-teal-100 text-teal-800" data-tip="AI system user / operator" x-text="s.name"></span>
             </template>
           </div>
           <p x-show="!(data.stakeholder_groups?.users?.length)" class="text-sm text-gray-400 italic">None identified</p>
@@ -150,10 +224,10 @@
 
         <!-- Subjects -->
         <div class="border border-gray-200 rounded-lg p-4">
-          <h3 class="text-xs text-gray-400 uppercase tracking-wide mb-2">Subjects</h3>
+          <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="People or entities affected by the AI system's decisions or outputs, who may not directly interact with it.">Subjects</h3>
           <div class="flex flex-wrap gap-1.5">
             <template x-for="s in data.stakeholder_groups?.subjects || []" :key="s.name">
-              <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" x-text="s.name"></span>
+              <span class="tip px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" data-tip="AI system subject — person or entity affected" x-text="s.name"></span>
             </template>
           </div>
           <p x-show="!(data.stakeholder_groups?.subjects?.length)" class="text-sm text-gray-400 italic">None identified</p>
@@ -164,10 +238,13 @@
 
     <!-- 4. Policies -->
     <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-        Policies
-        <span class="text-gray-400 font-normal" x-text="'(' + (data.document?.policies?.length || 0) + ')'"></span>
-      </h2>
+      <div class="flex items-center gap-1 mb-3">
+        <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Individual policy concepts extracted from the document, with definitions, boundary examples, acceptable uses, risk controls, and human involvement requirements.">
+          Policies
+          <span class="text-gray-400 font-normal" x-text="'(' + (data.document?.policies?.length || 0) + ')'"></span>
+        </h2>
+        <span class="tip-icon" data-tip="Each policy concept defines one rule the AI system should follow. Boundary examples show the line between prohibited and acceptable behavior.">i</span>
+      </div>
       <div class="space-y-4">
         <template x-for="(policy, idx) in data.document?.policies || []" :key="policy.policy_concept">
           <div class="border border-gray-200 rounded-lg" x-data="{ open: true }">
@@ -175,20 +252,25 @@
             <!-- Policy header -->
             <button @click="open = !open"
               class="w-full flex items-center justify-between p-4 text-left hover:bg-gray-50 rounded-t-lg">
-              <div class="flex items-center gap-3">
+              <div class="flex items-center gap-3 flex-wrap">
                 <span class="font-semibold text-gray-800" x-text="policy.policy_concept"></span>
-                <!-- Confidence dots -->
-                <div class="flex gap-1">
-                  <span class="dot" :class="'dot-' + (data.confidence?.policies?.[idx]?.boundary_examples || 'red')"
-                    title="Boundary examples"></span>
-                  <span class="dot" :class="'dot-' + (data.confidence?.policies?.[idx]?.acceptable_uses || 'red')"
-                    title="Acceptable uses"></span>
-                  <span class="dot" :class="'dot-' + (data.confidence?.policies?.[idx]?.risk_controls || 'red')"
-                    title="Risk controls"></span>
-                  <span class="dot" :class="'dot-' + (data.confidence?.policies?.[idx]?.human_involvement || 'red')"
-                    title="Human involvement"></span>
-                  <span class="dot" :class="'dot-' + (data.confidence?.policies?.[idx]?.decomposition || 'red')"
-                    title="Decomposition"></span>
+                <!-- Confidence labels -->
+                <div class="flex gap-1.5 flex-wrap">
+                  <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    :class="confidenceLabelClass(data.confidence?.policies?.[idx]?.boundary_examples)"
+                    data-tip="Boundary examples — paired prohibited/acceptable behavior examples. Green = good pairs, Red = none found.">Boundaries</span>
+                  <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    :class="confidenceLabelClass(data.confidence?.policies?.[idx]?.acceptable_uses)"
+                    data-tip="Acceptable uses — explicitly permitted activities. Green = identified, Amber = partial, Red = none.">Uses</span>
+                  <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    :class="confidenceLabelClass(data.confidence?.policies?.[idx]?.risk_controls)"
+                    data-tip="Risk controls — safeguards in place. Green = identified, Amber = partial, Red = none.">Controls</span>
+                  <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    :class="confidenceLabelClass(data.confidence?.policies?.[idx]?.human_involvement)"
+                    data-tip="Human involvement — oversight requirements. Green = identified, Amber = partial, Red = none.">Human</span>
+                  <span class="tip px-1.5 py-0.5 rounded text-[10px] font-medium"
+                    :class="confidenceLabelClass(data.confidence?.policies?.[idx]?.decomposition)"
+                    data-tip="Decomposition — agent/activity/entity breakdown. Green = all three, Amber = partial, Red = not decomposed.">Decomp</span>
                 </div>
               </div>
               <svg class="w-5 h-5 text-gray-400 transition-transform" :class="open ? 'rotate-180' : ''"
@@ -202,25 +284,25 @@
 
               <!-- Definition -->
               <div>
-                <h4 class="text-xs text-gray-400 uppercase tracking-wide mb-1">Definition</h4>
+                <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Natural language definition of what this policy concept covers and how it should be applied.">Definition</h4>
                 <p class="text-sm text-gray-700 leading-relaxed" x-text="policy.concept_definition"></p>
               </div>
 
               <!-- Boundary Examples -->
               <div x-show="policy.boundary_examples?.length">
-                <h4 class="text-xs text-gray-400 uppercase tracking-wide mb-1">Boundary Examples</h4>
+                <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Paired examples showing the line between prohibited and acceptable behavior. These calibrate the red-team prompt generator.">Boundary Examples</h4>
                 <table class="w-full text-sm">
                   <thead>
                     <tr class="text-left text-xs text-gray-400 uppercase border-b border-gray-200">
-                      <th class="pb-2 pr-3 w-1/2">Prohibited</th>
-                      <th class="pb-2 w-1/2">Acceptable</th>
+                      <th class="tip pb-2 pr-3 w-1/2" data-tip="Example of behavior that violates this policy — the kind of request the red-team prompts should emulate.">Prohibited</th>
+                      <th class="tip pb-2 w-1/2" data-tip="Example of similar but permitted behavior — helps calibrate the boundary between allowed and prohibited.">Acceptable</th>
                     </tr>
                   </thead>
                   <tbody>
                     <template x-for="be in policy.boundary_examples" :key="be.prohibited">
                       <tr class="border-b border-gray-100">
-                        <td class="py-2 pr-3 text-red-700 bg-red-50/50" x-text="be.prohibited"></td>
-                        <td class="py-2 text-green-700 bg-green-50/50" x-text="be.acceptable"></td>
+                        <td class="py-2 px-3 text-red-700 bg-red-50" x-text="be.prohibited"></td>
+                        <td class="py-2 px-3 text-green-700 bg-green-50" x-text="be.acceptable"></td>
                       </tr>
                     </template>
                   </tbody>
@@ -229,7 +311,7 @@
 
               <!-- Acceptable Uses -->
               <div x-show="policy.acceptable_uses?.length">
-                <h4 class="text-xs text-gray-400 uppercase tracking-wide mb-1">Acceptable Uses</h4>
+                <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Activities explicitly permitted by this policy, even when they touch on sensitive topics.">Acceptable Uses</h4>
                 <ul class="text-sm text-gray-700 space-y-1">
                   <template x-for="au in policy.acceptable_uses" :key="au">
                     <li class="flex items-start gap-1.5">
@@ -242,7 +324,7 @@
 
               <!-- Risk Controls -->
               <div x-show="policy.risk_controls?.length">
-                <h4 class="text-xs text-gray-400 uppercase tracking-wide mb-1">Risk Controls</h4>
+                <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Safeguards or mitigations the organization has in place for this policy area.">Risk Controls</h4>
                 <ul class="text-sm text-gray-700 space-y-1">
                   <template x-for="rc in policy.risk_controls" :key="rc">
                     <li class="flex items-start gap-1.5">
@@ -255,7 +337,7 @@
 
               <!-- Human Involvement -->
               <div x-show="policy.human_involvement">
-                <h4 class="text-xs text-gray-400 uppercase tracking-wide mb-1">Human Involvement</h4>
+                <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Human oversight requirements for this policy area (e.g. human-in-the-loop review, escalation procedures).">Human Involvement</h4>
                 <div class="bg-indigo-50 border border-indigo-200 rounded-lg p-3">
                   <p class="text-sm text-indigo-800" x-text="policy.human_involvement"></p>
                 </div>
@@ -263,23 +345,28 @@
 
               <!-- Decomposition: Agent -> Activity -> Entity -->
               <div x-show="policy.decomposition">
-                <h4 class="text-xs text-gray-400 uppercase tracking-wide mb-1">Decomposition</h4>
+                <h4 class="tip text-xs text-gray-400 uppercase tracking-wide mb-1" data-tip="Agent → Activity → Entity breakdown of the policy concept into semantic components.">Decomposition</h4>
                 <div class="flex items-center gap-2 text-sm">
-                  <span x-show="policy.decomposition?.agent"
-                    class="px-2 py-1 rounded bg-teal-100 text-teal-800 font-medium" x-text="policy.decomposition?.agent"></span>
-                  <span x-show="policy.decomposition?.agent" class="flow-arrow">&rarr;</span>
-                  <span x-show="policy.decomposition?.activity"
-                    class="px-2 py-1 rounded bg-blue-100 text-blue-800 font-medium" x-text="policy.decomposition?.activity"></span>
-                  <span x-show="policy.decomposition?.activity" class="flow-arrow">&rarr;</span>
-                  <span x-show="policy.decomposition?.entity"
-                    class="px-2 py-1 rounded bg-amber-100 text-amber-800 font-medium" x-text="policy.decomposition?.entity"></span>
-                </div>
-                <div class="flex gap-4 mt-1 text-[10px] text-gray-400 uppercase">
-                  <span x-show="policy.decomposition?.agent">Agent</span>
-                  <span x-show="policy.decomposition?.agent">&nbsp;</span>
-                  <span x-show="policy.decomposition?.activity">Activity</span>
-                  <span x-show="policy.decomposition?.activity">&nbsp;</span>
-                  <span x-show="policy.decomposition?.entity">Entity</span>
+                  <template x-if="policy.decomposition?.agent">
+                    <div class="text-center">
+                      <span class="px-2 py-1 rounded bg-teal-100 text-teal-800 font-medium inline-block" x-text="policy.decomposition.agent"></span>
+                      <div class="text-[10px] text-gray-400 uppercase mt-0.5">Agent</div>
+                    </div>
+                  </template>
+                  <span x-show="policy.decomposition?.agent && policy.decomposition?.activity" class="flow-arrow self-start mt-1.5">&rarr;</span>
+                  <template x-if="policy.decomposition?.activity">
+                    <div class="text-center">
+                      <span class="px-2 py-1 rounded bg-blue-100 text-blue-800 font-medium inline-block" x-text="policy.decomposition.activity"></span>
+                      <div class="text-[10px] text-gray-400 uppercase mt-0.5">Activity</div>
+                    </div>
+                  </template>
+                  <span x-show="policy.decomposition?.activity && policy.decomposition?.entity" class="flow-arrow self-start mt-1.5">&rarr;</span>
+                  <template x-if="policy.decomposition?.entity">
+                    <div class="text-center">
+                      <span class="px-2 py-1 rounded bg-amber-100 text-amber-800 font-medium inline-block" x-text="policy.decomposition.entity"></span>
+                      <div class="text-[10px] text-gray-400 uppercase mt-0.5">Entity</div>
+                    </div>
+                  </template>
                 </div>
               </div>
 
@@ -291,22 +378,25 @@
 
     <!-- 5. Coverage Summary -->
     <section class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
-      <h2 class="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">Coverage Summary</h2>
+      <div class="flex items-center gap-1 mb-3">
+        <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Summary statistics about the ingest results: how many policies were extracted, how many were enriched, boundary pairs count, and quality indicators.">Coverage Summary</h2>
+        <span class="tip-icon" data-tip="High enrichment rates and many boundary pairs indicate a well-structured policy. Zero-pair policies may need manual review.">i</span>
+      </div>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
 
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
+        <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Total number of policy concepts successfully parsed from the document.">
           <p class="text-2xl font-bold text-indigo-600" x-text="data.confidence?.summary?.policies_total || 0"></p>
           <p class="text-xs text-gray-400">Policies Extracted</p>
         </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
+        <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Policies with at least boundary examples, acceptable uses, or risk controls identified.">
           <p class="text-2xl font-bold text-green-600" x-text="data.confidence?.summary?.policies_enriched || 0"></p>
           <p class="text-xs text-gray-400">Policies Enriched</p>
         </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
+        <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Total prohibited/acceptable example pairs across all policies. More pairs = better calibration for prompt generation.">
           <p class="text-2xl font-bold text-teal-600" x-text="data.confidence?.summary?.boundary_pairs_total || 0"></p>
           <p class="text-xs text-gray-400">Boundary Pairs</p>
         </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg">
+        <div class="tip text-center p-3 bg-gray-50 rounded-lg" data-tip="Policies with no boundary examples. These may produce lower-quality prompts since the generator lacks prohibited/acceptable calibration. Zero is ideal.">
           <p class="text-2xl font-bold"
             :class="(data.confidence?.summary?.policies_with_zero_pairs || 0) > 0 ? 'text-red-600' : 'text-green-600'"
             x-text="data.confidence?.summary?.policies_with_zero_pairs || 0"></p>
@@ -317,29 +407,29 @@
 
       <!-- Weak Inferences -->
       <div x-show="data.confidence?.summary?.weak_inferences?.length" class="mt-4">
-        <h3 class="text-xs text-gray-400 uppercase tracking-wide mb-2">Weak Inferences</h3>
+        <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="Fields where the LLM had low confidence in its extraction. May need manual review.">Weak Inferences</h3>
         <div class="flex flex-wrap gap-2">
           <template x-for="wi in data.confidence?.summary?.weak_inferences || []" :key="wi">
-            <span class="px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" x-text="wi"></span>
+            <span class="tip px-2 py-0.5 rounded text-xs bg-amber-100 text-amber-800" data-tip="Field with low-confidence inference — may need manual review" x-text="wi"></span>
           </template>
         </div>
       </div>
 
       <!-- Passes Completed -->
-      <div class="mt-4">
-        <h3 class="text-xs text-gray-400 uppercase tracking-wide mb-2">Passes Completed</h3>
+      <div x-show="data.meta?.passes_completed?.length" class="mt-4">
+        <h3 class="tip text-xs text-gray-400 uppercase tracking-wide mb-2" data-tip="Ingest pipeline passes completed. Multiple passes progressively enrich the policy document.">Passes Completed</h3>
         <div class="flex gap-2">
           <template x-for="pass_name in data.meta?.passes_completed || []" :key="pass_name">
-            <span class="px-2 py-0.5 rounded text-xs bg-green-100 text-green-800" x-text="pass_name"></span>
+            <span class="tip px-2 py-0.5 rounded text-xs bg-green-100 text-green-800" data-tip="Ingest pipeline pass completed" x-text="pass_name"></span>
           </template>
         </div>
       </div>
 
       <!-- Source Info -->
       <div class="mt-4 text-xs text-gray-400">
-        Source: <span x-text="data.meta?.source_document || '?'"></span>
-        &middot; Format: <span x-text="data.meta?.input_format || '?'"></span>
-        &middot; Model: <span x-text="data.meta?.model || '?'"></span>
+        <span x-show="data.meta?.source_document">Source: <span x-text="data.meta?.source_document"></span> &middot; </span>
+        <span x-show="data.meta?.input_format">Format: <span x-text="data.meta?.input_format"></span> &middot; </span>
+        Model: <span x-text="data.meta?.model || '?'"></span>
       </div>
     </section>
 
@@ -351,6 +441,14 @@ const DATA = __REPORT_DATA__;
 function reportApp() {
   return {
     data: DATA,
+    confidenceLabelClass(level) {
+      const m = {
+        green: 'bg-green-100 text-green-800',
+        amber: 'bg-amber-100 text-amber-800',
+        red: 'bg-red-100 text-red-800',
+      };
+      return m[level] || m.red;
+    },
   };
 }
 </script>

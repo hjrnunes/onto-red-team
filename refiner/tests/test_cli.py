@@ -7,6 +7,7 @@ from refiner.models import (
     Policy,
     PolicyRiskMapping,
     DomainContextDocument,
+    RiskLandscape,
     RiskSummary,
 )
 from refiner.pipeline import PipelineState
@@ -34,6 +35,11 @@ def _make_completed_state():
         ],
         risk_details={},
         variation_axes=[],
+        risk_landscape=RiskLandscape(
+            model="test-model",
+            risks=[],
+            policy_mappings=[],
+        ),
         domain_context=DomainContextDocument(
             model="test-model",
             risks=[
@@ -237,6 +243,12 @@ def test_cli_run_enriched_format(mock_run, mock_create_client, mock_onto, mock_r
     assert "version" in written
     assert "risks" in written
     assert "policy_contexts" in written
+
+    # Verify HTML reports generated alongside YAML
+    assert (tmp_path / "enriched-risk-landscape.html").exists()
+    assert (tmp_path / "enriched-domain-context.html").exists()
+    assert (tmp_path / "enriched-taxonomy.html").exists()
+    assert (tmp_path / "enriched-run-report.html").exists()
 
 
 @patch("refiner.cli.export_taxonomy")
