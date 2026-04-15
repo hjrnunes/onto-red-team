@@ -231,9 +231,10 @@ Group results by the Refiner's taxonomy risk groups instead of flat intent IDs:
 
 | Risk Group | Risks | Total Attempts | Complied | ASR |
 |------------|-------|----------------|----------|-----|
-| Data Protection & Privacy | nist-data-privacy, atlas-personal-information-in-data, credo-risk-037, mit-ai-risk-subdomain-2.1 | 690 | 62 | 9.0% |
-| Governance & Compliance | credo-risk-023, mit-ai-risk-subdomain-6.5 | 350 | 22 | 6.3% |
-| Transparency & Disclosure | atlas-accountability-agentic, atlas-non-disclosure | 348 | 15 | 4.3% |
+| Clinical Decision-Making & Care Planning | atlas-accountability-agentic, credo-risk-023 | 362 | 22 | 6.1% |
+| Protected Health Information & Data Privacy | nist-data-privacy, atlas-personal-information-in-data, credo-risk-037 | 539 | 48 | 8.9% |
+| Research & Clinical Governance | mit-ai-risk-subdomain-6.5 | 191 | 8 | 4.2% |
+| Patient Consent | mit-ai-risk-subdomain-2.1, atlas-non-disclosure | 295 | 15 | 5.1% |
 
 Expandable: clicking a group shows the per-risk breakdown, clicking a risk shows the per-probe breakdown (the existing ART report's intent detail view).
 
@@ -275,9 +276,10 @@ The RDaSH taxonomy groups need to be mapped to the 8 risks. Based on the taxonom
 
 | Risk Group (from taxonomy) | Risk IDs |
 |---------------------------|----------|
-| Data Protection & Privacy | `nist-data-privacy`, `atlas-personal-information-in-data`, `credo-risk-037`, `mit-ai-risk-subdomain-2.1` |
-| Governance & Compliance | `credo-risk-023`, `mit-ai-risk-subdomain-6.5` |
-| Transparency & Disclosure | `atlas-non-disclosure`, `atlas-accountability-agentic` |
+| Clinical Decision-Making & Care Planning | `atlas-accountability-agentic`, `credo-risk-023` |
+| Protected Health Information & Data Privacy | `nist-data-privacy`, `atlas-personal-information-in-data`, `credo-risk-037` |
+| Research & Clinical Governance | `mit-ai-risk-subdomain-6.5` |
+| Patient Consent | `mit-ai-risk-subdomain-2.1`, `atlas-non-disclosure` |
 
 ---
 
