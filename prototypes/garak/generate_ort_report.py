@@ -16,7 +16,6 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-import yaml
 from jinja2 import Environment, FileSystemLoader
 
 # ---------------------------------------------------------------------------
@@ -80,11 +79,6 @@ def load_stubs(path: Path) -> dict[str, dict]:
         stubs[entry["id"]] = entry
     return stubs
 
-
-def load_yaml(path: Path) -> dict:
-    """Load a YAML file."""
-    with open(path) as f:
-        return yaml.safe_load(f)
 
 
 # ---------------------------------------------------------------------------
@@ -353,7 +347,6 @@ def risk_group_stats(attempts: list[dict]) -> list[dict]:
 def provenance_trails(
     attempts: list[dict],
     stubs: dict[str, dict],
-    mapping: dict,
 ) -> list[dict]:
     """Build provenance trails for complied attempts.
 
@@ -458,7 +451,7 @@ def render_report(
     cf_summary = cross_framework_summary(cf_matrix)
     vocab = domain_vocabulary_analysis(attempts, stubs)
     rg_stats = risk_group_stats(attempts)
-    prov_trails = provenance_trails(attempts, stubs, mapping)
+    prov_trails = provenance_trails(attempts, stubs)
 
     rg_chart = risk_group_chart_data(rg_stats)
     cf_chart = cross_framework_chart_data(cf_matrix)

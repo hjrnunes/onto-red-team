@@ -70,7 +70,7 @@
     .provenance-axes table { font-size: 12px; }
 
     /* Chart containers */
-    .chart-container { margin: 16px 0 24px; }
+    .chart-container { margin: 16px 0 24px; width: 100%; }
 
     /* Metadata strip */
     .metadata-strip { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 20px; padding: 12px 16px; background: var(--pf-t--global--background--color--secondary); border-radius: 6px; border: 1px solid var(--pf-t--global--border--color--default); }
@@ -241,7 +241,7 @@
           <tbody>
             {% for v in domain_vocabulary %}
             <tr>
-              <td>{{ v.axis_label }}</td>
+              <td title="{{ v.axis_uri }}">{{ v.axis_label }}</td>
               <td>{{ v.bfo_category }}</td>
               <td>{{ v.source_ontology }}</td>
               <td class="num">{{ v.total }}</td>
@@ -349,7 +349,7 @@
               <tbody>
                 {% for ax in trail.sampled_axes %}
                 <tr>
-                  <td>{{ ax.cco_class_label }}</td>
+                  <td>{{ ax.cco_class_label }} <code style="font-size: 10px; color: var(--pf-t--global--text--color--subtle);">{{ ax.cco_class_uri }}</code></td>
                   <td>{{ ax.bfo_category }}</td>
                   <td>{{ ax.sampled_label }}</td>
                   <td>{{ ax.source_ontology }}</td>
