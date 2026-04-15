@@ -91,8 +91,10 @@
     <h2>Sections</h2>
     <a href="#overview" class="active" data-nav>Overview</a>
     <a href="#behavior-by-probe" data-nav>Behavior by Probe</a>
+    <a href="#policy-concepts" data-nav>Policy Concepts</a>
+    <a href="#behavior-by-technique" data-nav>Behavior by Technique</a>
     <a href="#risk-groups" data-nav>Risk Groups</a>
-    <a href="#cross-framework" data-nav>Cross-Framework Coverage</a>
+    <a href="#cross-framework" data-nav>Cross-Framework Reach</a>
     <a href="#domain-vocab" data-nav>Domain Vocabulary</a>
     <a href="#intent-overview" data-nav>Overview by Intent</a>
     <a href="#probe-details" data-nav>Probe Details</a>
@@ -133,6 +135,72 @@
         <p class="section-subtitle">Complied vs refused outcomes across probe strategies</p>
         <div id="chart-behavior-by-probe" class="chart-container"></div>
         <div id="chart-behavior-by-intent" class="chart-container"></div>
+      </div>
+    </div>
+
+    <!-- ═══════════════ POLICY CONCEPTS ═══════════════ -->
+    <div id="policy-concepts" class="section-anchor">
+      <div class="section-card">
+        <h2>Policy Concepts</h2>
+        <p class="section-subtitle">Attack success rates by policy concept &mdash; these map directly to the client's original policy language</p>
+
+        <div id="chart-policy-concepts" class="chart-container"></div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Policy Concept</th>
+              <th class="num">Attempts</th>
+              <th class="num">Complied</th>
+              <th class="num">Refused</th>
+              <th class="num">ASR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for pc in policy_concept_stats %}
+            <tr>
+              <td>{{ pc.concept }}</td>
+              <td class="num">{{ pc.total }}</td>
+              <td class="num">{{ pc.complied }}</td>
+              <td class="num">{{ pc.total - pc.complied }}</td>
+              <td class="num {% if pc.asr > 10 %}asr-high{% elif pc.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ pc.asr }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ BEHAVIOR BY TECHNIQUE ═══════════════ -->
+    <div id="behavior-by-technique" class="section-anchor">
+      <div class="section-card">
+        <h2>Behavior by Adversarial Technique</h2>
+        <p class="section-subtitle">How the model responds to each adversarial technique used in prompt generation</p>
+
+        <div id="chart-technique" class="chart-container"></div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Technique</th>
+              <th class="num">Attempts</th>
+              <th class="num">Complied</th>
+              <th class="num">Refused</th>
+              <th class="num">ASR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in technique_stats %}
+            <tr>
+              <td><span class="technique-tag">{{ t.technique }}</span></td>
+              <td class="num">{{ t.total }}</td>
+              <td class="num">{{ t.complied }}</td>
+              <td class="num">{{ t.total - t.complied }}</td>
+              <td class="num {% if t.asr > 10 %}asr-high{% elif t.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ t.asr }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -183,11 +251,11 @@
       </div>
     </div>
 
-    <!-- ═══════════════ SECTION A: CROSS-FRAMEWORK COVERAGE ═══════════════ -->
+    <!-- ═══════════════ SECTION A: CROSS-FRAMEWORK REACH ═══════════════ -->
     <div id="cross-framework" class="section-anchor">
       <div class="section-card">
-        <h2>Cross-Framework Coverage</h2>
-        <p class="section-subtitle">Tested risks and their ASR propagated to cross-mapped risks via Nexus knowledge graph</p>
+        <h2>Cross-Framework Reach</h2>
+        <p class="section-subtitle">Our tests cover {{ cf_summary.unique_mapped_risks }} mapped risks across {{ cf_summary.frameworks_covered | length }} frameworks via Nexus SSSOM cross-mappings &mdash; with empirical ASR from our evaluations propagated to each mapping</p>
 
         <div class="stat-grid" style="margin-bottom: 20px;">
           <div class="stat-card">
@@ -196,16 +264,17 @@
           </div>
           <div class="stat-card">
             <div class="stat-value">{{ cf_summary.frameworks_covered | length }}</div>
-            <div class="stat-label">Frameworks Covered</div>
+            <div class="stat-label">Frameworks Reached</div>
           </div>
           <div class="stat-card">
             <div class="stat-value">{{ cf_summary.unique_mapped_risks }}</div>
-            <div class="stat-label">Unique Mapped Risks</div>
+            <div class="stat-label">Mapped Risks Covered</div>
           </div>
         </div>
 
         <div id="chart-cross-framework" class="chart-container"></div>
 
+        <h3 style="font-size: 15px; margin: 20px 0 8px;">Detailed Mappings</h3>
         <table class="report-table">
           <thead>
             <tr>
@@ -389,22 +458,22 @@
             {% endif %}
             {% if trail.sampled_axes %}
             <div class="provenance-axes">
-              <strong style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Sampled Axes</strong>
+              <strong style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Variation Axes</strong>
               <table class="report-table" style="margin-top: 6px;">
                 <thead>
                   <tr>
-                    <th>CCO Class</th>
+                    <th>Sampled Value</th>
                     <th>BFO Category</th>
-                    <th>Sampled Label</th>
+                    <th>Ontological Class</th>
                     <th>Source</th>
                   </tr>
                 </thead>
                 <tbody>
                   {% for ax in trail.sampled_axes %}
                   <tr>
-                    <td>{{ ax.cco_class_label }} <code style="font-size: 10px; color: var(--pf-t--global--text--color--subtle);">{{ ax.cco_class_uri }}</code></td>
+                    <td><strong>{{ ax.sampled_label }}</strong></td>
                     <td>{{ ax.bfo_category }}</td>
-                    <td>{{ ax.sampled_label }}</td>
+                    <td>{{ ax.cco_class_label }} <code style="font-size: 10px; color: var(--pf-t--global--text--color--subtle);">{{ ax.cco_class_uri }}</code></td>
                     <td>{{ ax.source_ontology }}</td>
                   </tr>
                   {% endfor %}
@@ -548,25 +617,97 @@
       "config": { "view": { "stroke": null } }
     }, opts).catch(console.error);
 
-    // ── Cross-framework heatmap ──
-    vegaEmbed('#chart-cross-framework', {
+    // ── Policy Concepts stacked bar ──
+    var pcData = {{ policy_concept_stats | tojson }};
+    var pcChartData = [];
+    pcData.forEach(function(pc) {
+      pcChartData.push({ concept: pc.concept, outcome: "Complied", count: pc.complied });
+      pcChartData.push({ concept: pc.concept, outcome: "Refused", count: pc.total - pc.complied });
+    });
+    vegaEmbed('#chart-policy-concepts', {
       "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "data": { "values": {{ cross_framework_chart_data | tojson }} },
+      "data": { "values": pcChartData },
       "width": "container",
-      "height": 250,
-      "mark": { "type": "rect", "cornerRadius": 3 },
+      "height": 200,
+      "mark": { "type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3 },
       "encoding": {
-        "x": { "field": "mapped_framework", "type": "nominal", "title": "Mapped Framework", "axis": { "labelAngle": -30, "labelLimit": 200 } },
-        "y": { "field": "tested_risk", "type": "nominal", "title": "Tested Risk", "axis": { "labelLimit": 250 } },
-        "color": { "field": "count", "type": "quantitative", "title": "Mappings", "scale": { "scheme": "blues" } },
+        "x": { "field": "concept", "type": "nominal", "title": "Policy Concept", "axis": { "labelAngle": -25, "labelLimit": 250 } },
+        "y": { "field": "count", "type": "quantitative", "title": "Attempts", "stack": "zero" },
+        "color": {
+          "field": "outcome", "type": "nominal", "title": "Outcome",
+          "scale": { "domain": ["Complied", "Refused"], "range": ["#CA5050", "#A4A4A4"] }
+        },
         "tooltip": [
-          { "field": "tested_risk", "title": "Tested Risk" },
-          { "field": "tested_asr", "title": "Tested ASR %" },
-          { "field": "mapped_framework", "title": "Mapped Framework" },
-          { "field": "count", "title": "Mappings" },
-          { "field": "types", "title": "Types" }
+          { "field": "concept", "title": "Policy Concept" },
+          { "field": "outcome", "title": "Outcome" },
+          { "field": "count", "title": "Count" }
         ]
       },
+      "config": { "view": { "stroke": null } }
+    }, opts).catch(console.error);
+
+    // ── Technique stacked bar ──
+    var techData = {{ technique_stats | tojson }};
+    var techChartData = [];
+    techData.forEach(function(t) {
+      techChartData.push({ technique: t.technique, outcome: "Complied", count: t.complied });
+      techChartData.push({ technique: t.technique, outcome: "Refused", count: t.total - t.complied });
+    });
+    vegaEmbed('#chart-technique', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "data": { "values": techChartData },
+      "width": "container",
+      "height": 200,
+      "mark": { "type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3 },
+      "encoding": {
+        "x": { "field": "technique", "type": "nominal", "title": "Adversarial Technique", "axis": { "labelAngle": -25, "labelLimit": 200 } },
+        "y": { "field": "count", "type": "quantitative", "title": "Attempts", "stack": "zero" },
+        "color": {
+          "field": "outcome", "type": "nominal", "title": "Outcome",
+          "scale": { "domain": ["Complied", "Refused"], "range": ["#CA5050", "#A4A4A4"] }
+        },
+        "tooltip": [
+          { "field": "technique", "title": "Technique" },
+          { "field": "outcome", "title": "Outcome" },
+          { "field": "count", "title": "Count" }
+        ]
+      },
+      "config": { "view": { "stroke": null } }
+    }, opts).catch(console.error);
+
+    // ── Cross-framework reach: risks covered per framework with avg ASR ──
+    vegaEmbed('#chart-cross-framework', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "data": { "values": {{ cross_framework_reach | tojson }} },
+      "width": "container",
+      "height": { "step": 32 },
+      "layer": [
+        {
+          "mark": { "type": "bar", "cornerRadiusEnd": 3 },
+          "encoding": {
+            "y": { "field": "framework", "type": "nominal", "title": null, "sort": "-x", "axis": { "labelLimit": 250 } },
+            "x": { "field": "risks_covered", "type": "quantitative", "title": "Mapped Risks Covered" },
+            "color": {
+              "field": "avg_tested_asr", "type": "quantitative", "title": "Avg Tested ASR %",
+              "scale": { "scheme": "redyellowgreen", "reverse": true, "domain": [0, 10] }
+            },
+            "tooltip": [
+              { "field": "framework", "title": "Framework" },
+              { "field": "risks_covered", "title": "Risks Covered" },
+              { "field": "avg_tested_asr", "title": "Avg Tested ASR %", "format": ".1f" },
+              { "field": "max_tested_asr", "title": "Max Tested ASR %", "format": ".1f" }
+            ]
+          }
+        },
+        {
+          "mark": { "type": "text", "align": "left", "dx": 4, "fontSize": 11 },
+          "encoding": {
+            "y": { "field": "framework", "type": "nominal", "sort": "-x" },
+            "x": { "field": "risks_covered", "type": "quantitative" },
+            "text": { "field": "avg_tested_asr", "type": "quantitative", "format": ".1f" }
+          }
+        }
+      ],
       "config": { "view": { "stroke": null } }
     }, opts).catch(console.error);
 

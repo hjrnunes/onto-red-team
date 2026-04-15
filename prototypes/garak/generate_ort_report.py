@@ -458,6 +458,84 @@ def domain_vocab_chart_data(vocab: list[dict]) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
+def technique_stats(
+    attempts: list[dict],
+    stubs: dict[str, dict],
+) -> list[dict]:
+    """ASR by adversarial technique."""
+    by_tech: dict[str, dict] = {}
+    for a in attempts:
+        stub = stubs.get(a["stub_id"], {})
+        tech = stub.get("technique", "unknown")
+        if tech not in by_tech:
+            by_tech[tech] = {"technique": tech, "total": 0, "complied": 0}
+        by_tech[tech]["total"] += 1
+        if a["outcome"] == "complied":
+            by_tech[tech]["complied"] += 1
+
+    result: list[dict] = []
+    for info in sorted(by_tech.values(), key=lambda x: x["technique"]):
+        asr = (info["complied"] / info["total"] * 100) if info["total"] > 0 else 0.0
+        result.append({**info, "asr": round(asr, 1)})
+    return result
+
+
+def policy_concept_stats(
+    attempts: list[dict],
+    stubs: dict[str, dict],
+) -> list[dict]:
+    """ASR by policy concept — closest to the client's original policy language."""
+    by_concept: dict[str, dict] = {}
+    for a in attempts:
+        stub = stubs.get(a["stub_id"], {})
+        concept = stub.get("policy_concept", "Unknown")
+        if concept not in by_concept:
+            by_concept[concept] = {"concept": concept, "total": 0, "complied": 0}
+        by_concept[concept]["total"] += 1
+        if a["outcome"] == "complied":
+            by_concept[concept]["complied"] += 1
+
+    result: list[dict] = []
+    for info in sorted(by_concept.values(), key=lambda x: x["concept"]):
+        asr = (info["complied"] / info["total"] * 100) if info["total"] > 0 else 0.0
+        result.append({**info, "asr": round(asr, 1)})
+    return result
+
+
+def cross_framework_reach(
+    matrix: list[dict],
+) -> list[dict]:
+    """Per-framework reach: how many mapped risks we cover and at what tested ASR.
+
+    This connects the cross-mappings to actual test results: "our tests
+    at X% ASR cover N risks in Framework Y."
+    """
+    by_framework: dict[str, dict] = {}
+    for row in matrix:
+        fw = row["mapped_framework"]
+        if fw not in by_framework:
+            by_framework[fw] = {
+                "framework": fw,
+                "mapped_risks": set(),
+                "tested_asrs": [],
+            }
+        by_framework[fw]["mapped_risks"].add(row["mapped_risk_id"])
+        by_framework[fw]["tested_asrs"].append(row.get("tested_asr", 0.0))
+
+    result: list[dict] = []
+    for info in sorted(by_framework.values(), key=lambda x: -len(x["mapped_risks"])):
+        asrs = info["tested_asrs"]
+        avg_asr = sum(asrs) / len(asrs) if asrs else 0.0
+        max_asr = max(asrs) if asrs else 0.0
+        result.append({
+            "framework": info["framework"],
+            "risks_covered": len(info["mapped_risks"]),
+            "avg_tested_asr": round(avg_asr, 1),
+            "max_tested_asr": round(max_asr, 1),
+        })
+    return result
+
+
 def behavior_chart_data(attempts: list[dict]) -> list[dict]:
     """Per-attempt data for behavior-by-probe and behavior-by-intent charts.
 
@@ -558,6 +636,11 @@ def render_report(
     beh_chart = behavior_chart_data(attempts)
     probe_details = probe_details_data(attempts)
 
+    # ORT-enriched dimensions
+    tech_stats = technique_stats(attempts, stubs)
+    pc_stats = policy_concept_stats(attempts, stubs)
+    cf_reach = cross_framework_reach(cf_matrix)
+
     # ORT-specific chart data
     rg_chart = risk_group_chart_data(rg_stats)
     cf_chart = cross_framework_chart_data(cf_matrix)
@@ -585,6 +668,10 @@ def render_report(
         # Original ART charts
         chart_attacks_data=beh_chart,
         probe_details=probe_details,
+        # ORT-enriched dimensions
+        technique_stats=tech_stats,
+        policy_concept_stats=pc_stats,
+        cross_framework_reach=cf_reach,
         # ORT-specific charts
         risk_group_chart_data=rg_chart,
         cross_framework_chart_data=cf_chart,
