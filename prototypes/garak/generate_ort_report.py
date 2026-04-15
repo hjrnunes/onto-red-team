@@ -415,35 +415,6 @@ def risk_group_chart_data(groups: list[dict]) -> list[dict]:
     return data
 
 
-def cross_framework_chart_data(matrix: list[dict]) -> list[dict]:
-    """Vega-Lite data for heatmap: tested_risk x mapped_framework."""
-    cell_counts: dict[tuple[str, str], dict] = {}
-
-    for row in matrix:
-        key = (row["tested_risk"], row["mapped_framework"])
-        if key not in cell_counts:
-            cell_counts[key] = {
-                "tested_risk": row["tested_risk"],
-                "tested_asr": row.get("tested_asr", 0.0),
-                "mapped_framework": row["mapped_framework"],
-                "count": 0,
-                "types": set(),
-            }
-        cell_counts[key]["count"] += 1
-        cell_counts[key]["types"].add(row["mapping_type"])
-
-    data: list[dict] = []
-    for cell in cell_counts.values():
-        data.append({
-            "tested_risk": cell["tested_risk"],
-            "tested_asr": cell["tested_asr"],
-            "mapped_framework": cell["mapped_framework"],
-            "count": cell["count"],
-            "types": ", ".join(sorted(cell["types"])),
-        })
-    return data
-
-
 def domain_vocab_chart_data(vocab: list[dict]) -> list[dict]:
     """Vega-Lite data for horizontal bar: axis x ASR."""
     return [
@@ -566,119 +537,77 @@ def cross_framework_reach(
     return result
 
 
-def cross_framework_pack_data(
+def cross_framework_lens_data(
     mapping: dict,
-    intent_asr: dict[str, float],
-) -> list[dict]:
-    """Hierarchy for circle packing: Group → Tested Risk → Mapped Risks.
-
-    Returns flat list in stratify format (id/parent) with metadata.
-    """
-    intent_map = mapping.get("intent_map", {})
-    nodes: list[dict] = []
-
-    nodes.append({
-        "id": "root", "parent": None, "name": "Tests",
-        "depth": 0, "size": None, "asr": None,
-        "tested": False, "framework": "", "mapping_type": "",
-    })
-
-    groups: dict[str, list[tuple[str, dict]]] = defaultdict(list)
-    for intent_id, info in intent_map.items():
-        groups[info.get("risk_group", "Unknown")].append((intent_id, info))
-
-    for group_name, risks in sorted(groups.items()):
-        gid = f"g:{group_name}"
-        nodes.append({
-            "id": gid, "parent": "root", "name": group_name,
-            "depth": 1, "size": None, "asr": None,
-            "tested": False, "framework": "", "mapping_type": "",
-        })
-
-        for intent_id, info in risks:
-            rid = info["nexus_risk_id"]
-            asr = intent_asr.get(intent_id, 0.0)
-            nid = f"r:{rid}"
-            nodes.append({
-                "id": nid, "parent": gid, "name": info["risk_name"],
-                "depth": 2, "size": None, "asr": asr,
-                "tested": True, "framework": info["risk_framework"],
-                "mapping_type": "",
-            })
-
-            for cm in info.get("cross_mappings", []):
-                mid = f"m:{rid}:{cm['id']}"
-                nodes.append({
-                    "id": mid, "parent": nid, "name": cm["name"],
-                    "depth": 3, "size": 1, "asr": asr,
-                    "tested": False, "framework": cm["taxonomy"],
-                    "mapping_type": cm["mapping_type"],
-                })
-
-    return nodes
-
-
-def cross_framework_bundle_data(
-    mapping: dict,
-    intent_asr: dict[str, float],
+    attempts: list[dict],
 ) -> dict:
-    """Hierarchy (by framework) + edges for edge bundling.
+    """Build chart data for framework lens selector.
 
-    Nodes arranged by framework; edges are the cross-mappings between
-    tested risks and mapped risks across frameworks.
+    Returns ``{"frameworks": [...], "data": [...]}``.
+
+    The ``data`` list contains Vega-Lite rows: one row per
+    (framework, risk_name, outcome) combination.  The default framework
+    ``"ORT Tested"`` uses direct results; other frameworks inherit
+    counts from the tested risk that maps to the mapped risk.
     """
     intent_map = mapping.get("intent_map", {})
 
-    fw_risks: dict[str, dict[str, dict]] = defaultdict(dict)
-    edges: list[dict] = []
+    # Per-intent counts
+    counts: dict[str, dict] = {}
+    for a in attempts:
+        intent = a["intent"]
+        if intent not in counts:
+            counts[intent] = {"total": 0, "complied": 0}
+        counts[intent]["total"] += 1
+        if a["outcome"] == "complied":
+            counts[intent]["complied"] += 1
 
-    for intent_id, info in intent_map.items():
-        rid = info["nexus_risk_id"]
-        fw = info["risk_framework"]
-        asr = intent_asr.get(intent_id, 0.0)
+    data: list[dict] = []
+    frameworks_seen: set[str] = {"ORT Tested"}
 
-        fw_risks[fw][rid] = {
-            "name": info["risk_name"], "tested": True, "asr": asr,
-        }
+    for intent_id, info in sorted(intent_map.items()):
+        c = counts.get(intent_id, {"total": 0, "complied": 0})
+        complied = c["complied"]
+        refused = c["total"] - complied
+        risk_name = info["risk_name"]
 
-        for cm in info.get("cross_mappings", []):
-            mapped_id = cm["id"]
-            mapped_fw = cm["taxonomy"]
-            if mapped_id not in fw_risks[mapped_fw]:
-                fw_risks[mapped_fw][mapped_id] = {
-                    "name": cm["name"], "tested": False, "asr": 0.0,
-                }
-
-            edges.append({
-                "source": f"{fw}|{rid}",
-                "target": f"{mapped_fw}|{mapped_id}",
-                "type": cm["mapping_type"],
-                "asr": asr,
-            })
-
-    # Build hierarchy: root → frameworks → risks
-    nodes: list[dict] = [
-        {"id": "root", "parent": None, "name": "Frameworks",
-         "tested": False, "asr": 0},
-    ]
-    for fw in sorted(fw_risks.keys()):
-        fw_id = fw
-        nodes.append({
-            "id": fw_id, "parent": "root", "name": fw,
-            "tested": False, "asr": 0,
+        # Direct "ORT Tested" view
+        data.append({
+            "framework": "ORT Tested",
+            "risk_name": risk_name,
+            "outcome": "Complied", "count": complied,
+            "mapping_type": "direct", "tested_via": "",
+        })
+        data.append({
+            "framework": "ORT Tested",
+            "risk_name": risk_name,
+            "outcome": "Refused", "count": refused,
+            "mapping_type": "direct", "tested_via": "",
         })
 
-        for rid, rinfo in sorted(
-            fw_risks[fw].items(), key=lambda x: x[1]["name"]
-        ):
-            node_id = f"{fw}|{rid}"
-            nodes.append({
-                "id": node_id, "parent": fw_id,
-                "name": rinfo["name"], "tested": rinfo["tested"],
-                "asr": rinfo["asr"],
+        # Mapped framework views
+        for cm in info.get("cross_mappings", []):
+            fw = cm["taxonomy"]
+            frameworks_seen.add(fw)
+            mapped_name = cm["name"]
+            mtype = cm["mapping_type"]
+
+            data.append({
+                "framework": fw,
+                "risk_name": mapped_name,
+                "outcome": "Complied", "count": complied,
+                "mapping_type": mtype, "tested_via": risk_name,
+            })
+            data.append({
+                "framework": fw,
+                "risk_name": mapped_name,
+                "outcome": "Refused", "count": refused,
+                "mapping_type": mtype, "tested_via": risk_name,
             })
 
-    return {"nodes": nodes, "edges": edges}
+    # Sort: ORT Tested first, then alphabetical
+    fw_list = ["ORT Tested"] + sorted(frameworks_seen - {"ORT Tested"})
+    return {"frameworks": fw_list, "data": data}
 
 
 def behavior_chart_data(attempts: list[dict]) -> list[dict]:
@@ -787,13 +716,11 @@ def render_report(
     pc_stats = policy_concept_stats(attempts, stubs, policy_texts)
     cf_reach = cross_framework_reach(cf_matrix)
 
-    # Cross-framework visualizations
-    cf_pack = cross_framework_pack_data(mapping, i_asr)
-    cf_bundle = cross_framework_bundle_data(mapping, i_asr)
+    # Cross-framework lens
+    cf_lens = cross_framework_lens_data(mapping, attempts)
 
     # ORT-specific chart data
     rg_chart = risk_group_chart_data(rg_stats)
-    cf_chart = cross_framework_chart_data(cf_matrix)
     dv_chart = domain_vocab_chart_data(vocab)
 
     policy_source = mapping.get("policy_source", {})
@@ -822,12 +749,10 @@ def render_report(
         technique_stats=tech_stats,
         policy_concept_stats=pc_stats,
         cross_framework_reach=cf_reach,
-        # Cross-framework visualizations
-        cf_pack_data=cf_pack,
-        cf_bundle_data=cf_bundle,
+        # Cross-framework lens
+        cf_lens_data=cf_lens,
         # ORT-specific charts
         risk_group_chart_data=rg_chart,
-        cross_framework_chart_data=cf_chart,
         domain_vocab_chart_data=dv_chart,
     )
 

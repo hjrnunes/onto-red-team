@@ -299,19 +299,7 @@
           </div>
         </div>
 
-        <!-- Circle Packing: hierarchical view -->
-        <h3 style="font-size: 15px; margin: 16px 0 4px;">Hierarchical View</h3>
-        <p style="font-size: 12px; color: var(--pf-t--global--text--color--subtle); margin: 0 0 8px;">Policy risk groups contain tested risks, which expand into their cross-mapped risks. Color = target framework.</p>
-        <div id="chart-cf-pack" class="chart-container" style="display: flex; justify-content: center;"></div>
-
-        <!-- Edge Bundling: network view -->
-        <h3 style="font-size: 15px; margin: 24px 0 4px;">Network View</h3>
-        <p style="font-size: 12px; color: var(--pf-t--global--text--color--subtle); margin: 0 0 8px;">Risks arranged by framework around the circle. Edges show cross-mappings between tested risks (red) and mapped risks (gray).</p>
-        <div id="chart-cf-bundle" class="chart-container" style="display: flex; justify-content: center;"></div>
-
-        <!-- Summary bar: framework reach -->
-        <h3 style="font-size: 15px; margin: 24px 0 4px;">Framework Summary</h3>
-        <div id="chart-cross-framework" class="chart-container"></div>
+        <div id="chart-cf-lens" class="chart-container"></div>
 
         <h3 style="font-size: 15px; margin: 20px 0 8px;">Detailed Mappings</h3>
         <table class="report-table">
@@ -714,213 +702,43 @@
       "config": { "view": { "stroke": null } }
     }, opts).catch(console.error);
 
-    // ── Circle Packing: hierarchical view of cross-framework reach ──
-    vegaEmbed('#chart-cf-pack', {
-      "$schema": "https://vega.github.io/schema/vega/v5.json",
-      "width": 700, "height": 700,
-      "padding": 5, "autosize": "none",
-      "data": [
-        {
-          "name": "tree",
-          "values": {{ cf_pack_data | tojson }},
-          "transform": [
-            {"type": "stratify", "key": "id", "parentKey": "parent"},
-            {"type": "pack", "field": "size", "size": [700, 700], "padding": 6}
-          ]
-        }
-      ],
-      "scales": [
-        {
-          "name": "fwColor", "type": "ordinal",
-          "domain": {"data": "tree", "field": "framework", "sort": true},
-          "range": {"scheme": "tableau10"}
-        }
-      ],
-      "marks": [
-        {
-          "type": "symbol",
-          "from": {"data": "tree"},
-          "encode": {
-            "enter": {
-              "shape": {"value": "circle"},
-              "x": {"field": "x"}, "y": {"field": "y"},
-              "size": {"signal": "4 * datum.r * datum.r"},
-              "tooltip": {"signal": "datum.depth === 3 ? {title: datum.name, Framework: datum.framework, Type: datum.mapping_type, 'Tested ASR': datum.asr + '%'} : datum.depth === 2 ? {title: datum.name, Framework: datum.framework, ASR: datum.asr + '%'} : datum.depth === 1 ? {title: datum.name} : null"}
-            },
-            "update": {
-              "fill": {"signal": "datum.depth === 0 ? 'transparent' : datum.depth === 1 ? '#f0f0f0' : datum.depth === 2 ? '#fde8e8' : scale('fwColor', datum.framework)"},
-              "fillOpacity": {"signal": "datum.depth <= 1 ? 0.6 : datum.depth === 2 ? 0.4 : 0.75"},
-              "stroke": {"signal": "datum.depth === 0 ? 'transparent' : datum.depth === 1 ? '#ccc' : datum.depth === 2 ? '#CA5050' : '#fff'"},
-              "strokeWidth": {"signal": "datum.depth === 2 ? 2 : datum.depth === 1 ? 1.5 : 0.5"}
-            }
-          }
-        },
-        {
-          "type": "text",
-          "from": {"data": "tree"},
-          "encode": {
-            "enter": {
-              "x": {"field": "x"}, "y": {"field": "y"},
-              "align": {"value": "center"}, "baseline": {"value": "middle"},
-              "fontSize": {"signal": "datum.depth === 1 ? 11 : datum.depth === 2 ? 9 : 0"},
-              "fontWeight": {"signal": "datum.depth === 1 ? 'bold' : '600'"},
-              "fill": {"signal": "datum.depth === 1 ? '#333' : '#CA5050'"},
-              "text": {"signal": "datum.depth === 1 ? datum.name : datum.depth === 2 ? datum.name + ' (' + datum.asr + '%)' : ''"},
-              "limit": {"signal": "datum.r * 1.8"}
-            }
-          }
-        }
-      ],
-      "legends": [
-        {"fill": "fwColor", "title": "Target Framework", "orient": "bottom-right", "encode": {"labels": {"update": {"fontSize": {"value": 10}}}}}
-      ]
-    }, opts).catch(console.error);
-
-    // ── Network View: radial layout with curved edges ──
-    var bundleData = {{ cf_bundle_data | tojson }};
-    vegaEmbed('#chart-cf-bundle', {
-      "$schema": "https://vega.github.io/schema/vega/v5.json",
-      "width": 720, "height": 720,
-      "padding": 5, "autosize": "none",
-      "signals": [
-        {"name": "radius", "value": 280},
-        {"name": "extent", "value": 360},
-        {"name": "rotate", "value": 0},
-        {"name": "originX", "update": "width / 2"},
-        {"name": "originY", "update": "height / 2"}
-      ],
-      "data": [
-        {
-          "name": "tree",
-          "values": bundleData.nodes,
-          "transform": [
-            {"type": "stratify", "key": "id", "parentKey": "parent"},
-            {"type": "tree", "method": "cluster", "size": [1, 1], "as": ["alpha", "beta", "depth", "children"]},
-            {"type": "formula", "expr": "(rotate + extent * datum.alpha + 270) % 360", "as": "angle"},
-            {"type": "formula", "expr": "PI * datum.angle / 180", "as": "radians"},
-            {"type": "formula", "expr": "inrange(datum.angle, [90, 270])", "as": "leftside"},
-            {"type": "formula", "expr": "originX + radius * datum.beta * cos(datum.radians)", "as": "x"},
-            {"type": "formula", "expr": "originY + radius * datum.beta * sin(datum.radians)", "as": "y"}
-          ]
-        },
-        {
-          "name": "leaves",
-          "source": "tree",
-          "transform": [{"type": "filter", "expr": "!datum.children"}]
-        },
-        {
-          "name": "edges",
-          "values": bundleData.edges,
-          "transform": [
-            {"type": "lookup", "from": "tree", "key": "id", "fields": ["source"], "as": ["src"]},
-            {"type": "lookup", "from": "tree", "key": "id", "fields": ["target"], "as": ["tgt"]},
-            {"type": "filter", "expr": "datum.src && datum.tgt"},
-            {"type": "formula", "expr": "'M' + datum.src.x + ',' + datum.src.y + 'Q' + originX + ',' + originY + ' ' + datum.tgt.x + ',' + datum.tgt.y", "as": "path"}
-          ]
-        }
-      ],
-      "marks": [
-        {
-          "type": "path",
-          "from": {"data": "edges"},
-          "encode": {
-            "enter": {
-              "path": {"field": "path"},
-              "stroke": {"value": "#CA5050"},
-              "strokeOpacity": {"value": 0.18},
-              "strokeWidth": {"value": 1.2},
-              "fill": {"value": "transparent"}
-            }
-          }
-        },
-        {
-          "type": "symbol",
-          "from": {"data": "leaves"},
-          "encode": {
-            "enter": {
-              "x": {"field": "x"}, "y": {"field": "y"},
-              "size": {"signal": "datum.tested ? 50 : 20"},
-              "fill": {"signal": "datum.tested ? '#CA5050' : '#A4A4A4'"},
-              "stroke": {"value": "white"}, "strokeWidth": {"value": 1},
-              "tooltip": {"signal": "{title: datum.name, Tested: datum.tested ? 'Yes' : 'No', ASR: datum.tested ? datum.asr + '%' : 'N/A'}"}
-            }
-          }
-        },
-        {
-          "type": "text",
-          "from": {"data": "leaves"},
-          "encode": {
-            "enter": {
-              "x": {"field": "x"}, "y": {"field": "y"},
-              "dx": {"signal": "datum.leftside ? -8 : 8"},
-              "align": {"signal": "datum.leftside ? 'right' : 'left'"},
-              "angle": {"signal": "datum.leftside ? datum.angle - 180 : datum.angle"},
-              "baseline": {"value": "middle"},
-              "text": {"field": "name"},
-              "fontSize": {"signal": "datum.tested ? 10 : 8"},
-              "fontWeight": {"signal": "datum.tested ? 'bold' : 'normal'"},
-              "fill": {"signal": "datum.tested ? '#CA5050' : '#666'"},
-              "limit": {"value": 180}
-            }
-          }
-        },
-        {
-          "type": "text",
-          "from": {"data": "tree"},
-          "encode": {
-            "enter": {
-              "x": {"field": "x"}, "y": {"field": "y"},
-              "align": {"signal": "datum.leftside ? 'right' : 'left'"},
-              "angle": {"signal": "datum.leftside ? datum.angle - 180 : datum.angle"},
-              "dx": {"signal": "datum.leftside ? -8 : 8"},
-              "baseline": {"value": "middle"},
-              "text": {"field": "name"},
-              "fontSize": {"value": 11},
-              "fontWeight": {"value": "bold"},
-              "fill": {"value": "#333"},
-              "limit": {"value": 180}
-            },
-            "update": {
-              "opacity": {"signal": "datum.depth === 1 ? 1 : 0"}
-            }
-          }
-        }
-      ]
-    }, opts).catch(console.error);
-
-    // ── Cross-framework reach: risks covered per framework with avg ASR ──
-    vegaEmbed('#chart-cross-framework', {
+    // ── Cross-framework lens: dropdown switches framework perspective ──
+    var cfLens = {{ cf_lens_data | tojson }};
+    vegaEmbed('#chart-cf-lens', {
       "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "data": { "values": {{ cross_framework_reach | tojson }} },
+      "params": [
+        {
+          "name": "framework",
+          "value": "ORT Tested",
+          "bind": {
+            "input": "select",
+            "options": cfLens.frameworks,
+            "name": "Framework perspective: "
+          }
+        }
+      ],
+      "data": { "values": cfLens.data },
+      "transform": [
+        { "filter": "datum.framework === framework" }
+      ],
       "width": "container",
       "height": { "step": 32 },
-      "layer": [
-        {
-          "mark": { "type": "bar", "cornerRadiusEnd": 3 },
-          "encoding": {
-            "y": { "field": "framework", "type": "nominal", "title": null, "sort": "-x", "axis": { "labelLimit": 250 } },
-            "x": { "field": "risks_covered", "type": "quantitative", "title": "Mapped Risks Covered" },
-            "color": {
-              "field": "avg_tested_asr", "type": "quantitative", "title": "Avg Tested ASR %",
-              "scale": { "scheme": "redyellowgreen", "reverse": true, "domain": [0, 10] }
-            },
-            "tooltip": [
-              { "field": "framework", "title": "Framework" },
-              { "field": "risks_covered", "title": "Risks Covered" },
-              { "field": "avg_tested_asr", "title": "Avg Tested ASR %", "format": ".1f" },
-              { "field": "max_tested_asr", "title": "Max Tested ASR %", "format": ".1f" }
-            ]
-          }
+      "mark": { "type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3 },
+      "encoding": {
+        "y": { "field": "risk_name", "type": "nominal", "title": null, "sort": { "field": "count", "op": "sum", "order": "descending" }, "axis": { "labelLimit": 280 } },
+        "x": { "field": "count", "type": "quantitative", "title": "Attempts", "stack": "zero" },
+        "color": {
+          "field": "outcome", "type": "nominal", "title": "Outcome",
+          "scale": { "domain": ["Complied", "Refused"], "range": ["#CA5050", "#A4A4A4"] }
         },
-        {
-          "mark": { "type": "text", "align": "left", "dx": 4, "fontSize": 11 },
-          "encoding": {
-            "y": { "field": "framework", "type": "nominal", "sort": "-x" },
-            "x": { "field": "risks_covered", "type": "quantitative" },
-            "text": { "field": "avg_tested_asr", "type": "quantitative", "format": ".1f" }
-          }
-        }
-      ],
+        "tooltip": [
+          { "field": "risk_name", "title": "Risk" },
+          { "field": "outcome", "title": "Outcome" },
+          { "field": "count", "title": "Count" },
+          { "field": "mapping_type", "title": "Mapping Type" },
+          { "field": "tested_via", "title": "Tested Via" }
+        ]
+      },
       "config": { "view": { "stroke": null } }
     }, opts).catch(console.error);
 
