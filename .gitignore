@@ -15,6 +15,7 @@ ontologies/commons/*.rdf
 ontologies/obo/*.owl
 ontologies/dron-base.owl
 mlflow-artifacts/
+prototypes/garak/mock_runs/
 .DS_Store
 .idea/
 *.iml
