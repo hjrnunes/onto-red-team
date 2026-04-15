@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ORT Adversarial Red-Team Report</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6/patternfly.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    /* Layout */
+    body { display: flex; min-height: 100vh; margin: 0; background: var(--pf-t--global--background--color--primary); }
+    .sidebar { width: 260px; min-width: 260px; background: var(--pf-t--global--background--color--secondary); border-right: 1px solid var(--pf-t--global--border--color--default); position: fixed; top: 0; bottom: 0; overflow-y: auto; z-index: 100; }
+    .main-content { margin-left: 260px; flex: 1; padding: 24px 32px; max-width: 1200px; }
+
+    /* Sidebar nav */
+    .sidebar h2 { font-size: 14px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--pf-t--global--text--color--subtle); padding: 20px 16px 8px; margin: 0; }
+    .sidebar .nav-title { font-size: 16px; font-weight: 700; padding: 16px 16px 4px; margin: 0; color: var(--pf-t--global--text--color--regular); text-transform: none; letter-spacing: normal; }
+    .sidebar a { display: block; padding: 8px 16px; font-size: 14px; color: var(--pf-t--global--text--color--regular); text-decoration: none; border-left: 3px solid transparent; transition: all 0.15s; }
+    .sidebar a:hover { background: var(--pf-t--global--background--color--primary); }
+    .sidebar a.active { border-left-color: var(--pf-t--global--color--brand--default); font-weight: 600; background: var(--pf-t--global--background--color--primary); }
+
+    /* Stat cards */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: #fff; border: 1px solid var(--pf-t--global--border--color--default); border-radius: 8px; padding: 20px; text-align: center; }
+    .stat-value { font-size: 32px; font-weight: 700; color: var(--pf-t--global--text--color--regular); line-height: 1.2; }
+    .stat-label { font-size: 13px; color: var(--pf-t--global--text--color--subtle); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.03em; }
+
+    /* Mapping type badges */
+    .mapping-badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.03em; }
+    .mapping-badge--exact { background: #c6efce; color: #006100; }
+    .mapping-badge--close { background: #bdd7ee; color: #1f4e79; }
+    .mapping-badge--broad { background: #fff2cc; color: #7f6000; }
+    .mapping-badge--narrow { background: #f2dcdb; color: #632523; }
+    .mapping-badge--related { background: #e2e2e2; color: #4a4a4a; }
+
+    /* Section card */
+    .section-card { background: #fff; border: 1px solid var(--pf-t--global--border--color--default); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+    .section-card h2 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+    .section-card .section-subtitle { font-size: 13px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 16px; }
+
+    /* Tables */
+    .report-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .report-table th { text-align: left; font-weight: 600; padding: 8px 12px; border-bottom: 2px solid var(--pf-t--global--border--color--default); color: var(--pf-t--global--text--color--subtle); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .report-table td { padding: 8px 12px; border-bottom: 1px solid var(--pf-t--global--border--color--default); vertical-align: top; }
+    .report-table tr:last-child td { border-bottom: none; }
+    .report-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* ASR highlight */
+    .asr-high { color: #c9190b; font-weight: 700; }
+    .asr-mid { color: #f0ab00; font-weight: 600; }
+    .asr-low { color: #3e8635; font-weight: 600; }
+
+    /* Risk group cards */
+    .group-card { background: var(--pf-t--global--background--color--secondary); border: 1px solid var(--pf-t--global--border--color--default); border-radius: 8px; padding: 16px; margin-bottom: 12px; }
+    .group-card h3 { font-size: 15px; font-weight: 700; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+    .group-card .group-meta { font-size: 12px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 12px; }
+
+    /* Provenance expandable */
+    .provenance-item { border: 1px solid var(--pf-t--global--border--color--default); border-radius: 6px; margin-bottom: 8px; background: #fff; }
+    .provenance-item summary { padding: 12px 16px; cursor: pointer; font-size: 13px; font-weight: 600; list-style: none; display: flex; align-items: center; gap: 8px; }
+    .provenance-item summary::-webkit-details-marker { display: none; }
+    .provenance-item summary::before { content: "\25B6"; font-size: 10px; transition: transform 0.15s; color: var(--pf-t--global--text--color--subtle); }
+    .provenance-item[open] summary::before { transform: rotate(90deg); }
+    .provenance-grid { display: grid; grid-template-columns: 140px 1fr; gap: 4px 16px; padding: 0 16px 16px; font-size: 13px; }
+    .provenance-grid dt { font-weight: 600; color: var(--pf-t--global--text--color--subtle); }
+    .provenance-grid dd { margin: 0; }
+    .provenance-axes { margin-top: 8px; padding: 0 16px 16px; }
+    .provenance-axes table { font-size: 12px; }
+
+    /* Chart containers */
+    .chart-container { margin: 16px 0 24px; }
+
+    /* Metadata strip */
+    .metadata-strip { display: flex; gap: 24px; flex-wrap: wrap; font-size: 13px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 20px; padding: 12px 16px; background: var(--pf-t--global--background--color--secondary); border-radius: 6px; border: 1px solid var(--pf-t--global--border--color--default); }
+    .metadata-strip strong { color: var(--pf-t--global--text--color--regular); }
+
+    /* Section anchor offset for fixed sidebar */
+    .section-anchor { scroll-margin-top: 16px; }
+
+    /* Technique tag */
+    .technique-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; background: #e7f1fa; color: #06509e; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══════════════ SIDEBAR ═══════════════ -->
+  <nav class="sidebar">
+    <div class="nav-title">ORT ART Report</div>
+    <h2>Sections</h2>
+    <a href="#overview" class="active" data-nav>Overview</a>
+    <a href="#risk-groups" data-nav>Risk Groups</a>
+    <a href="#cross-framework" data-nav>Cross-Framework Coverage</a>
+    <a href="#domain-vocab" data-nav>Domain Vocabulary</a>
+    <a href="#intent-overview" data-nav>Overview by Intent</a>
+    <a href="#provenance" data-nav>Provenance Trail</a>
+  </nav>
+
+  <!-- ═══════════════ MAIN CONTENT ═══════════════ -->
+  <div class="main-content">
+
+    <h1 style="margin: 0 0 4px; font-size: 24px;">Ontology-Driven Red-Team Report</h1>
+    <p style="margin: 0 0 16px; font-size: 14px; color: var(--pf-t--global--text--color--subtle);">
+      ORT-enriched adversarial testing results with cross-framework coverage and provenance
+    </p>
+
+    <!-- Report metadata -->
+    <div class="metadata-strip">
+      <span><strong>Organization:</strong> {{ policy_source.organization }}</span>
+      <span><strong>Domain:</strong> {{ policy_source.domain }}</span>
+      <span><strong>ORT Run:</strong> {{ ort_run }}</span>
+    </div>
+
+    <!-- ═══════════════ OVERVIEW ═══════════════ -->
+    <div id="overview" class="section-anchor">
+      <div class="stat-grid">
+        {% for stat in high_level_stats %}
+        <div class="stat-card">
+          <div class="stat-value">{{ stat.value }}</div>
+          <div class="stat-label">{{ stat.label }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ═══════════════ SECTION C: RISK GROUPS ═══════════════ -->
+    <div id="risk-groups" class="section-anchor">
+      <div class="section-card">
+        <h2>Risk Groups</h2>
+        <p class="section-subtitle">Ontological grouping of tested risks with outcome distribution</p>
+
+        <div id="chart-risk-groups" class="chart-container"></div>
+
+        {% for group in risk_group_stats %}
+        <div class="group-card">
+          <h3>
+            {{ group.group_name }}
+            <span class="{% if group.asr > 10 %}asr-high{% elif group.asr > 0 %}asr-mid{% else %}asr-low{% endif %}" style="font-size: 13px;">
+              {{ group.asr }}% ASR
+            </span>
+          </h3>
+          <div class="group-meta">
+            {{ group.total_attempts }} attempts &middot; {{ group.complied }} complied &middot;
+            {{ group.risk_ids | length }} risk{{ "s" if group.risk_ids | length != 1 }}
+          </div>
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>Risk</th>
+                <th>Nexus ID</th>
+                <th class="num">Attempts</th>
+                <th class="num">Complied</th>
+                <th class="num">ASR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for r in group.risks %}
+              <tr>
+                <td>{{ r.risk_name }}</td>
+                <td><code>{{ r.nexus_risk_id }}</code></td>
+                <td class="num">{{ r.total }}</td>
+                <td class="num">{{ r.complied }}</td>
+                <td class="num {% if r.asr > 10 %}asr-high{% elif r.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ r.asr }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- ═══════════════ SECTION A: CROSS-FRAMEWORK COVERAGE ═══════════════ -->
+    <div id="cross-framework" class="section-anchor">
+      <div class="section-card">
+        <h2>Cross-Framework Coverage</h2>
+        <p class="section-subtitle">Nexus knowledge graph cross-mappings between tested risks and other AI risk frameworks</p>
+
+        <div class="stat-grid" style="margin-bottom: 20px;">
+          <div class="stat-card">
+            <div class="stat-value">{{ cf_summary.total_mappings }}</div>
+            <div class="stat-label">Total Mappings</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ cf_summary.frameworks_covered | length }}</div>
+            <div class="stat-label">Frameworks Covered</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-value">{{ cf_summary.unique_mapped_risks }}</div>
+            <div class="stat-label">Unique Mapped Risks</div>
+          </div>
+        </div>
+
+        <div id="chart-cross-framework" class="chart-container"></div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Tested Risk</th>
+              <th>Framework</th>
+              <th>Mapped Risk</th>
+              <th>Type</th>
+              <th>Mapped Framework</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in cross_framework_matrix %}
+            <tr>
+              <td>{{ row.tested_risk }}</td>
+              <td>{{ row.tested_framework }}</td>
+              <td>{{ row.mapped_risk }}</td>
+              <td><span class="mapping-badge mapping-badge--{{ row.mapping_type }}">{{ row.mapping_type }}</span></td>
+              <td>{{ row.mapped_framework }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SECTION B: DOMAIN VOCABULARY ═══════════════ -->
+    <div id="domain-vocab" class="section-anchor">
+      <div class="section-card">
+        <h2>Domain Vocabulary Analysis</h2>
+        <p class="section-subtitle">Attack success rates across ontological variation axes (CCO/BFO classes sampled during prompt generation)</p>
+
+        <div id="chart-domain-vocab" class="chart-container"></div>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Axis</th>
+              <th>BFO Category</th>
+              <th>Source Ontology</th>
+              <th class="num">Stubs</th>
+              <th class="num">Complied</th>
+              <th class="num">ASR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for v in domain_vocabulary %}
+            <tr>
+              <td>{{ v.axis_label }}</td>
+              <td>{{ v.bfo_category }}</td>
+              <td>{{ v.source_ontology }}</td>
+              <td class="num">{{ v.total }}</td>
+              <td class="num">{{ v.complied }}</td>
+              <td class="num {% if v.asr > 10 %}asr-high{% elif v.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ v.asr }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ INTENT OVERVIEW ═══════════════ -->
+    <div id="intent-overview" class="section-anchor">
+      <div class="section-card">
+        <h2>Overview by Intent</h2>
+        <p class="section-subtitle">Per-intent breakdown across all probe types</p>
+
+        <table class="report-table">
+          <thead>
+            <tr>
+              <th>Risk Name</th>
+              <th>Nexus Risk ID</th>
+              <th>Framework</th>
+              <th class="num">Attempts</th>
+              <th class="num">Unsafe</th>
+              <th class="num">ASR</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in intent_stats %}
+            <tr>
+              <td>{{ s.intent_name }}</td>
+              <td><code>{{ s.nexus_risk_id }}</code></td>
+              <td>{{ s.risk_framework }}</td>
+              <td class="num">{{ s.total_attempts }}</td>
+              <td class="num">{{ s.jailbroken }}</td>
+              <td class="num {% if s.attack_success_rate > 10 %}asr-high{% elif s.attack_success_rate > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ s.attack_success_rate }}%</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══════════════ SECTION D: PROVENANCE TRAIL ═══════════════ -->
+    <div id="provenance" class="section-anchor">
+      <div class="section-card">
+        <h2>Provenance Trail</h2>
+        <p class="section-subtitle">Full traceability for complied attempts: stub origin, technique, decomposition, and sampled ontological axes</p>
+
+        {% if provenance_trails %}
+        <p style="font-size: 13px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 16px;">
+          {{ provenance_trails | length }} complied attempt{{ "s" if provenance_trails | length != 1 }} with full provenance
+        </p>
+
+        {% for trail in provenance_trails %}
+        <details class="provenance-item">
+          <summary>
+            <span style="color: #c9190b;">&#9679;</span>
+            {{ trail.risk_name }}
+            <span style="font-weight: 400; color: var(--pf-t--global--text--color--subtle);">&mdash; {{ trail.probe_name }}</span>
+            {% if trail.technique %}
+            <span class="technique-tag">{{ trail.technique }}</span>
+            {% endif %}
+          </summary>
+          <dl class="provenance-grid">
+            <dt>Stub ID</dt>
+            <dd><code>{{ trail.stub_id }}</code></dd>
+            <dt>Nexus Risk ID</dt>
+            <dd><code>{{ trail.nexus_risk_id }}</code></dd>
+            <dt>Framework</dt>
+            <dd>{{ trail.risk_framework }}</dd>
+            <dt>Risk Group</dt>
+            <dd>{{ trail.risk_group }}</dd>
+            {% if trail.technique %}
+            <dt>Technique</dt>
+            <dd>{{ trail.technique }}{% if trail.technique_description %} &mdash; <em>{{ trail.technique_description }}</em>{% endif %}</dd>
+            {% endif %}
+            {% if trail.policy_concept %}
+            <dt>Policy Concept</dt>
+            <dd>{{ trail.policy_concept }}</dd>
+            {% endif %}
+            {% if trail.decomposition %}
+            <dt>Agent</dt>
+            <dd>{{ trail.decomposition.get('agent', '') }}</dd>
+            <dt>Activity</dt>
+            <dd>{{ trail.decomposition.get('activity', '') }}</dd>
+            <dt>Entity</dt>
+            <dd>{{ trail.decomposition.get('entity', '') }}</dd>
+            {% endif %}
+          </dl>
+          {% if trail.sampled_axes %}
+          <div class="provenance-axes">
+            <strong style="font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Sampled Axes</strong>
+            <table class="report-table" style="margin-top: 6px;">
+              <thead>
+                <tr>
+                  <th>CCO Class</th>
+                  <th>BFO Category</th>
+                  <th>Sampled Label</th>
+                  <th>Source</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for ax in trail.sampled_axes %}
+                <tr>
+                  <td>{{ ax.cco_class_label }}</td>
+                  <td>{{ ax.bfo_category }}</td>
+                  <td>{{ ax.sampled_label }}</td>
+                  <td>{{ ax.source_ontology }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        </details>
+        {% endfor %}
+        {% else %}
+        <p style="font-size: 14px; color: var(--pf-t--global--text--color--subtle); padding: 24px 0; text-align: center;">
+          No complied attempts to display.
+        </p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /main-content -->
+
+  <!-- ═══════════════ SCRIPTS ═══════════════ -->
+  <script>
+    // --- Navigation active state ---
+    document.addEventListener('DOMContentLoaded', function() {
+      var links = document.querySelectorAll('[data-nav]');
+      var sections = [];
+      links.forEach(function(link) {
+        var id = link.getAttribute('href').slice(1);
+        var el = document.getElementById(id);
+        if (el) sections.push({ link: link, el: el });
+      });
+
+      function updateActive() {
+        var scrollTop = window.scrollY + 40;
+        var active = sections[0];
+        for (var i = 0; i < sections.length; i++) {
+          if (sections[i].el.offsetTop <= scrollTop) {
+            active = sections[i];
+          }
+        }
+        links.forEach(function(l) { l.classList.remove('active'); });
+        if (active) active.link.classList.add('active');
+      }
+
+      window.addEventListener('scroll', updateActive);
+      updateActive();
+    });
+
+    // --- Vega-Lite Charts ---
+
+    // Risk Groups stacked bar
+    vegaEmbed('#chart-risk-groups', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "data": { "values": {{ risk_group_chart_data | tojson }} },
+      "width": "container",
+      "height": 200,
+      "mark": { "type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3 },
+      "encoding": {
+        "x": { "field": "group", "type": "nominal", "title": "Risk Group", "axis": { "labelAngle": -30, "labelLimit": 200 } },
+        "y": { "field": "count", "type": "quantitative", "title": "Attempts", "stack": "zero" },
+        "color": {
+          "field": "outcome", "type": "nominal", "title": "Outcome",
+          "scale": { "domain": ["Complied", "Refused"], "range": ["#c9190b", "#3e8635"] }
+        },
+        "tooltip": [
+          { "field": "group", "title": "Group" },
+          { "field": "outcome", "title": "Outcome" },
+          { "field": "count", "title": "Count" }
+        ]
+      },
+      "config": { "view": { "stroke": null } }
+    }, { "actions": false, "renderer": "svg" });
+
+    // Cross-framework heatmap
+    vegaEmbed('#chart-cross-framework', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "data": { "values": {{ cross_framework_chart_data | tojson }} },
+      "width": "container",
+      "height": 250,
+      "mark": { "type": "rect", "cornerRadius": 3 },
+      "encoding": {
+        "x": { "field": "mapped_framework", "type": "nominal", "title": "Mapped Framework", "axis": { "labelAngle": -30, "labelLimit": 200 } },
+        "y": { "field": "tested_risk", "type": "nominal", "title": "Tested Risk", "axis": { "labelLimit": 250 } },
+        "color": { "field": "count", "type": "quantitative", "title": "Mappings", "scale": { "scheme": "blues" } },
+        "tooltip": [
+          { "field": "tested_risk", "title": "Tested Risk" },
+          { "field": "mapped_framework", "title": "Mapped Framework" },
+          { "field": "count", "title": "Mappings" },
+          { "field": "types", "title": "Types" }
+        ]
+      },
+      "config": { "view": { "stroke": null } }
+    }, { "actions": false, "renderer": "svg" });
+
+    // Domain vocabulary horizontal bar
+    vegaEmbed('#chart-domain-vocab', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "data": { "values": {{ domain_vocab_chart_data | tojson }} },
+      "width": "container",
+      "height": { "step": 28 },
+      "mark": { "type": "bar", "cornerRadiusEnd": 3 },
+      "encoding": {
+        "y": { "field": "axis", "type": "nominal", "title": null, "sort": "-x", "axis": { "labelLimit": 250 } },
+        "x": { "field": "asr", "type": "quantitative", "title": "Attack Success Rate (%)" },
+        "color": {
+          "field": "asr", "type": "quantitative", "title": "ASR %",
+          "scale": { "scheme": "redyellowgreen", "reverse": true, "domain": [0, 15] },
+          "legend": null
+        },
+        "tooltip": [
+          { "field": "axis", "title": "Axis" },
+          { "field": "total", "title": "Total" },
+          { "field": "complied", "title": "Complied" },
+          { "field": "asr", "title": "ASR %", "format": ".1f" }
+        ]
+      },
+      "config": { "view": { "stroke": null } }
+    }, { "actions": false, "renderer": "svg" });
+  </script>
+
+</body>
+</html>
