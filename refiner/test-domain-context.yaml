@@ -1,1 +1,16 @@
-[]
+version: '0.1'
+model: test-model
+timestamp: ''
+run_slug: ''
+selected_domains: []
+policy_source: null
+config: null
+knowledge_base: null
+risks:
+- risk_id: ibm-risk-atlas-r1
+  risk_name: R1
+  risk_description: ''
+  risk_concern: ''
+  risk_framework: ''
+  cross_mappings: []
+policy_contexts: []
