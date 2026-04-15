@@ -10,35 +10,35 @@
 #   semapv: https://w3id.org/semapv/vocab/
 #   skos: http://www.w3.org/2004/02/skos/core#
 # mapping_set_id: vocabulary-to-ontology
-# mapping_set_description: Maps AIRO/DPV vocabulary concepts to domain ontology branches for structural navigation
+# mapping_set_description: Maps AIRO/DPV vocabulary concepts to domain ontology branches for structural navigation. LLM-generated, needs curation.
 # license: https://www.apache.org/licenses/LICENSE-2.0.html
 subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence
-pd:EthnicOrigin	Ethnic Origin	skos:broadMatch	http://purl.obolibrary.org/obo/HANCESTRO_0004	Ancestry Category	semapv:ManualMappingCuration	0.95
-pd:Gender	Gender	skos:broadMatch	http://purl.obolibrary.org/obo/GSSO_012003	Persons by Sexual Orientation	semapv:ManualMappingCuration	0.95
-pd:CreditScore	Credit Score	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating	Credit Rating	semapv:ManualMappingCuration	0.90
-pd:MedicalHealth	Medical Health	skos:broadMatch	http://purl.obolibrary.org/obo/OGMS_0000031	Disease	semapv:ManualMappingCuration	0.85
-pd:MedicalHealth	Medical Health	skos:broadMatch	http://purl.obolibrary.org/obo/MAXO_0000001	Medical Action	semapv:ManualMappingCuration	0.80
-pd:Financial	Financial	skos:broadMatch	https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialProduct	Financial Product	semapv:ManualMappingCuration	0.85
-eu-aiact:AISubject	AI Subject	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:ManualMappingCuration	0.90
-eu-aiact:AISubject	AI Subject	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:ManualMappingCuration	0.80
-eu-aiact:AIDeployer	AI Deployer	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:ManualMappingCuration	0.85
-eu-aiact:AIProvider	AI Provider	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:ManualMappingCuration	0.85
-risk:Threat	Threat	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#DangerousInformation	Dangerous Information	semapv:ManualMappingCuration	0.90
-risk:Threat	Threat	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception	Fraud and Deception	semapv:ManualMappingCuration	0.85
-risk:Vulnerability	Vulnerability	skos:relatedMatch	https://www.commoncoreontologies.org/ont00000958	Information Content Entity	semapv:ManualMappingCuration	0.75
-eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.80
-eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentBody	Government Body	semapv:ManualMappingCuration	0.75
-eu-rights:T3-Equality	Equality	skos:relatedMatch	http://purl.obolibrary.org/obo/GSSO_012003	Persons by Sexual Orientation	semapv:ManualMappingCuration	0.85
-eu-rights:T3-Equality	Equality	skos:relatedMatch	http://purl.obolibrary.org/obo/HANCESTRO_0004	Ancestry Category	semapv:ManualMappingCuration	0.85
-eu-rights:T2-DataProtection	Data Protection	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation	Privacy Violation	semapv:ManualMappingCuration	0.90
-sector-finance:CreditChecking	Credit Checking	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating	Credit Rating	semapv:ManualMappingCuration	0.85
-sector-law:CriminalLawEnforcement	Criminal Law Enforcement	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.70
-ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness	skos:relatedMatch	http://taxonomy-refiner.io/ontologies/cso#DangerousInformation	Dangerous Information	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-intellectual-property	Intellectual Property	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty	Intellectual Property	semapv:ManualMappingCuration	0.90
-eu-aiact:AIUser	AI User	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:ManualMappingCuration	0.85
-eu-aiact:AIUser	AI User	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:ManualMappingCuration	0.75
-eu-aiact:DeepFake	Deep Fake	skos:relatedMatch	http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception	Fraud and Deception	semapv:ManualMappingCuration	0.85
-eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentBody	Government Body	semapv:ManualMappingCuration	0.80
-eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:ManualMappingCuration	0.75
-pd:Biometric	Biometric	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:ManualMappingCuration	0.80
-pd:Biometric	Biometric	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:ManualMappingCuration	0.70
+pd:EthnicOrigin	Ethnic Origin	skos:broadMatch	http://purl.obolibrary.org/obo/HANCESTRO_0004	Ancestry Category	semapv:LLMBasedMatching	0.95
+pd:Gender	Gender	skos:broadMatch	http://purl.obolibrary.org/obo/GSSO_012003	Persons by Sexual Orientation	semapv:LLMBasedMatching	0.95
+pd:CreditScore	Credit Score	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating	Credit Rating	semapv:LLMBasedMatching	0.90
+pd:MedicalHealth	Medical Health	skos:broadMatch	http://purl.obolibrary.org/obo/OGMS_0000031	Disease	semapv:LLMBasedMatching	0.85
+pd:MedicalHealth	Medical Health	skos:broadMatch	http://purl.obolibrary.org/obo/MAXO_0000001	Medical Action	semapv:LLMBasedMatching	0.80
+pd:Financial	Financial	skos:broadMatch	https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialProduct	Financial Product	semapv:LLMBasedMatching	0.85
+eu-aiact:AISubject	AI Subject	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.90
+eu-aiact:AISubject	AI Subject	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:LLMBasedMatching	0.80
+eu-aiact:AIDeployer	AI Deployer	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:LLMBasedMatching	0.85
+eu-aiact:AIProvider	AI Provider	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:LLMBasedMatching	0.85
+risk:Threat	Threat	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#DangerousInformation	Dangerous Information	semapv:LLMBasedMatching	0.90
+risk:Threat	Threat	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception	Fraud and Deception	semapv:LLMBasedMatching	0.85
+risk:Vulnerability	Vulnerability	skos:relatedMatch	https://www.commoncoreontologies.org/ont00000958	Information Content Entity	semapv:LLMBasedMatching	0.75
+eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:LLMBasedMatching	0.80
+eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentBody	Government Body	semapv:LLMBasedMatching	0.75
+eu-rights:T3-Equality	Equality	skos:relatedMatch	http://purl.obolibrary.org/obo/GSSO_012003	Persons by Sexual Orientation	semapv:LLMBasedMatching	0.85
+eu-rights:T3-Equality	Equality	skos:relatedMatch	http://purl.obolibrary.org/obo/HANCESTRO_0004	Ancestry Category	semapv:LLMBasedMatching	0.85
+eu-rights:T2-DataProtection	Data Protection	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#PrivacyViolation	Privacy Violation	semapv:LLMBasedMatching	0.90
+sector-finance:CreditChecking	Credit Checking	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/FBC/DebtAndEquities/CreditRatings/CreditRating	Credit Rating	semapv:LLMBasedMatching	0.85
+sector-law:CriminalLawEnforcement	Criminal Law Enforcement	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:LLMBasedMatching	0.70
+ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness	skos:relatedMatch	http://taxonomy-refiner.io/ontologies/cso#DangerousInformation	Dangerous Information	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-intellectual-property	Intellectual Property	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty	Intellectual Property	semapv:LLMBasedMatching	0.90
+eu-aiact:AIUser	AI User	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.85
+eu-aiact:AIUser	AI User	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:LLMBasedMatching	0.75
+eu-aiact:DeepFake	Deep Fake	skos:relatedMatch	http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception	Fraud and Deception	semapv:LLMBasedMatching	0.85
+eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentBody	Government Body	semapv:LLMBasedMatching	0.80
+eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:LLMBasedMatching	0.75
+pd:Biometric	Biometric	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.80
+pd:Biometric	Biometric	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:LLMBasedMatching	0.70

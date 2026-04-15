@@ -13,7 +13,7 @@
 #   semapv: https://w3id.org/semapv/vocab/
 #   skos: http://www.w3.org/2004/02/skos/core#
 # mapping_set_id: risk-to-vocabulary
-# mapping_set_description: Maps AI risk concepts to AIRO/DPV vocabulary for structured LLM context
+# mapping_set_description: Maps AI risk concepts to AIRO/DPV vocabulary for structured LLM context. LLM-generated, needs curation.
 # license: https://www.apache.org/licenses/LICENSE-2.0.html
 subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence
 #
@@ -22,323 +22,323 @@ subject_id	subject_label	predicate_id	object_id	object_label	mapping_justificati
 # ============================================================
 #
 # --- ibm-risk-atlas-fairness ---
-ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.95
-ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.95
-ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:Gender	Gender	semapv:ManualMappingCuration	0.95
-ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	sector-finance:CreditChecking	Credit Checking	semapv:ManualMappingCuration	0.75
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.95
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.95
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:Gender	Gender	semapv:LLMBasedMatching	0.95
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-fairness	Fairness	skos:relatedMatch	sector-finance:CreditChecking	Credit Checking	semapv:LLMBasedMatching	0.75
 # --- ibm-risk-atlas-privacy ---
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.95
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:Biometric	Biometric	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	justifications:LegitimateInterestOverride	Legitimate Interest Override	semapv:ManualMappingCuration	0.70
-ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.95
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:Biometric	Biometric	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	justifications:LegitimateInterestOverride	Legitimate Interest Override	semapv:LLMBasedMatching	0.70
+ibm-risk-atlas-privacy	Privacy	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:LLMBasedMatching	0.90
 # --- ibm-risk-atlas-misuse ---
-ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	eu-aiact:AIUser	AI User	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.70
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	eu-aiact:AIUser	AI User	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-misuse	Misuse	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.70
 # --- ibm-risk-atlas-robustness ---
-ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
 # --- ibm-risk-atlas-legal-compliance ---
-ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	semapv:ManualMappingCuration	0.75
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	semapv:LLMBasedMatching	0.75
 # --- ibm-risk-atlas-value-alignment ---
-ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.85
 # --- ibm-risk-atlas-explainability ---
-ibm-risk-atlas-explainability	Explainability	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-explainability	Explainability	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-explainability	Explainability	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-explainability	Explainability	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
 # --- ibm-risk-atlas-transparency ---
-ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.80
 # --- ibm-risk-atlas-governance ---
-ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.80
 # --- ibm-risk-atlas-intellectual-property ---
-ibm-risk-atlas-intellectual-property	Intellectual Property	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-intellectual-property	Intellectual Property	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
 # --- ibm-risk-atlas-societal-impact ---
-ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
 # --- ibm-risk-atlas-accuracy (NEW) ---
-ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.75
+ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.75
 # --- ibm-risk-atlas-computational-inefficiency (NEW) ---
-ibm-risk-atlas-computational-inefficiency	Computational Inefficiency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-ibm-risk-atlas-computational-inefficiency	Computational Inefficiency	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.70
+ibm-risk-atlas-computational-inefficiency	Computational Inefficiency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-computational-inefficiency	Computational Inefficiency	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.70
 # --- ibm-risk-atlas-data-laws (NEW) ---
-ibm-risk-atlas-data-laws	Data Laws	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-data-laws	Data Laws	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-data-laws	Data Laws	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-data-laws	Data Laws	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-data-laws	Data Laws	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-data-laws	Data Laws	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:LLMBasedMatching	0.85
 # --- ibm-risk-atlas-robustness-model-behavior-manipulation (NEW in Layer 1) ---
-ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness: Model Behavior Manipulation	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness: Model Behavior Manipulation	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness: Model Behavior Manipulation	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness: Model Behavior Manipulation	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness: Model Behavior Manipulation	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness: Model Behavior Manipulation	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
 # --- ibm-risk-atlas-robustness-prompt-attacks (NEW) ---
-ibm-risk-atlas-robustness-prompt-attacks	Robustness: Prompt Attacks	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-ibm-risk-atlas-robustness-prompt-attacks	Robustness: Prompt Attacks	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.90
-ibm-risk-atlas-robustness-prompt-attacks	Robustness: Prompt Attacks	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
+ibm-risk-atlas-robustness-prompt-attacks	Robustness: Prompt Attacks	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+ibm-risk-atlas-robustness-prompt-attacks	Robustness: Prompt Attacks	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.90
+ibm-risk-atlas-robustness-prompt-attacks	Robustness: Prompt Attacks	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
 #
 # ============================================================
 # AI Risk Taxonomy (43 populated groups)
 # ============================================================
 #
 # --- Privacy & Data ---
-ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:Biometric	Biometric	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-confidentiality	Confidentiality	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-confidentiality	Confidentiality	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-confidentiality	Confidentiality	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.80
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:Biometric	Biometric	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-privacy-violations/sensitive-data-combinations	Privacy Violations	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-confidentiality	Confidentiality	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-confidentiality	Confidentiality	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-confidentiality	Confidentiality	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.80
 # --- Discrimination & Bias ---
-ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	pd:Gender	Gender	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	pd:Gender	Gender	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-offensive-language	Offensive Language	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-offensive-language	Offensive Language	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-offensive-language	Offensive Language	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-perpetuating-harmful-beliefs	Perpetuating Harmful Beliefs	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-perpetuating-harmful-beliefs	Perpetuating Harmful Beliefs	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-perpetuating-harmful-beliefs	Perpetuating Harmful Beliefs	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-sowing-division	Sowing Division	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-sowing-division	Sowing Division	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-sowing-division	Sowing Division	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
+ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	pd:Gender	Gender	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-discrimination/protected-characteristics-combinations	Discrimination	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	pd:Gender	Gender	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-hate-speech-(inciting/promoting/expressing-hatred)	Hate Speech	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-offensive-language	Offensive Language	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-offensive-language	Offensive Language	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-offensive-language	Offensive Language	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-perpetuating-harmful-beliefs	Perpetuating Harmful Beliefs	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-perpetuating-harmful-beliefs	Perpetuating Harmful Beliefs	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-perpetuating-harmful-beliefs	Perpetuating Harmful Beliefs	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-sowing-division	Sowing Division	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-sowing-division	Sowing Division	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-sowing-division	Sowing Division	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
 # --- Fraud & Criminal Activity ---
-ai-risk-taxonomy-fraud	Fraud	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-fraud	Fraud	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-fraud	Fraud	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-schemes	Schemes	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-schemes	Schemes	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-other-illegal/unlawful/criminal-activities	Criminal Activities	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-other-illegal/unlawful/criminal-activities	Criminal Activities	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-services/exploitation	Exploitation	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-services/exploitation	Exploitation	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-services/exploitation	Exploitation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-supporting-malicious-organized-groups	Supporting Malicious Groups	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-supporting-malicious-organized-groups	Supporting Malicious Groups	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-illegal/regulated-substances/goods	Illegal Substances	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-illegal/regulated-substances/goods	Illegal Substances	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.90
+ai-risk-taxonomy-fraud	Fraud	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-fraud	Fraud	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-fraud	Fraud	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-schemes	Schemes	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-schemes	Schemes	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-other-illegal/unlawful/criminal-activities	Criminal Activities	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-other-illegal/unlawful/criminal-activities	Criminal Activities	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-services/exploitation	Exploitation	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-services/exploitation	Exploitation	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-services/exploitation	Exploitation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-supporting-malicious-organized-groups	Supporting Malicious Groups	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-supporting-malicious-organized-groups	Supporting Malicious Groups	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-illegal/regulated-substances/goods	Illegal Substances	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-illegal/regulated-substances/goods	Illegal Substances	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.90
 # --- Violence & Physical Harm ---
-ai-risk-taxonomy-violent-acts	Violent Acts	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-violent-acts	Violent Acts	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-weapon-usage-&-development	Weapon Usage	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-weapon-usage-&-development	Weapon Usage	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-depicting-violence	Depicting Violence	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-depicting-violence	Depicting Violence	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-celebrating-suffering	Celebrating Suffering	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-celebrating-suffering	Celebrating Suffering	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-military-and-warfare	Military and Warfare	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-military-and-warfare	Military and Warfare	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.75
+ai-risk-taxonomy-violent-acts	Violent Acts	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-violent-acts	Violent Acts	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-weapon-usage-&-development	Weapon Usage	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-weapon-usage-&-development	Weapon Usage	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-depicting-violence	Depicting Violence	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-depicting-violence	Depicting Violence	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-celebrating-suffering	Celebrating Suffering	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-celebrating-suffering	Celebrating Suffering	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-military-and-warfare	Military and Warfare	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-military-and-warfare	Military and Warfare	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.75
 # --- Misinformation & Deception ---
-ai-risk-taxonomy-mis/disinformation	Misinformation	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-mis/disinformation	Misinformation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-mis/disinformation	Misinformation	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:ManualMappingCuration	0.75
-ai-risk-taxonomy-misrepresentation	Misrepresentation	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-misrepresentation	Misrepresentation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-misrepresentation	Misrepresentation	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:ManualMappingCuration	0.75
+ai-risk-taxonomy-mis/disinformation	Misinformation	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-mis/disinformation	Misinformation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-mis/disinformation	Misinformation	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:LLMBasedMatching	0.75
+ai-risk-taxonomy-misrepresentation	Misrepresentation	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-misrepresentation	Misrepresentation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-misrepresentation	Misrepresentation	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:LLMBasedMatching	0.75
 # --- Self-Harm & Suicide ---
-ai-risk-taxonomy-suicidal-and-non-suicidal-self-injury	Self-Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-suicidal-and-non-suicidal-self-injury	Self-Harm	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-suicidal-and-non-suicidal-self-injury	Self-Harm	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.75
+ai-risk-taxonomy-suicidal-and-non-suicidal-self-injury	Self-Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-suicidal-and-non-suicidal-self-injury	Self-Harm	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-suicidal-and-non-suicidal-self-injury	Self-Harm	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.75
 # --- Child Safety ---
-ai-risk-taxonomy-child-sexual-abuse	Child Sexual Abuse	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-child-sexual-abuse	Child Sexual Abuse	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-child-sexual-abuse	Child Sexual Abuse	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-endangerment,-harm,-or-abuse-of-children	Child Harm	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.95
-ai-risk-taxonomy-endangerment,-harm,-or-abuse-of-children	Child Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-endangerment,-harm,-or-abuse-of-children	Child Harm	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.85
+ai-risk-taxonomy-child-sexual-abuse	Child Sexual Abuse	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-child-sexual-abuse	Child Sexual Abuse	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-child-sexual-abuse	Child Sexual Abuse	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-endangerment,-harm,-or-abuse-of-children	Child Harm	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.95
+ai-risk-taxonomy-endangerment,-harm,-or-abuse-of-children	Child Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-endangerment,-harm,-or-abuse-of-children	Child Harm	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.85
 # --- Adult & Sexual Content ---
-ai-risk-taxonomy-adult-content	Adult Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-adult-content	Adult Content	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.75
-ai-risk-taxonomy-erotic	Erotic Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-erotic	Erotic Content	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.70
-ai-risk-taxonomy-non-consensual-nudity	Non-Consensual Nudity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-non-consensual-nudity	Non-Consensual Nudity	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-non-consensual-nudity	Non-Consensual Nudity	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-sexual-content	Sexual Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-sexual-content	Sexual Content	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.70
+ai-risk-taxonomy-adult-content	Adult Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-adult-content	Adult Content	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.75
+ai-risk-taxonomy-erotic	Erotic Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-erotic	Erotic Content	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.70
+ai-risk-taxonomy-non-consensual-nudity	Non-Consensual Nudity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-non-consensual-nudity	Non-Consensual Nudity	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-non-consensual-nudity	Non-Consensual Nudity	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-sexual-content	Sexual Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-sexual-content	Sexual Content	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.70
 # --- Political & Democratic ---
-ai-risk-taxonomy-deterring-democratic-participation	Deterring Democracy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-deterring-democratic-participation	Deterring Democracy	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-influencing-politics	Influencing Politics	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-influencing-politics	Influencing Politics	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-influencing-politics	Influencing Politics	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.75
-ai-risk-taxonomy-political-persuasion	Political Persuasion	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-political-persuasion	Political Persuasion	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-political-persuasion	Political Persuasion	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.75
-ai-risk-taxonomy-disrupting-social-order-(china-unique)	Disrupting Social Order	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-disrupting-social-order-(china-unique)	Disrupting Social Order	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.75
-ai-risk-taxonomy-disrupting-social-order-(china-unique)	Disrupting Social Order	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.80
+ai-risk-taxonomy-deterring-democratic-participation	Deterring Democracy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-deterring-democratic-participation	Deterring Democracy	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-influencing-politics	Influencing Politics	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-influencing-politics	Influencing Politics	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-influencing-politics	Influencing Politics	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.75
+ai-risk-taxonomy-political-persuasion	Political Persuasion	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-political-persuasion	Political Persuasion	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-political-persuasion	Political Persuasion	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.75
+ai-risk-taxonomy-disrupting-social-order-(china-unique)	Disrupting Social Order	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-disrupting-social-order-(china-unique)	Disrupting Social Order	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.75
+ai-risk-taxonomy-disrupting-social-order-(china-unique)	Disrupting Social Order	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.80
 # --- Harassment ---
-ai-risk-taxonomy-harassment	Harassment	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-harassment	Harassment	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-harassment	Harassment	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.75
+ai-risk-taxonomy-harassment	Harassment	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-harassment	Harassment	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-harassment	Harassment	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.75
 # --- Defamation ---
-ai-risk-taxonomy-types-of-defamation	Defamation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-types-of-defamation	Defamation	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.80
+ai-risk-taxonomy-types-of-defamation	Defamation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-types-of-defamation	Defamation	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.80
 # --- Rights ---
-ai-risk-taxonomy-specific-types-of-rights	Rights	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-specific-types-of-rights	Rights	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-specific-types-of-rights	Rights	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.75
+ai-risk-taxonomy-specific-types-of-rights	Rights	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-specific-types-of-rights	Rights	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-specific-types-of-rights	Rights	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.75
 # --- Regulated Advice ---
-ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.80
+ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.80
 # --- Automated Decision-Making ---
-ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.75
+ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.75
 # --- Security & Integrity ---
-ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-availability	Availability	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-availability	Availability	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
+ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-availability	Availability	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-availability	Availability	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
 # --- Labor & Economic ---
-ai-risk-taxonomy-disempowering-workers	Disempowering Workers	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-disempowering-workers	Disempowering Workers	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-unfair-market-practices	Unfair Market Practices	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-unfair-market-practices	Unfair Market Practices	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-unfair-market-practices	Unfair Market Practices	skos:relatedMatch	sector-finance:CreditChecking	Credit Checking	semapv:ManualMappingCuration	0.70
-ai-risk-taxonomy-high-risk-financial-activities	High-Risk Financial	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-high-risk-financial-activities	High-Risk Financial	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-high-risk-financial-activities	High-Risk Financial	skos:relatedMatch	sector-finance:CreditChecking	Credit Checking	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-monetized	Monetized Content	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-monetized	Monetized Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.75
+ai-risk-taxonomy-disempowering-workers	Disempowering Workers	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-disempowering-workers	Disempowering Workers	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-unfair-market-practices	Unfair Market Practices	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-unfair-market-practices	Unfair Market Practices	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-unfair-market-practices	Unfair Market Practices	skos:relatedMatch	sector-finance:CreditChecking	Credit Checking	semapv:LLMBasedMatching	0.70
+ai-risk-taxonomy-high-risk-financial-activities	High-Risk Financial	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-high-risk-financial-activities	High-Risk Financial	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-high-risk-financial-activities	High-Risk Financial	skos:relatedMatch	sector-finance:CreditChecking	Credit Checking	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-monetized	Monetized Content	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-monetized	Monetized Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.75
 # --- Autonomous Systems ---
-ai-risk-taxonomy-autonomous-unsafe-operation-of-systems	Unsafe Autonomous Operation	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-ai-risk-taxonomy-autonomous-unsafe-operation-of-systems	Unsafe Autonomous Operation	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.85
-ai-risk-taxonomy-autonomous-unsafe-operation-of-systems	Unsafe Autonomous Operation	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
+ai-risk-taxonomy-autonomous-unsafe-operation-of-systems	Unsafe Autonomous Operation	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+ai-risk-taxonomy-autonomous-unsafe-operation-of-systems	Unsafe Autonomous Operation	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.85
+ai-risk-taxonomy-autonomous-unsafe-operation-of-systems	Unsafe Autonomous Operation	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
 # --- Academic Dishonesty ---
-ai-risk-taxonomy-academic-dishonesty	Academic Dishonesty	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-ai-risk-taxonomy-academic-dishonesty	Academic Dishonesty	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.70
+ai-risk-taxonomy-academic-dishonesty	Academic Dishonesty	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-academic-dishonesty	Academic Dishonesty	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.70
 #
 # ============================================================
 # Credo AI (12 populated groups)
 # ============================================================
 #
-credo-rg-privacy	Privacy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-credo-rg-privacy	Privacy	skos:relatedMatch	pd:Biometric	Biometric	semapv:ManualMappingCuration	0.85
-credo-rg-privacy	Privacy	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.80
-credo-rg-privacy	Privacy	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
-credo-rg-harmful-content	Harmful Content	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-credo-rg-harmful-content	Harmful Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-credo-rg-malicious-use	Malicious Use	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-credo-rg-malicious-use	Malicious Use	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.85
-credo-rg-malicious-use	Malicious Use	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-credo-rg-information-integrity	Information Integrity	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-credo-rg-information-integrity	Information Integrity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-credo-rg-information-integrity	Information Integrity	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:ManualMappingCuration	0.75
-credo-rg-human-ai-interaction	Human-AI Interaction	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-credo-rg-human-ai-interaction	Human-AI Interaction	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.80
-credo-rg-human-ai-interaction	Human-AI Interaction	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.70
-credo-rg-security	Security	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.90
-credo-rg-security	Security	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-credo-rg-security	Security	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-credo-rg-societal-impact	Societal Impact	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-credo-rg-societal-impact	Societal Impact	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
-credo-rg-societal-impact	Societal Impact	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.75
-credo-rg-ai-agency	AI Agency	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-credo-rg-ai-agency	AI Agency	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.80
-credo-rg-ai-agency	AI Agency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.75
-credo-rg-environmental-harm	Environmental Harm	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-credo-rg-environmental-harm	Environmental Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.75
-credo-rg-legal	Legal	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-credo-rg-legal	Legal	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:ManualMappingCuration	0.85
-credo-rg-legal	Legal	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.75
-credo-rg-operational	Operational	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-credo-rg-operational	Operational	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.80
-credo-rg-performance-and-robustness	Performance and Robustness	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.85
-credo-rg-performance-and-robustness	Performance and Robustness	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.85
-credo-rg-third-party	Third Party	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.85
-credo-rg-third-party	Third Party	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-credo-rg-third-party	Third Party	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.75
+credo-rg-privacy	Privacy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+credo-rg-privacy	Privacy	skos:relatedMatch	pd:Biometric	Biometric	semapv:LLMBasedMatching	0.85
+credo-rg-privacy	Privacy	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.80
+credo-rg-privacy	Privacy	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:LLMBasedMatching	0.90
+credo-rg-harmful-content	Harmful Content	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+credo-rg-harmful-content	Harmful Content	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+credo-rg-malicious-use	Malicious Use	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+credo-rg-malicious-use	Malicious Use	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.85
+credo-rg-malicious-use	Malicious Use	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+credo-rg-information-integrity	Information Integrity	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+credo-rg-information-integrity	Information Integrity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+credo-rg-information-integrity	Information Integrity	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:LLMBasedMatching	0.75
+credo-rg-human-ai-interaction	Human-AI Interaction	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+credo-rg-human-ai-interaction	Human-AI Interaction	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.80
+credo-rg-human-ai-interaction	Human-AI Interaction	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.70
+credo-rg-security	Security	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.90
+credo-rg-security	Security	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+credo-rg-security	Security	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+credo-rg-societal-impact	Societal Impact	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+credo-rg-societal-impact	Societal Impact	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
+credo-rg-societal-impact	Societal Impact	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.75
+credo-rg-ai-agency	AI Agency	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+credo-rg-ai-agency	AI Agency	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
+credo-rg-ai-agency	AI Agency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.75
+credo-rg-environmental-harm	Environmental Harm	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+credo-rg-environmental-harm	Environmental Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.75
+credo-rg-legal	Legal	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+credo-rg-legal	Legal	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.85
+credo-rg-legal	Legal	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.75
+credo-rg-operational	Operational	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+credo-rg-operational	Operational	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
+credo-rg-performance-and-robustness	Performance and Robustness	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
+credo-rg-performance-and-robustness	Performance and Robustness	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.85
+credo-rg-third-party	Third Party	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
+credo-rg-third-party	Third Party	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+credo-rg-third-party	Third Party	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.75
 #
 # ============================================================
 # MIT AI Risk Repository (10 groups)
 # ============================================================
 #
-mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	pd:Gender	Gender	semapv:ManualMappingCuration	0.85
-mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.80
-mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:ManualMappingCuration	0.75
-mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:ManualMappingCuration	0.85
-mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-mit-ai-risk-domain-5	Human-Computer Interaction	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-5	Human-Computer Interaction	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.80
-mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.80
-mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	pd:Financial	Financial	semapv:ManualMappingCuration	0.75
-mit-ai-risk-domain-7	AI System Safety	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.90
-mit-ai-risk-domain-7	AI System Safety	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-mit-ai-risk-domain-7	AI System Safety	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-mit-ai-risk-repository-causal-entity	Causal Entity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.80
-mit-ai-risk-repository-causal-entity	Causal Entity	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-mit-ai-risk-repository-causal-intent	Causal Intent	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-mit-ai-risk-repository-causal-intent	Causal Intent	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.75
-mit-ai-risk-repository-causal-timing	Causal Timing	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.80
-mit-ai-risk-repository-causal-timing	Causal Timing	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.75
+mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	pd:Gender	Gender	semapv:LLMBasedMatching	0.85
+mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
+mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:LLMBasedMatching	0.75
+mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.85
+mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+mit-ai-risk-domain-5	Human-Computer Interaction	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-5	Human-Computer Interaction	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.80
+mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
+mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.75
+mit-ai-risk-domain-7	AI System Safety	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.90
+mit-ai-risk-domain-7	AI System Safety	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+mit-ai-risk-domain-7	AI System Safety	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+mit-ai-risk-repository-causal-entity	Causal Entity	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
+mit-ai-risk-repository-causal-entity	Causal Entity	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+mit-ai-risk-repository-causal-intent	Causal Intent	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+mit-ai-risk-repository-causal-intent	Causal Intent	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.75
+mit-ai-risk-repository-causal-timing	Causal Timing	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
+mit-ai-risk-repository-causal-timing	Causal Timing	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.75
 #
 # ============================================================
 # AILuminate (3 groups)
 # ============================================================
 #
-ail-physical-hazards	Physical Hazards	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-ail-physical-hazards	Physical Hazards	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ail-non-physical-hazards	Nonphysical Hazards	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-ail-non-physical-hazards	Nonphysical Hazards	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.90
-ail-non-physical-hazards	Nonphysical Hazards	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.75
-ail-contextual-hazards	Contextual Hazards	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-ail-contextual-hazards	Contextual Hazards	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:ManualMappingCuration	0.80
-ail-contextual-hazards	Contextual Hazards	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.75
+ail-physical-hazards	Physical Hazards	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+ail-physical-hazards	Physical Hazards	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ail-non-physical-hazards	Nonphysical Hazards	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+ail-non-physical-hazards	Nonphysical Hazards	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
+ail-non-physical-hazards	Nonphysical Hazards	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.75
+ail-contextual-hazards	Contextual Hazards	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+ail-contextual-hazards	Contextual Hazards	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.80
+ail-contextual-hazards	Contextual Hazards	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.75
 #
 # ============================================================
 # Granite Guardian (4 groups)
 # ============================================================
 #
-granite-guardian-harm-group	Harm	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.90
-granite-guardian-harm-group	Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-granite-guardian-harm-group	Harm	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.75
-granite-guardian-agentic-safety-group	Agentic Safety	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.85
-granite-guardian-agentic-safety-group	Agentic Safety	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-granite-guardian-agentic-safety-group	Agentic Safety	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-granite-guardian-rag-safety-group	RAG Safety	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:ManualMappingCuration	0.85
-granite-guardian-rag-safety-group	RAG Safety	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.80
-granite-guardian-rag-safety-group	RAG Safety	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:ManualMappingCuration	0.80
-granite-guardian-conversational-egregiousness	Conversational Egregiousness	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-granite-guardian-conversational-egregiousness	Conversational Egregiousness	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.80
+granite-guardian-harm-group	Harm	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.90
+granite-guardian-harm-group	Harm	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+granite-guardian-harm-group	Harm	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.75
+granite-guardian-agentic-safety-group	Agentic Safety	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.85
+granite-guardian-agentic-safety-group	Agentic Safety	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+granite-guardian-agentic-safety-group	Agentic Safety	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+granite-guardian-rag-safety-group	RAG Safety	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.85
+granite-guardian-rag-safety-group	RAG Safety	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.80
+granite-guardian-rag-safety-group	RAG Safety	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
+granite-guardian-conversational-egregiousness	Conversational Egregiousness	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+granite-guardian-conversational-egregiousness	Conversational Egregiousness	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.80
 #
 # ============================================================
 # ShieldGemma (1 group)
 # ============================================================
 #
-shieldgemma-content-safety-group	Content Safety	skos:relatedMatch	risk:Threat	Threat	semapv:ManualMappingCuration	0.85
-shieldgemma-content-safety-group	Content Safety	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:ManualMappingCuration	0.85
-shieldgemma-content-safety-group	Content Safety	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:ManualMappingCuration	0.75
+shieldgemma-content-safety-group	Content Safety	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
+shieldgemma-content-safety-group	Content Safety	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
+shieldgemma-content-safety-group	Content Safety	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.75
