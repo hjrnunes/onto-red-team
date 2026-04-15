@@ -200,21 +200,27 @@ def intent_stats(attempts: list[dict]) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def cross_framework_matrix(mapping: dict) -> list[dict]:
-    """Build a cross-framework mapping matrix.
+def cross_framework_matrix(
+    mapping: dict,
+    intent_asr: dict[str, float],
+) -> list[dict]:
+    """Build a cross-framework mapping matrix grounded in test results.
 
-    One row per cross-mapping: tested risk -> mapped risk.
+    One row per cross-mapping: tested risk -> mapped risk, with the
+    tested risk's ASR attached so each mapping carries its empirical weight.
     """
     intent_map = mapping.get("intent_map", {})
     rows: list[dict] = []
 
-    for _intent, info in sorted(intent_map.items()):
+    for intent_id, info in sorted(intent_map.items()):
         tested_risk = info.get("risk_name", "")
         tested_framework = info.get("risk_framework", "")
+        asr = intent_asr.get(intent_id, 0.0)
         for cm in info.get("cross_mappings", []):
             rows.append({
                 "tested_risk": tested_risk,
                 "tested_framework": tested_framework,
+                "tested_asr": asr,
                 "mapped_risk": cm.get("name", ""),
                 "mapped_risk_id": cm.get("id", ""),
                 "mapped_framework": cm.get("taxonomy", ""),
@@ -348,11 +354,12 @@ def provenance_trails(
     attempts: list[dict],
     stubs: dict[str, dict],
 ) -> list[dict]:
-    """Build provenance trails for complied attempts.
+    """Build provenance trail groups for complied attempts.
 
+    Returns a list of risk-group dicts, each containing its trails.
     Joins attempt data with stub metadata for full traceability.
     """
-    trails: list[dict] = []
+    trails_by_group: dict[str, list[dict]] = defaultdict(list)
 
     for a in attempts:
         if a["outcome"] != "complied":
@@ -360,7 +367,7 @@ def provenance_trails(
 
         stub = stubs.get(a["stub_id"], {})
 
-        trails.append({
+        trails_by_group[a["risk_group"]].append({
             "uuid": a["uuid"],
             "stub_id": a["stub_id"],
             "probe_name": a["probe_name"],
@@ -371,11 +378,21 @@ def provenance_trails(
             "technique": stub.get("technique", ""),
             "technique_description": stub.get("technique_description", ""),
             "policy_concept": stub.get("policy_concept", ""),
+            "prompt": stub.get("prompt", ""),
             "decomposition": stub.get("decomposition", {}),
             "sampled_axes": stub.get("sampled_axes", []),
         })
 
-    return trails
+    # Return as list of groups with their trails
+    result: list[dict] = []
+    for group_name in sorted(trails_by_group.keys()):
+        group_trails = trails_by_group[group_name]
+        result.append({
+            "group_name": group_name,
+            "count": len(group_trails),
+            "trails": group_trails,
+        })
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -403,6 +420,7 @@ def cross_framework_chart_data(matrix: list[dict]) -> list[dict]:
         if key not in cell_counts:
             cell_counts[key] = {
                 "tested_risk": row["tested_risk"],
+                "tested_asr": row.get("tested_asr", 0.0),
                 "mapped_framework": row["mapped_framework"],
                 "count": 0,
                 "types": set(),
@@ -414,6 +432,7 @@ def cross_framework_chart_data(matrix: list[dict]) -> list[dict]:
     for cell in cell_counts.values():
         data.append({
             "tested_risk": cell["tested_risk"],
+            "tested_asr": cell["tested_asr"],
             "mapped_framework": cell["mapped_framework"],
             "count": cell["count"],
             "types": ", ".join(sorted(cell["types"])),
@@ -435,6 +454,87 @@ def domain_vocab_chart_data(vocab: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Original ART charts: behavior-by-probe, behavior-by-intent, probe details
+# ---------------------------------------------------------------------------
+
+
+def behavior_chart_data(attempts: list[dict]) -> list[dict]:
+    """Per-attempt data for behavior-by-probe and behavior-by-intent charts.
+
+    Matches the shape expected by the original ART Vega-Lite specs.
+    """
+    return [
+        {
+            "probe_classname": a["probe_classname"],
+            "probe_name": a["probe_name"],
+            "intent": a["intent"],
+            "intent_name": a["risk_name"],
+            "stub": a["stub_id"],
+            "outcome": a["outcome"],
+        }
+        for a in attempts
+    ]
+
+
+def probe_details_data(attempts: list[dict]) -> list[dict]:
+    """Per-probe breakdown tables (the Probe Details section from original ART)."""
+    # Group by probe
+    by_probe: dict[str, list[dict]] = defaultdict(list)
+    for a in attempts:
+        by_probe[a["probe_classname"]].append(a)
+
+    # Determine probe ordering
+    probe_order = list(PROBE_NAMES.keys())
+
+    details: list[dict] = []
+    for probe_class in probe_order:
+        if probe_class not in by_probe:
+            continue
+        probe_attempts = by_probe[probe_class]
+        probe_name = PROBE_NAMES.get(probe_class, probe_class)
+        is_baseline = probe_class == "base.IntentProbe"
+
+        # Per-intent rows
+        by_intent: dict[str, list[dict]] = defaultdict(list)
+        for a in probe_attempts:
+            by_intent[a["intent"]].append(a)
+
+        table: list[dict] = []
+        for intent, atts in sorted(by_intent.items()):
+            total = len(atts)
+            complied = sum(1 for a in atts if a["outcome"] == "complied")
+            asr = round(complied / total * 100, 1) if total else 0.0
+            table.append({
+                "intent_name": atts[0]["risk_name"],
+                "total_attacks": total,
+                "complied_attacks": complied,
+                "asr": asr,
+            })
+
+        details.append({
+            "probe_name": probe_name,
+            "is_baseline": is_baseline,
+            "table": table,
+        })
+
+    return details
+
+
+def compute_intent_asr(attempts: list[dict]) -> dict[str, float]:
+    """Compute ASR per intent ID for grounding cross-framework mappings."""
+    by_intent: dict[str, list[dict]] = defaultdict(list)
+    for a in attempts:
+        by_intent[a["intent"]].append(a)
+
+    result: dict[str, float] = {}
+    for intent, atts in by_intent.items():
+        total = len(atts)
+        complied = sum(1 for a in atts if a["outcome"] == "complied")
+        result[intent] = round(complied / total * 100, 1) if total else 0.0
+    return result
+
+
+# ---------------------------------------------------------------------------
 # Render
 # ---------------------------------------------------------------------------
 
@@ -447,12 +547,18 @@ def render_report(
     """Compute all template variables and render the HTML report."""
     hl_stats = high_level_stats(attempts)
     i_stats = intent_stats(attempts)
-    cf_matrix = cross_framework_matrix(mapping)
+    i_asr = compute_intent_asr(attempts)
+    cf_matrix = cross_framework_matrix(mapping, i_asr)
     cf_summary = cross_framework_summary(cf_matrix)
     vocab = domain_vocabulary_analysis(attempts, stubs)
     rg_stats = risk_group_stats(attempts)
     prov_trails = provenance_trails(attempts, stubs)
 
+    # Original ART chart data
+    beh_chart = behavior_chart_data(attempts)
+    probe_details = probe_details_data(attempts)
+
+    # ORT-specific chart data
     rg_chart = risk_group_chart_data(rg_stats)
     cf_chart = cross_framework_chart_data(cf_matrix)
     dv_chart = domain_vocab_chart_data(vocab)
@@ -476,6 +582,10 @@ def render_report(
         domain_vocabulary=vocab,
         risk_group_stats=rg_stats,
         provenance_trails=prov_trails,
+        # Original ART charts
+        chart_attacks_data=beh_chart,
+        probe_details=probe_details,
+        # ORT-specific charts
         risk_group_chart_data=rg_chart,
         cross_framework_chart_data=cf_chart,
         domain_vocab_chart_data=dv_chart,
