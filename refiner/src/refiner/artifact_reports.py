@@ -51,8 +51,6 @@ def build_dataset_report(rows: list[dict], output_path: Path) -> Path:
     for r in rows:
         for ax in r.get("sampled_axes", []):
             all_axes.append(ax)
-    ontologies = Counter(ax.get("source_ontology", "") for ax in all_axes)
-    roles = Counter(role for ax in all_axes for role in ax.get("roles", []))
     relevance = Counter(ax.get("relevance", "") for ax in all_axes)
 
     report_data = {
@@ -62,8 +60,6 @@ def build_dataset_report(rows: list[dict], output_path: Path) -> Path:
             "techniques": dict(techniques.most_common()),
             "risks": dict(risks.most_common()),
             "frameworks": dict(frameworks.most_common()),
-            "ontologies": dict(ontologies.most_common()),
-            "roles": dict(roles.most_common()),
             "relevance": dict(relevance.most_common()),
         },
         "rows": rows,
