@@ -14,6 +14,12 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 
+- **Judge evaluation aggregations** — expanded LLM-as-a-judge results with four new views:
+  `by_risk` (per risk_id), `by_technique` (per adversarial framing technique),
+  `by_risk_framework` (per source framework — OWASP, Atlas, AIR, etc.), and
+  `score_distribution` (1-5 histogram per dimension to surface bimodal distributions).
+  Extracted `risk_id_to_framework()` from `compute_risk_framework_coverage` for reuse.
+
 - **Anchor stage LLM prompt** — rewrote the system prompt for axis selection:
   - Clarified that a variation axis is a concept whose instances provide variation, not a dimension itself
   - Explained candidate categories (Object, Process, Role, etc.) in practical terms with what each varies, removing assumption that the LLM knows BFO

@@ -117,32 +117,33 @@ def aggregate_stage_quality(events: list[dict]) -> dict:
     return result
 
 
+_KNOWN_PREFIXES = {
+    "atlas-": "ibm_risk_atlas",
+    "owasp-": "owasp_llm_top10",
+    "llm0": "owasp_llm_top10",
+    "nist-": "nist_ai_rmf",
+    "ai-risk-taxonomy-": "air_2024",
+    "air-": "air_2024",
+    "mit-ai-risk": "mit_ai_risk_repository",
+    "ail-": "ailuminate",
+    "credo-": "credo",
+    "aiuc-": "aiuc1",
+    "csiro-": "csiro",
+    "shieldgemma-": "shieldgemma",
+}
+
+
+def risk_id_to_framework(risk_id: str) -> str:
+    for prefix, framework in _KNOWN_PREFIXES.items():
+        if risk_id.startswith(prefix):
+            return framework
+    return "unknown"
+
+
 def compute_risk_framework_coverage(matched_risk_ids: list[str]) -> dict:
-    KNOWN_PREFIXES = {
-        "atlas-": "ibm_risk_atlas",
-        "owasp-": "owasp_llm_top10",
-        "llm0": "owasp_llm_top10",
-        "nist-": "nist_ai_rmf",
-        "ai-risk-taxonomy-": "air_2024",
-        "air-": "air_2024",
-        "mit-ai-risk": "mit_ai_risk_repository",
-        "ail-": "ailuminate",
-        "credo-": "credo",
-        "aiuc-": "aiuc1",
-        "csiro-": "csiro",
-        "shieldgemma-": "shieldgemma",
-    }
     by_framework: dict[str, int] = defaultdict(int)
     for rid in matched_risk_ids:
-        matched_prefix = None
-        for prefix, framework in KNOWN_PREFIXES.items():
-            if rid.startswith(prefix):
-                matched_prefix = framework
-                break
-        if matched_prefix:
-            by_framework[matched_prefix] += 1
-        else:
-            by_framework["unknown"] += 1
+        by_framework[risk_id_to_framework(rid)] += 1
     return {
         "total_matched": len(matched_risk_ids),
         "by_framework": dict(by_framework),
@@ -494,25 +495,118 @@ def _axis_words(label: str) -> set[str]:
     return {w.lower() for w in label.split() if len(w) > 2 and w.lower() not in _AXIS_STOPWORDS}
 
 
+_SEMANTIC_THRESHOLD = 0.30
+
+_embed_fn_cache: list = []  # single-element cache for lazy init
+
+
+def _get_embed_fn():
+    """Lazily load ChromaDB's default embedding function."""
+    if _embed_fn_cache:
+        return _embed_fn_cache[0]
+    try:
+        from chromadb.utils.embedding_functions import DefaultEmbeddingFunction
+        fn = DefaultEmbeddingFunction()
+        _embed_fn_cache.append(fn)
+        return fn
+    except Exception:
+        return None
+
+
+def _cosine_similarity(a: list[float], b: list[float]) -> float:
+    dot = sum(x * y for x, y in zip(a, b))
+    norm_a = sum(x * x for x in a) ** 0.5
+    norm_b = sum(x * x for x in b) ** 0.5
+    if norm_a == 0 or norm_b == 0:
+        return 0.0
+    return dot / (norm_a * norm_b)
+
+
+def _batch_embed(embed_fn, texts: list[str]) -> list[list[float]]:
+    """Embed a batch of texts, chunking to avoid OOM on large batches."""
+    if not texts:
+        return []
+    batch_size = 256
+    all_embeddings: list[list[float]] = []
+    for i in range(0, len(texts), batch_size):
+        chunk = texts[i:i + batch_size]
+        all_embeddings.extend(embed_fn(chunk))
+    return all_embeddings
+
+
 def compute_axis_fidelity(rows: list[dict]) -> dict:
     full = 0
     partial = 0
     improvised = 0
     fidelities = []
-    for row in rows:
+    by_provenance: dict[str, dict] = {}
+
+    # Collect prompts and labels for batch embedding
+    prompt_texts: list[str] = []
+    row_indices: list[int] = []  # maps prompt_texts index to rows index
+    all_labels: set[str] = set()
+    for i, row in enumerate(rows):
         axes = row.get("sampled_axes", [])
         if not axes:
             continue
+        prompt_texts.append((row.get("prompt") or ""))
+        row_indices.append(i)
+        for sa in axes:
+            all_labels.add(sa.get("sampled_label", ""))
+
+    # Batch-embed prompts and labels for semantic matching
+    embed_fn = _get_embed_fn()
+    prompt_embeddings: list[list[float]] = []
+    label_embeddings: dict[str, list[float]] = {}
+    if embed_fn and prompt_texts:
+        try:
+            prompt_embeddings = _batch_embed(embed_fn, prompt_texts)
+            label_list = list(all_labels)
+            label_embs = _batch_embed(embed_fn, label_list)
+            label_embeddings = dict(zip(label_list, label_embs))
+        except Exception:
+            prompt_embeddings = []
+            label_embeddings = {}
+
+    prompt_idx = 0
+    for i, row in enumerate(rows):
+        axes = row.get("sampled_axes", [])
+        if not axes:
+            continue
+
+        prompt_emb = prompt_embeddings[prompt_idx] if prompt_idx < len(prompt_embeddings) else None
+        prompt_idx += 1
+
         matched = 0
+        prompt_lower = (row.get("prompt") or "").lower()
+
         for sa in axes:
             label = sa.get("sampled_label", "")
+            prov = sa.get("provenance", "generated")
+            if prov not in by_provenance:
+                by_provenance[prov] = {"matched": 0, "total": 0}
+            by_provenance[prov]["total"] += 1
+
             words = _axis_words(label)
             if not words:
                 matched += 1
+                by_provenance[prov]["matched"] += 1
                 continue
-            prompt_lower = (row.get("prompt") or "").lower()
+
+            # Fast path: keyword match
             if any(w in prompt_lower for w in words):
                 matched += 1
+                by_provenance[prov]["matched"] += 1
+                continue
+
+            # Semantic similarity fallback
+            if prompt_emb is not None and label in label_embeddings:
+                sim = _cosine_similarity(label_embeddings[label], prompt_emb)
+                if sim >= _SEMANTIC_THRESHOLD:
+                    matched += 1
+                    by_provenance[prov]["matched"] += 1
+                    continue
+
         fidelity = matched / len(axes)
         fidelities.append(fidelity)
         if fidelity == 1.0:
@@ -521,13 +615,24 @@ def compute_axis_fidelity(rows: list[dict]) -> dict:
             improvised += 1
         else:
             partial += 1
-    return {
+
+    result: dict = {
         "total_prompts": len(fidelities),
         "full_fidelity": full,
         "partial": partial,
         "improvised": improvised,
         "mean_fidelity": round(sum(fidelities) / len(fidelities), 3) if fidelities else 0,
     }
+    if by_provenance:
+        result["by_provenance"] = {
+            prov: {
+                "total": d["total"],
+                "matched": d["matched"],
+                "match_rate": round(d["matched"] / d["total"], 3) if d["total"] > 0 else 0,
+            }
+            for prov, d in sorted(by_provenance.items())
+        }
+    return result
 
 
 _NAMED_ENTITY_RE = re.compile(r"\b[A-Z][a-z]+(?:\s+[A-Z][a-z]+)+\b")

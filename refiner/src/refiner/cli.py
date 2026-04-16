@@ -745,7 +745,8 @@ def evaluate(
         import json as json_mod
         import random
         from collections import defaultdict as dd
-        from refiner.judge import judge_prompt as jp, aggregate_judge_results
+        from refiner.judge import judge_prompt as jp, aggregate_judge_results, compute_score_distribution
+        from refiner.evaluate import risk_id_to_framework
         from refiner.llm import LLMConfig, create_client
 
         j_base = judge_base_url or os.environ.get("REFINER_BASE_URL", "")
@@ -760,6 +761,9 @@ def evaluate(
 
         scores = []
         scores_by_policy: dict[str, list] = dd(list)
+        scores_by_risk: dict[str, list] = dd(list)
+        scores_by_technique: dict[str, list] = dd(list)
+        scores_by_framework: dict[str, list] = dd(list)
         for row in adv_rows:
             s = jp(
                 j_client, j_config,
@@ -775,14 +779,30 @@ def evaluate(
             }
             scores.append(score_dict)
             scores_by_policy[row.get("policy_concept", "unknown")].append(score_dict)
+            scores_by_risk[row.get("risk_id", "unknown")].append(score_dict)
+            scores_by_technique[row.get("technique", "unknown")].append(score_dict)
+            scores_by_framework[risk_id_to_framework(row.get("risk_id", ""))].append(score_dict)
 
         evaluation["judge_evaluation"] = {
             "model": j_model,
             "prompts_scored": len(scores),
             "aggregates": aggregate_judge_results(scores),
+            "score_distribution": compute_score_distribution(scores),
             "by_policy_concept": {
                 pc: aggregate_judge_results(pc_scores)
                 for pc, pc_scores in sorted(scores_by_policy.items())
+            },
+            "by_risk": {
+                rid: aggregate_judge_results(risk_scores)
+                for rid, risk_scores in sorted(scores_by_risk.items())
+            },
+            "by_technique": {
+                tech: aggregate_judge_results(tech_scores)
+                for tech, tech_scores in sorted(scores_by_technique.items())
+            },
+            "by_risk_framework": {
+                fw: aggregate_judge_results(fw_scores)
+                for fw, fw_scores in sorted(scores_by_framework.items())
             },
         }
 

@@ -82,3 +82,16 @@ def aggregate_judge_results(scores: list[dict]) -> dict:
                 "std": round(statistics.stdev(values), 2) if len(values) > 1 else 0,
             }
     return result
+
+
+def compute_score_distribution(scores: list[dict]) -> dict:
+    """Histogram of scores (1-5) per dimension."""
+    result = {}
+    for dim in DIMENSIONS:
+        dist = {i: 0 for i in range(1, 6)}
+        for s in scores:
+            v = s.get(dim)
+            if v is not None:
+                dist[v] = dist.get(v, 0) + 1
+        result[dim] = dist
+    return result
