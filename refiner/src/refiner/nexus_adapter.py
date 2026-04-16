@@ -7,7 +7,6 @@ from refiner.models import (
     AiSystem,
     Policy,
     PolicyProfile,
-    RegulatoryReference,
     Stakeholder,
 )
 
