@@ -44,16 +44,21 @@ class TestCollectOntologyEnumerations:
         handlers = self._make_handlers(
             subclasses=[],
             siblings=[
-                {"uri": "http://ex.org/Sib1", "label": "Sib One"},
-                {"uri": "http://ex.org/Sib2", "label": "Sib Two"},
-                {"uri": "http://ex.org/Parent", "label": "Parent"},
+                {"uri": "http://ex.org/InsuranceFraud", "label": "Insurance Fraud"},
+                {"uri": "http://ex.org/InvestmentFraud", "label": "Investment Fraud"},
+                {"uri": "http://ex.org/Fraud", "label": "Fraud"},
             ],
+            definitions={
+                "http://ex.org/Fraud": {"label": "Fraud"},
+                "http://ex.org/InsuranceFraud": {"label": "Insurance Fraud"},
+                "http://ex.org/InvestmentFraud": {"label": "Investment Fraud"},
+            },
         )
-        result = _collect_ontology_enumerations("http://ex.org/Parent", handlers, selected_domains=None)
+        result = _collect_ontology_enumerations("http://ex.org/Fraud", handlers, selected_domains=None)
         assert len(result) == 2
         assert all(e.provenance == "sibling" for e in result)
         assert all(e.relevance == "medium" for e in result)
-        assert all(e.class_uri != "http://ex.org/Parent" for e in result)
+        assert all(e.class_uri != "http://ex.org/Fraud" for e in result)
 
     def test_caps_at_max_enumerations(self):
         subclasses = [{"uri": f"http://ex.org/Sub{i}", "label": f"Sub {i}", "depth": 1} for i in range(20)]
@@ -84,6 +89,64 @@ class TestCollectOntologyEnumerations:
         assert len(result) == 1
         assert result[0].class_uri == "http://obo.org/Patient"
         assert result[0].source_ontology == "OBO"
+
+    def test_cco_military_person_uris_blocked(self):
+        from refiner.stages.contextualize import _CCO_MILITARY_PERSON_URIS
+        handlers = self._make_handlers(
+            subclasses=[
+                {"uri": "https://www.commoncoreontologies.org/ont00000860", "label": "Allied Person", "depth": 1},
+                {"uri": "https://www.commoncoreontologies.org/ont00000697", "label": "Enemy Person", "depth": 1},
+                {"uri": "http://ex.org/ValidSub", "label": "Valid Sub", "depth": 1},
+            ],
+            definitions={
+                "https://www.commoncoreontologies.org/ont00000860": {"label": "Allied Person"},
+                "https://www.commoncoreontologies.org/ont00000697": {"label": "Enemy Person"},
+                "http://ex.org/ValidSub": {"label": "Valid Sub"},
+            },
+        )
+        result = _collect_ontology_enumerations(
+            "https://www.commoncoreontologies.org/ont00001262", handlers, selected_domains=None,
+        )
+        assert len(result) == 1
+        assert result[0].class_uri == "http://ex.org/ValidSub"
+
+    def test_sibling_relevance_filters_unrelated(self):
+        handlers = self._make_handlers(
+            subclasses=[],
+            siblings=[
+                {"uri": "http://ex.org/Treaty", "label": "Treaty"},
+                {"uri": "http://ex.org/Decree", "label": "Decree"},
+                {"uri": "http://ex.org/ConductGuideline", "label": "Conduct Guideline"},
+                {"uri": "http://ex.org/CodeOfConduct", "label": "Code of Conduct"},
+            ],
+            definitions={
+                "http://ex.org/CodeOfConduct": {"label": "Code of Conduct"},
+                "http://ex.org/Treaty": {"label": "Treaty"},
+                "http://ex.org/Decree": {"label": "Decree"},
+                "http://ex.org/ConductGuideline": {"label": "Conduct Guideline"},
+            },
+        )
+        result = _collect_ontology_enumerations(
+            "http://ex.org/CodeOfConduct", handlers, selected_domains=None,
+        )
+        assert len(result) == 1
+        assert result[0].class_label == "Conduct Guideline"
+
+    def test_sibling_relevance_passes_when_axis_label_empty(self):
+        handlers = self._make_handlers(
+            subclasses=[],
+            siblings=[
+                {"uri": "http://ex.org/Sib1", "label": "Sib One"},
+            ],
+            definitions={
+                "http://ex.org/Unknown": None,
+                "http://ex.org/Sib1": {"label": "Sib One"},
+            },
+        )
+        result = _collect_ontology_enumerations(
+            "http://ex.org/Unknown", handlers, selected_domains=None,
+        )
+        assert len(result) == 1
 
     def test_empty_ontology_returns_empty(self):
         handlers = self._make_handlers(subclasses=[], siblings=[])

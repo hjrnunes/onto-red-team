@@ -21,6 +21,26 @@ from refiner.stages.identify_domains import derive_source_ontology
 
 logger = logging.getLogger(__name__)
 
+# CCO Person subclasses from the military/defense domain — irrelevant for
+# non-military policies but always included because CCO is foundational.
+_CCO_MILITARY_PERSON_URIS = frozenset({
+    "https://www.commoncoreontologies.org/ont00000860",  # Allied Person
+    "https://www.commoncoreontologies.org/ont00000697",  # Enemy Person
+    "https://www.commoncoreontologies.org/ont00000666",  # Neutral Person
+    "https://www.commoncoreontologies.org/ont00000647",  # Organization Member
+    "https://www.commoncoreontologies.org/ont00000388",  # Citizen
+    "https://www.commoncoreontologies.org/ont00000645",  # Permanent Resident
+})
+
+_STOP_WORDS = frozenset({
+    "a", "an", "the", "of", "in", "on", "at", "to", "for", "and", "or", "is", "by",
+})
+
+
+def _content_words(label: str) -> set[str]:
+    return {w.lower() for w in label.split() if len(w) > 2 and w.lower() not in _STOP_WORDS}
+
+
 SYSTEM_PROMPT = """\
 You are generating domain-specific concept terms for an AI risk axis.
 
@@ -91,10 +111,16 @@ def _collect_ontology_enumerations(
     """Collect enumerations from ontology subclasses, with sibling fallback for leaf nodes."""
     enumerations: list[AxisEnumeration] = []
 
+    axis_defn = onto_handlers["get_class_definition"](axis_uri)
+    axis_label = axis_defn.get("label", "") if axis_defn else ""
+    axis_words = _content_words(axis_label)
+
     subclasses = onto_handlers["get_subclasses"](axis_uri, depth=1)
     for sc in subclasses:
         uri = sc.get("uri", "")
         if not uri:
+            continue
+        if uri in _CCO_MILITARY_PERSON_URIS:
             continue
         domain = derive_source_ontology(uri)
         if selected_domains and domain and domain not in selected_domains:
@@ -126,6 +152,8 @@ def _collect_ontology_enumerations(
                 continue
             label = defn.get("label", sib.get("label", ""))
             if not label:
+                continue
+            if axis_words and not (_content_words(label) & axis_words):
                 continue
             enumerations.append(AxisEnumeration(
                 class_uri=uri, class_label=label,

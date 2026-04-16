@@ -6,6 +6,18 @@ All notable changes to this project will be documented in this file.
 
 ### Improved
 
+- **Enumeration quality filtering** — two filters in `_collect_ontology_enumerations` to remove
+  irrelevant axis enumerations:
+  1. CCO military Person blocklist: all 6 direct subclasses of CCO Person (Allied Person, Enemy
+     Person, Neutral Person, Organization Member, Citizen, Permanent Resident) are from CCO's
+     military/defense domain and irrelevant for non-military policies. Blocked by URI since CCO
+     is always-included and the subclasses share the same namespace as core classes.
+  2. Sibling relevance gate: when the sibling fallback fires (leaf nodes with no subclasses),
+     siblings must share at least one content word with the axis class label. Eliminates
+     semantically unrelated siblings like Treaty/Decree/Contract for a "Code of Conduct" axis.
+  Projected impact: eliminates ~438 fidelity misses (337 CCO military + 101 LKIF doc siblings),
+  moving keyword-based hit rate from ~60.9% to ~67.5%.
+
 - **Axis fidelity metric robustness** — replaced substring keyword matching with three-tier
   matching: (1) stemmed keyword match on sampled label using prefix-based stemming and
   British→American spelling normalization, (2) stemmed keyword match on axis class label as
