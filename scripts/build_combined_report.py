@@ -148,6 +148,14 @@ def build_combined_report(
     # Build title
     title = title or _title_from_dir(run_dir)
 
+    # Build (policy_concept, risk_id) → match_distance lookup from risk landscape
+    distance_lookup: dict[tuple[str, str], float] = {}
+    for pm in rl_data.get("policy_mappings", []):
+        concept = pm.get("policy_concept", "")
+        for mr in pm.get("matched_risks", []):
+            if mr.get("match_distance") is not None:
+                distance_lookup[(concept, mr["risk_id"])] = mr["match_distance"]
+
     # Transform domain context: flatten policy_contexts[].risk_groundings[]
     # into profiles[] for the combined template
     if "policy_contexts" in dc_data and "profiles" not in dc_data:
@@ -156,15 +164,18 @@ def build_combined_report(
         for ctx in dc_data.get("policy_contexts", []):
             for grounding in ctx.get("risk_groundings", []):
                 risk_meta = risks_by_id.get(grounding["risk_id"], {})
+                risk_id = grounding["risk_id"]
+                policy_concept = ctx.get("policy_concept")
                 profiles.append({
-                    "risk_id": grounding["risk_id"],
-                    "risk_name": risk_meta.get("risk_name", grounding["risk_id"]),
+                    "risk_id": risk_id,
+                    "risk_name": risk_meta.get("risk_name", risk_id),
                     "risk_description": risk_meta.get("risk_description"),
                     "risk_concern": risk_meta.get("risk_concern"),
                     "risk_framework": risk_meta.get("risk_framework"),
-                    "policy_concept": ctx.get("policy_concept"),
+                    "policy_concept": policy_concept,
                     "axes": grounding.get("axes", []),
                     "cross_mappings": risk_meta.get("cross_mappings", []),
+                    "match_distance": distance_lookup.get((policy_concept, risk_id)),
                 })
         dc_data["profiles"] = profiles
 

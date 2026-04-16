@@ -1925,6 +1925,16 @@
                     <template x-if="dcProfileForEntry(entry)?.risk_framework">
                       <span class="tip inline-flex items-center px-2 py-0.5 rounded text-[10px] font-medium bg-amber-100 text-amber-800" data-tip="Source risk framework" x-text="dcProfileForEntry(entry).risk_framework"></span>
                     </template>
+                    <template x-if="dcProfileForEntry(entry)?.match_distance != null">
+                      <span class="tip inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold"
+                        data-tip="Embedding match distance to policy concept (lower = better match)"
+                        :class="{
+                          'bg-green-100 text-green-800': dcProfileForEntry(entry).match_distance < 0.3,
+                          'bg-amber-100 text-amber-800': dcProfileForEntry(entry).match_distance >= 0.3 && dcProfileForEntry(entry).match_distance <= 0.5,
+                          'bg-red-100 text-red-800': dcProfileForEntry(entry).match_distance > 0.5
+                        }"
+                        x-text="'d=' + dcProfileForEntry(entry).match_distance.toFixed(3)"></span>
+                    </template>
                   </div>
                 </div>
                 <div class="flex items-center gap-3 shrink-0">

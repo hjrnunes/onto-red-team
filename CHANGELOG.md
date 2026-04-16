@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Gen 17 (current)
 
+### Added
+
+- **Match distance in Enriched Taxonomy tab** — each taxonomy entry header now shows a color-coded
+  distance badge (green <0.3, amber 0.3–0.5, red >0.5) indicating how confidently the risk was
+  matched to its policy concept. Distance data flows from `risk_landscape.policy_mappings` through
+  `build_combined_report.py` into DC profiles, eliminating the need to cross-reference the Risk
+  Landscape tab.
+
 ### Improved
 
 - **Anchor stage LLM prompt** — rewrote the system prompt for axis selection:
