@@ -34,6 +34,7 @@ def test_map_risks_cli_produces_risk_landscape(tmp_path):
             set(),  # seen_risk_ids
             {},  # related_risks
             {},  # risk_actions
+            [],  # coverage_gaps
         )
         mock_rh.return_value = {}
 

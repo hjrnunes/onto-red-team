@@ -34,6 +34,7 @@ class PipelineState:
     seen_risk_ids: set[str] | None = None
     related_risks: dict[str, list[dict]] | None = None
     risk_actions: dict[str, list[str]] | None = None
+    coverage_gaps: list = field(default_factory=list)
     risk_landscape: RiskLandscape | None = None
     variation_axes: list[RiskVariationAxes] | None = None
     domain_context: DomainContext | None = None
@@ -136,9 +137,10 @@ def run_pipeline(
         return state
 
     t0 = _now()
-    state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions = map_risks(
+    state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions, coverage_gaps = map_risks(
         state.policies, client, config, risk_handlers, report=report
     )
+    state.coverage_gaps = coverage_gaps
     _stage_done("map_risks", t0)
     state.risk_landscape = build_risk_landscape(
         mappings=state.risk_mappings,

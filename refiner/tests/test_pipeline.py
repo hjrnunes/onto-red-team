@@ -28,6 +28,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         {"r1"},
         {"r1": [{"id": "r2", "mapping_type": "close"}]},
         {},
+        [],  # coverage_gaps
     )
     anchor_axes = [
         RiskVariationAxes(

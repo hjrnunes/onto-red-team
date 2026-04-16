@@ -479,7 +479,7 @@ def map_risks_cmd(
 
     # Stage 2: map risks
     from refiner.stages.map_risks import map_risks
-    mappings, risk_details, seen_ids, related, actions = map_risks(
+    mappings, risk_details, seen_ids, related, actions, coverage_gaps = map_risks(
         policies, client, config, risk_handlers, report=report,
     )
 

@@ -8,6 +8,7 @@ from refiner.models import (
     Policy,
     PolicyRiskMapping,
     RiskMatch,
+    CoverageGap,
 )
 from refiner import debug
 
@@ -125,14 +126,15 @@ def map_risks(
         config: LLMConfig,
         risk_handlers: dict,
         report=None,
-) -> tuple[list[PolicyRiskMapping], dict[str, dict], set[str], dict[str, list[dict]], dict[str, list[str]]]:
+) -> tuple[list[PolicyRiskMapping], dict[str, dict], set[str], dict[str, list[dict]], dict[str, list[str]], list[CoverageGap]]:
     if not policies:
-        return [], {}, set(), {}, {}
+        return [], {}, set(), {}, {}, []
 
     risk_details_cache: dict[str, dict] = {}
     seen_risk_ids: set[str] = set()  # all risk IDs shown to the model (candidates + related)
     related_risks: dict[str, list[dict]] = {}  # risk_id -> related risk entries from knowledge graph
     risk_actions_cache: dict[str, list[str]] = {}
+    coverage_gaps: list[CoverageGap] = []
     mappings: list[PolicyRiskMapping] = []
 
     for pol in policies:
@@ -243,4 +245,52 @@ def map_risks(
             matched_risks=valid_risks,
         ))
 
-    return mappings, risk_details_cache, seen_risk_ids, related_risks, risk_actions_cache
+        # --- Coverage gap detection ---
+        min_distance = min(
+            (ec.get("distance") or 0.0) for ec in enriched_candidates
+        ) if enriched_candidates else 1.0
+        primary_count = sum(1 for r in valid_risks if r.relevance == "primary")
+        has_decomposition = (
+            pol.decomposition is not None
+            and bool(pol.decomposition.agent or pol.decomposition.activity or pol.decomposition.entity)
+        )
+
+        gap_score = compute_gap_score(min_distance, primary_count, has_decomposition)
+        if gap_score >= GAP_SCORE_THRESHOLD:
+            nearest = [
+                {"id": ec["id"], "name": ec.get("name", ""), "distance": ec.get("distance")}
+                for ec in enriched_candidates[:3]
+            ]
+            classification = characterize_gap(
+                pol.policy_concept,
+                pol.concept_definition,
+                enriched_candidates[:5],
+                client,
+                config,
+            )
+            adjusted_confidence = gap_score * GAP_TYPE_WEIGHTS[classification.gap_type]
+            gap = CoverageGap(
+                policy_concept=pol.policy_concept,
+                concept_definition=pol.concept_definition,
+                gap_type=classification.gap_type,
+                confidence=round(adjusted_confidence, 3),
+                nearest_risks=nearest,
+                reasoning=classification.reasoning,
+                decomposition=pol.decomposition,
+            )
+            coverage_gaps.append(gap)
+            logger.info(
+                "Coverage gap detected for '%s': type=%s confidence=%.3f",
+                pol.policy_concept, classification.gap_type, adjusted_confidence,
+            )
+            if report:
+                report.events.append({
+                    "stage": "map_risks", "event": "coverage_gap",
+                    "policy_concept": pol.policy_concept,
+                    "gap_type": classification.gap_type,
+                    "confidence": round(adjusted_confidence, 3),
+                    "gap_score_raw": round(gap_score, 3),
+                    "nearest_risks": nearest,
+                })
+
+    return mappings, risk_details_cache, seen_risk_ids, related_risks, risk_actions_cache, coverage_gaps
