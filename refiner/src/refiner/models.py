@@ -164,6 +164,16 @@ class WeakMatch(BaseModel):
     distance: float
 
 
+class CoverageGap(BaseModel):
+    policy_concept: str
+    concept_definition: str
+    gap_type: Literal["domain_specialization", "compositional", "novel"]
+    confidence: float
+    nearest_risks: list[dict]
+    reasoning: str
+    decomposition: PolicyDecomposition | None = None
+
+
 class RiskLandscape(BaseModel):
     version: str = "0.1"
     model: str = ""
@@ -176,6 +186,7 @@ class RiskLandscape(BaseModel):
     policy_mappings: list[PolicyRiskMapping] = []
     framework_coverage: dict[str, int] = {}
     weak_matches: list[WeakMatch] = []
+    coverage_gaps: list[CoverageGap] = []
 
 
 class VariationAxis(BaseModel):

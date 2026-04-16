@@ -493,3 +493,61 @@ def test_risk_landscape_defaults():
     assert landscape.weak_matches == []
     assert landscape.selected_domains == []
     assert landscape.knowledge_base is None
+
+
+def test_coverage_gap_model():
+    from refiner.models import CoverageGap, PolicyDecomposition
+
+    gap = CoverageGap(
+        policy_concept="AI triage liability",
+        concept_definition="AI systems making triage decisions may create liability",
+        gap_type="novel",
+        confidence=0.82,
+        nearest_risks=[
+            {"id": "atlas-liability", "name": "Liability", "distance": 0.65},
+        ],
+        reasoning="No existing risk covers AI-specific triage liability",
+    )
+    assert gap.gap_type == "novel"
+    assert gap.confidence == 0.82
+    assert gap.decomposition is None
+
+
+def test_coverage_gap_with_decomposition():
+    from refiner.models import CoverageGap, PolicyDecomposition
+
+    gap = CoverageGap(
+        policy_concept="AI triage liability",
+        concept_definition="AI systems making triage decisions may create liability",
+        gap_type="domain_specialization",
+        confidence=0.71,
+        nearest_risks=[],
+        reasoning="Domain-specific variant of general liability risk",
+        decomposition=PolicyDecomposition(
+            agent="AI triage system",
+            activity="diagnose",
+            entity="patient symptoms",
+        ),
+    )
+    assert gap.decomposition.agent == "AI triage system"
+
+
+def test_risk_landscape_has_coverage_gaps():
+    from refiner.models import RiskLandscape, CoverageGap
+
+    landscape = RiskLandscape()
+    assert landscape.coverage_gaps == []
+
+    landscape_with = RiskLandscape(
+        coverage_gaps=[
+            CoverageGap(
+                policy_concept="test",
+                concept_definition="test def",
+                gap_type="novel",
+                confidence=0.8,
+                nearest_risks=[],
+                reasoning="test",
+            ),
+        ],
+    )
+    assert len(landscape_with.coverage_gaps) == 1
