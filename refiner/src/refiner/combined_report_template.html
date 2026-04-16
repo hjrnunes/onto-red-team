@@ -2213,7 +2213,7 @@
         <div x-show="helpOpen" x-collapse class="mt-3 text-xs text-blue-800 space-y-2 border-t border-blue-200 pt-3">
           <p>The ingest stage parses a content policy document and extracts structured information:</p>
           <ul class="list-disc ml-4 space-y-1">
-            <li><strong>Context</strong> — organization, domain, purpose, governed systems, and regulations</li>
+            <li><strong>Context</strong> — organization, domain, purpose, AI systems, and regulations</li>
             <li><strong>Stakeholders</strong> — who governs, uses, and is affected by the AI system</li>
             <li><strong>Policy concepts</strong> — individual rules with definitions, boundary examples, and controls</li>
             <li><strong>Confidence labels</strong> — color-coded tags on each policy header: <span class="px-1 rounded text-[10px] bg-green-100 text-green-800">green</span> = high confidence, <span class="px-1 rounded text-[10px] bg-amber-100 text-amber-800">amber</span> = partial, <span class="px-1 rounded text-[10px] bg-red-100 text-red-800">red</span> = not found</li>
@@ -2232,7 +2232,7 @@
       <!-- Context Summary -->
       <section x-show="policy?.profile?.organization?.name" class="bg-white rounded-xl shadow-sm border border-gray-200 p-5">
         <div class="flex items-center gap-1 mb-3">
-          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Key metadata extracted from the policy document: organization, domain, purpose, governed AI systems, and applicable regulations.">Context Summary</h2>
+          <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Key metadata extracted from the policy document: organization, domain, purpose, AI systems, and applicable regulations.">Context Summary</h2>
           <span class="tip-icon" data-tip="Each field has a confidence indicator (green/amber/red dot) showing how confidently the LLM identified this information.">i</span>
         </div>
         <div class="bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-3 text-xs text-blue-800">
@@ -2271,7 +2271,7 @@
             <p x-show="!(policy.profile?.purpose?.length)" class="text-sm text-gray-400 italic">None identified</p>
           </div>
 
-          <!-- Governed Systems -->
+          <!-- AI Systems -->
           <div class="border border-gray-200 rounded-lg p-4">
             <div class="flex items-center gap-2 mb-2">
               <span class="dot" :class="'dot-' + policy.confidence?.context?.ai_systems"></span>
@@ -2280,7 +2280,7 @@
             <div class="flex flex-wrap gap-2">
               <template x-for="gs in (policy.profile?.ai_systems || [])" :key="gs.name">
                 <span class="tip px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800"
-                  :data-tip="gs.risk_level ? 'Risk level: ' + gs.risk_level : 'AI system governed by these policies'"
+                  :data-tip="gs.risk_level ? 'Risk level: ' + gs.risk_level : 'AI system covered by these policies'"
                   x-text="gs.name"></span>
               </template>
             </div>
