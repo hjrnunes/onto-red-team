@@ -11,9 +11,9 @@ from refiner.provenance import write_provenance
 from refiner.models import (
     AxisEnumeration,
     DomainContextAxis,
-    DomainContextDocument,
+    DomainContext,
     Policy,
-    PolicyDocument,
+    PolicyProfile,
     PolicyDomainContext,
     RiskGrounding,
     RiskSummary,
@@ -118,7 +118,7 @@ def build_prompt(
     risk_name: str,
     sampled_axes: list[SampledAxis],
     policy: Policy | None = None,
-    doc_context: PolicyDocument | None = None,
+    policy_profile: PolicyProfile | None = None,
     frame: AdversarialFrame | None = None,
 ) -> list[dict]:
     # Build scenario lines from sampled axes
@@ -180,11 +180,11 @@ def build_prompt(
             )
 
     org_block = ""
-    if doc_context and doc_context.organization:
-        org_parts = [f"Organization: {doc_context.organization.name}"]
-        if doc_context.domain:
-            org_parts[0] += f" ({doc_context.domain})"
-        subjects = [s.name for s in doc_context.stakeholders if "airo:AISubject" in s.roles]
+    if policy_profile and policy_profile.organization:
+        org_parts = [f"Organization: {policy_profile.organization.name}"]
+        if policy_profile.domain:
+            org_parts[0] += f" ({policy_profile.domain})"
+        subjects = [s.name for s in policy_profile.stakeholders if "airo:AISubject" in s.roles]
         if subjects:
             org_parts.append(f"AI subjects: {', '.join(subjects)}")
         org_block = "\n" + "\n".join(org_parts) + "\n"
@@ -214,16 +214,16 @@ Respond with JSON: {{"prompt": "..."}}"""
     ]
 
 
-def load_domain_context(path: Path) -> DomainContextDocument:
+def load_domain_context(path: Path) -> DomainContext:
     raw = yaml.safe_load(path.read_text())
-    return DomainContextDocument(**raw)
+    return DomainContext(**raw)
 
 
-def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyDocument | None]:
+def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyProfile | None]:
     raw = json.loads(path.read_text())
     if isinstance(raw, list):
         return {p["policy_concept"]: Policy(**p) for p in raw}, None
-    doc = PolicyDocument(**raw)
+    doc = PolicyProfile(**raw)
     return {p.policy_concept: p for p in doc.policies}, doc
 
 
@@ -258,7 +258,7 @@ def emit(
 ) -> None:
     dc_path = _discover_domain_context(output_dir)
     doc = load_domain_context(dc_path)
-    policy_map, doc_context = load_policies(policies_path)
+    policy_map, policy_profile = load_policies(policies_path)
 
     if seed is not None:
         random.seed(seed)
@@ -311,7 +311,7 @@ def emit(
                     risk_name,
                     sampled,
                     policy=policy,
-                    doc_context=doc_context,
+                    policy_profile=policy_profile,
                     frame=frame,
                 )
                 row = {

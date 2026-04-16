@@ -3,13 +3,13 @@
 import json
 from pathlib import Path
 
-from refiner.models import PolicyDocument, RunReport
+from refiner.models import PolicyProfile, RunReport
 
 
 _AIRO_ROLES = {"airo:AIUser", "airo:AISubject", "airo:AIProvider", "airo:AIDeployer"}
 
 
-def _context_confidence(doc: PolicyDocument) -> dict:
+def _context_confidence(doc: PolicyProfile) -> dict:
     """Compute green/amber/red for each context-level field."""
     ctx = {}
     ctx["organization"] = "green" if doc.organization and doc.organization.name else "red"
@@ -36,7 +36,7 @@ def _context_confidence(doc: PolicyDocument) -> dict:
     return ctx
 
 
-def _policy_confidence(doc: PolicyDocument) -> list[dict]:
+def _policy_confidence(doc: PolicyProfile) -> list[dict]:
     """Compute green/amber/red for each per-policy field."""
     results = []
     for p in doc.policies:
@@ -61,7 +61,7 @@ def _policy_confidence(doc: PolicyDocument) -> list[dict]:
     return results
 
 
-def group_stakeholders(doc: PolicyDocument) -> dict:
+def group_stakeholders(doc: PolicyProfile) -> dict:
     """Group stakeholders into Lewis et al. 2021 categories.
 
     Returns dict with keys: organisation, governance, users, subjects.
@@ -87,7 +87,7 @@ def group_stakeholders(doc: PolicyDocument) -> dict:
     return result
 
 
-def _summary(doc: PolicyDocument, report: RunReport) -> dict:
+def _summary(doc: PolicyProfile, report: RunReport) -> dict:
     """Compute aggregate summary stats."""
     policies_enriched = sum(
         1 for p in doc.policies if p.boundary_examples or p.acceptable_uses or p.risk_controls
@@ -110,14 +110,14 @@ def _summary(doc: PolicyDocument, report: RunReport) -> dict:
 
 
 def build_report_data(
-    doc: PolicyDocument,
+    doc: PolicyProfile,
     report: RunReport,
     meta: dict,
 ) -> dict:
-    """Combine PolicyDocument + RunReport events into report payload."""
+    """Combine PolicyProfile + RunReport events into report payload."""
     return {
         "meta": meta,
-        "document": doc.model_dump(),
+        "profile": doc.model_dump(),
         "stakeholder_groups": group_stakeholders(doc),
         "confidence": {
             "context": _context_confidence(doc),
@@ -128,7 +128,7 @@ def build_report_data(
 
 
 def build_ingest_report(
-    doc: PolicyDocument,
+    doc: PolicyProfile,
     report: RunReport,
     output_path: Path,
     meta: dict,

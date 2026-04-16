@@ -9,7 +9,7 @@ runner = CliRunner()
 
 
 def test_map_risks_cli_produces_risk_landscape(tmp_path):
-    # Create input PolicyDocument
+    # Create input PolicyProfile
     policy_doc = {
         "organization": {"name": "TestOrg", "roles": []},
         "domain": "banking",
@@ -96,10 +96,10 @@ def test_ground_cli_produces_dcd(tmp_path):
          patch("refiner.stages.anchor.anchor") as mock_anchor, \
          patch("refiner.stages.contextualize.contextualize") as mock_ctx:
 
-        from refiner.models import DomainContextDocument
+        from refiner.models import DomainContext
         mock_oh.return_value = {}
         mock_anchor.return_value = ([], {})
-        mock_ctx.return_value = DomainContextDocument(
+        mock_ctx.return_value = DomainContext(
             model="test-model", run_slug="test",
             selected_domains=["CCO", "Commons"],
         )

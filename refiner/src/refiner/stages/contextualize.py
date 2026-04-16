@@ -8,7 +8,7 @@ from refiner.models import (
     Policy,
     RiskLandscape,
     RiskVariationAxes,
-    DomainContextDocument,
+    DomainContext,
     PolicyDomainContext,
     RiskGrounding,
     RiskSummary,
@@ -89,7 +89,7 @@ def contextualize(
     run_slug: str = "",
     timestamp: str = "",
     risk_landscape: RiskLandscape | None = None,
-) -> DomainContextDocument:
+) -> DomainContext:
     # Extract fields from RiskLandscape if provided
     if risk_landscape is not None:
         selected_domains = selected_domains or risk_landscape.selected_domains
@@ -105,7 +105,7 @@ def contextualize(
         timestamp = timestamp or risk_landscape.timestamp
 
     if not variation_axes:
-        return DomainContextDocument()
+        return DomainContext()
 
     context_cache: dict[str, list[DomainContextAxis]] = {}  # risk_id -> cached axes
     policy_groundings: dict[str, list[RiskGrounding]] = {}
@@ -269,7 +269,7 @@ def contextualize(
         for pc, groundings in policy_groundings.items()
     ]
 
-    return DomainContextDocument(
+    return DomainContext(
         model=config.model,
         timestamp=timestamp,
         run_slug=run_slug,

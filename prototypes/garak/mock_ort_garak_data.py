@@ -5,16 +5,23 @@ Takes an existing garak report/hitlog and an ORT Refiner run, then produces
 re-keyed outputs where generic safety intents (S00Xfraud, etc.) are replaced
 with Nexus risk-backed intents and linked to adversarial prompt stubs.
 
-Output files (in prototypes/garak/mock_runs/):
-  - ort-rdash.report.jsonl   — re-keyed garak report
-  - ort-rdash.hitlog.jsonl    — re-keyed garak hitlog
-  - ort_intent_mapping.json   — intent mapping with cross-framework data
-  - ort_stubs.jsonl           — adversarial prompt stubs with stub IDs
+Usage::
+
+    cd refiner
+    uv run python ../prototypes/garak/mock_ort_garak_data.py --run-dir ../runs/rdash-nhs-gemma-4-26b-a4b-it-g12
+
+Output files (in prototypes/garak/mock_runs/<run-slug>/):
+  - report.jsonl          — re-keyed garak report
+  - hitlog.jsonl          — re-keyed garak hitlog
+  - intent_mapping.json   — intent mapping with cross-framework data
+  - stubs.jsonl           — adversarial prompt stubs with stub IDs
 """
 
 from __future__ import annotations
 
+import argparse
 import json
+import re
 from collections import Counter, defaultdict
 from itertools import cycle
 from pathlib import Path
@@ -26,111 +33,118 @@ import yaml
 # ---------------------------------------------------------------------------
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+SCRIPT_DIR = Path(__file__).resolve().parent
 
 GARAK_REPORT = (
-    REPO_ROOT
-    / "prototypes/garak/garak_runs"
+    SCRIPT_DIR
+    / "garak_runs"
     / "garak.0e04280f-b86a-45d3-b741-f763219cc2c3.report.jsonl"
 )
 GARAK_HITLOG = (
-    REPO_ROOT
-    / "prototypes/garak/garak_runs"
+    SCRIPT_DIR
+    / "garak_runs"
     / "garak.0e04280f-b86a-45d3-b741-f763219cc2c3.hitlog.jsonl"
 )
-ORT_RUN_DIR = REPO_ROOT / "runs/rdash-nhs-gemma-4-26b-a4b-it-g12"
-OUTPUT_DIR = REPO_ROOT / "prototypes/garak/mock_runs"
+
+# The 8 generic intents in the existing garak report
+OLD_INTENTS = [
+    "S001fraud",
+    "S002hatespeech",
+    "S003illegalactivity",
+    "S004misinformation",
+    "S005securitymalware",
+    "S006selfharm",
+    "S007sexuallyexplicit",
+    "S008violence",
+]
+
 
 # ---------------------------------------------------------------------------
-# Intent re-keying: old generic intents -> new Nexus-backed intents
+# Derive mappings from run data
 # ---------------------------------------------------------------------------
 
-INTENT_REKEY: dict[str, str] = {
-    "S001fraud": "S001regulatorycompliance",
-    "S002hatespeech": "S002dataprivacy",
-    "S003illegalactivity": "S003nondisclosure",
-    "S004misinformation": "S004personalinformation",
-    "S005securitymalware": "S005sensitiveinfo",
-    "S006selfharm": "S006accountability",
-    "S007sexuallyexplicit": "S007privacycompromise",
-    "S008violence": "S008governancefailure",
-}
 
-# ---------------------------------------------------------------------------
-# Nexus risk info per new intent
-# ---------------------------------------------------------------------------
+def _sanitize_intent_name(name: str) -> str:
+    """Turn a risk name into a lowercase S-number suffix."""
+    return re.sub(r"[^a-z0-9]", "", name.lower())[:30]
 
-INTENT_TO_RISK: dict[str, dict[str, str]] = {
-    "S001regulatorycompliance": {
-        "nexus_risk_id": "credo-risk-023",
-        "risk_name": "Regulatory compliance",
-        "risk_framework": "Credo AI",
-    },
-    "S002dataprivacy": {
-        "nexus_risk_id": "nist-data-privacy",
-        "risk_name": "Data Privacy",
-        "risk_framework": "NIST AI RMF",
-    },
-    "S003nondisclosure": {
-        "nexus_risk_id": "atlas-non-disclosure",
-        "risk_name": "Non-disclosure",
-        "risk_framework": "IBM Risk Atlas",
-    },
-    "S004personalinformation": {
-        "nexus_risk_id": "atlas-personal-information-in-data",
-        "risk_name": "Personal information in data",
-        "risk_framework": "IBM Risk Atlas",
-    },
-    "S005sensitiveinfo": {
-        "nexus_risk_id": "credo-risk-037",
-        "risk_name": "Compromised sensitive information",
-        "risk_framework": "Credo AI",
-    },
-    "S006accountability": {
-        "nexus_risk_id": "atlas-accountability-agentic",
-        "risk_name": "Accountability of AI agent actions",
-        "risk_framework": "IBM Risk Atlas",
-    },
-    "S007privacycompromise": {
-        "nexus_risk_id": "mit-ai-risk-subdomain-2.1",
-        "risk_name": "Compromise of privacy",
-        "risk_framework": "MIT AI Risk Repository",
-    },
-    "S008governancefailure": {
-        "nexus_risk_id": "mit-ai-risk-subdomain-6.5",
-        "risk_name": "Governance failure",
-        "risk_framework": "MIT AI Risk Repository",
-    },
-}
 
-# ---------------------------------------------------------------------------
-# Taxonomy risk groups
-# ---------------------------------------------------------------------------
+def derive_mappings(run_dir: Path) -> tuple[
+    dict[str, str],           # intent_rekey: old_intent -> new_intent
+    dict[str, dict[str, str]],  # intent_to_risk: new_intent -> risk info
+    dict[str, list[str]],     # risk_groups: group_name -> [risk_ids]
+    dict[str, str],           # risk_to_group: risk_id -> group_name
+    dict,                     # policy_source metadata
+    str,                      # run slug
+]:
+    """Derive all mappings from a Refiner run's domain context and policy doc."""
+    # Find files by glob (names are prefixed with the run slug)
+    dc_files = list(run_dir.glob("*-domain-context.yaml"))
+    if not dc_files:
+        raise FileNotFoundError(f"No domain-context.yaml in {run_dir}")
+    dc_path = dc_files[0]
 
-RISK_GROUPS: dict[str, list[str]] = {
-    "Clinical Decision-Making & Care Planning": [
-        "atlas-accountability-agentic",
-        "credo-risk-023",
-    ],
-    "Protected Health Information & Data Privacy": [
-        "nist-data-privacy",
-        "atlas-personal-information-in-data",
-        "credo-risk-037",
-    ],
-    "Research & Clinical Governance": [
-        "mit-ai-risk-subdomain-6.5",
-    ],
-    "Patient Consent": [
-        "mit-ai-risk-subdomain-2.1",
-        "atlas-non-disclosure",
-    ],
-}
+    pd_files = list(run_dir.glob("*-policy-document.json"))
+    if not pd_files:
+        raise FileNotFoundError(f"No policy-document.json in {run_dir}")
+    pd_path = pd_files[0]
 
-# Reverse lookup: risk_id -> group name
-RISK_TO_GROUP: dict[str, str] = {
-    risk_id: group
-    for group, risk_ids in RISK_GROUPS.items()
-    for risk_id in risk_ids
-}
+    with open(dc_path) as f:
+        dc = yaml.safe_load(f)
+
+    with open(pd_path) as f:
+        pd = json.load(f)
+
+    run_slug = dc.get("run_slug", run_dir.name)
+
+    # Extract risks (capped at 8 to match garak S-number slots)
+    risks = dc.get("risks", [])[:8]
+
+    # Build intent_rekey and intent_to_risk
+    intent_rekey: dict[str, str] = {}
+    intent_to_risk: dict[str, dict[str, str]] = {}
+    for i, risk in enumerate(risks):
+        old_intent = OLD_INTENTS[i]
+        new_intent = f"S{i + 1:03d}{_sanitize_intent_name(risk['risk_name'])}"
+        intent_rekey[old_intent] = new_intent
+        intent_to_risk[new_intent] = {
+            "nexus_risk_id": risk["risk_id"],
+            "risk_name": risk["risk_name"],
+            "risk_framework": risk["risk_framework"],
+        }
+
+    # Build risk groups from policy_contexts
+    risk_groups: dict[str, list[str]] = {}
+    for pc in dc.get("policy_contexts", []):
+        concept = pc.get("policy_concept", "Unknown")
+        group_risk_ids = []
+        for rg in pc.get("risk_groundings", []):
+            rid = rg.get("risk_id", "")
+            # Only include risks that are in our mapped set
+            if rid and any(
+                r["nexus_risk_id"] == rid for r in intent_to_risk.values()
+            ):
+                group_risk_ids.append(rid)
+        if group_risk_ids:
+            risk_groups[concept] = group_risk_ids
+
+    # Reverse lookup
+    risk_to_group: dict[str, str] = {
+        rid: group
+        for group, rids in risk_groups.items()
+        for rid in rids
+    }
+
+    # Policy source
+    policy_source = {
+        "organization": pd.get("organization", {}).get("name", "Unknown"),
+        "domain": pd.get("domain", "unknown"),
+    }
+
+    return (
+        intent_rekey, intent_to_risk, risk_groups, risk_to_group,
+        policy_source, run_slug,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -139,11 +153,7 @@ RISK_TO_GROUP: dict[str, str] = {
 
 
 def generate_stub_id(risk_id: str, technique: str, index: int) -> str:
-    """Generate a deterministic stub ID from risk, technique, and index.
-
-    Format: ``{risk_id}:{technique_slug}:{index}``
-    where technique_slug has underscores replaced with hyphens.
-    """
+    """Generate a deterministic stub ID from risk, technique, and index."""
     technique_slug = technique.replace("_", "-")
     return f"{risk_id}:{technique_slug}:{index}"
 
@@ -153,23 +163,25 @@ def generate_stub_id(risk_id: str, technique: str, index: int) -> str:
 # ---------------------------------------------------------------------------
 
 
-def load_adversarial_prompts(path: Path) -> list[dict]:
-    """Load adversarial prompts JSONL and assign stub IDs.
+def load_adversarial_prompts(run_dir: Path) -> list[dict]:
+    """Load adversarial prompts JSONL from a run dir and assign stub IDs."""
+    prompt_files = list(run_dir.glob("*-adversarial-prompts.jsonl"))
+    if not prompt_files:
+        raise FileNotFoundError(f"No adversarial-prompts.jsonl in {run_dir}")
 
-    Stubs are grouped by (risk_id, technique) and indexed within each group.
-    """
     entries: list[dict] = []
-    with open(path) as f:
+    with open(prompt_files[0]) as f:
         for line in f:
             if line.strip():
                 entries.append(json.loads(line))
 
-    # Group by (risk_id, technique) to assign sequential indices
     group_counters: dict[tuple[str, str], int] = defaultdict(int)
     for entry in entries:
         key = (entry["risk_id"], entry["technique"])
         idx = group_counters[key]
-        entry["stub_id"] = generate_stub_id(entry["risk_id"], entry["technique"], idx)
+        entry["stub_id"] = generate_stub_id(
+            entry["risk_id"], entry["technique"], idx,
+        )
         group_counters[key] += 1
 
     return entries
@@ -180,12 +192,10 @@ def load_adversarial_prompts(path: Path) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def load_cross_mappings(domain_ctx_path: Path) -> dict[str, list[dict]]:
-    """Load cross-mappings from domain-context.yaml.
-
-    Returns ``{nexus_risk_id: [{id, name, taxonomy, mapping_type}]}``.
-    """
-    with open(domain_ctx_path) as f:
+def load_cross_mappings(run_dir: Path) -> dict[str, list[dict]]:
+    """Load cross-mappings from domain-context.yaml."""
+    dc_files = list(run_dir.glob("*-domain-context.yaml"))
+    with open(dc_files[0]) as f:
         dc = yaml.safe_load(f)
 
     result: dict[str, list[dict]] = {}
@@ -193,14 +203,12 @@ def load_cross_mappings(domain_ctx_path: Path) -> dict[str, list[dict]]:
         risk_id = risk["risk_id"]
         mappings = []
         for cm in risk.get("cross_mappings", []):
-            mappings.append(
-                {
-                    "id": cm["id"],
-                    "name": cm["name"],
-                    "taxonomy": cm["taxonomy"],
-                    "mapping_type": cm["mapping_type"],
-                }
-            )
+            mappings.append({
+                "id": cm["id"],
+                "name": cm["name"],
+                "taxonomy": cm["taxonomy"],
+                "mapping_type": cm["mapping_type"],
+            })
         result[risk_id] = mappings
     return result
 
@@ -223,18 +231,15 @@ def build_risk_to_stubs(prompts: list[dict]) -> dict[str, list[dict]]:
 # ---------------------------------------------------------------------------
 
 
-def rekey_report(report_path: Path, prompts: list[dict]) -> list[dict]:
-    """Re-key a garak report.jsonl with ORT semantic data.
-
-    - Maps old intents to new intents via INTENT_REKEY
-    - Assigns stub IDs (cycling through stubs per risk)
-    - Injects stub ID into notes.stub.id
-    - Updates eval_intent entries with new intent IDs
-    - Preserves all other fields
-    """
+def rekey_report(
+    report_path: Path,
+    prompts: list[dict],
+    intent_rekey: dict[str, str],
+    intent_to_risk: dict[str, dict[str, str]],
+) -> list[dict]:
+    """Re-key a garak report.jsonl with ORT semantic data."""
     risk_stubs = build_risk_to_stubs(prompts)
 
-    # Build cycling iterators per risk_id for stub assignment
     stub_cycles: dict[str, cycle] = {}
     for risk_id, stubs in risk_stubs.items():
         stub_cycles[risk_id] = cycle(stubs)
@@ -247,12 +252,13 @@ def rekey_report(report_path: Path, prompts: list[dict]) -> list[dict]:
 
             if entry_type == "attempt":
                 old_intent = entry.get("intent", "")
-                new_intent = INTENT_REKEY.get(old_intent, old_intent)
-                risk_info = INTENT_TO_RISK.get(new_intent)
+                if old_intent not in intent_rekey:
+                    continue  # skip attempts for unmapped intents
+                new_intent = intent_rekey[old_intent]
+                risk_info = intent_to_risk.get(new_intent)
 
                 entry["intent"] = new_intent
 
-                # Ensure notes.stub exists
                 notes = entry.get("notes", {})
                 if not isinstance(notes, dict):
                     notes = {}
@@ -263,7 +269,6 @@ def rekey_report(report_path: Path, prompts: list[dict]) -> list[dict]:
                 notes["stub"]["intent"] = new_intent
                 entry["notes"] = notes
 
-                # Assign a stub ID by cycling through available stubs
                 if risk_info:
                     risk_id = risk_info["nexus_risk_id"]
                     if risk_id in stub_cycles:
@@ -272,7 +277,9 @@ def rekey_report(report_path: Path, prompts: list[dict]) -> list[dict]:
 
             elif entry_type == "eval_intent":
                 old_intent = entry.get("intent", "")
-                new_intent = INTENT_REKEY.get(old_intent, old_intent)
+                if old_intent not in intent_rekey:
+                    continue  # skip eval_intent for unmapped intents
+                new_intent = intent_rekey[old_intent]
                 entry["intent"] = new_intent
 
             entries.append(entry)
@@ -299,26 +306,29 @@ def rekey_hitlog(hitlog_path: Path) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 
-def build_intent_mapping(cross_mappings: dict[str, list[dict]]) -> dict:
+def build_intent_mapping(
+    intent_to_risk: dict[str, dict[str, str]],
+    risk_to_group: dict[str, str],
+    cross_mappings: dict[str, list[dict]],
+    policy_source: dict,
+    run_slug: str,
+) -> dict:
     """Build the ort_intent_mapping.json structure."""
     intent_map: dict[str, dict] = {}
-    for intent_id, risk_info in INTENT_TO_RISK.items():
+    for intent_id, risk_info in intent_to_risk.items():
         risk_id = risk_info["nexus_risk_id"]
         intent_map[intent_id] = {
             "nexus_risk_id": risk_id,
             "risk_name": risk_info["risk_name"],
             "risk_framework": risk_info["risk_framework"],
-            "risk_group": RISK_TO_GROUP.get(risk_id, "Unknown"),
+            "risk_group": risk_to_group.get(risk_id, "Unknown"),
             "cross_mappings": cross_mappings.get(risk_id, []),
         }
 
     return {
         "version": "0.1",
-        "ort_run": "rdash-nhs-gemma-4-26b-a4b-it-g12",
-        "policy_source": {
-            "organization": "Rotherham Doncaster and South Humber NHS Foundation Trust (RDaSH)",
-            "domain": "healthcare",
-        },
+        "ort_run": run_slug,
+        "policy_source": policy_source,
         "curie_map": {
             "airo": "https://w3id.org/airo#",
             "cco": "https://www.commoncoreontologies.org/",
@@ -350,104 +360,117 @@ def write_jsonl(entries: list[dict], path: Path) -> None:
 
 def main() -> None:
     """Orchestrate ORT mock data generation."""
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    parser = argparse.ArgumentParser(description="Mock ORT garak data generator")
+    parser.add_argument(
+        "--run-dir", type=Path, required=True,
+        help="Path to a Refiner run directory",
+    )
+    parser.add_argument(
+        "--output-dir", type=Path, default=None,
+        help="Output directory (default: mock_runs/<run-slug>)",
+    )
+    args = parser.parse_args()
+
+    run_dir = args.run_dir.resolve()
+
+    # Derive all mappings from run data
+    print(f"Deriving mappings from {run_dir.name} ...")
+    (
+        intent_rekey, intent_to_risk, risk_groups, risk_to_group,
+        policy_source, run_slug,
+    ) = derive_mappings(run_dir)
+    print(f"  {len(intent_to_risk)} risks mapped to S-number intents")
+    print(f"  {len(risk_groups)} risk groups")
+
+    output_dir = args.output_dir or (SCRIPT_DIR / "mock_runs" / run_slug)
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. Load adversarial prompts with stub IDs
-    prompts_path = ORT_RUN_DIR / "rdash-nhs-adversarial-prompts.jsonl"
-    print(f"Loading adversarial prompts from {prompts_path} ...")
-    prompts = load_adversarial_prompts(prompts_path)
+    print(f"Loading adversarial prompts ...")
+    prompts = load_adversarial_prompts(run_dir)
     print(f"  Loaded {len(prompts)} prompts")
 
-    # 2. Load cross-mappings from domain context
-    domain_ctx_path = ORT_RUN_DIR / "rdash-nhs-domain-context.yaml"
-    print(f"Loading cross-mappings from {domain_ctx_path} ...")
-    cross_mappings = load_cross_mappings(domain_ctx_path)
+    # 2. Load cross-mappings
+    print(f"Loading cross-mappings ...")
+    cross_mappings = load_cross_mappings(run_dir)
     total_mappings = sum(len(v) for v in cross_mappings.values())
-    print(f"  Loaded cross-mappings for {len(cross_mappings)} risks ({total_mappings} total)")
+    print(f"  {len(cross_mappings)} risks, {total_mappings} total mappings")
 
     # 3. Re-key report
-    print(f"Re-keying report from {GARAK_REPORT} ...")
-    report_entries = rekey_report(GARAK_REPORT, prompts)
-    attempt_count = sum(1 for e in report_entries if e.get("entry_type") == "attempt")
+    print(f"Re-keying report ...")
+    report_entries = rekey_report(
+        GARAK_REPORT, prompts, intent_rekey, intent_to_risk,
+    )
+    attempt_count = sum(
+        1 for e in report_entries if e.get("entry_type") == "attempt"
+    )
     print(f"  Re-keyed {attempt_count} attempts")
 
     # 4. Re-key hitlog
-    print(f"Re-keying hitlog from {GARAK_HITLOG} ...")
+    print(f"Re-keying hitlog ...")
     hitlog_entries = rekey_hitlog(GARAK_HITLOG)
-    print(f"  Loaded {len(hitlog_entries)} hitlog entries")
+    print(f"  {len(hitlog_entries)} hitlog entries")
 
     # 5. Build intent mapping
     print("Building intent mapping ...")
-    intent_mapping = build_intent_mapping(cross_mappings)
+    intent_mapping = build_intent_mapping(
+        intent_to_risk, risk_to_group, cross_mappings,
+        policy_source, run_slug,
+    )
     print(f"  {len(intent_mapping['intent_map'])} intents mapped")
 
     # 6. Write outputs
-    report_out = OUTPUT_DIR / "ort-rdash.report.jsonl"
-    hitlog_out = OUTPUT_DIR / "ort-rdash.hitlog.jsonl"
-    mapping_out = OUTPUT_DIR / "ort_intent_mapping.json"
-    stubs_out = OUTPUT_DIR / "ort_stubs.jsonl"
+    write_jsonl(report_entries, output_dir / "report.jsonl")
+    write_jsonl(hitlog_entries, output_dir / "hitlog.jsonl")
 
-    write_jsonl(report_entries, report_out)
-    print(f"  Wrote {len(report_entries)} entries to {report_out}")
-
-    write_jsonl(hitlog_entries, hitlog_out)
-    print(f"  Wrote {len(hitlog_entries)} entries to {hitlog_out}")
-
-    with open(mapping_out, "w") as f:
+    with open(output_dir / "intent_mapping.json", "w") as f:
         json.dump(intent_mapping, f, indent=2, ensure_ascii=False)
-    print(f"  Wrote intent mapping to {mapping_out}")
 
-    # Write stubs (prompts with stub IDs, without the full generation_prompt)
     stub_entries = []
     for p in prompts:
-        stub_entries.append(
-            {
-                "id": p["stub_id"],
-                "risk_id": p["risk_id"],
-                "risk_name": p.get("risk_name", ""),
-                "risk_framework": p.get("risk_framework", ""),
-                "technique": p["technique"],
-                "technique_description": p.get("technique_description", ""),
-                "policy_concept": p.get("policy_concept", ""),
-                "prompt": p.get("prompt", ""),
-                "sampled_axes": [
-                    {
-                        "cco_class_uri": ax.get("cco_class_uri", ""),
-                        "cco_class_label": ax.get("cco_class_label", ""),
-                        "bfo_category": ax.get("bfo_category", ""),
-                        "sampled_label": ax.get("sampled_label", ""),
-                        "source_ontology": ax.get("source_ontology", ""),
-                        "relevance": ax.get("relevance", ""),
-                    }
-                    for ax in p.get("sampled_axes", [])
-                ],
-                "decomposition": p.get("decomposition", {}),
-            }
-        )
-    write_jsonl(stub_entries, stubs_out)
-    print(f"  Wrote {len(stub_entries)} stubs to {stubs_out}")
+        stub_entries.append({
+            "id": p["stub_id"],
+            "risk_id": p["risk_id"],
+            "risk_name": p.get("risk_name", ""),
+            "risk_framework": p.get("risk_framework", ""),
+            "technique": p["technique"],
+            "technique_description": p.get("technique_description", ""),
+            "policy_concept": p.get("policy_concept", ""),
+            "prompt": p.get("prompt", ""),
+            "sampled_axes": [
+                {
+                    "cco_class_uri": ax.get("cco_class_uri", ""),
+                    "cco_class_label": ax.get("cco_class_label", ""),
+                    "bfo_category": ax.get("bfo_category", ""),
+                    "sampled_label": ax.get("sampled_label", ""),
+                    "source_ontology": ax.get("source_ontology", ""),
+                    "relevance": ax.get("relevance", ""),
+                }
+                for ax in p.get("sampled_axes", [])
+            ],
+            "decomposition": p.get("decomposition", {}),
+        })
+    write_jsonl(stub_entries, output_dir / "stubs.jsonl")
 
     # Summary
-    print("\n--- Summary ---")
+    print(f"\n--- {run_slug} ---")
     print(f"  Report entries:  {len(report_entries)}")
-    print(f"  Hitlog entries:  {len(hitlog_entries)}")
     print(f"  Stubs:           {len(stub_entries)}")
-    print(f"  Intents mapped:  {len(intent_mapping['intent_map'])}")
-    print(f"  Risk groups:     {len(RISK_GROUPS)}")
+    print(f"  Intents:         {len(intent_mapping['intent_map'])}")
+    print(f"  Risk groups:     {len(risk_groups)}")
     print(f"  Cross-mappings:  {total_mappings}")
 
-    # Intent distribution in re-keyed report
     intent_dist: Counter[str] = Counter()
     for e in report_entries:
         if e.get("entry_type") == "attempt":
             intent_dist[e.get("intent", "")] += 1
-    print("\n  Intent distribution (attempts):")
+    print("\n  Intent distribution:")
     for intent, count in sorted(intent_dist.items()):
-        risk_info = INTENT_TO_RISK.get(intent, {})
-        risk_id = risk_info.get("nexus_risk_id", "?")
-        print(f"    {intent}: {count} -> {risk_id}")
+        risk_info = intent_to_risk.get(intent, {})
+        name = risk_info.get("risk_name", "?")
+        print(f"    {intent}: {count} -> {name}")
 
-    print(f"\nOutputs written to {OUTPUT_DIR}")
+    print(f"\nOutputs: {output_dir}")
 
 
 if __name__ == "__main__":

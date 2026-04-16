@@ -3,7 +3,7 @@ import json
 import yaml
 
 from refiner.models import (
-    AxisEnumeration, DomainContextDocument, DomainContextAxis, PolicyDomainContext,
+    AxisEnumeration, DomainContext, DomainContextAxis, PolicyDomainContext,
     RiskGrounding, RiskSummary, SampledAxis, Stakeholder,
 )
 from refiner.emit import relevance_weights, sample_axes, build_prompt, load_domain_context, load_policies
@@ -66,9 +66,9 @@ def _make_axes():
 
 
 def _make_doc():
-    """Build a minimal DomainContextDocument for tests."""
+    """Build a minimal DomainContext for tests."""
     axes = _make_axes()
-    return DomainContextDocument(
+    return DomainContext(
         risks=[RiskSummary(risk_id="r1", risk_name="Risk One")],
         policy_contexts=[
             PolicyDomainContext(
@@ -241,7 +241,7 @@ def test_load_domain_context(tmp_path):
     p = tmp_path / "test-domain-context.yaml"
     p.write_text(yaml.dump(doc_data))
     result = load_domain_context(p)
-    assert isinstance(result, DomainContextDocument)
+    assert isinstance(result, DomainContext)
     assert len(result.risks) == 1
     assert result.risks[0].risk_id == "r1"
     assert len(result.policy_contexts) == 1
@@ -281,15 +281,15 @@ def test_load_policies_enriched_format(tmp_path):
     p = tmp_path / "enriched.json"
     p.write_text(json.dumps(doc))
 
-    policies, doc_context = load_policies(p)
+    policies, policy_profile = load_policies(p)
     assert "PHI" in policies
-    assert doc_context is not None
-    assert doc_context.organization.name == "Test Org"
+    assert policy_profile is not None
+    assert policy_profile.organization.name == "Test Org"
     assert len(policies["PHI"].boundary_examples) == 1
 
 
 def test_build_prompt_with_boundary_examples():
-    from refiner.models import Policy, BoundaryExample, PolicyDocument
+    from refiner.models import Policy, BoundaryExample, PolicyProfile
 
     policy = Policy(
         policy_concept="Clinical",
@@ -299,13 +299,13 @@ def test_build_prompt_with_boundary_examples():
         ],
         acceptable_uses=["General health concepts"],
     )
-    doc_ctx = PolicyDocument(
+    doc_ctx = PolicyProfile(
         organization="NHS Trust",
         domain="healthcare",
         stakeholders=[Stakeholder(name="patients", roles=["airo:AISubject"])],
     )
 
-    messages = build_prompt("Clinical", "No clinical decisions", "Misdiagnosis", [], policy=policy, doc_context=doc_ctx)
+    messages = build_prompt("Clinical", "No clinical decisions", "Misdiagnosis", [], policy=policy, policy_profile=doc_ctx)
     user_msg = messages[1]["content"]
     assert "PROHIBITED: care plan for John" in user_msg
     assert "ACCEPTABLE: summarise guidelines" in user_msg

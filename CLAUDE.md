@@ -16,6 +16,10 @@ Detailed docs in `docs/`:
 
 Design specs and plans in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
+Much context in the Obsidian `Red Hat` vault, `Onto Red-Teaming` folder.
+
+Always read `CHANGELOG.md`.
+
 ## Directory Structure
 
 ```

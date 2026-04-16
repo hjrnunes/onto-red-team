@@ -2,9 +2,9 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a stakeholder-facing HTML report generated alongside the enriched PolicyDocument JSON during `refiner ingest`.
+**Goal:** Add a stakeholder-facing HTML report generated alongside the enriched PolicyProfile JSON during `refiner ingest`.
 
-**Architecture:** A new `ingest_report.py` module computes confidence signals from the PolicyDocument and RunReport events, then injects the data into a self-contained HTML template (Tailwind + Alpine.js). The CLI calls this after writing the JSON. No new dependencies.
+**Architecture:** A new `ingest_report.py` module computes confidence signals from the PolicyProfile and RunReport events, then injects the data into a self-contained HTML template (Tailwind + Alpine.js). The CLI calls this after writing the JSON. No new dependencies.
 
 **Tech Stack:** Python (Pydantic, Typer), HTML/JS (Tailwind CDN, Alpine.js)
 
@@ -33,7 +33,7 @@ from refiner.models import (
     GovernedSystem,
     Policy,
     PolicyDecomposition,
-    PolicyDocument,
+    PolicyProfile,
     RegulatoryReference,
     RunReport,
     Stakeholder,
@@ -59,8 +59,8 @@ def _make_report(**overrides):
 
 
 def _full_doc():
-    """PolicyDocument with all fields populated — expect all green."""
-    return PolicyDocument(
+    """PolicyProfile with all fields populated — expect all green."""
+    return PolicyProfile(
         organization=Stakeholder(name="Acme Corp"),
         domain="finance",
         purpose=["chatbot"],
@@ -114,7 +114,7 @@ Append to `refiner/tests/test_ingest_report.py`:
 
 ```python
 def test_context_confidence_missing_fields():
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     data = build_report_data(doc, _make_report(), _make_meta())
     ctx = data["confidence"]["context"]
     assert ctx["organization"] == "red"
@@ -127,7 +127,7 @@ def test_context_confidence_missing_fields():
 
 def test_context_confidence_regulations_amber():
     """Regulations present but missing jurisdiction/reference → amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         organization=Stakeholder(name="Acme"),
         domain="finance",
         purpose=["chatbot"],
@@ -141,7 +141,7 @@ def test_context_confidence_regulations_amber():
 
 def test_context_confidence_stakeholders_amber():
     """Stakeholders present but none with governance roles → amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         organization=Stakeholder(name="Acme"),
         domain="finance",
         purpose=["chatbot"],
@@ -177,7 +177,7 @@ def test_policy_confidence_all_green():
 
 def test_policy_confidence_minimal():
     """Policy with only concept + definition — everything red/amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         policies=[
             Policy(policy_concept="Fraud", concept_definition="About fraud")
         ]
@@ -193,7 +193,7 @@ def test_policy_confidence_minimal():
 
 def test_policy_confidence_partial_decomposition():
     """Decomposition with only 1 of 3 fields → amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         policies=[
             Policy(
                 policy_concept="Test",
@@ -212,7 +212,7 @@ Append to `refiner/tests/test_ingest_report.py`:
 
 ```python
 def test_summary_counts():
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         policies=[
             Policy(
                 policy_concept="P1",
@@ -240,14 +240,14 @@ def test_summary_weak_inferences():
         "event": "context_weak_inference",
         "missing_fields": ["organization", "domain"],
     })
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     data = build_report_data(doc, report, _make_meta())
     assert data["confidence"]["summary"]["weak_inferences"] == ["organization", "domain"]
 
 
 def test_meta_passthrough():
     meta = _make_meta(model="gemma-4", source_document="rdash.md")
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     data = build_report_data(doc, _make_report(), meta)
     assert data["meta"]["model"] == "gemma-4"
     assert data["meta"]["source_document"] == "rdash.md"
@@ -270,13 +270,13 @@ Create `refiner/src/refiner/ingest_report.py`:
 import json
 from pathlib import Path
 
-from refiner.models import PolicyDocument, RunReport
+from refiner.models import PolicyProfile, RunReport
 
 
 _AIRO_ROLES = {"airo:AIUser", "airo:AISubject", "airo:AIProvider", "airo:AIDeployer"}
 
 
-def _context_confidence(doc: PolicyDocument) -> dict:
+def _context_confidence(doc: PolicyProfile) -> dict:
     """Compute green/amber/red for each context-level field."""
     ctx = {}
 
@@ -315,7 +315,7 @@ def _context_confidence(doc: PolicyDocument) -> dict:
     return ctx
 
 
-def _policy_confidence(doc: PolicyDocument) -> list[dict]:
+def _policy_confidence(doc: PolicyProfile) -> list[dict]:
     """Compute green/amber/red for each per-policy field."""
     results = []
     for p in doc.policies:
@@ -349,7 +349,7 @@ def _policy_confidence(doc: PolicyDocument) -> list[dict]:
     return results
 
 
-def _summary(doc: PolicyDocument, report: RunReport) -> dict:
+def _summary(doc: PolicyProfile, report: RunReport) -> dict:
     """Compute aggregate summary stats."""
     policies_enriched = sum(
         1 for p in doc.policies if p.boundary_examples or p.acceptable_uses or p.risk_controls
@@ -373,11 +373,11 @@ def _summary(doc: PolicyDocument, report: RunReport) -> dict:
 
 
 def build_report_data(
-    doc: PolicyDocument,
+    doc: PolicyProfile,
     report: RunReport,
     meta: dict,
 ) -> dict:
-    """Combine PolicyDocument + RunReport events into report payload."""
+    """Combine PolicyProfile + RunReport events into report payload."""
     return {
         "meta": meta,
         "document": doc.model_dump(),
@@ -420,7 +420,7 @@ from refiner.ingest_report import group_stakeholders
 
 def test_group_stakeholders_full():
     """Stakeholders are grouped by Lewis et al. categories."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         organization=Stakeholder(name="RDaSH"),
         stakeholders=[
             Stakeholder(name="staff", roles=["airo:AIUser"]),
@@ -441,7 +441,7 @@ def test_group_stakeholders_full():
 
 
 def test_group_stakeholders_empty():
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     groups = group_stakeholders(doc)
     assert groups["organisation"] is None
     assert groups["users"] == []
@@ -451,7 +451,7 @@ def test_group_stakeholders_empty():
 
 def test_group_stakeholders_mixed_roles():
     """Stakeholder with both airo:AIUser and governance role goes to governance."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         stakeholders=[
             Stakeholder(name="Admin", roles=["airo:AIUser", "system admin"]),
         ],
@@ -471,7 +471,7 @@ Expected: FAIL with `ImportError: cannot import name 'group_stakeholders'`
 Add to `refiner/src/refiner/ingest_report.py`, before `build_report_data()`:
 
 ```python
-def group_stakeholders(doc: PolicyDocument) -> dict:
+def group_stakeholders(doc: PolicyProfile) -> dict:
     """Group stakeholders into Lewis et al. 2021 categories.
 
     Returns dict with keys: organisation, governance, users, subjects.
@@ -508,11 +508,11 @@ In `build_report_data()`, add `"stakeholder_groups"` to the returned dict:
 
 ```python
 def build_report_data(
-    doc: PolicyDocument,
+    doc: PolicyProfile,
     report: RunReport,
     meta: dict,
 ) -> dict:
-    """Combine PolicyDocument + RunReport events into report payload."""
+    """Combine PolicyProfile + RunReport events into report payload."""
     return {
         "meta": meta,
         "document": doc.model_dump(),
@@ -999,7 +999,7 @@ Add to `refiner/src/refiner/ingest_report.py`:
 
 ```python
 def build_ingest_report(
-    doc: PolicyDocument,
+    doc: PolicyProfile,
     report: RunReport,
     output_path: Path,
     meta: dict,
@@ -1136,9 +1136,9 @@ uv run python -c "
 import json
 from pathlib import Path
 from refiner.ingest_report import build_ingest_report
-from refiner.models import PolicyDocument, RunReport
+from refiner.models import PolicyProfile, RunReport
 
-doc = PolicyDocument(**json.loads(Path('runs/rdash-nhs-gemma-4-26b-a4b-it-g10.1/rdash-nhs-enriched.json').read_text()))
+doc = PolicyProfile(**json.loads(Path('runs/rdash-nhs-gemma-4-26b-a4b-it-g10.1/rdash-nhs-enriched.json').read_text()))
 report = RunReport(model='gemma-4-26b-a4b-it', policy_set='rdash-nhs', timestamp='2026-04-14T16:52:00Z')
 meta = {'model': 'gemma-4-26b-a4b-it', 'source_document': 'rdash-nhs.md', 'timestamp': '2026-04-14T16:52:00Z', 'input_format': 'markdown', 'passes_completed': ['context', 'policies', 'enrichment']}
 out = Path('/tmp/rdash-nhs-ingest-report.html')

@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml", "pydantic"]
 # ///
 """Regenerate all HTML reports from existing data artifacts in run directories.
 
@@ -32,7 +32,7 @@ from refiner.artifact_reports import (
 )
 from refiner.evaluate import build_html_report
 from refiner.ingest_report import build_ingest_report
-from refiner.models import PolicyDocument, RunReport
+from refiner.models import PolicyProfile, RunReport
 
 # Add scripts dir to path so we can import the combined report builder
 sys.path.insert(0, str(Path(__file__).parent))
@@ -111,17 +111,21 @@ def regen_run(run_dir: Path) -> None:
         regenerated.append(f"dataset ({len(rows)} rows)")
 
     # Evaluation
-    eval_json = run_dir / f"{slug}-policy-document-evaluation.json"
+    eval_json = run_dir / f"{slug}-policy-profile-evaluation.json"
+    if not eval_json.exists():
+        eval_json = run_dir / f"{slug}-policy-document-evaluation.json"
     if eval_json.exists():
-        out = run_dir / f"{slug}-policy-document-evaluation.html"
+        out = run_dir / f"{slug}-policy-profile-evaluation.html"
         build_html_report(_load_json(eval_json), out)
         regenerated.append("evaluation")
 
-    # Ingest report (from policy document JSON + run report YAML)
-    policy_json = run_dir / f"{slug}-policy-document.json"
+    # Ingest report (from policy profile JSON + run report YAML)
+    policy_json = run_dir / f"{slug}-policy-profile.json"
+    if not policy_json.exists():
+        policy_json = run_dir / f"{slug}-policy-document.json"
     if policy_json.exists() and rr_yaml.exists():
         out = run_dir / f"{slug}-ingest-report.html"
-        doc = PolicyDocument(**_load_json(policy_json))
+        doc = PolicyProfile(**_load_json(policy_json))
         rr_data = _load_yaml(rr_yaml)
         report = RunReport(
             model=rr_data.get("model", ""),

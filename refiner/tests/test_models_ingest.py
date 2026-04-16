@@ -1,10 +1,10 @@
-"""Tests for enriched policy models: BoundaryExample, NamedEntity, PolicyDocument."""
+"""Tests for enriched policy models: BoundaryExample, NamedEntity, PolicyProfile."""
 
 from refiner.models import (
     BoundaryExample,
     NamedEntity,
     Policy,
-    PolicyDocument,
+    PolicyProfile,
 )
 
 
@@ -56,7 +56,7 @@ def test_policy_with_enrichments():
 
 
 def test_policy_document_defaults():
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     assert doc.airo_version == "0.2"
     assert doc.organization is None
     assert doc.domain is None
@@ -104,7 +104,7 @@ def test_policy_document_roundtrip():
             },
         ],
     }
-    doc = PolicyDocument(**data)
+    doc = PolicyProfile(**data)
     assert doc.organization.name == "South West Bank"
     assert doc.domain == "banking"
     assert len(doc.stakeholders) == 4

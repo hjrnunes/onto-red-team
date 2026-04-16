@@ -10,7 +10,7 @@ import yaml
 
 
 def _flatten_to_profiles(dc_data: dict) -> list[dict]:
-    """Flatten DomainContextDocument dict into profile-like dicts for metrics."""
+    """Flatten DomainContext dict into profile-like dicts for metrics."""
     risk_by_id = {r["risk_id"]: r for r in dc_data.get("risks", [])}
     profiles = []
     for pc in dc_data.get("policy_contexts", []):

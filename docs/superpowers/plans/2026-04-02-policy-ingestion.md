@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED: Use superpowers:subagent-driven-development (if subagents available) or superpowers:executing-plans to implement this plan. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add a `refiner ingest` command that transforms policy documents (markdown) or flat JSON policy arrays into an enriched `PolicyDocument` format using AIRO-mapped multi-pass LLM extraction.
+**Goal:** Add a `refiner ingest` command that transforms policy documents (markdown) or flat JSON policy arrays into an enriched `PolicyProfile` format using AIRO-mapped multi-pass LLM extraction.
 
 **Architecture:** Three-pass LLM extraction (context → concepts → boundary enrichment) using Instructor structured output. Each pass uses slim `_`-prefixed Pydantic response models. Follows existing refiner stage patterns (mock_client fixtures, RunReport events, debug logging). The enriched output feeds into the existing `refiner run` pipeline.
 
@@ -16,7 +16,7 @@
 
 ```
 refiner/src/refiner/
-  models.py                     # MODIFY: Add BoundaryExample, NamedEntity, PolicyDocument, extend Policy
+  models.py                     # MODIFY: Add BoundaryExample, NamedEntity, PolicyProfile, extend Policy
   stages/
     ingest.py                   # CREATE: Three extraction passes + orchestration
   templates/
@@ -47,7 +47,7 @@ refiner/tests/
 Create `refiner/tests/test_models_ingest.py`:
 
 ```python
-from refiner.models import BoundaryExample, NamedEntity, PolicyDocument, Policy
+from refiner.models import BoundaryExample, NamedEntity, PolicyProfile, Policy
 
 
 def test_boundary_example():
@@ -89,7 +89,7 @@ def test_policy_with_enrichments():
 
 
 def test_policy_document():
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         airo_version="0.2",
         organization="Test Org",
         domain="healthcare",
@@ -108,7 +108,7 @@ def test_policy_document():
 
 
 def test_policy_document_from_dict():
-    """Round-trip: dict → PolicyDocument → dict."""
+    """Round-trip: dict → PolicyProfile → dict."""
     data = {
         "airo_version": "0.2",
         "organization": "RDaSH",
@@ -132,7 +132,7 @@ def test_policy_document_from_dict():
             }
         ],
     }
-    doc = PolicyDocument(**data)
+    doc = PolicyProfile(**data)
     assert doc.organization == "RDaSH"
     assert doc.policies[0].boundary_examples[0].prohibited == "enter patient data"
     roundtrip = doc.model_dump()
@@ -142,7 +142,7 @@ def test_policy_document_from_dict():
 - [ ] **Step 2: Run tests to verify they fail**
 
 Run: `cd refiner && uv run pytest tests/test_models_ingest.py -v`
-Expected: FAIL — `BoundaryExample`, `NamedEntity`, `PolicyDocument` not importable.
+Expected: FAIL — `BoundaryExample`, `NamedEntity`, `PolicyProfile` not importable.
 
 - [ ] **Step 3: Add new models to `models.py`**
 
@@ -171,10 +171,10 @@ class Policy(BaseModel):
     human_involvement: str | None = None
 ```
 
-Add `PolicyDocument` after `Policy`:
+Add `PolicyProfile` after `Policy`:
 
 ```python
-class PolicyDocument(BaseModel):
+class PolicyProfile(BaseModel):
     airo_version: str = "0.2"
     organization: str = ""
     domain: str = ""
@@ -201,10 +201,10 @@ Expected: All existing tests still pass. The new optional fields on `Policy` don
 
 ```bash
 git add refiner/src/refiner/models.py refiner/tests/test_models_ingest.py
-git commit -m "feat(refiner): add BoundaryExample, NamedEntity, PolicyDocument models
+git commit -m "feat(refiner): add BoundaryExample, NamedEntity, PolicyProfile models
 
 Extend Policy with optional enrichment fields (boundary_examples,
-acceptable_uses, risk_controls, human_involvement). Add PolicyDocument
+acceptable_uses, risk_controls, human_involvement). Add PolicyProfile
 wrapper for AIRO-mapped extraction output."
 ```
 
@@ -408,7 +408,7 @@ from refiner.models import (
     BoundaryExample,
     NamedEntity,
     Policy,
-    PolicyDocument,
+    PolicyProfile,
     RunReport,
 )
 
@@ -724,7 +724,7 @@ def ingest(
     domain_override: str | None = None,
     organization_override: str | None = None,
     report: RunReport | None = None,
-) -> PolicyDocument:
+) -> PolicyProfile:
     if report:
         report.events.append({
             "stage": "ingest", "event": "input_format_detected",
@@ -739,7 +739,7 @@ def ingest(
         context.organization = organization_override
 
     if until == "context":
-        return PolicyDocument(
+        return PolicyProfile(
             organization=context.organization,
             domain=context.domain,
             purpose=context.purpose,
@@ -764,7 +764,7 @@ def ingest(
         policies = extract_policies(document_text, context, client, config, report=report)
 
     if until == "policies":
-        return PolicyDocument(
+        return PolicyProfile(
             organization=context.organization,
             domain=context.domain,
             purpose=context.purpose,
@@ -786,7 +786,7 @@ def ingest(
             "stage": "ingest", "event": "enrichment_skipped",
         })
 
-    return PolicyDocument(
+    return PolicyProfile(
         organization=context.organization,
         domain=context.domain,
         purpose=context.purpose,
@@ -1185,7 +1185,7 @@ def test_cli_ingest_json(mock_create_client, tmp_path, monkeypatch):
 
 
 def test_cli_ingest_already_enriched(tmp_path, monkeypatch):
-    """Ingesting an already-enriched PolicyDocument should error."""
+    """Ingesting an already-enriched PolicyProfile should error."""
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
 
@@ -1199,7 +1199,7 @@ def test_cli_ingest_already_enriched(tmp_path, monkeypatch):
 
     result = runner.invoke(app, ["ingest", str(enriched)])
     assert result.exit_code == 1
-    assert "Already an enriched PolicyDocument" in result.output
+    assert "Already an enriched PolicyProfile" in result.output
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -1212,7 +1212,7 @@ Expected: FAIL — no `ingest` command defined.
 Add the ingest command to `refiner/src/refiner/cli.py`, after the existing imports and before the `run` command. Update the import at top:
 
 ```python
-from refiner.models import Policy, PolicyDocument, RunReport
+from refiner.models import Policy, PolicyProfile, RunReport
 ```
 
 Add the command (before the `run` function):
@@ -1234,7 +1234,7 @@ def ingest(
     organization: str = typer.Option(None, "--organization", help="Override inferred organization"),
     until: str = typer.Option(None, "--until", help=f"Run up to this pass: {', '.join(INGEST_PASSES)}"),
 ):
-    """Ingest a policy document or flat JSON into enriched PolicyDocument format."""
+    """Ingest a policy document or flat JSON into enriched PolicyProfile format."""
     if not document.exists():
         typer.echo(f"Error: {document} does not exist", err=True)
         raise typer.Exit(1)
@@ -1253,7 +1253,7 @@ def ingest(
         import json as json_mod
         raw = json_mod.loads(document_text)
         if isinstance(raw, dict) and "policies" in raw:
-            typer.echo("Error: Already an enriched PolicyDocument — use 'refiner run' directly.", err=True)
+            typer.echo("Error: Already an enriched PolicyProfile — use 'refiner run' directly.", err=True)
             raise typer.Exit(1)
         input_format = "json_array"
     else:
@@ -1280,7 +1280,7 @@ def ingest(
     out_path = output or document.with_stem(f"{document.stem}-enriched").with_suffix(".json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result.model_dump(), indent=2))
-    typer.echo(f"Enriched PolicyDocument written to {out_path}")
+    typer.echo(f"Enriched PolicyProfile written to {out_path}")
     typer.echo(f"  Organization: {result.organization}")
     typer.echo(f"  Domain: {result.domain}")
     typer.echo(f"  Policies: {len(result.policies)}")
@@ -1303,7 +1303,7 @@ git add refiner/src/refiner/cli.py refiner/tests/test_cli.py
 git commit -m "feat(refiner): add 'refiner ingest' CLI command
 
 Accepts markdown/text or flat JSON, detects format, runs AIRO-mapped
-extraction passes, writes enriched PolicyDocument JSON. Supports
+extraction passes, writes enriched PolicyProfile JSON. Supports
 --skip-enrichment, --until, --domain, --organization overrides."
 ```
 
@@ -1385,13 +1385,13 @@ In `refiner/src/refiner/cli.py`, replace lines 67-70:
 With:
 
 ```python
-    # Load policies — detect flat array vs enriched PolicyDocument
+    # Load policies — detect flat array vs enriched PolicyProfile
     raw = json.loads(policy_json.read_text())
     if isinstance(raw, list):
         policies = [Policy(**p) for p in raw]
         doc_context = None
     else:
-        doc = PolicyDocument(**raw)
+        doc = PolicyProfile(**raw)
         policies = doc.policies
         doc_context = doc
     typer.echo(f"Loaded {len(policies)} policies from {policy_json.name}")
@@ -1402,13 +1402,13 @@ With:
 In `refiner/src/refiner/pipeline.py`, add import and field:
 
 ```python
-from refiner.models import PolicyDocument
+from refiner.models import PolicyProfile
 ```
 
 Add to `PipelineState` class (after `report`):
 
 ```python
-    doc_context: PolicyDocument | None = None
+    doc_context: PolicyProfile | None = None
 ```
 
 - [ ] **Step 5: Run test**
@@ -1425,10 +1425,10 @@ Expected: All tests pass (existing flat JSON tests still work via array detectio
 
 ```bash
 git add refiner/src/refiner/cli.py refiner/src/refiner/pipeline.py refiner/tests/test_cli.py
-git commit -m "feat(refiner): accept enriched PolicyDocument format in 'refiner run'
+git commit -m "feat(refiner): accept enriched PolicyProfile format in 'refiner run'
 
 Format detection: JSON array → flat format, JSON object → enriched
-PolicyDocument. Adds doc_context to PipelineState. Backward compatible."
+PolicyProfile. Adds doc_context to PipelineState. Backward compatible."
 ```
 
 ---
@@ -1446,7 +1446,7 @@ Add to `refiner/tests/test_emit.py`:
 ```python
 def test_load_policies_enriched_format(tmp_path):
     from refiner.emit import load_policies
-    from refiner.models import PolicyDocument
+    from refiner.models import PolicyProfile
 
     doc = {
         "airo_version": "0.2",
@@ -1496,15 +1496,15 @@ Expected: FAIL — `load_policies` returns `dict[str, str]` not `tuple`.
 Replace `load_policies` (line 127-129) with:
 
 ```python
-def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyDocument | None]:
+def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyProfile | None]:
     raw = json.loads(path.read_text())
     if isinstance(raw, list):
         return {p["policy_concept"]: Policy(**p) for p in raw}, None
-    doc = PolicyDocument(**raw)
+    doc = PolicyProfile(**raw)
     return {p.policy_concept: p for p in doc.policies}, doc
 ```
 
-Add `PolicyDocument` to the import from `refiner.models` at the top.
+Add `PolicyProfile` to the import from `refiner.models` at the top.
 
 - [ ] **Step 4: Update `build_prompt` to include boundary context**
 
@@ -1517,7 +1517,7 @@ def build_prompt(
     risk_name: str,
     sampled_axes: list[SampledAxis],
     policy: Policy | None = None,
-    doc_context: PolicyDocument | None = None,
+    doc_context: PolicyProfile | None = None,
 ) -> list[dict]:
 ```
 
@@ -1594,7 +1594,7 @@ Add to `refiner/tests/test_emit.py`:
 ```python
 def test_build_prompt_with_boundary_examples():
     from refiner.emit import build_prompt
-    from refiner.models import Policy, BoundaryExample, PolicyDocument
+    from refiner.models import Policy, BoundaryExample, PolicyProfile
 
     policy = Policy(
         policy_concept="Clinical",
@@ -1604,7 +1604,7 @@ def test_build_prompt_with_boundary_examples():
         ],
         acceptable_uses=["General health concepts"],
     )
-    doc_ctx = PolicyDocument(
+    doc_ctx = PolicyProfile(
         organization="NHS Trust",
         domain="healthcare",
         ai_subjects=["patients"],
@@ -1664,7 +1664,7 @@ Add to `refiner/tests/test_evaluate.py`:
 
 ```python
 def test_run_evaluation_enriched_policies(tmp_path):
-    """run_evaluation should handle enriched PolicyDocument format."""
+    """run_evaluation should handle enriched PolicyProfile format."""
     import json
 
     # Create minimal pipeline output files
@@ -1733,7 +1733,7 @@ Expected: All pass.
 
 ```bash
 git add refiner/src/refiner/evaluate.py refiner/tests/test_evaluate.py
-git commit -m "fix(refiner): handle enriched PolicyDocument format in evaluate
+git commit -m "fix(refiner): handle enriched PolicyProfile format in evaluate
 
 Format detection for policy loading — flat array or object with policies key.
 Backward compatible with existing flat JSON files."
@@ -1791,15 +1791,15 @@ def test_ingest_then_run_integration(mock_create_client, tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     assert enriched.exists()
 
-    # Verify enriched file is valid PolicyDocument
+    # Verify enriched file is valid PolicyProfile
     import json as json_mod
     data = json_mod.loads(enriched.read_text())
     assert data["organization"] == "Bank"
     assert data["policies"][0]["boundary_examples"][0]["prohibited"] == "commit fraud"
 
     # Verify refiner run would accept this file (just test the loading, not full pipeline)
-    from refiner.models import PolicyDocument
-    doc = PolicyDocument(**data)
+    from refiner.models import PolicyProfile
+    doc = PolicyProfile(**data)
     assert len(doc.policies) == 1
     assert doc.policies[0].policy_concept == "Fraud"
 ```
@@ -1820,7 +1820,7 @@ Expected: All tests pass (140 existing + ~25 new).
 git add refiner/tests/test_cli.py
 git commit -m "test(refiner): add ingest→run integration test
 
-Verifies full workflow: flat JSON → ingest → enriched PolicyDocument →
+Verifies full workflow: flat JSON → ingest → enriched PolicyProfile →
 loadable by refiner run."
 ```
 

@@ -15,7 +15,7 @@ All notable changes to this project will be documented in this file.
 
 - **KnowledgeBaseRef model** — Provenance tracking for the knowledge graph state used during a run:
   nexus commit hash, risk count, ontology index hash, per-domain class counts, and indexing
-  timestamp. Attached to both `DomainContextDocument` and `RiskLandscape` as an optional
+  timestamp. Attached to both `DomainContext` and `RiskLandscape` as an optional
   `knowledge_base` field.
 
 - **`build_risk_landscape()` pure function** — New `refiner/stages/build_landscape.py` assembles a
@@ -29,9 +29,9 @@ All notable changes to this project will be documented in this file.
   document, not a pipeline stage. Re-exports `slugify` for CLI use.
 
 - **Independent CLI commands** — Two new commands for stage-level execution:
-  - `refiner map-risks <policy-file>`: PolicyDocument → RiskLandscape YAML (runs identify_domains +
+  - `refiner map-risks <policy-file>`: PolicyProfile → RiskLandscape YAML (runs identify_domains +
     map_risks + build_landscape, stops before ontology grounding)
-  - `refiner ground <landscape> <policy-file>`: RiskLandscape + PolicyDocument → DomainContextDocument
+  - `refiner ground <landscape> <policy-file>`: RiskLandscape + PolicyProfile → DomainContext
     + taxonomy YAML (runs anchor + contextualize + export from a pre-built landscape)
 
 - **PipelineState resolver properties** — Four `@property` methods (`risk_mappings_resolved`,
@@ -42,7 +42,7 @@ All notable changes to this project will be documented in this file.
 ### Changed
 
 - **Convergence-divergence diamond pattern** — Pipeline data flow restructured around two hub
-  artifacts: `RiskLandscape` (risk identification convergence) and `DomainContextDocument` (ontology
+  artifacts: `RiskLandscape` (risk identification convergence) and `DomainContext` (ontology
   grounding convergence). Everything before `build_landscape` converges into `RiskLandscape`;
   everything after diverges into domain context and taxonomy projections. Each stage consumes
   serialized artifacts and produces new serializable artifacts, enabling independent tool extraction.
@@ -54,7 +54,7 @@ All notable changes to this project will be documented in this file.
   `selected_domains`, `risk_details`, `run_slug`, and `timestamp` are extracted from it.
 
 - **CLI serializes RiskLandscape** — Both full (`run`) and partial (`--until`) execution paths write
-  `{slug}-risk-landscape.yaml`. `PolicySourceRef` attached from `PolicyDocument` context when
+  `{slug}-risk-landscape.yaml`. `PolicySourceRef` attached from `PolicyProfile` context when
   available.
 
 ### Refactored
@@ -82,7 +82,7 @@ All notable changes to this project will be documented in this file.
   evaluation aggregation, and both HTML report templates.
 
 - **`ai_users`, `ai_subjects`, `named_entities` fields** — Replaced by unified `stakeholders:
-  list[Stakeholder]` on `PolicyDocument`. The LLM extraction model (`_SlimContext`) still extracts
+  list[Stakeholder]` on `PolicyProfile`. The LLM extraction model (`_SlimContext`) still extracts
   users/subjects/entities separately; `_build_document()` consolidates them into typed `Stakeholder`
   objects with AIRO role CURIEs (`airo:AIUser`, `airo:AISubject`). Named entities carry their
   original role string (e.g. "CEO"). HTML report template renders a single Stakeholders section
@@ -111,7 +111,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **AIRO-grounded PolicyDocument envelope** — `PolicyDocument.organization` is now a typed
+- **AIRO-grounded PolicyProfile envelope** — `PolicyProfile.organization` is now a typed
   `Stakeholder` (name + AIRO role CURIEs + description) instead of a bare string. A `@field_validator`
   coerces plain strings for backward compatibility with existing JSON policy files. `domain` default
   changed from `""` to `None` (absent vs empty distinction).

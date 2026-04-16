@@ -1,6 +1,6 @@
-"""Export layer — projections from DomainContextDocument to various formats.
+"""Export layer — projections from DomainContext to various formats.
 
-The DomainContextDocument is the canonical artifact. These functions produce
+The DomainContext is the canonical artifact. These functions produce
 views/projections for specific consumers (AIRO taxonomy, SSSOM, etc.).
 """
 from refiner.stages.structure import structure, slugify
@@ -15,7 +15,7 @@ def export_taxonomy(
     valid_risk_ids=None,
     report=None,
 ):
-    """Export DomainContextDocument as AIRO-compatible LinkML taxonomy.
+    """Export DomainContext as AIRO-compatible LinkML taxonomy.
 
     Accepts either risk_mappings (legacy) or risk_landscape (new).
     Returns (taxonomy_dict, domain_context_dict).

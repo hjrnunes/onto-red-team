@@ -1,5 +1,5 @@
 from refiner.models import (
-    PolicyDocument,
+    PolicyProfile,
     PolicyRiskMapping,
     PolicySourceRef,
     RiskDetail,
@@ -42,7 +42,7 @@ def build_risk_landscape(
     model: str = "",
     run_slug: str = "",
     timestamp: str = "",
-    doc_context: PolicyDocument | None = None,
+    policy_profile: PolicyProfile | None = None,
     knowledge_base: KnowledgeBaseRef | None = None,
 ) -> RiskLandscape:
     related_risks = related_risks or {}
@@ -82,13 +82,13 @@ def build_risk_landscape(
 
             framework_counts[framework] = framework_counts.get(framework, 0) + 1
 
-    # Build policy source from PolicyDocument
+    # Build policy source from PolicyProfile
     policy_source = None
-    if doc_context:
+    if policy_profile:
         policy_source = PolicySourceRef(
-            organization=doc_context.organization.name if doc_context.organization else None,
-            domain=doc_context.domain,
-            policy_count=len(doc_context.policies),
+            organization=policy_profile.organization.name if policy_profile.organization else None,
+            domain=policy_profile.domain,
+            policy_count=len(policy_profile.policies),
         )
 
     return RiskLandscape(

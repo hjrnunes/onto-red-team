@@ -3,7 +3,7 @@ from refiner.models import (
     Policy, RiskMatch, PolicyRiskMapping,
     VariationAxis, RiskVariationAxes, AxisEnumeration, DomainContextAxis,
     VocabularyContext, PolicySourceRef, PipelineConfig, RiskSummary,
-    RiskGrounding, PolicyDomainContext, DomainContextDocument,
+    RiskGrounding, PolicyDomainContext, DomainContext,
 )
 
 def test_policy_creation():
@@ -242,11 +242,11 @@ def test_policy_domain_context():
     assert len(pdc.risk_groundings) == 1
 
 
-# --- DomainContextDocument ---
+# --- DomainContext ---
 
 
 def test_domain_context_document_defaults():
-    doc = DomainContextDocument()
+    doc = DomainContext()
     assert doc.version == "0.1"
     assert doc.model == ""
     assert doc.timestamp == ""
@@ -259,7 +259,7 @@ def test_domain_context_document_defaults():
 
 
 def test_domain_context_document_full():
-    doc = DomainContextDocument(
+    doc = DomainContext(
         version="0.1",
         model="phi-4",
         timestamp="2026-04-14T00:00:00Z",
@@ -286,7 +286,7 @@ def test_domain_context_document_full():
 
 
 def test_domain_context_document_roundtrip_json():
-    doc = DomainContextDocument(
+    doc = DomainContext(
         version="0.1",
         model="phi-4",
         timestamp="2026-04-14T00:00:00Z",
@@ -298,7 +298,7 @@ def test_domain_context_document_roundtrip_json():
         policy_contexts=[],
     )
     json_str = doc.model_dump_json()
-    restored = DomainContextDocument.model_validate_json(json_str)
+    restored = DomainContext.model_validate_json(json_str)
     assert restored.model == "phi-4"
     assert restored.policy_source.organization == "Acme"
     assert isinstance(restored.config, PipelineConfig)
@@ -307,17 +307,17 @@ def test_domain_context_document_roundtrip_json():
 
 def test_domain_context_document_has_knowledge_base():
     from refiner.models import KnowledgeBaseRef
-    dcd = DomainContextDocument(
+    dcd = DomainContext(
         knowledge_base=KnowledgeBaseRef(nexus_commit="abc123"),
     )
     d = dcd.model_dump()
     assert d["knowledge_base"]["nexus_commit"] == "abc123"
-    dcd2 = DomainContextDocument(**d)
+    dcd2 = DomainContext(**d)
     assert dcd2.knowledge_base.nexus_commit == "abc123"
 
 
 def test_domain_context_document_knowledge_base_defaults_none():
-    dcd = DomainContextDocument()
+    dcd = DomainContext()
     assert dcd.knowledge_base is None
 
 

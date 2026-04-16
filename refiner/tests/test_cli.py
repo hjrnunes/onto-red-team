@@ -6,7 +6,7 @@ from refiner.cli import app
 from refiner.models import (
     Policy,
     PolicyRiskMapping,
-    DomainContextDocument,
+    DomainContext,
     RiskLandscape,
     RiskSummary,
 )
@@ -40,7 +40,7 @@ def _make_completed_state():
             risks=[],
             policy_mappings=[],
         ),
-        domain_context=DomainContextDocument(
+        domain_context=DomainContext(
             model="test-model",
             risks=[
                 RiskSummary(risk_id="ibm-risk-atlas-r1", risk_name="R1"),
@@ -188,7 +188,7 @@ def test_cli_ingest_already_enriched(tmp_path, monkeypatch):
 
     result = runner.invoke(app, ["ingest", str(enriched)])
     assert result.exit_code == 1
-    assert "Already an enriched PolicyDocument" in result.output
+    assert "Already an enriched PolicyProfile" in result.output
 
 
 def _make_enriched_policy_file(tmp_path: Path) -> Path:
@@ -290,7 +290,7 @@ def test_cli_run_framework_labels_and_cross_mappings(mock_run, mock_create_clien
 @patch("refiner.cli.create_client")
 @patch("refiner.cli.run_pipeline")
 def test_cli_run_policy_source_from_enriched(mock_run, mock_create_client, mock_onto, mock_risk, mock_export, tmp_path, monkeypatch):
-    """PolicySourceRef is populated from enriched PolicyDocument."""
+    """PolicySourceRef is populated from enriched PolicyProfile."""
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
     monkeypatch.setenv("NEXUS_BASE_DIR", "/tmp/nexus")
@@ -317,7 +317,7 @@ def test_cli_run_policy_source_from_enriched(mock_run, mock_create_client, mock_
 def test_ingest_then_run_integration(mock_create_client, tmp_path, monkeypatch):
     """Full workflow: ingest flat JSON → enriched JSON → refiner run accepts it."""
     from refiner.stages.ingest import _SlimContext, _SlimEnrichmentList, _SlimEnrichment, _SlimBoundaryExample
-    from refiner.models import PolicyDocument
+    from refiner.models import PolicyProfile
 
     monkeypatch.setenv("REFINER_BASE_URL", "http://localhost:8000/v1")
     monkeypatch.setenv("REFINER_MODEL", "test-model")
@@ -354,12 +354,12 @@ def test_ingest_then_run_integration(mock_create_client, tmp_path, monkeypatch):
     assert result.exit_code == 0, result.output
     assert enriched.exists()
 
-    # Verify enriched file is valid PolicyDocument
+    # Verify enriched file is valid PolicyProfile
     data = json.loads(enriched.read_text())
     assert data["organization"]["name"] == "Bank"
     assert data["policies"][0]["boundary_examples"][0]["prohibited"] == "commit fraud"
 
     # Verify refiner run would accept this file
-    doc = PolicyDocument(**data)
+    doc = PolicyProfile(**data)
     assert len(doc.policies) == 1
     assert doc.policies[0].policy_concept == "Fraud"

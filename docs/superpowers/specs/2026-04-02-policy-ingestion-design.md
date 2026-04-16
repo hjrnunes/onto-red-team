@@ -11,7 +11,7 @@ Real-world policy documents like the [RDaSH NHS AI Policy](../../../policy_examp
 
 ## Solution
 
-Add a `refiner ingest` command — a multi-pass LLM extraction stage that transforms policy documents (markdown/text) or existing flat JSON policy arrays into an enriched `PolicyDocument` format. This is the universal entry point for all policy inputs into the refiner pipeline.
+Add a `refiner ingest` command — a multi-pass LLM extraction stage that transforms policy documents (markdown/text) or existing flat JSON policy arrays into an enriched `PolicyProfile` format. This is the universal entry point for all policy inputs into the refiner pipeline.
 
 The extraction schema is mapped to the [AIRO ontology](https://delaramglp.github.io/airo/) (AI Risk Ontology, ADAPT Centre), providing principled categories grounded in the EU AI Act and ISO 31000, with URI provenance for future interoperability with [GAF-Guard](https://github.com/IBM/risk-atlas-nexus-demos/tree/main/gaf-guard) and other AIRO-aligned tooling.
 
@@ -27,7 +27,7 @@ The extraction schema is mapped to the [AIRO ontology](https://delaramglp.github
 
 ## Enriched Policy Schema
 
-### `PolicyDocument` (document-level)
+### `PolicyProfile` (document-level)
 
 | Field | Type | AIRO Class | URI | Description |
 |---|---|---|---|---|
@@ -138,7 +138,7 @@ The passes adapt to input format:
 **AIRO dimensions:** `Domain`, `Purpose`, `AISystem`, `AIDeployer`, `AIUser`, `AISubject`, `Regulation`
 
 - **Input:** Full document text (markdown) or all concept definitions concatenated (JSON)
-- **Output:** `PolicyDocumentContext` — all `PolicyDocument` fields except `policies`
+- **Output:** `PolicyProfileContext` — all `PolicyProfile` fields except `policies`
 - **LLM task:** Extract organizational context. For markdown, this is mostly explicit in the document. For JSON, the LLM infers from policy content (e.g., "South West Bank" → organization, "financial services" → domain).
 - **CoT:** 1-2 examples showing document excerpts → extracted context.
 - **Weak inference handling:** When input is a flat JSON with generic policies (e.g., `generic.json` — no domain terminology), the LLM may return empty or vague results. Fields default to empty. CLI overrides `--domain` and `--organization` allow the user to supplement LLM inference when the source material lacks explicit context.
@@ -163,7 +163,7 @@ The passes adapt to input format:
 - For markdown: extracts from the document and attributes to the correct concept.
 - For JSON: generates boundary examples and acceptable uses from the concept definitions. The LLM infers what the acceptable counterpart would be for each prohibition.
 - **CoT:** 1-2 examples showing policy concepts + source text → enrichments, including the prohibited/acceptable pair pattern.
-- **Optional for JSON input:** A `--skip-enrichment` flag allows skipping Pass 3, producing a `PolicyDocument` with context metadata but no boundary enrichments. Useful when Pass 1 context (organization, domain) is the primary goal, or when model quality is insufficient for boundary generation.
+- **Optional for JSON input:** A `--skip-enrichment` flag allows skipping Pass 3, producing a `PolicyProfile` with context metadata but no boundary enrichments. Useful when Pass 1 context (organization, domain) is the primary goal, or when model quality is insufficient for boundary generation.
 - **Feasibility note:** Generating high-quality boundary examples is a creative, nuanced task. Small models (Gemma 2 9B) may produce low-quality pairs. The CoT examples are critical for guiding this pass. Empty `boundary_examples` lists are acceptable — downstream `emit.py` falls back gracefully.
 
 ### Pass ordering rationale
@@ -181,7 +181,7 @@ def ingest(
     config: LLMConfig,
     skip_enrichment: bool = False,
     report: RunReport | None = None,
-) -> PolicyDocument:
+) -> PolicyProfile:
     context = extract_context(document_text, client, config, report=report)
 
     if input_format == "json_array":
@@ -192,7 +192,7 @@ def ingest(
     if not skip_enrichment:
         policies = enrich_policies(document_text, context, policies, client, config, report=report)
 
-    return PolicyDocument(airo_version="0.2", **context.model_dump(), policies=policies)
+    return PolicyProfile(airo_version="0.2", **context.model_dump(), policies=policies)
 ```
 
 ### RunReport events
@@ -300,7 +300,7 @@ refiner ingest policy.md -o policies.json --until context
 | Arg/Option | Type | Required | Default | Notes |
 |---|---|---|---|---|
 | `document` | Path | yes | — | Policy document (`.md`, `.txt`) or flat JSON (`.json`) |
-| `--output`, `-o` | Path | no | `<stem>-enriched.json` | Output path for enriched PolicyDocument |
+| `--output`, `-o` | Path | no | `<stem>-enriched.json` | Output path for enriched PolicyProfile |
 | `--base-url` | str | yes | `REFINER_BASE_URL` | LLM API endpoint |
 | `--model` | str | yes | `REFINER_MODEL` | Model name |
 | `--api-key` | str | no | `REFINER_API_KEY` / `"none"` | LLM API key |
@@ -310,7 +310,7 @@ refiner ingest policy.md -o policies.json --until context
 | `--organization` | str | no | — | Override/supplement inferred organization |
 | `--until` | str | no | — | Run up to a specific pass: `context`, `policies`, `enrichment` |
 
-**Input format detection:** By file extension. `.json` → parse and check: if array, treat as flat JSON (`json_array`); if object with `policies` key, error with message "Already an enriched PolicyDocument — use `refiner run` directly." `.md` / `.txt` / other → treat as document text (`markdown`).
+**Input format detection:** By file extension. `.json` → parse and check: if array, treat as flat JSON (`json_array`); if object with `policies` key, error with message "Already an enriched PolicyProfile — use `refiner run` directly." `.md` / `.txt` / other → treat as document text (`markdown`).
 
 **No new dependencies.** Uses the same `LLMConfig`, `create_client`, Instructor, and `debug.configure` as existing commands.
 
@@ -318,35 +318,35 @@ refiner ingest policy.md -o policies.json --until context
 
 ### `refiner run` — accept enriched format
 
-`cli.py` changes to load from the enriched `PolicyDocument` format. During a transition period, both formats are accepted:
+`cli.py` changes to load from the enriched `PolicyProfile` format. During a transition period, both formats are accepted:
 
 ```python
 raw = json.loads(policy_json.read_text())
 if isinstance(raw, list):
-    # Legacy flat format — wrap in minimal PolicyDocument
+    # Legacy flat format — wrap in minimal PolicyProfile
     policies = [Policy(**p) for p in raw]
     doc_context = None
 else:
-    # Enriched PolicyDocument format
-    doc = PolicyDocument(**raw)
+    # Enriched PolicyProfile format
+    doc = PolicyProfile(**raw)
     policies = doc.policies
     doc_context = doc
 ```
 
-`PipelineState` gains an optional `doc_context: PolicyDocument | None` field, threaded through to stages that can exploit it.
+`PipelineState` gains an optional `doc_context: PolicyProfile | None` field, threaded through to stages that can exploit it.
 
 ### `emit.py` — format-aware policy loading and enriched prompts
 
 **`load_policies()`** (line 127-129) currently expects a flat JSON array. Updated to handle both formats:
 
 ```python
-def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyDocument | None]:
+def load_policies(path: Path) -> tuple[dict[str, Policy], PolicyProfile | None]:
     raw = json.loads(path.read_text())
     if isinstance(raw, list):
         policies = {p["policy_concept"]: Policy(**p) for p in raw}
         return policies, None
     else:
-        doc = PolicyDocument(**raw)
+        doc = PolicyProfile(**raw)
         policies = {p.policy_concept: p for p in doc.policies}
         return policies, doc
 ```
@@ -384,7 +384,7 @@ When `doc_context.domain` is present, use it as a strong hint for ontology selec
 
 ```
 refiner/src/refiner/
-  models.py                    # Add BoundaryExample, NamedEntity, PolicyDocument models
+  models.py                    # Add BoundaryExample, NamedEntity, PolicyProfile models
   stages/
     ingest.py                  # Three extraction passes + orchestration
   templates/
@@ -404,7 +404,7 @@ refiner/src/refiner/
   flat JSON -----→ |  ingest   | ←--- AIRO-mapped multi-pass extraction
                     +-----------+
                          |
-                  enriched PolicyDocument JSON
+                  enriched PolicyProfile JSON
                          |
                     (user review/edit)
                          |
@@ -430,8 +430,8 @@ refiner/src/refiner/
 - **Unit tests for each pass**: Mock Instructor responses, verify schema validation and post-processing.
 - **CoT loading tests**: Verify `ingest_cot.json` loads via `Path(__file__).parent` and renders into prompts.
 - **Format detection tests**: Flat JSON array, already-enriched JSON (should error), markdown, plain text.
-- **Idempotency test**: Running `ingest` on an already-enriched `PolicyDocument` JSON errors with a clear message.
-- **Round-trip test**: Ingest a flat JSON → verify output is valid `PolicyDocument` → feed to `refiner run` (mocked).
+- **Idempotency test**: Running `ingest` on an already-enriched `PolicyProfile` JSON errors with a clear message.
+- **Round-trip test**: Ingest a flat JSON → verify output is valid `PolicyProfile` → feed to `refiner run` (mocked).
 - **Backward compatibility test**: Existing `swb.json` through updated `refiner run` (flat array wrapping).
 - **Emit enrichment test**: Verify `build_generation_prompt` includes boundary examples when present, falls back gracefully when absent.
 - **Emit format test**: Verify `load_policies` handles both flat and enriched formats.
@@ -446,7 +446,7 @@ refiner/src/refiner/
 
 Each field in the extraction schema carries an implicit AIRO URI mapping (documented in this spec's schema tables). The output JSON includes `airo_version: "0.2"` for traceability. No runtime dependency on the AIRO OWL file.
 
-Future integration: AIRO URIs enable interop with GAF-Guard and other AIRO-aligned tooling. A `PolicyDocument` could be transformed into AIRO RDF triples for exchange with governance systems, but this is out of scope for the initial implementation.
+Future integration: AIRO URIs enable interop with GAF-Guard and other AIRO-aligned tooling. A `PolicyProfile` could be transformed into AIRO RDF triples for exchange with governance systems, but this is out of scope for the initial implementation.
 
 ## References
 

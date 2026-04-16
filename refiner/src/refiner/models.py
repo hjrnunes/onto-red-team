@@ -55,7 +55,7 @@ class Policy(BaseModel):
     decomposition: PolicyDecomposition | None = None
 
 
-class PolicyDocument(BaseModel):
+class PolicyProfile(BaseModel):
     airo_version: str = "0.2"
     organization: Stakeholder | None = None
     domain: str | None = None
@@ -222,7 +222,7 @@ class PolicyDomainContext(BaseModel):
     risk_groundings: list[RiskGrounding]
 
 
-class DomainContextDocument(BaseModel):
+class DomainContext(BaseModel):
     version: str = "0.1"
     model: str = ""
     timestamp: str = ""

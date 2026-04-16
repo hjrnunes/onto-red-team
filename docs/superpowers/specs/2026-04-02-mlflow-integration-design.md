@@ -11,7 +11,7 @@ Integrate the refiner evaluation framework with MLflow for two goals:
 
 - MLflow tracking wraps `refiner run` (for tracing) and `refiner evaluate` (for metrics/artifacts).
 - A standalone `refiner track` command enables retroactive logging of existing runs.
-- `refiner ingest` is excluded — it's a preprocessing step that produces a `PolicyDocument`; its outputs feed into `refiner run` where tracking begins. Adding tracing to ingest can be revisited if ingestion quality becomes a comparison axis.
+- `refiner ingest` is excluded — it's a preprocessing step that produces a `PolicyProfile`; its outputs feed into `refiner run` where tracking begins. Adding tracing to ingest can be revisited if ingestion quality becomes a comparison axis.
 - Prompt Registry is excluded — git SHA + tracing adequately covers prompt template versioning for the current workflow.
 
 ## Architecture

@@ -12,6 +12,7 @@ _ARTIFACT_PATTERNS = [
     "*-dataset.jsonl",
     "*-adversarial-prompts.jsonl",
     "*-adversarial-prompts.html",
+    "*-policy-profile.json",
     "*-policy-document.json",
     "*-curie-map.json",
     "*-provenance.jsonl",

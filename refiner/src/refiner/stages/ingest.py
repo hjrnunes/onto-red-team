@@ -12,7 +12,7 @@ from refiner.models import (
     GovernedSystem,
     Policy,
     PolicyDecomposition,
-    PolicyDocument,
+    PolicyProfile,
     RegulatoryReference,
     RunReport,
     Stakeholder,
@@ -383,10 +383,10 @@ def enrich_policies(
 
 
 # ---------------------------------------------------------------------------
-# Helper: build PolicyDocument from context + policies
+# Helper: build PolicyProfile from context + policies
 # ---------------------------------------------------------------------------
 
-def _build_document(context: _SlimContext, policies: list[Policy]) -> PolicyDocument:
+def _build_document(context: _SlimContext, policies: list[Policy]) -> PolicyProfile:
     stakeholders: list[Stakeholder] = []
     for u in context.ai_users:
         stakeholders.append(Stakeholder(name=u, roles=["airo:AIUser"]))
@@ -394,7 +394,7 @@ def _build_document(context: _SlimContext, policies: list[Policy]) -> PolicyDocu
         stakeholders.append(Stakeholder(name=s, roles=["airo:AISubject"]))
     for ne in context.named_entities:
         stakeholders.append(Stakeholder(name=ne.name, roles=[ne.role]))
-    return PolicyDocument(
+    return PolicyProfile(
         organization=Stakeholder(name=context.organization) if context.organization else None,
         domain=context.domain,
         purpose=context.purpose,
@@ -419,7 +419,7 @@ def ingest(
     domain_override: str | None = None,
     organization_override: str | None = None,
     report: RunReport | None = None,
-) -> PolicyDocument:
+) -> PolicyProfile:
     if report:
         report.events.append({
             "stage": "ingest",

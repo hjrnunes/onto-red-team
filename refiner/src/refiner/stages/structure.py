@@ -4,7 +4,7 @@ import re
 from refiner.curie_registry import CURIE_MAP
 from refiner.models import (
     PolicyRiskMapping,
-    DomainContextDocument,
+    DomainContext,
     RunReport,
 )
 
@@ -22,7 +22,7 @@ def slugify(text: str) -> str:
 def structure(
     client_slug: str,
     risk_mappings: list[PolicyRiskMapping],
-    domain_context: DomainContextDocument,
+    domain_context: DomainContext,
     related_risks: dict[str, list[dict]] | None = None,
     valid_risk_ids: set[str] | None = None,
     report: RunReport | None = None,

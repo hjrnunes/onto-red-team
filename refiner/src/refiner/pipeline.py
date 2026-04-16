@@ -8,11 +8,11 @@ logger = logging.getLogger(__name__)
 from refiner.llm import LLMConfig
 from refiner.models import (
     Policy,
-    PolicyDocument,
+    PolicyProfile,
     PolicyRiskMapping,
     RiskLandscape,
     RiskVariationAxes,
-    DomainContextDocument,
+    DomainContext,
     RunReport,
 )
 from refiner.stages.identify_domains import identify_domains
@@ -36,11 +36,11 @@ class PipelineState:
     risk_actions: dict[str, list[str]] | None = None
     risk_landscape: RiskLandscape | None = None
     variation_axes: list[RiskVariationAxes] | None = None
-    domain_context: DomainContextDocument | None = None
+    domain_context: DomainContext | None = None
     run_slug: str = ""
     vocabulary_contexts: dict[str, dict] = field(default_factory=dict)
     report: RunReport | None = None
-    doc_context: PolicyDocument | None = None
+    policy_profile: PolicyProfile | None = None
 
     @property
     def risk_mappings_resolved(self) -> list[PolicyRiskMapping] | None:

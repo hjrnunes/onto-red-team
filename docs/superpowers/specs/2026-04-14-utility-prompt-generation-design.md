@@ -51,7 +51,7 @@ Functions moved from current `emit.py`:
 - `sample_axes(profile, n)` — weighted random axis sampling with dedup
 - `relevance_weights(enumerations)` — relevance-to-weight conversion
 - `load_domain_context(path)` — YAML → DomainContextProfile list
-- `load_policies(path)` — JSON → (Policy dict, PolicyDocument) with fuzzy matching
+- `load_policies(path)` — JSON → (Policy dict, PolicyProfile) with fuzzy matching
 - `_discover_domain_context(output_dir)` — glob for `*-domain-context.yaml`
 - `_strip_framework_suffix(label)` — remove framework/ontology suffixes from labels
 - `_fuzzy_match_policy(concept, policy_map)` — substring fallback for policy lookup

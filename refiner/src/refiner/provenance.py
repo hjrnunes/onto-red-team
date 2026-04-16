@@ -16,14 +16,14 @@ from pathlib import Path
 
 import yaml
 
-from refiner.models import DomainContextDocument
+from refiner.models import DomainContext
 
 logger = logging.getLogger(__name__)
 
 
-def _load_document(domain_context_path: Path) -> DomainContextDocument:
+def _load_document(domain_context_path: Path) -> DomainContext:
     raw = yaml.safe_load(domain_context_path.read_text())
-    return DomainContextDocument(**raw)
+    return DomainContext(**raw)
 
 
 def write_provenance(

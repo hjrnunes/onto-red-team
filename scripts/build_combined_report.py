@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.12"
-# dependencies = ["pyyaml"]
+# dependencies = ["pyyaml", "pydantic"]
 # ///
 """Build a combined HTML report from a pipeline run directory.
 
@@ -25,7 +25,7 @@ import yaml
 sys.path.insert(0, str(Path(__file__).parent / "../refiner/src"))
 
 from refiner.ingest_report import build_report_data
-from refiner.models import PolicyDocument, RunReport
+from refiner.models import PolicyProfile, RunReport
 
 
 TEMPLATE = Path(__file__).parent / "../refiner/src/refiner/combined_report_template.html"
@@ -90,7 +90,7 @@ def build_combined_report(
     risk_landscape = _discover(run_dir, "*-risk-landscape.yaml")
     domain_ctx = _discover(run_dir, "*-domain-context.yaml")
     taxonomy = _discover(run_dir, "*-taxonomy.json") or _discover(run_dir, "*-taxonomy.yaml")
-    enriched_policy = _discover(run_dir, "*-policy-document.json") or _discover(run_dir, "*-enriched.json")
+    enriched_policy = _discover(run_dir, "*-policy-profile.json") or _discover(run_dir, "*-policy-document.json") or _discover(run_dir, "*-enriched.json")
 
     # Load data
     report_data = _load_json(eval_json)
@@ -104,7 +104,7 @@ def build_combined_report(
     if enriched_policy:
         raw_policy = _load_json(enriched_policy)
         rr_data = _load_yaml(run_report_yaml)
-        doc = PolicyDocument(**raw_policy)
+        doc = PolicyProfile(**raw_policy)
         rr = RunReport(
             model=rr_data.get("model", ""),
             policy_set=rr_data.get("policy_set", ""),

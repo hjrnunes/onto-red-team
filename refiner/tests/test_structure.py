@@ -3,7 +3,7 @@ from refiner.models import (
     Policy,
     PolicyRiskMapping,
     RiskMatch,
-    DomainContextDocument,
+    DomainContext,
     PolicyDomainContext,
     RiskGrounding,
     DomainContextAxis,
@@ -42,7 +42,7 @@ def _make_state_data():
             {"id": "owasp-fraud", "mapping_type": "close"},
         ],
     }
-    domain_context = DomainContextDocument(
+    domain_context = DomainContext(
         policy_contexts=[
             PolicyDomainContext(
                 policy_concept="Fraud",
@@ -156,7 +156,7 @@ def test_structure_deduplicates_entries_by_id():
             {"id": "nist-fraud", "mapping_type": "related"},
         ],
     }
-    domain_context = DomainContextDocument()
+    domain_context = DomainContext()
     taxonomy, _ = structure("test", risk_mappings, domain_context,
                             related_risks=related_risks)
     fraud_entries = [e for e in taxonomy["entries"] if "fraud" in e["id"]]
@@ -219,7 +219,7 @@ def test_structure_summary_with_multiple_axes():
             matched_risks=[RiskMatch(risk_id="atlas-fraud", risk_name="Fraud", relevance="primary", justification="j")],
         ),
     ]
-    domain_context = DomainContextDocument(
+    domain_context = DomainContext(
         policy_contexts=[
             PolicyDomainContext(
                 policy_concept="Fraud",
@@ -258,7 +258,7 @@ def test_export_taxonomy_from_risk_landscape():
     from refiner.export import export_taxonomy
     from refiner.models import (
         RiskLandscape, RiskDetail, PolicyRiskMapping, RiskMatch,
-        DomainContextDocument, PolicyDomainContext, RiskGrounding,
+        DomainContext, PolicyDomainContext, RiskGrounding,
         DomainContextAxis, AxisEnumeration,
     )
 
@@ -283,7 +283,7 @@ def test_export_taxonomy_from_risk_landscape():
         ],
     )
 
-    dcd = DomainContextDocument(
+    dcd = DomainContext(
         policy_contexts=[
             PolicyDomainContext(
                 policy_concept="Policy A",

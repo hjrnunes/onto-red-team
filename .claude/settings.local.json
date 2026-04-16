@@ -109,7 +109,17 @@
       "WebFetch(domain:mowl.readthedocs.io)",
       "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
       "WebFetch(domain:link.springer.com)",
-      "WebFetch(domain:jbiomedsem.biomedcentral.com)"
+      "WebFetch(domain:jbiomedsem.biomedcentral.com)",
+      "WebFetch(domain:agentdojo.spylab.ai)",
+      "Bash(gh repo:*)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__navigate_page",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_snapshot",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__take_screenshot",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__evaluate_script",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__click",
+      "WebFetch(domain:eval-hub.github.io)",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_console_messages",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages"
     ]
   }
 }

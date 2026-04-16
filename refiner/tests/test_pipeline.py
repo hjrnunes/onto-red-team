@@ -5,7 +5,7 @@ from refiner.models import (
     RiskMatch,
     RiskVariationAxes,
     VariationAxis,
-    DomainContextDocument,
+    DomainContext,
     PolicyDomainContext,
     RiskGrounding,
     DomainContextAxis,
@@ -37,7 +37,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
     ]
     anchor_vocab = {"r1": {"stakeholders": [{"concept": "eu-aiact:AISubject", "label": "AI Subject"}]}}
     anchor_result = (anchor_axes, anchor_vocab)
-    context_result = DomainContextDocument(
+    context_result = DomainContext(
         model="test-model",
         policy_contexts=[
             PolicyDomainContext(
@@ -74,7 +74,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
         assert state.variation_axes == anchor_axes
         assert state.vocabulary_contexts == anchor_vocab
         assert state.domain_context == context_result
-        assert isinstance(state.domain_context, DomainContextDocument)
+        assert isinstance(state.domain_context, DomainContext)
         assert len(state.domain_context.policy_contexts) == 1
         assert state.domain_context.policy_contexts[0].policy_concept == "Fraud"
         assert state.domain_context.policy_contexts[0].risk_groundings[0].risk_id == "r1"

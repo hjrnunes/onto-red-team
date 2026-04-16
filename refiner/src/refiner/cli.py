@@ -8,7 +8,7 @@ import yaml
 
 from refiner import debug
 from refiner.llm import LLMConfig, TokenTracker, create_client
-from refiner.models import Policy, PolicyDocument, RunReport
+from refiner.models import Policy, PolicyProfile, RunReport
 from refiner.pipeline import run_pipeline, STAGES
 from refiner.export import export_taxonomy
 
@@ -36,7 +36,7 @@ def _parse_tags(tags: list[str]) -> dict[str, str]:
 @app.command()
 def ingest(
     document: Path = typer.Argument(..., help="Policy document (.md/.txt) or flat JSON (.json)"),
-    output: Path = typer.Option(None, "--output", "-o", help="Output path (default: <stem>-policy-document.json)"),
+    output: Path = typer.Option(None, "--output", "-o", help="Output path (default: <stem>-policy-profile.json)"),
     base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL", help="LLM API base URL"),
     model: str = typer.Option(None, "--model", envvar="REFINER_MODEL", help="LLM model name"),
     api_key: str = typer.Option("none", "--api-key", envvar="REFINER_API_KEY", help="LLM API key"),
@@ -46,7 +46,7 @@ def ingest(
     organization: str = typer.Option(None, "--organization", help="Override inferred organization"),
     until: str = typer.Option(None, "--until", help=f"Run up to this pass: {', '.join(INGEST_PASSES)}"),
 ):
-    """Ingest a policy document or flat JSON into enriched PolicyDocument format."""
+    """Ingest a policy document or flat JSON into enriched PolicyProfile format."""
     if not document.exists():
         typer.echo(f"Error: {document} does not exist", err=True)
         raise typer.Exit(1)
@@ -64,7 +64,7 @@ def ingest(
     if document.suffix == ".json":
         raw = json.loads(document_text)
         if isinstance(raw, dict) and "policies" in raw:
-            typer.echo("Error: Already an enriched PolicyDocument — use 'refiner run' directly.", err=True)
+            typer.echo("Error: Already an enriched PolicyProfile — use 'refiner run' directly.", err=True)
             raise typer.Exit(1)
         input_format = "json_array"
     else:
@@ -89,10 +89,10 @@ def ingest(
         report=report,
     )
 
-    out_path = output or document.with_stem(f"{document.stem}-policy-document").with_suffix(".json")
+    out_path = output or document.with_stem(f"{document.stem}-policy-profile").with_suffix(".json")
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(result.model_dump(), indent=2))
-    typer.echo(f"Enriched PolicyDocument written to {out_path}")
+    typer.echo(f"Enriched PolicyProfile written to {out_path}")
     typer.echo(f"  Organization: {result.organization.name if result.organization else ''}")
     typer.echo(f"  Domain: {result.domain}")
     typer.echo(f"  Policies: {len(result.policies)}")
@@ -174,15 +174,15 @@ def run(
         typer.echo(f"Error: --until must be one of: {', '.join(STAGES)}", err=True)
         raise typer.Exit(1)
 
-    # Load policies — detect flat array vs enriched PolicyDocument
+    # Load policies — detect flat array vs enriched PolicyProfile
     raw = json.loads(policy_json.read_text())
     if isinstance(raw, list):
         policies = [Policy(**p) for p in raw]
-        doc_context = None
+        policy_profile = None
     else:
-        doc = PolicyDocument(**raw)
+        doc = PolicyProfile(**raw)
         policies = doc.policies
-        doc_context = doc
+        policy_profile = doc
     typer.echo(f"Loaded {len(policies)} policies from {policy_json.name}")
 
     if not base_url or not model:
@@ -235,7 +235,7 @@ def run(
 
     # Run pipeline
     client_slug = policy_json.stem
-    for _sfx in ("-policy-document", "-enriched"):
+    for _sfx in ("-policy-profile", "-policy-document", "-enriched"):
         if client_slug.endswith(_sfx):
             client_slug = client_slug[:-len(_sfx)]
             break
@@ -248,16 +248,16 @@ def run(
         bfo_fallbacks=bfo_fallbacks,
         run_slug=client_slug,
     )
-    # TODO: thread doc_context into pipeline stages (e.g. identify_domains domain hint)
-    state.doc_context = doc_context
+    # TODO: thread policy_profile into pipeline stages (e.g. identify_domains domain hint)
+    state.policy_profile = policy_profile
 
     # Attach policy source to risk landscape
-    if state.risk_landscape is not None and doc_context:
+    if state.risk_landscape is not None and policy_profile:
         from refiner.models import PolicySourceRef
         state.risk_landscape.policy_source = PolicySourceRef(
-            organization=doc_context.organization.name if doc_context.organization else None,
-            domain=doc_context.domain,
-            policy_count=len(doc_context.policies),
+            organization=policy_profile.organization.name if policy_profile.organization else None,
+            domain=policy_profile.domain,
+            policy_count=len(policy_profile.policies),
         )
 
     # Output
@@ -301,13 +301,13 @@ def run(
         if state.domain_context is not None and state.risk_mappings is not None:
             doc = state.domain_context
 
-            # Set policy source from PolicyDocument
-            if state.doc_context:
+            # Set policy source from PolicyProfile
+            if state.policy_profile:
                 from refiner.models import PolicySourceRef
                 doc.policy_source = PolicySourceRef(
-                    organization=state.doc_context.organization.name if state.doc_context.organization else None,
-                    domain=state.doc_context.domain,
-                    policy_count=len(state.doc_context.policies),
+                    organization=state.policy_profile.organization.name if state.policy_profile.organization else None,
+                    domain=state.policy_profile.domain,
+                    policy_count=len(state.policy_profile.policies),
                 )
 
             # Validate cross-mapping targets against all risk IDs shown to the model
@@ -423,7 +423,7 @@ def run(
 
 @app.command("map-risks")
 def map_risks_cmd(
-    policy_json: Path = typer.Argument(..., help="Enriched PolicyDocument JSON"),
+    policy_json: Path = typer.Argument(..., help="Enriched PolicyProfile JSON"),
     output_dir: Path = typer.Option(None, "--output", "-o", help="Output directory"),
     base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL"),
     model: str = typer.Option(None, "--model", envvar="REFINER_MODEL"),
@@ -432,7 +432,7 @@ def map_risks_cmd(
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR"),
     debug_dir: Path = typer.Option(None, "--debug"),
 ):
-    """Run risk landscape mapping on a PolicyDocument. Produces a RiskLandscape YAML artifact."""
+    """Run risk landscape mapping on a PolicyProfile. Produces a RiskLandscape YAML artifact."""
     if not policy_json.exists():
         typer.echo(f"Error: {policy_json} does not exist", err=True)
         raise typer.Exit(1)
@@ -445,9 +445,9 @@ def map_risks_cmd(
 
     raw = json.loads(policy_json.read_text())
     if isinstance(raw, list):
-        typer.echo("Error: expected enriched PolicyDocument, got flat array. Run 'refiner ingest' first.", err=True)
+        typer.echo("Error: expected enriched PolicyProfile, got flat array. Run 'refiner ingest' first.", err=True)
         raise typer.Exit(1)
-    doc = PolicyDocument(**raw)
+    doc = PolicyProfile(**raw)
     policies = doc.policies
 
     config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
@@ -484,7 +484,7 @@ def map_risks_cmd(
         model=config.model,
         run_slug=policy_json.stem,
         timestamp=report.timestamp,
-        doc_context=doc,
+        policy_profile=doc,
     )
 
     out = output_dir or Path(".")
@@ -511,7 +511,7 @@ def map_risks_cmd(
 @app.command()
 def ground(
     risk_landscape_yaml: Path = typer.Argument(..., help="RiskLandscape YAML from 'refiner map-risks'"),
-    policies: Path = typer.Option(..., "--policies", help="Enriched PolicyDocument JSON"),
+    policies: Path = typer.Option(..., "--policies", help="Enriched PolicyProfile JSON"),
     output_dir: Path = typer.Option(None, "--output", "-o", help="Output directory"),
     base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL"),
     model: str = typer.Option(None, "--model", envvar="REFINER_MODEL"),
@@ -521,7 +521,7 @@ def ground(
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR"),
     debug_dir: Path = typer.Option(None, "--debug"),
 ):
-    """Run ontological grounding on a RiskLandscape. Produces DomainContextDocument YAML + taxonomy."""
+    """Run ontological grounding on a RiskLandscape. Produces DomainContext YAML + taxonomy."""
     if not risk_landscape_yaml.exists():
         typer.echo(f"Error: {risk_landscape_yaml} does not exist", err=True)
         raise typer.Exit(1)
@@ -536,7 +536,7 @@ def ground(
     landscape = RiskLandscape(**yaml.safe_load(risk_landscape_yaml.read_text()))
 
     raw = json.loads(policies.read_text())
-    doc = PolicyDocument(**raw) if isinstance(raw, dict) else None
+    doc = PolicyProfile(**raw) if isinstance(raw, dict) else None
     policy_list = doc.policies if doc else [Policy(**p) for p in raw]
 
     config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
@@ -783,7 +783,7 @@ def evaluate(
     out_path = output
     if out_path is None:
         slug = evaluation.get("run", {}).get("policy_set", "eval").replace(".json", "")
-        for _sfx in ("-policy-document", "-enriched"):
+        for _sfx in ("-policy-profile", "-policy-document", "-enriched"):
             if slug.endswith(_sfx):
                 slug = slug[:-len(_sfx)]
                 break

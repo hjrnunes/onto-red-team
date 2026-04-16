@@ -8,7 +8,7 @@ from refiner.models import (
     GovernedSystem,
     Policy,
     PolicyDecomposition,
-    PolicyDocument,
+    PolicyProfile,
     RegulatoryReference,
     RunReport,
     Stakeholder,
@@ -34,8 +34,8 @@ def _make_report(**overrides):
 
 
 def _full_doc():
-    """PolicyDocument with all fields populated — expect all green."""
-    return PolicyDocument(
+    """PolicyProfile with all fields populated — expect all green."""
+    return PolicyProfile(
         organization=Stakeholder(name="Acme Corp"),
         domain="finance",
         purpose=["chatbot"],
@@ -79,7 +79,7 @@ def test_context_confidence_all_green():
 
 
 def test_context_confidence_missing_fields():
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     data = build_report_data(doc, _make_report(), _make_meta())
     ctx = data["confidence"]["context"]
     assert ctx["organization"] == "red"
@@ -92,7 +92,7 @@ def test_context_confidence_missing_fields():
 
 def test_context_confidence_regulations_amber():
     """Regulations present but missing jurisdiction/reference → amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         organization=Stakeholder(name="Acme"),
         domain="finance",
         purpose=["chatbot"],
@@ -106,7 +106,7 @@ def test_context_confidence_regulations_amber():
 
 def test_context_confidence_stakeholders_amber():
     """Stakeholders present but none with governance roles → amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         organization=Stakeholder(name="Acme"),
         domain="finance",
         purpose=["chatbot"],
@@ -137,7 +137,7 @@ def test_policy_confidence_all_green():
 
 def test_policy_confidence_minimal():
     """Policy with only concept + definition — everything red/amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         policies=[
             Policy(policy_concept="Fraud", concept_definition="About fraud")
         ]
@@ -153,7 +153,7 @@ def test_policy_confidence_minimal():
 
 def test_policy_confidence_partial_decomposition():
     """Decomposition with only 1 of 3 fields → amber."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         policies=[
             Policy(
                 policy_concept="Test",
@@ -167,7 +167,7 @@ def test_policy_confidence_partial_decomposition():
 
 
 def test_summary_counts():
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         policies=[
             Policy(
                 policy_concept="P1",
@@ -195,14 +195,14 @@ def test_summary_weak_inferences():
         "event": "context_weak_inference",
         "missing_fields": ["organization", "domain"],
     })
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     data = build_report_data(doc, report, _make_meta())
     assert data["confidence"]["summary"]["weak_inferences"] == ["organization", "domain"]
 
 
 def test_meta_passthrough():
     meta = _make_meta(model="gemma-4", source_document="rdash.md")
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     data = build_report_data(doc, _make_report(), meta)
     assert data["meta"]["model"] == "gemma-4"
     assert data["meta"]["source_document"] == "rdash.md"
@@ -211,8 +211,8 @@ def test_meta_passthrough():
 def test_document_included():
     doc = _full_doc()
     data = build_report_data(doc, _make_report(), _make_meta())
-    assert data["document"]["domain"] == "finance"
-    assert len(data["document"]["policies"]) == 1
+    assert data["profile"]["domain"] == "finance"
+    assert len(data["profile"]["policies"]) == 1
 
 
 from refiner.ingest_report import group_stakeholders
@@ -220,7 +220,7 @@ from refiner.ingest_report import group_stakeholders
 
 def test_group_stakeholders_full():
     """Stakeholders are grouped by Lewis et al. categories."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         organization=Stakeholder(name="RDaSH"),
         stakeholders=[
             Stakeholder(name="staff", roles=["airo:AIUser"]),
@@ -241,7 +241,7 @@ def test_group_stakeholders_full():
 
 
 def test_group_stakeholders_empty():
-    doc = PolicyDocument()
+    doc = PolicyProfile()
     groups = group_stakeholders(doc)
     assert groups["organisation"] is None
     assert groups["users"] == []
@@ -251,7 +251,7 @@ def test_group_stakeholders_empty():
 
 def test_group_stakeholders_mixed_roles():
     """Stakeholder with both airo:AIUser and governance role goes to governance."""
-    doc = PolicyDocument(
+    doc = PolicyProfile(
         stakeholders=[
             Stakeholder(name="Admin", roles=["airo:AIUser", "system admin"]),
         ],
@@ -303,7 +303,7 @@ def test_build_ingest_report_valid_json_in_html(tmp_path):
     match = re.search(r"const DATA = (.+?);", html, re.DOTALL)
     assert match is not None
     parsed = json.loads(match.group(1))
-    assert parsed["document"]["domain"] == "finance"
+    assert parsed["profile"]["domain"] == "finance"
 
 
 from unittest.mock import patch, MagicMock

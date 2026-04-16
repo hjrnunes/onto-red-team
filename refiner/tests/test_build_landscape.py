@@ -1,7 +1,7 @@
 import pytest
 from refiner.models import (
     RiskLandscape, RiskDetail, PolicyRiskMapping, RiskMatch,
-    PolicySourceRef, PolicyDocument, Stakeholder,
+    PolicySourceRef, PolicyProfile, Stakeholder,
 )
 
 
@@ -165,7 +165,7 @@ def test_build_risk_landscape_framework_coverage():
 def test_build_risk_landscape_with_policy_source():
     from refiner.stages.build_landscape import build_risk_landscape
 
-    doc_context = PolicyDocument(
+    policy_profile = PolicyProfile(
         organization=Stakeholder(name="South West Bank"),
         domain="banking",
         policies=[],
@@ -176,7 +176,7 @@ def test_build_risk_landscape_with_policy_source():
         model="test-model",
         run_slug="test",
         timestamp="2026-04-14T12:00:00Z",
-        doc_context=doc_context,
+        policy_profile=policy_profile,
     )
 
     assert landscape.policy_source is not None

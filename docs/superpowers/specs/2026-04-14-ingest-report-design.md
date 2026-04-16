@@ -5,13 +5,13 @@
 
 ## Purpose
 
-The ingest stage produces a `PolicyDocument` JSON — a machine artifact consumed by downstream pipeline stages and other tools. This spec adds a companion HTML report — a human artifact for stakeholder validation. The report renders the same extraction data in a form that a governance team can review, annotate, and push back on: "here's what we understood from your policy document, does this match your intent?"
+The ingest stage produces a `PolicyProfile` JSON — a machine artifact consumed by downstream pipeline stages and other tools. This spec adds a companion HTML report — a human artifact for stakeholder validation. The report renders the same extraction data in a form that a governance team can review, annotate, and push back on: "here's what we understood from your policy document, does this match your intent?"
 
 This is the first step toward extracting ingest as a standalone tool. The report ships inside the existing `refiner/` package; extraction into a separate package is a later concern.
 
 ## Design Decisions
 
-- **Latest schema is canonical.** The `PolicyDocument` model with AIRO-envelope structure (Stakeholder objects with roles, GovernedSystem entries, RegulatoryReference entries) is the output contract. Older flat-field outputs are legacy.
+- **Latest schema is canonical.** The `PolicyProfile` model with AIRO-envelope structure (Stakeholder objects with roles, GovernedSystem entries, RegulatoryReference entries) is the output contract. Older flat-field outputs are legacy.
 - **Confidence signals.** The report surfaces quality indicators per field (green/amber/red) computed from simple rules, not LLM-generated.
 - **Lewis et al. framing.** Stakeholders are grouped by the Entity/Activity/Agent categories from Lewis et al. 2021 (BFO + PROV-O). Policy decompositions are rendered as Agent → Activity → Entity flows. No AIMS activity extraction — just presentation framing.
 - **HTML report.** Self-contained HTML using Tailwind CDN + Alpine.js, same pattern as `evaluation_report_template.html`. Data injected via `__REPORT_DATA__` replacement.
@@ -22,7 +22,7 @@ This is the first step toward extracting ingest as a standalone tool. The report
 A `build_report_data()` function combines three inputs into a single JSON blob for template injection:
 
 **Inputs:**
-- `result: PolicyDocument` — the enriched document
+- `result: PolicyProfile` — the enriched document
 - `report: RunReport` — the event log (has `context_weak_inference`, `enrichment_stats`, `input_format_detected`)
 - `meta: dict` — model name, source document filename, timestamp
 
@@ -152,14 +152,14 @@ Two functions:
 
 ```python
 def build_report_data(
-    doc: PolicyDocument,
+    doc: PolicyProfile,
     report: RunReport,
     meta: dict,
 ) -> dict:
-    """Combine PolicyDocument + RunReport events into report payload."""
+    """Combine PolicyProfile + RunReport events into report payload."""
 
 def build_ingest_report(
-    doc: PolicyDocument,
+    doc: PolicyProfile,
     report: RunReport,
     output_path: Path,
     meta: dict,
@@ -191,6 +191,6 @@ No changes. The report appears as a side effect of `refiner ingest`. The HTML fi
 
 ## Testing
 
-- **Unit tests for `build_report_data()`:** given a PolicyDocument and RunReport with known events, assert confidence signals are correct (green/amber/red for each field)
+- **Unit tests for `build_report_data()`:** given a PolicyProfile and RunReport with known events, assert confidence signals are correct (green/amber/red for each field)
 - **Snapshot test:** generate the HTML for the RDaSH enriched JSON, check it's valid HTML with `__REPORT_DATA__` replaced by valid JSON
 - **Stakeholder grouping test:** verify the Lewis et al. grouping logic correctly categorises stakeholders by role

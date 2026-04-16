@@ -21,7 +21,7 @@ This document describes every data boundary in the Taxonomy Refiner system: what
                                  │        │        + Oxigraph RDF   │
                                  └────────┼───────────────┼────────┘
                                           │               │
-  Policy JSON/MD ──► [ingest] ──► PolicyDocument          │
+  Policy JSON/MD ──► [ingest] ──► PolicyProfile          │
                                       │                   │
                                       ▼                   │
                             [identify_domains] ──LLM──►  domain keys[]
@@ -33,7 +33,7 @@ This document describes every data boundary in the Taxonomy Refiner system: what
                                 [anchor] ──SSSOM+graph+ChromaDB+LLM──► RiskVariationAxes[]
                                       │                   │
                                       ▼                   │
-                            [contextualize] ──LLM──► DomainContextDocument
+                            [contextualize] ──LLM──► DomainContext
                                       │
                                       ▼
                              [structure] ──deterministic──► taxonomy.yaml
@@ -86,7 +86,7 @@ AI systems must NOT be used for:
 ...
 ```
 
-After ingest (or LLM enrichment), both formats produce a `PolicyDocument`:
+After ingest (or LLM enrichment), both formats produce a `PolicyProfile`:
 
 ```json
 {
@@ -453,11 +453,11 @@ This is the most data-intensive stage, with a multi-tier candidate discovery pip
 ### 3.4 Contextualize
 
 Generates domain-specific enumerations (concrete instances) for each variation axis and wraps
-everything in a `DomainContextDocument` envelope.
+everything in a `DomainContext` envelope.
 
 ```
 Input:  list[RiskVariationAxes]
-Output: DomainContextDocument
+Output: DomainContext
 LLM:    yes (enumeration generation)
 ```
 
@@ -480,7 +480,7 @@ LLM:    yes (enumeration generation)
   get_disjoint_classes(axis_uri) ──► filter conflicting enumerations
          │
          ▼
-  DomainContextDocument
+  DomainContext
     ├── version: "0.1"
     ├── model: "gemma-3-12b-it"
     ├── timestamp: "2026-04-14T..."
@@ -606,7 +606,7 @@ policy_contexts:
 Deterministic assembly of all pipeline outputs into LinkML-conformant YAML. No LLM calls.
 
 ```
-Input:  all prior stage outputs (DomainContextDocument for domain context)
+Input:  all prior stage outputs (DomainContext for domain context)
 Output: 3 YAML files on disk
 ```
 
@@ -625,7 +625,7 @@ Output: 3 YAML files on disk
   │    from related_risks cache (never LLM-generated)│
   │                                                  │
   │ 4. Attach domain context summary per entry       │
-  │    (axes looked up from DomainContextDocument     │
+  │    (axes looked up from DomainContext     │
   │     via policy_contexts → risk_groundings)       │
   └──────────────────────────────────────────────────┘
          │
@@ -698,12 +698,12 @@ events:
 Pure Python (no LLM calls). Transforms the domain context document into red-team generation prompts.
 
 ```
-Input:  {policy_set}-domain-context.yaml (DomainContextDocument) + original policy JSON
+Input:  {policy_set}-domain-context.yaml (DomainContext) + original policy JSON
 Output: dataset.jsonl
 ```
 
 ```
- DomainContextDocument
+ DomainContext
    policy_contexts → risk_groundings → axes
          │
          ▼
@@ -905,7 +905,7 @@ runs/gen8/swb-gemma-3-12b-it-g8/
 │   ├── 02-map_risks-executive-compensation.json
 │   ├── 09-anchor-executive-compensation.json
 │   └── 24-contextualize-atlas-personal-information-in-prompt.json
-├── swb-enriched.json                   # Enriched PolicyDocument (ingest output)
+├── swb-enriched.json                   # Enriched PolicyProfile (ingest output)
 ├── swb-enriched-taxonomy.yaml          # Final risk taxonomy (LinkML YAML)
 ├── swb-enriched-domain-context.yaml    # Full domain context profiles
 ├── swb-enriched-report.yaml            # Pipeline execution events
@@ -964,11 +964,11 @@ A `.mlflow-run-id` file links the pipeline run to its MLflow run, so `refiner ev
 
 | Boundary | Format | Schema | LLM involved |
 |----------|--------|--------|-------------|
-| Policy input → identify_domains | JSON or Markdown | `Policy[]` or `PolicyDocument` | Yes |
+| Policy input → identify_domains | JSON or Markdown | `Policy[]` or `PolicyProfile` | Yes |
 | identify_domains → map_risks | In memory | `list[str]` (domain keys) | Yes |
 | map_risks → anchor | In memory | `PolicyRiskMapping[]` + caches | Yes |
 | anchor → contextualize | In memory | `RiskVariationAxes[]` | Yes |
-| contextualize → structure | In memory | `DomainContextDocument` | No |
+| contextualize → structure | In memory | `DomainContext` | No |
 | structure → disk | YAML files | LinkML-conformant taxonomy | No |
 | emit (disk → disk) | YAML → JSONL | `dataset.jsonl` | No |
 | redteam (disk → disk) | JSONL → JSONL | `adversarial_prompts.jsonl` | Yes (external) |
@@ -991,21 +991,21 @@ independently runnable via CLI.
 | Stage | CLI command | Input artifacts | Output data artifact | Output presentation |
 |-------|-------------|-----------------|---------------------|-------------------|
 | 0. Index | `just index-ontologies` | Ontology files (TTL/RDF/OWL) + Nexus YAML | ChromaDB + Oxigraph + manifest.json | Index report |
-| 1. Canonicalize | `refiner ingest` | Raw policy (JSON/MD) | `PolicyDocument` (JSON) | Ingest report (HTML) |
-| 2. Map Risk Landscape | `refiner map-risks` | `PolicyDocument` + Risk Knowledge Graph | `RiskLandscape` (YAML) | Risk landscape report |
-| 3. Ground in Ontology | `refiner ground` | `RiskLandscape` + Ontology Index | `DomainContextDocument` (YAML) + taxonomy.yaml export | Grounding report |
-| 4. Emit Dataset | `refiner emit` | `DomainContextDocument` + `PolicyDocument` | `dataset.jsonl` | Dataset report |
+| 1. Canonicalize | `refiner ingest` | Raw policy (JSON/MD) | `PolicyProfile` (JSON) | Ingest report (HTML) |
+| 2. Map Risk Landscape | `refiner map-risks` | `PolicyProfile` + Risk Knowledge Graph | `RiskLandscape` (YAML) | Risk landscape report |
+| 3. Ground in Ontology | `refiner ground` | `RiskLandscape` + Ontology Index | `DomainContext` (YAML) + taxonomy.yaml export | Grounding report |
+| 4. Emit Dataset | `refiner emit` | `DomainContext` + `PolicyProfile` | `dataset.jsonl` | Dataset report |
 | 5. Generate | `redteam` | `dataset.jsonl` | `adversarial_prompts.jsonl` | Prompt browser (HTML) |
 | 6. Evaluate | `refiner evaluate` | All prior artifacts | `evaluation.json` | Evaluation dashboard (HTML) |
 
 ### Convergence-divergence pattern
 
 ```
-Raw Policy ─── canonicalize ──► PolicyDocument
+Raw Policy ─── canonicalize ──► PolicyProfile
                                     │
 Risk Knowledge ── map risks ──► RiskLandscape
                                     │
-Ontology Index ── ground ─────► DomainContextDocument  ◄── THE HUB
+Ontology Index ── ground ─────► DomainContext  ◄── THE HUB
                                     │
                           ┌─────────┼─────────┐
                           ▼         ▼         ▼
@@ -1013,13 +1013,13 @@ Ontology Index ── ground ─────► DomainContextDocument  ◄──
                     Prompts     Benchmarks    Data
 ```
 
-The `DomainContextDocument` is the central artifact. Everything before it
+The `DomainContext` is the central artifact. Everything before it
 converges toward building it; everything after diverges into specific uses.
 
 ### Export layer
 
 The taxonomy is NOT a pipeline stage — it's an export/projection of the
-`DomainContextDocument` in AIRO-compatible LinkML format. Generated by default
+`DomainContext` in AIRO-compatible LinkML format. Generated by default
 alongside the DCD. Other future exports:
 
 - SSSOM mapping file (cross-mappings in standard TSV)

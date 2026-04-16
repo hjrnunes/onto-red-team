@@ -22,7 +22,7 @@ def build_risk_landscape_report(data: dict, output_path: Path) -> Path:
 
 
 def build_domain_context_report(data: dict, output_path: Path) -> Path:
-    """Build HTML report for a DomainContextDocument YAML artifact."""
+    """Build HTML report for a DomainContext YAML artifact."""
     return _render("domain_context_report_template.html", data, output_path)
 
 

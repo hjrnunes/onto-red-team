@@ -2,7 +2,7 @@
 import pytest
 from unittest.mock import MagicMock
 from refiner.models import (
-    RiskVariationAxes, VariationAxis, DomainContextDocument
+    RiskVariationAxes, VariationAxis, DomainContext
 )
 from refiner.stages.contextualize import contextualize, _Variation, _ContextResponse
 
@@ -82,7 +82,7 @@ def test_generates_variations(
         risk_details=sample_risk_details,
         policies=sample_policies,
     )
-    assert isinstance(result, DomainContextDocument)
+    assert isinstance(result, DomainContext)
     assert len(result.policy_contexts) == 1
     assert result.policy_contexts[0].policy_concept == "Do not disclose biometric data"
     assert len(result.policy_contexts[0].risk_groundings) == 1
@@ -181,7 +181,7 @@ def test_empty_axes_returns_grounding_with_empty_axes(
     result = contextualize(
         axes, mock_client, mock_config, mock_onto_handlers,
     )
-    assert isinstance(result, DomainContextDocument)
+    assert isinstance(result, DomainContext)
     assert len(result.policy_contexts) == 1
     assert result.policy_contexts[0].risk_groundings[0].axes == []
     assert mock_client.chat.completions.create.call_count == 0
@@ -193,7 +193,7 @@ def test_empty_input_returns_empty_document(
     result = contextualize(
         [], mock_client, mock_config, mock_onto_handlers,
     )
-    assert isinstance(result, DomainContextDocument)
+    assert isinstance(result, DomainContext)
     assert result.policy_contexts == []
     assert result.risks == []
 

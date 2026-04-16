@@ -69,8 +69,8 @@
     <div class="max-w-screen-xl mx-auto">
       <h1 class="text-2xl font-bold tracking-tight">Policy Ingest Report</h1>
       <p class="text-gray-400 text-sm mt-0.5">
-        <span x-text="data.document?.organization?.name || 'Unknown Organisation'"></span>
-        &mdash; <span x-text="data.document?.domain || '?'"></span>
+        <span x-text="data.profile?.organization?.name || 'Unknown Organisation'"></span>
+        &mdash; <span x-text="data.profile?.domain || '?'"></span>
         &mdash; <span x-text="data.meta?.model || '?'"></span>
         &mdash; <span x-text="data.meta?.timestamp || '?'"></span>
       </p>
@@ -116,12 +116,12 @@
             <span class="dot" :class="'dot-' + data.confidence?.context?.organization"></span>
             <h3 class="tip text-sm font-semibold text-gray-700" data-tip="The organization that operates the AI system. Identified from the policy document header or context.">Organisation</h3>
           </div>
-          <p class="text-gray-800 font-medium" x-text="data.document?.organization?.name || 'Not identified'"></p>
+          <p class="text-gray-800 font-medium" x-text="data.profile?.organization?.name || 'Not identified'"></p>
           <div class="flex items-center gap-2 mt-3">
             <span class="dot" :class="'dot-' + data.confidence?.context?.domain"></span>
             <span class="tip text-xs text-gray-400 uppercase" data-tip="Business domain or industry sector (e.g. banking, healthcare, government).">Domain</span>
           </div>
-          <p class="text-gray-700 text-sm" x-text="data.document?.domain || 'Not identified'"></p>
+          <p class="text-gray-700 text-sm" x-text="data.profile?.domain || 'Not identified'"></p>
         </div>
 
         <!-- Purpose -->
@@ -131,14 +131,14 @@
             <h3 class="tip text-sm font-semibold text-gray-700" data-tip="Stated purposes of the AI system as described in the policy document.">Purpose</h3>
           </div>
           <ul class="text-sm text-gray-700 space-y-1">
-            <template x-for="p in data.document?.purpose || []" :key="p">
+            <template x-for="p in data.profile?.purpose || []" :key="p">
               <li class="flex items-start gap-1.5">
                 <span class="text-gray-400 mt-0.5">&#8226;</span>
                 <span x-text="p"></span>
               </li>
             </template>
           </ul>
-          <p x-show="!(data.document?.purpose?.length)" class="text-sm text-gray-400 italic">None identified</p>
+          <p x-show="!(data.profile?.purpose?.length)" class="text-sm text-gray-400 italic">None identified</p>
         </div>
 
         <!-- Governed Systems -->
@@ -148,11 +148,11 @@
             <h3 class="tip text-sm font-semibold text-gray-700" data-tip="AI systems explicitly covered by this policy (e.g. chatbots, recommendation engines, content generators).">Governed AI Systems</h3>
           </div>
           <div class="flex flex-wrap gap-2">
-            <template x-for="gs in data.document?.governed_systems || []" :key="gs.name">
+            <template x-for="gs in data.profile?.governed_systems || []" :key="gs.name">
               <span class="tip px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800" data-tip="AI system governed by these policies" x-text="gs.name"></span>
             </template>
           </div>
-          <p x-show="!(data.document?.governed_systems?.length)" class="text-sm text-gray-400 italic">None identified</p>
+          <p x-show="!(data.profile?.governed_systems?.length)" class="text-sm text-gray-400 italic">None identified</p>
         </div>
 
         <!-- Regulations -->
@@ -162,7 +162,7 @@
             <h3 class="tip text-sm font-semibold text-gray-700" data-tip="Laws, regulations, and standards the policy references (e.g. EU AI Act, GDPR, NIST AI RMF).">Regulations</h3>
           </div>
           <div class="space-y-1">
-            <template x-for="r in data.document?.regulations || []" :key="r.name">
+            <template x-for="r in data.profile?.regulations || []" :key="r.name">
               <div class="text-sm">
                 <span class="font-medium text-gray-700" x-text="r.name"></span>
                 <span x-show="r.jurisdiction" class="text-gray-400 text-xs ml-1" x-text="'(' + r.jurisdiction + ')'"></span>
@@ -172,7 +172,7 @@
               </div>
             </template>
           </div>
-          <p x-show="!(data.document?.regulations?.length)" class="text-sm text-gray-400 italic">None identified</p>
+          <p x-show="!(data.profile?.regulations?.length)" class="text-sm text-gray-400 italic">None identified</p>
         </div>
 
       </div>
@@ -241,12 +241,12 @@
       <div class="flex items-center gap-1 mb-3">
         <h2 class="tip text-sm font-semibold text-gray-500 uppercase tracking-wide" data-tip="Individual policy concepts extracted from the document, with definitions, boundary examples, acceptable uses, risk controls, and human involvement requirements.">
           Policies
-          <span class="text-gray-400 font-normal" x-text="'(' + (data.document?.policies?.length || 0) + ')'"></span>
+          <span class="text-gray-400 font-normal" x-text="'(' + (data.profile?.policies?.length || 0) + ')'"></span>
         </h2>
         <span class="tip-icon" data-tip="Each policy concept defines one rule the AI system should follow. Boundary examples show the line between prohibited and acceptable behavior.">i</span>
       </div>
       <div class="space-y-4">
-        <template x-for="(policy, idx) in data.document?.policies || []" :key="policy.policy_concept">
+        <template x-for="(policy, idx) in data.profile?.policies || []" :key="policy.policy_concept">
           <div class="border border-gray-200 rounded-lg" x-data="{ open: true }">
 
             <!-- Policy header -->

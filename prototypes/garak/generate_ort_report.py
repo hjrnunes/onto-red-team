@@ -5,13 +5,17 @@ Reads mock garak report data and ORT metadata, then renders an HTML report
 with cross-framework coverage, domain vocabulary analysis, ontological risk
 grouping, and provenance trails.
 
-Run from the refiner venv::
+Usage::
 
-    cd refiner && uv run python ../prototypes/garak/generate_ort_report.py
+    cd refiner
+    uv run python ../prototypes/garak/generate_ort_report.py \
+        --mock-dir ../prototypes/garak/mock_runs/rdash-nhs-gemma-4-26b-a4b-it-g12 \
+        --run-dir ../runs/rdash-nhs-gemma-4-26b-a4b-it-g12
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 from collections import defaultdict
 from pathlib import Path
@@ -23,17 +27,7 @@ from jinja2 import Environment, FileSystemLoader
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-MOCK_DIR = SCRIPT_DIR / "mock_runs"
 TEMPLATE_DIR = SCRIPT_DIR
-
-REPO_ROOT = SCRIPT_DIR.parent.parent
-ORT_RUN_DIR = REPO_ROOT / "runs/rdash-nhs-gemma-4-26b-a4b-it-g12"
-
-REPORT_JSONL = MOCK_DIR / "ort-rdash.report.jsonl"
-MAPPING_JSON = MOCK_DIR / "ort_intent_mapping.json"
-STUBS_JSONL = MOCK_DIR / "ort_stubs.jsonl"
-POLICY_DOC = ORT_RUN_DIR / "rdash-nhs-policy-document.json"
-OUTPUT_HTML = MOCK_DIR / "ort-rdash.report.html"
 
 # ---------------------------------------------------------------------------
 # Probe display names
@@ -695,6 +689,7 @@ def render_report(
     attempts: list[dict],
     mapping: dict,
     stubs: dict[str, dict],
+    policy_doc_path: Path,
 ) -> str:
     """Compute all template variables and render the HTML report."""
     hl_stats = high_level_stats(attempts)
@@ -712,7 +707,7 @@ def render_report(
 
     # ORT-enriched dimensions
     tech_stats = technique_stats(attempts, stubs)
-    policy_texts = load_policy_concepts(POLICY_DOC)
+    policy_texts = load_policy_concepts(policy_doc_path)
     pc_stats = policy_concept_stats(attempts, stubs, policy_texts)
     cf_reach = cross_framework_reach(cf_matrix)
 
@@ -764,16 +759,47 @@ def render_report(
 
 def main() -> None:
     """Load data, extract attempts, render report, and write HTML."""
-    print(f"Loading report from {REPORT_JSONL} ...")
-    raw = parse_jsonl(REPORT_JSONL)
+    parser = argparse.ArgumentParser(description="ORT-enriched ART report generator")
+    parser.add_argument(
+        "--mock-dir", type=Path, required=True,
+        help="Path to mock run directory (contains report.jsonl, intent_mapping.json, stubs.jsonl)",
+    )
+    parser.add_argument(
+        "--run-dir", type=Path, required=True,
+        help="Path to the Refiner run directory (contains *-policy-document.json)",
+    )
+    parser.add_argument(
+        "--output", type=Path, default=None,
+        help="Output HTML path (default: <mock-dir>/report.html)",
+    )
+    args = parser.parse_args()
+
+    mock_dir = args.mock_dir.resolve()
+    run_dir = args.run_dir.resolve()
+
+    report_jsonl = mock_dir / "report.jsonl"
+    mapping_json = mock_dir / "intent_mapping.json"
+    stubs_jsonl = mock_dir / "stubs.jsonl"
+    output_html = args.output or (mock_dir / "report.html")
+
+    # Find policy document by glob
+    pd_files = list(run_dir.glob("*-policy-document.json"))
+    if not pd_files:
+        raise FileNotFoundError(f"No policy-document.json in {run_dir}")
+    policy_doc = pd_files[0]
+
+    print(f"Loading report from {report_jsonl} ...")
+    raw = parse_jsonl(report_jsonl)
     print(f"  {len(raw)} entries")
 
-    print(f"Loading mapping from {MAPPING_JSON} ...")
-    mapping = load_mapping(MAPPING_JSON)
+    print(f"Loading mapping from {mapping_json} ...")
+    mapping = load_mapping(mapping_json)
 
-    print(f"Loading stubs from {STUBS_JSONL} ...")
-    stubs = load_stubs(STUBS_JSONL)
+    print(f"Loading stubs from {stubs_jsonl} ...")
+    stubs = load_stubs(stubs_jsonl)
     print(f"  {len(stubs)} stubs")
+
+    print(f"Loading policy document from {policy_doc} ...")
 
     print("Extracting attempts ...")
     attempts = extract_attempts(raw, mapping)
@@ -783,12 +809,12 @@ def main() -> None:
     print(f"  {complied} complied, {len(attempts) - complied} refused")
 
     print("Rendering report ...")
-    html = render_report(attempts, mapping, stubs)
+    html = render_report(attempts, mapping, stubs, policy_doc)
 
-    OUTPUT_HTML.parent.mkdir(parents=True, exist_ok=True)
-    with open(OUTPUT_HTML, "w") as f:
+    output_html.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_html, "w") as f:
         f.write(html)
-    print(f"Report written to {OUTPUT_HTML}")
+    print(f"Report written to {output_html}")
 
 
 if __name__ == "__main__":

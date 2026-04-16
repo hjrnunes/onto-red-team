@@ -121,7 +121,7 @@ def test_collect_artifacts_whitelists(tmp_path):
     (tmp_path / "swb-dataset.jsonl").write_text("x")
     (tmp_path / "swb-adversarial-prompts.jsonl").write_text("x")
     (tmp_path / "swb-run-report.yaml").write_text("x")
-    (tmp_path / "swb-policy-document.json").write_text("x")
+    (tmp_path / "swb-policy-profile.json").write_text("x")
     (tmp_path / "swb-curie-map.json").write_text("x")
     (tmp_path / "swb-provenance.jsonl").write_text("x")
     (tmp_path / "swb-risk-landscape.yaml").write_text("x")
@@ -143,7 +143,7 @@ def test_collect_artifacts_whitelists(tmp_path):
     assert "swb-dataset.jsonl" in names
     assert "swb-adversarial-prompts.jsonl" in names
     assert "swb-run-report.yaml" in names
-    assert "swb-policy-document.json" in names
+    assert "swb-policy-profile.json" in names
     assert "swb-curie-map.json" in names
     assert "swb-provenance.jsonl" in names
     assert "swb-risk-landscape.yaml" in names
