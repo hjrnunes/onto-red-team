@@ -2,7 +2,112 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 12 (current)
+## Gen 15 (current)
+
+### Added
+
+- **Hybrid ontology-first enumeration** — `contextualize` now collects ontology subclasses first
+  (provenance: `"subclass"`), falls back to siblings for leaf nodes (provenance: `"sibling"`), and
+  only supplements with LLM-generated enumerations when the ontology pool is smaller than
+  `enumerations_per_axis` (default 8). New `_collect_ontology_enumerations()` helper handles the
+  subclass→sibling cascade with domain filtering and definition validation. Report events
+  `ontology_enumerations` and `enumerations_populated` track the hybrid split per axis.
+
+- **Axis compatibility groups** — Anchor LLM now selects 5–8 axes (up from 2–3) and annotates
+  which axes form coherent scenario groups of 2–3. Stored as `axis_groups: list[list[str]]` on
+  both `RiskVariationAxes` and `RiskGrounding`, containing URIs. New `_AxisGroup` response model
+  and `_resolve_axis_groups()` post-processor map LLM candidate IDs to validated URIs.
+
+- **Group-aware axis pool sampling** — `sample_axes()` rewritten to pick a random compatibility
+  group per sample, then draw `k` axes from that group (`k` defaults to 3 via `--axes-per-prompt`).
+  Combinatorial space estimated via `math.comb` per group. Dedup key includes axis identity
+  `(cco_class_uri, sampled_uri)` so the same enumeration on different axes produces distinct
+  samples. New `--axes-per-prompt` CLI option on `emit` command.
+
+- **BFO diversity metric** — New `compute_bfo_diversity()` in `evaluate.py` counts distinct BFO
+  categories per prompt. Reports `mean_distinct_categories` and `category_distribution` in the
+  generation metrics block.
+
+### Changed
+
+- **`PipelineConfig.max_axes_per_risk`** — Default changed from 3 to 8 to reflect the widened
+  axis pool. `axes_per_prompt` (previously on `PipelineConfig`) removed — it is an emit-time
+  concern, controlled via `--axes-per-prompt` CLI flag (default: 3).
+
+### Fixed
+
+- **Anchor cache hit preserving axis_groups** — Added `groups_cache` alongside `axes_cache` so
+  that when the same risk appears under multiple policies, the cache-hit path preserves the
+  compatibility groups from the original LLM call.
+
+- **`sample_axes` default k** — Changed from `len(usable_axes)` (which put all axes into every
+  prompt, defeating group-aware sampling) to `k=3`, matching the design intent.
+
+## Gen 14
+
+### Added
+
+- **Derivation provenance on variation axes** — `AxisDerivation` now carries `seed_label`,
+  `predicate` (e.g. `skos:broadMatch`), and `path_labels` (human-readable labels for each URI
+  in the navigation path). These are populated during `navigate_from_seeds` and carried through
+  enrichment to the final YAML output, enabling full traceability from vocabulary concept →
+  SSSOM seed → structural navigation → selected axis.
+
+- **Navigation breadcrumb in combined report** — The domain context tab now shows a visual
+  navigation chain above each axis's source/domain/confidence line:
+  `sector-health:ClinicalCare → broadMatch Medical Action → diagnostic procedure`.
+  Renders as a compact indigo pill with arrows showing how the pipeline reached each axis class.
+
+### Fixed
+
+- **Diversity injection prefers navigated candidates** — When `merge_tiered` injects an
+  underrepresented ontology family, it now selects by `(path_length, confidence)` instead of
+  confidence alone. Navigated candidates (broadMatch subclass traversal, longer path) are
+  preferred over generic direct seeds (relatedMatch, empty path). Fixes PHI/Consent risks where
+  OMRSE Human Social Role (generic, confidence 0.80) was chosen over MAXO Medical Action
+  subclasses (domain-specific, confidence 0.72) as the OBO representative.
+
+## Gen 13
+
+### Fixed
+
+- **Ontology diversity in `merge_tiered`** — A single high-confidence seed (e.g. CSO PrivacyViolation
+  at 0.81) could fill all 8 structural slots and crowd out domain-specific ontologies (OBO, FIBO,
+  LKIF). Added a diversity injection pass that guarantees at least one structural candidate per
+  ontology family. Representative selection prefers structurally navigated candidates (longer path
+  from broadMatch subclass traversal) over generic direct seeds (relatedMatch), so e.g. MAXO
+  diagnostic procedure is chosen over OMRSE Human Social Role within the OBO family.
+
+- **Vocabulary diversity check** — `merge_tiered` now ensures at least two vocabulary category
+  prefixes (e.g. `sector-health` and `eu-aiact`) are represented in the final candidate set,
+  preventing a single vocabulary category from monopolizing all slots.
+
+### Changed
+
+- **Layer 2 SSSOM expansion (vocabulary-to-ontology)** — Added 9 health-sector → OBO mappings:
+  `sector-health:ClinicalCare` → MAXO Medical Action, OGMS Patient Role, OGMS Disease;
+  `sector-health:PatientTreatment` → MAXO Medical Action, OMRSE Healthcare Provider Role, OGMS
+  Disease; `sector-health:HealthDataGovernance` → DUO Data Use Permission, OGMS Patient Role,
+  DUO Health/Medical Research.
+
+- **Layer 1 SSSOM expansion (risk-to-vocabulary)** — Added `sector-health:ClinicalCare`,
+  `sector-health:PatientTreatment`, and `sector-health:HealthDataGovernance` vocabulary concepts
+  to 10 risk groups across IBM Risk Atlas, CREDO, AI Risk Taxonomy, and MIT frameworks.
+
+- **CCO confidence rebalancing** — Lowered effective confidence for generic CCO seeds: AISubject →
+  Person (0.90→0.70), AIDeployer/AIProvider → Organization (0.85→0.65), AIUser → Person
+  (0.85→0.70), Biometric → Person (0.80→0.65), Vulnerability → InformationContentEntity
+  (0.75→0.60). Prevents generic agent/organization classes from outranking domain-specific seeds.
+
+### Results (gemma-4-26b, gen12 → gen13)
+
+- rdash-nhs: CCO 17%→4%, OBO 4%→44%
+- healthcare: CCO 6%→3%, OBO 38%→66%
+- generic: CCO 31%→19%, OBO 0%→17%
+- dhs-gov: CCO 35%→19%, FIBO 0%→15%
+- swb: FIBO stable at 33%, no regression
+
+## Gen 12
 
 ### Added
 
