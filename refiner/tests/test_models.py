@@ -137,8 +137,9 @@ def test_policy_source_ref_with_values():
 def test_pipeline_config_defaults():
     pc = PipelineConfig()
     assert pc.weak_match_threshold == 0.4
-    assert pc.max_axes_per_risk == 3
+    assert pc.max_axes_per_risk == 8
     assert pc.enumerations_per_axis == 8
+    assert pc.axes_per_prompt == 3
 
 
 def test_pipeline_config_custom():

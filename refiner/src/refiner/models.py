@@ -91,8 +91,9 @@ class PolicySourceRef(BaseModel):
 
 class PipelineConfig(BaseModel):
     weak_match_threshold: float = 0.4
-    max_axes_per_risk: int = 3
+    max_axes_per_risk: int = 8
     enumerations_per_axis: int = 8
+    axes_per_prompt: int = 3
 
 
 class RiskSummary(BaseModel):
@@ -120,7 +121,10 @@ class PolicyRiskMapping(BaseModel):
 class AxisDerivation(BaseModel):
     source: str = ""  # "structural" or "search"
     seed_uri: str = ""
+    seed_label: str = ""
+    predicate: str = ""  # e.g. "skos:broadMatch", "skos:relatedMatch"
     path: list[str] = []
+    path_labels: list[str] = []
     effective_confidence: float = 0.0
     best_distance: float | None = None
     domain: str = ""
@@ -181,6 +185,7 @@ class RiskVariationAxes(BaseModel):
     risk_name: str
     policy_concept: str
     axes: list[VariationAxis]
+    axis_groups: list[list[str]] = []
 
 
 class AxisEnumeration(BaseModel):
@@ -215,6 +220,7 @@ class DomainContextAxis(BaseModel):
 class RiskGrounding(BaseModel):
     risk_id: str
     axes: list[DomainContextAxis]
+    axis_groups: list[list[str]] = []
 
 
 class PolicyDomainContext(BaseModel):
