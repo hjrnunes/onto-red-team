@@ -53,6 +53,72 @@ class _RiskSelection(BaseModel):
     matched_risks: list[_SlimRiskMatch]
 
 
+GAP_TYPE_WEIGHTS = {
+    "domain_specialization": 1.0,
+    "compositional": 0.6,
+    "novel": 1.0,
+}
+
+
+class _GapClassification(BaseModel):
+    gap_type: Literal["domain_specialization", "compositional", "novel"]
+    reasoning: str
+
+
+GAP_CHARACTERIZATION_PROMPT = """\
+You are classifying a coverage gap in an AI risk taxonomy.
+
+A policy concern was not well matched to any existing risk in the knowledge graph. Your job is to determine WHY.
+
+Three gap types:
+- domain_specialization: The concern is a domain-specific variant of an existing risk (e.g. "AI triage liability" is healthcare-specific "Liability"). The risk concept exists but needs domain narrowing.
+- compositional: The concern can be fully expressed as a combination of multiple existing risks (e.g. "automated hiring discrimination via training data bias" = "Bias" + "Discrimination"). No new risk concept is needed.
+- novel: The concern names a fundamentally different failure mode not covered by existing risks, even in combination (e.g. "multi-agent collusion", "AI welfare").
+
+Prefer domain_specialization over compositional. Prefer compositional over novel. Only classify as novel if the concern truly cannot be expressed using existing risks.
+
+Return the gap_type and a one-sentence reasoning."""
+
+
+def characterize_gap(
+    policy_concept: str,
+    concept_definition: str,
+    nearest_candidates: list[dict],
+    client: instructor.Instructor,
+    config: LLMConfig,
+) -> _GapClassification:
+    candidate_lines = []
+    for c in nearest_candidates[:5]:
+        line = f"- {c.get('name', '?')}: {c.get('description', '')}"
+        if c.get("distance") is not None:
+            line += f" (distance: {c['distance']:.3f})"
+        candidate_lines.append(line)
+
+    user_content = (
+        f"Policy concern: {policy_concept}\n"
+        f"Definition: {concept_definition}\n\n"
+        f"Nearest existing risks (none matched well):\n"
+        + "\n".join(candidate_lines)
+    )
+
+    messages = [
+        {"role": "system", "content": GAP_CHARACTERIZATION_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+    result = client.chat.completions.create(
+        model=config.model,
+        response_model=_GapClassification,
+        messages=messages,
+        temperature=config.temperature,
+        max_retries=config.max_retries,
+        max_tokens=config.max_tokens,
+    )
+    debug.log_call("characterize_gap", messages, result, context={
+        "policy_concept": policy_concept,
+    })
+    return result
+
+
 def map_risks(
         policies: list[Policy],
         client: instructor.Instructor,

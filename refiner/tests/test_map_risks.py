@@ -379,3 +379,48 @@ def test_gap_score_moderate_distance_tangential_only():
     )
     # 0.45*0.5 + 0.35*1.0 + 0.20*1.0 = 0.225 + 0.35 + 0.20 = 0.775
     assert 0.7 < score < 0.85
+
+
+from refiner.stages.map_risks import characterize_gap, _GapClassification, GAP_TYPE_WEIGHTS
+
+
+def test_characterize_gap_novel(mock_client, mock_config):
+    mock_client.chat.completions.create.return_value = _GapClassification(
+        gap_type="novel",
+        reasoning="No existing risk covers multi-agent collusion",
+    )
+    result = characterize_gap(
+        policy_concept="Multi-agent collusion",
+        concept_definition="Multiple AI agents coordinating to bypass safety controls",
+        nearest_candidates=[
+            {"name": "Dangerous use", "description": "Dangerous capabilities", "distance": 0.72},
+        ],
+        client=mock_client,
+        config=mock_config,
+    )
+    assert result.gap_type == "novel"
+    assert "multi-agent" in result.reasoning.lower() or "collusion" in result.reasoning.lower() or "No existing" in result.reasoning
+
+
+def test_characterize_gap_compositional_downweighted(mock_client, mock_config):
+    mock_client.chat.completions.create.return_value = _GapClassification(
+        gap_type="compositional",
+        reasoning="Combination of bias and hiring discrimination",
+    )
+    result = characterize_gap(
+        policy_concept="Automated hiring discrimination",
+        concept_definition="AI hiring tools that discriminate via training data bias",
+        nearest_candidates=[
+            {"name": "Bias", "description": "Model bias", "distance": 0.55},
+            {"name": "Discrimination", "description": "Discrimination in outputs", "distance": 0.58},
+        ],
+        client=mock_client,
+        config=mock_config,
+    )
+    assert result.gap_type == "compositional"
+
+
+def test_gap_type_weights():
+    assert GAP_TYPE_WEIGHTS["compositional"] == 0.6
+    assert GAP_TYPE_WEIGHTS["novel"] == 1.0
+    assert GAP_TYPE_WEIGHTS["domain_specialization"] == 1.0
