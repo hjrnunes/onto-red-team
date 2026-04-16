@@ -10,6 +10,7 @@ from refiner.evaluate import (
     compute_semantic_diversity, compute_similarity_edges, compute_sibling_relevance,
     compute_candidate_expansion_effectiveness, compute_query_source_contribution,
     compute_technique_diversity,
+    compute_bfo_diversity,
     _flatten_to_profiles,
 )
 
@@ -1424,3 +1425,41 @@ def test_similarity_edges_node_fields():
     assert "policy_concept" in node
     assert "technique" in node
     assert "risk_name" in node
+
+
+# --- BFO diversity ---
+
+class TestBfoDiversity:
+    def test_computes_distinct_categories_per_prompt(self):
+        rows = [
+            {"sampled_axes": [
+                {"bfo_category": "Role", "sampled_label": "Officer"},
+                {"bfo_category": "InformationContentEntity", "sampled_label": "Report"},
+                {"bfo_category": "Process", "sampled_label": "Audit"},
+            ]},
+            {"sampled_axes": [
+                {"bfo_category": "Role", "sampled_label": "Analyst"},
+                {"bfo_category": "Role", "sampled_label": "Manager"},
+            ]},
+        ]
+        result = compute_bfo_diversity(rows)
+        assert result["per_prompt_counts"] == [3, 1]
+        assert result["mean_distinct_categories"] == 2.0
+        assert result["category_distribution"]["Role"] == 2
+
+    def test_handles_missing_bfo_category(self):
+        rows = [
+            {"sampled_axes": [
+                {"bfo_category": "", "sampled_label": "X"},
+                {"bfo_category": "Role", "sampled_label": "Y"},
+            ]},
+        ]
+        result = compute_bfo_diversity(rows)
+        assert result["per_prompt_counts"] == [1]
+        assert result["mean_distinct_categories"] == 1.0
+
+    def test_empty_input(self):
+        result = compute_bfo_diversity([])
+        assert result["per_prompt_counts"] == []
+        assert result["mean_distinct_categories"] == 0.0
+        assert result["category_distribution"] == {}

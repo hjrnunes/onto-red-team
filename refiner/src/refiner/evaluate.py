@@ -357,6 +357,30 @@ def compute_technique_diversity(rows: list[dict]) -> dict:
     }
 
 
+def compute_bfo_diversity(rows: list[dict]) -> dict:
+    """Compute BFO category diversity across prompts."""
+    per_prompt_counts: list[int] = []
+    category_prompts: dict[str, int] = defaultdict(int)
+
+    for row in rows:
+        categories = set()
+        for sa in row.get("sampled_axes", []):
+            cat = sa.get("bfo_category", "")
+            if cat:
+                categories.add(cat)
+        per_prompt_counts.append(len(categories))
+        for cat in categories:
+            category_prompts[cat] += 1
+
+    mean = sum(per_prompt_counts) / len(per_prompt_counts) if per_prompt_counts else 0.0
+
+    return {
+        "per_prompt_counts": per_prompt_counts,
+        "mean_distinct_categories": round(mean, 2),
+        "category_distribution": dict(sorted(category_prompts.items())),
+    }
+
+
 def compute_single_value_axis_dominance(profiles: list[dict]) -> dict:
     total = 0
     single = 0
@@ -965,6 +989,7 @@ def run_evaluation(
         gen = compute_generation_metrics(emit_rows, profiles)
         gen["enumeration_concentration"] = compute_enumeration_concentration(emit_rows)
         gen["technique_diversity"] = compute_technique_diversity(emit_rows)
+        gen["bfo_diversity"] = compute_bfo_diversity(emit_rows)
         result["generation_metrics"] = gen
 
     if adversarial_path and adversarial_path.exists():
