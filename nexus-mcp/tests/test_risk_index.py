@@ -1,4 +1,20 @@
-from nexus_mcp.risk_index import RiskIndex
+from nexus_mcp.risk_index import RiskIndex, build_structural_context
+
+
+def test_structural_context_group_and_siblings(mock_risks, mock_groups, mock_actions):
+    risks_by_id = {r.id: r for r in mock_risks}
+    actions_by_id = {a.id: a for a in mock_actions}
+    ctx = build_structural_context(risks_by_id, mock_groups, actions_by_id)
+
+    # atlas-prompt-injection is in Robustness group (only member in that group)
+    assert "atlas-prompt-injection" in ctx
+    assert "PartOf: Robustness" in ctx["atlas-prompt-injection"]
+
+    # llm01-prompt-injection shares owasp-llm-top-10-group with llm02
+    owasp_ctx = ctx["llm01-prompt-injection"]
+    assert "PartOf: OWASP LLM Top 10" in owasp_ctx
+    assert "Siblings:" in owasp_ctx
+    assert "LLM02: Sensitive Information Disclosure" in owasp_ctx
 
 
 def test_index_risks(chroma_dir, mock_risks):
