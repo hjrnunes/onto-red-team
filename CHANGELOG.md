@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## Gen 17 (current)
 
+### Improved
+
+- **Anchor stage LLM prompt** — rewrote the system prompt for axis selection:
+  - Clarified that a variation axis is a concept whose instances provide variation, not a dimension itself
+  - Explained candidate categories (Object, Process, Role, etc.) in practical terms with what each varies, removing assumption that the LLM knows BFO
+  - Added guidance to prefer a mix of categories for diverse test scenarios
+  - Prompt now requests a rationale for each axis group (`_AxisGroup.rationale`)
+
 ### Fixed
 
 - **Enriched taxonomy profile matching** — taxonomy entries whose client-policy name differs from the
