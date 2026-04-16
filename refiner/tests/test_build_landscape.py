@@ -198,3 +198,46 @@ def test_build_risk_landscape_empty_inputs():
     assert landscape.risks == []
     assert landscape.policy_mappings == []
     assert landscape.framework_coverage == {}
+
+
+def test_build_risk_landscape_with_coverage_gaps():
+    from refiner.stages.build_landscape import build_risk_landscape
+    from refiner.models import CoverageGap
+
+    gaps = [
+        CoverageGap(
+            policy_concept="Multi-agent collusion",
+            concept_definition="AI agents coordinating to bypass controls",
+            gap_type="novel",
+            confidence=0.82,
+            nearest_risks=[{"id": "atlas-dangerous-use", "name": "Dangerous use", "distance": 0.75}],
+            reasoning="No existing risk covers multi-agent coordination failures",
+        ),
+    ]
+
+    landscape = build_risk_landscape(
+        mappings=[],
+        risk_details_cache={},
+        coverage_gaps=gaps,
+        model="test-model",
+        run_slug="test",
+        timestamp="2026-04-16T12:00:00Z",
+    )
+
+    assert len(landscape.coverage_gaps) == 1
+    assert landscape.coverage_gaps[0].gap_type == "novel"
+    assert landscape.coverage_gaps[0].policy_concept == "Multi-agent collusion"
+
+
+def test_build_risk_landscape_empty_coverage_gaps():
+    from refiner.stages.build_landscape import build_risk_landscape
+
+    landscape = build_risk_landscape(
+        mappings=[],
+        risk_details_cache={},
+        model="test-model",
+        run_slug="test",
+        timestamp="2026-04-16T12:00:00Z",
+    )
+
+    assert landscape.coverage_gaps == []

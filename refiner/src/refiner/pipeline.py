@@ -151,6 +151,7 @@ def run_pipeline(
         model=config.model,
         run_slug=run_slug,
         timestamp=report.timestamp if report else "",
+        coverage_gaps=state.coverage_gaps,
     )
     if until == "map_risks":
         return state

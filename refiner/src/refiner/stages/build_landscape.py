@@ -1,4 +1,5 @@
 from refiner.models import (
+    CoverageGap,
     PolicyProfile,
     PolicyRiskMapping,
     PolicySourceRef,
@@ -44,6 +45,7 @@ def build_risk_landscape(
     timestamp: str = "",
     policy_profile: PolicyProfile | None = None,
     knowledge_base: KnowledgeBaseRef | None = None,
+    coverage_gaps: list[CoverageGap] | None = None,
 ) -> RiskLandscape:
     related_risks = related_risks or {}
     risk_actions = risk_actions or {}
@@ -102,4 +104,5 @@ def build_risk_landscape(
         policy_mappings=mappings,
         framework_coverage=framework_counts,
         weak_matches=weak_matches,
+        coverage_gaps=coverage_gaps or [],
     )

@@ -495,6 +495,7 @@ def map_risks_cmd(
         run_slug=policy_json.stem,
         timestamp=report.timestamp,
         policy_profile=doc,
+        coverage_gaps=coverage_gaps,
     )
 
     out = output_dir or Path(".")
