@@ -91,12 +91,10 @@
     <h2>Sections</h2>
     <a href="#overview" class="active" data-nav>Overview</a>
     <a href="#behavior-by-probe" data-nav>Behavior by Probe</a>
-    <a href="#policy-concepts" data-nav>Policy Concepts</a>
+    <a href="#risk-policy" data-nav>Risk &amp; Policy Analysis</a>
     <a href="#behavior-by-technique" data-nav>Behavior by Technique</a>
-    <a href="#risk-groups" data-nav>Risk Groups</a>
     <a href="#cross-framework" data-nav>Cross-Framework Reach</a>
     <a href="#domain-vocab" data-nav>Domain Vocabulary</a>
-    <a href="#intent-overview" data-nav>Overview by Intent</a>
     <a href="#probe-details" data-nav>Probe Details</a>
     <a href="#provenance" data-nav>Provenance Trail</a>
   </nav>
@@ -138,66 +136,6 @@
       </div>
     </div>
 
-    <!-- ═══════════════ POLICY CONCEPTS ═══════════════ -->
-    <div id="policy-concepts" class="section-anchor">
-      <div class="section-card">
-        <h2>Policy Concepts</h2>
-        <p class="section-subtitle">Attack success rates against the client's original policy language &mdash; each concept is a distinct policy area from the organization's AI governance framework</p>
-
-        <div id="chart-policy-concepts" class="chart-container"></div>
-
-        {% for pc in policy_concept_stats %}
-        <div class="group-card">
-          <h3>
-            {{ pc.concept }}
-            <span class="{% if pc.asr > 10 %}asr-high{% elif pc.asr > 0 %}asr-mid{% else %}asr-low{% endif %}" style="font-size: 13px;">
-              {{ pc.asr }}% ASR
-            </span>
-          </h3>
-          <div class="group-meta">
-            {{ pc.total }} attempts &middot; {{ pc.complied }} complied &middot; {{ pc.total - pc.complied }} refused
-          </div>
-
-          {% if pc.definition %}
-          <div style="margin: 8px 0 12px; padding: 10px 14px; background: var(--pf-t--global--background--color--primary); border-left: 3px solid var(--pf-t--global--border--color--default); font-size: 13px; line-height: 1.5; color: var(--pf-t--global--text--color--regular);">
-            {{ pc.definition }}
-          </div>
-          {% endif %}
-
-          {% if pc.boundary_examples %}
-          <div style="margin-bottom: 10px;">
-            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Policy Boundaries</strong>
-            <table class="report-table" style="margin-top: 4px; font-size: 12px;">
-              <thead>
-                <tr><th style="color: #c9190b;">Prohibited</th><th style="color: #3e8635;">Acceptable</th></tr>
-              </thead>
-              <tbody>
-                {% for ex in pc.boundary_examples %}
-                <tr>
-                  <td>{{ ex.prohibited }}</td>
-                  <td>{{ ex.acceptable }}</td>
-                </tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endif %}
-
-          {% if pc.risk_controls %}
-          <div style="margin-bottom: 6px;">
-            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Required Controls</strong>
-            <ul style="margin: 4px 0 0; padding-left: 20px; font-size: 12px; color: var(--pf-t--global--text--color--regular);">
-              {% for ctrl in pc.risk_controls %}
-              <li>{{ ctrl }}</li>
-              {% endfor %}
-            </ul>
-          </div>
-          {% endif %}
-        </div>
-        {% endfor %}
-      </div>
-    </div>
-
     <!-- ═══════════════ BEHAVIOR BY TECHNIQUE ═══════════════ -->
     <div id="behavior-by-technique" class="section-anchor">
       <div class="section-card">
@@ -231,11 +169,11 @@
       </div>
     </div>
 
-    <!-- ═══════════════ SECTION C: RISK GROUPS ═══════════════ -->
-    <div id="risk-groups" class="section-anchor">
+    <!-- ═══════════════ RISK & POLICY ANALYSIS (merged) ═══════════════ -->
+    <div id="risk-policy" class="section-anchor">
       <div class="section-card">
-        <h2>Risk Groups</h2>
-        <p class="section-subtitle">Ontological grouping of tested risks with outcome distribution</p>
+        <h2>Risk &amp; Policy Analysis</h2>
+        <p class="section-subtitle">Tested risks grouped by policy concept, with the organization's original policy language and per-risk outcome breakdown</p>
 
         <div id="chart-risk-groups" class="chart-container"></div>
 
@@ -251,11 +189,49 @@
             {{ group.total_attempts }} attempts &middot; {{ group.complied }} complied &middot;
             {{ group.risk_ids | length }} risk{{ "s" if group.risk_ids | length != 1 }}
           </div>
+
+          {% if group.definition %}
+          <div style="margin: 8px 0 12px; padding: 10px 14px; background: var(--pf-t--global--background--color--primary); border-left: 3px solid var(--pf-t--global--border--color--default); font-size: 13px; line-height: 1.5; color: var(--pf-t--global--text--color--regular);">
+            {{ group.definition }}
+          </div>
+          {% endif %}
+
+          {% if group.boundary_examples %}
+          <div style="margin-bottom: 10px;">
+            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Policy Boundaries</strong>
+            <table class="report-table" style="margin-top: 4px; font-size: 12px;">
+              <thead>
+                <tr><th style="color: #c9190b;">Prohibited</th><th style="color: #3e8635;">Acceptable</th></tr>
+              </thead>
+              <tbody>
+                {% for ex in group.boundary_examples %}
+                <tr>
+                  <td>{{ ex.prohibited }}</td>
+                  <td>{{ ex.acceptable }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+
+          {% if group.risk_controls %}
+          <div style="margin-bottom: 12px;">
+            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Required Controls</strong>
+            <ul style="margin: 4px 0 0; padding-left: 20px; font-size: 12px; color: var(--pf-t--global--text--color--regular);">
+              {% for ctrl in group.risk_controls %}
+              <li>{{ ctrl }}</li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
+
           <table class="report-table">
             <thead>
               <tr>
                 <th>Risk</th>
                 <th>Nexus ID</th>
+                <th>Framework</th>
                 <th class="num">Attempts</th>
                 <th class="num">Complied</th>
                 <th class="num">ASR</th>
@@ -266,6 +242,7 @@
               <tr>
                 <td>{{ r.risk_name }}</td>
                 <td><code>{{ r.nexus_risk_id }}</code></td>
+                <td>{{ r.risk_framework }}</td>
                 <td class="num">{{ r.total }}</td>
                 <td class="num">{{ r.complied }}</td>
                 <td class="num {% if r.asr > 10 %}asr-high{% elif r.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ r.asr }}%</td>
@@ -355,39 +332,6 @@
               <td class="num">{{ v.total }}</td>
               <td class="num">{{ v.complied }}</td>
               <td class="num {% if v.asr > 10 %}asr-high{% elif v.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ v.asr }}%</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══════════════ INTENT OVERVIEW ═══════════════ -->
-    <div id="intent-overview" class="section-anchor">
-      <div class="section-card">
-        <h2>Overview by Intent</h2>
-        <p class="section-subtitle">Per-intent breakdown across all probe types</p>
-
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Risk Name</th>
-              <th>Nexus Risk ID</th>
-              <th>Framework</th>
-              <th class="num">Attempts</th>
-              <th class="num">Unsafe</th>
-              <th class="num">ASR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for s in intent_stats %}
-            <tr>
-              <td>{{ s.intent_name }}</td>
-              <td><code>{{ s.nexus_risk_id }}</code></td>
-              <td>{{ s.risk_framework }}</td>
-              <td class="num">{{ s.total_attempts }}</td>
-              <td class="num">{{ s.jailbroken }}</td>
-              <td class="num {% if s.attack_success_rate > 10 %}asr-high{% elif s.attack_success_rate > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ s.attack_success_rate }}%</td>
             </tr>
             {% endfor %}
           </tbody>
@@ -637,35 +581,6 @@
         },
         "tooltip": [
           { "field": "group", "title": "Group" },
-          { "field": "outcome", "title": "Outcome" },
-          { "field": "count", "title": "Count" }
-        ]
-      },
-      "config": { "view": { "stroke": null } }
-    }, opts).catch(console.error);
-
-    // ── Policy Concepts stacked bar ──
-    var pcData = {{ policy_concept_stats | tojson }};
-    var pcChartData = [];
-    pcData.forEach(function(pc) {
-      pcChartData.push({ concept: pc.concept, outcome: "Complied", count: pc.complied });
-      pcChartData.push({ concept: pc.concept, outcome: "Refused", count: pc.total - pc.complied });
-    });
-    vegaEmbed('#chart-policy-concepts', {
-      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-      "data": { "values": pcChartData },
-      "width": "container",
-      "height": 200,
-      "mark": { "type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3 },
-      "encoding": {
-        "x": { "field": "concept", "type": "nominal", "title": "Policy Concept", "axis": { "labelAngle": -25, "labelLimit": 250 } },
-        "y": { "field": "count", "type": "quantitative", "title": "Attempts", "stack": "zero" },
-        "color": {
-          "field": "outcome", "type": "nominal", "title": "Outcome",
-          "scale": { "domain": ["Complied", "Refused"], "range": ["#CA5050", "#A4A4A4"] }
-        },
-        "tooltip": [
-          { "field": "concept", "title": "Policy Concept" },
           { "field": "outcome", "title": "Outcome" },
           { "field": "count", "title": "Count" }
         ]

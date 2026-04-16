@@ -166,32 +166,6 @@ def high_level_stats(attempts: list[dict]) -> list[dict]:
     ]
 
 
-def intent_stats(attempts: list[dict]) -> list[dict]:
-    """Per-intent statistics: name, risk ID, framework, totals, ASR."""
-    groups: dict[str, list[dict]] = defaultdict(list)
-    for a in attempts:
-        groups[a["intent"]].append(a)
-
-    stats: list[dict] = []
-    for intent, group in sorted(groups.items()):
-        total = len(group)
-        jailbroken = sum(1 for a in group if a["outcome"] == "complied")
-        # Count baseline stubs (IntentProbe)
-        baseline = sum(1 for a in group if a["probe_classname"] == "base.IntentProbe")
-        asr = (jailbroken / total * 100) if total > 0 else 0.0
-        first = group[0]
-        stats.append({
-            "intent_name": first["risk_name"],
-            "nexus_risk_id": first["nexus_risk_id"],
-            "risk_framework": first["risk_framework"],
-            "total_attempts": total,
-            "jailbroken": jailbroken,
-            "baseline_stubs": baseline,
-            "attack_success_rate": round(asr, 1),
-        })
-
-    return stats
-
 
 # ---------------------------------------------------------------------------
 # Section A: Cross-Framework Coverage
@@ -297,8 +271,15 @@ def domain_vocabulary_analysis(
 # ---------------------------------------------------------------------------
 
 
-def risk_group_stats(attempts: list[dict]) -> list[dict]:
-    """Statistics per ontological risk group with per-risk breakdown."""
+def risk_group_stats(
+    attempts: list[dict],
+    policy_texts: dict[str, dict],
+) -> list[dict]:
+    """Statistics per risk group with per-risk breakdown and policy text.
+
+    Merges risk group aggregation, per-risk detail (with framework), and
+    policy concept language into a single structure per group.
+    """
     groups: dict[str, list[dict]] = defaultdict(list)
     for a in attempts:
         groups[a["risk_group"]].append(a)
@@ -317,6 +298,7 @@ def risk_group_stats(attempts: list[dict]) -> list[dict]:
                 risk_breakdown[rid] = {
                     "risk_name": a["risk_name"],
                     "nexus_risk_id": rid,
+                    "risk_framework": a["risk_framework"],
                     "total": 0,
                     "complied": 0,
                 }
@@ -331,6 +313,9 @@ def risk_group_stats(attempts: list[dict]) -> list[dict]:
 
         risk_ids = sorted(risk_breakdown.keys())
 
+        # Merge policy text for this group
+        policy = policy_texts.get(group_name, {})
+
         result.append({
             "group_name": group_name,
             "risk_ids": risk_ids,
@@ -338,6 +323,10 @@ def risk_group_stats(attempts: list[dict]) -> list[dict]:
             "total_attempts": total,
             "complied": complied,
             "asr": round(asr, 1),
+            "definition": policy.get("definition", ""),
+            "boundary_examples": policy.get("boundary_examples", []),
+            "risk_controls": policy.get("risk_controls", []),
+            "human_involvement": policy.get("human_involvement", ""),
         })
 
     return result
@@ -465,36 +454,6 @@ def load_policy_concepts(path: Path) -> dict[str, dict]:
         }
     return result
 
-
-def policy_concept_stats(
-    attempts: list[dict],
-    stubs: dict[str, dict],
-    policy_texts: dict[str, dict],
-) -> list[dict]:
-    """ASR by policy concept, enriched with original policy language."""
-    by_concept: dict[str, dict] = {}
-    for a in attempts:
-        stub = stubs.get(a["stub_id"], {})
-        concept = stub.get("policy_concept", "Unknown")
-        if concept not in by_concept:
-            by_concept[concept] = {"concept": concept, "total": 0, "complied": 0}
-        by_concept[concept]["total"] += 1
-        if a["outcome"] == "complied":
-            by_concept[concept]["complied"] += 1
-
-    result: list[dict] = []
-    for info in sorted(by_concept.values(), key=lambda x: x["concept"]):
-        asr = (info["complied"] / info["total"] * 100) if info["total"] > 0 else 0.0
-        policy = policy_texts.get(info["concept"], {})
-        result.append({
-            **info,
-            "asr": round(asr, 1),
-            "definition": policy.get("definition", ""),
-            "boundary_examples": policy.get("boundary_examples", []),
-            "risk_controls": policy.get("risk_controls", []),
-            "human_involvement": policy.get("human_involvement", ""),
-        })
-    return result
 
 
 def cross_framework_reach(
@@ -693,12 +652,12 @@ def render_report(
 ) -> str:
     """Compute all template variables and render the HTML report."""
     hl_stats = high_level_stats(attempts)
-    i_stats = intent_stats(attempts)
     i_asr = compute_intent_asr(attempts)
     cf_matrix = cross_framework_matrix(mapping, i_asr)
     cf_summary = cross_framework_summary(cf_matrix)
     vocab = domain_vocabulary_analysis(attempts, stubs)
-    rg_stats = risk_group_stats(attempts)
+    policy_texts = load_policy_concepts(policy_doc_path)
+    rg_stats = risk_group_stats(attempts, policy_texts)
     prov_trails = provenance_trails(attempts, stubs)
 
     # Original ART chart data
@@ -707,8 +666,6 @@ def render_report(
 
     # ORT-enriched dimensions
     tech_stats = technique_stats(attempts, stubs)
-    policy_texts = load_policy_concepts(policy_doc_path)
-    pc_stats = policy_concept_stats(attempts, stubs, policy_texts)
     cf_reach = cross_framework_reach(cf_matrix)
 
     # Cross-framework lens
@@ -731,7 +688,6 @@ def render_report(
         ort_run=ort_run,
         policy_source=policy_source,
         high_level_stats=hl_stats,
-        intent_stats=i_stats,
         cross_framework_matrix=cf_matrix,
         cf_summary=cf_summary,
         domain_vocabulary=vocab,
@@ -742,7 +698,6 @@ def render_report(
         probe_details=probe_details,
         # ORT-enriched dimensions
         technique_stats=tech_stats,
-        policy_concept_stats=pc_stats,
         cross_framework_reach=cf_reach,
         # Cross-framework lens
         cf_lens_data=cf_lens,
