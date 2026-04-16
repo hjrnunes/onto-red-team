@@ -575,6 +575,47 @@ def test_axis_fidelity_default_provenance():
     assert result["by_provenance"]["generated"]["total"] == 1
 
 
+def test_axis_fidelity_stemming():
+    """Morphological variants should match via stemming."""
+    rows = [
+        {"prompt": "This is an urgent request regarding the organization.",
+         "sampled_axes": [
+             {"sampled_label": "false urgency framing"},
+             {"sampled_label": "formal organisation"},
+         ]},
+    ]
+    result = compute_axis_fidelity(rows)
+    assert result["mean_fidelity"] == 1.0
+
+
+def test_axis_fidelity_class_label_fallback():
+    """When sampled label misses, axis class label should be checked."""
+    rows = [
+        {"prompt": "The employee manipulated the financial records to commit fraud.",
+         "sampled_axes": [
+             {"sampled_label": "Ponzi Scheme", "cco_class_label": "Financial Fraud"},
+             {"sampled_label": "Organization Member", "cco_class_label": "Person"},
+         ]},
+    ]
+    result = compute_axis_fidelity(rows)
+    # "fraud" stem matches "Financial Fraud" class label
+    # "person" is not in prompt, but "employee" doesn't match "Person" either
+    # Only "Financial Fraud" class matches via "fraud"
+    assert result["mean_fidelity"] == 0.5
+
+
+def test_axis_fidelity_class_label_not_needed_when_label_matches():
+    """Class label fallback should not be needed when sampled label matches."""
+    rows = [
+        {"prompt": "Review the phishing campaign targeting customers.",
+         "sampled_axes": [
+             {"sampled_label": "Phishing", "cco_class_label": "Social Engineering Fraud"},
+         ]},
+    ]
+    result = compute_axis_fidelity(rows)
+    assert result["full_fidelity"] == 1
+
+
 # --- Named entity utilization ---
 
 def test_named_entity_utilization_basic():

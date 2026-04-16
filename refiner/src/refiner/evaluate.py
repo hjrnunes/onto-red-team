@@ -486,9 +486,37 @@ _AXIS_STOPWORDS = frozenset({
     "act", "function",  # too generic in ontology labels
 })
 
+_STEM_LEN = 5
+
+
+def _normalize_spelling(w: str) -> str:
+    if w.endswith("isation"):
+        return w[:-7] + "ization"
+    if w.endswith("ising"):
+        return w[:-5] + "izing"
+    if w.endswith("ised"):
+        return w[:-4] + "ized"
+    if w.endswith("ise") and len(w) > 4:
+        return w[:-3] + "ize"
+    return w
+
+
+def _word_stem(w: str) -> str:
+    w = _normalize_spelling(w.lower())
+    return w[:_STEM_LEN] if len(w) >= _STEM_LEN else w
+
 
 def _axis_words(label: str) -> set[str]:
     return {w.lower() for w in label.split() if len(w) > 2 and w.lower() not in _AXIS_STOPWORDS}
+
+
+def _prompt_word_stems(prompt: str) -> frozenset[str]:
+    stems: set[str] = set()
+    for w in re.split(r"[^a-zA-Z0-9]+", prompt):
+        w = w.lower()
+        if len(w) > 2 and w not in _AXIS_STOPWORDS:
+            stems.add(_word_stem(w))
+    return frozenset(stems)
 
 
 _SEMANTIC_THRESHOLD = 0.30
@@ -575,6 +603,7 @@ def compute_axis_fidelity(rows: list[dict]) -> dict:
 
         matched = 0
         prompt_lower = (row.get("prompt") or "").lower()
+        p_stems = _prompt_word_stems(prompt_lower)
 
         for sa in axes:
             label = sa.get("sampled_label", "")
@@ -589,13 +618,25 @@ def compute_axis_fidelity(rows: list[dict]) -> dict:
                 by_provenance[prov]["matched"] += 1
                 continue
 
-            # Fast path: keyword match
-            if any(w in prompt_lower for w in words):
+            label_stems = frozenset(_word_stem(w) for w in words)
+
+            # Tier 1: stemmed keyword match on sampled label
+            if label_stems & p_stems:
                 matched += 1
                 by_provenance[prov]["matched"] += 1
                 continue
 
-            # Semantic similarity fallback
+            # Tier 2: stemmed keyword match on axis class label
+            class_label = sa.get("cco_class_label", "")
+            class_words = _axis_words(class_label)
+            if class_words:
+                class_stems = frozenset(_word_stem(w) for w in class_words)
+                if class_stems & p_stems:
+                    matched += 1
+                    by_provenance[prov]["matched"] += 1
+                    continue
+
+            # Tier 3: semantic similarity fallback
             if prompt_emb is not None and label in label_embeddings:
                 sim = _cosine_similarity(label_embeddings[label], prompt_emb)
                 if sim >= _SEMANTIC_THRESHOLD:
