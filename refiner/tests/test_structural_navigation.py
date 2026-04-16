@@ -6,6 +6,7 @@ from refiner.stages.anchor import (
     check_structural_connection,
     merge_tiered,
     derive_bfo_category,
+    _resolve_axis_groups,
 )
 
 
@@ -173,3 +174,126 @@ class TestMergeTiered:
         ]
         result = merge_tiered(structural, [], [], max_total=12)
         assert len(result) <= 12
+
+    def test_ontology_diversity_injects_underrepresented(self):
+        """High-confidence CSO candidates should not crowd out OBO candidates.
+
+        Reproduces the rdash-nhs Data Privacy pattern: 8 CSO PrivacyViolation
+        subclasses at 0.81 fill all structural slots, while OBO Disease
+        subclasses at 0.72 never enter the candidate pool.
+        """
+        # 8 CSO candidates at high confidence
+        cso_base = "http://taxonomy-refiner.io/ontologies/cso#"
+        cso = [
+            {"uri": f"{cso_base}Priv{i}", "effective_confidence": 0.81,
+             "path": [f"{cso_base}PrivacyViolation", f"{cso_base}Priv{i}"],
+             "vocabulary_concept": "eu-rights:T2-DataProtection"}
+            for i in range(8)
+        ]
+        # 4 OBO candidates at lower confidence
+        obo_base = "http://purl.obolibrary.org/obo/"
+        obo = [
+            {"uri": f"{obo_base}OGMS_{i:07d}", "effective_confidence": 0.72,
+             "path": [f"{obo_base}OGMS_0000031", f"{obo_base}OGMS_{i:07d}"],
+             "vocabulary_concept": "pd:MedicalHealth"}
+            for i in range(4)
+        ]
+        # 1 CCO candidate at highest confidence
+        cco = [
+            {"uri": "https://www.commoncoreontologies.org/ont00001262",
+             "effective_confidence": 0.855, "path": [],
+             "vocabulary_concept": "eu-aiact:AISubject"}
+        ]
+        structural = cco + cso + obo
+
+        result = merge_tiered(structural, [], [])
+        result_uris = {c["uri"] for c in result}
+
+        # At least one OBO candidate must appear despite lower confidence
+        obo_in_result = {u for u in result_uris if obo_base in u}
+        assert obo_in_result, (
+            "OBO candidates crowded out by higher-confidence CSO/CCO; "
+            "ontology diversity guarantee failed"
+        )
+        # CCO and CSO should still be present
+        assert any("commoncoreontologies" in u for u in result_uris)
+        assert any("taxonomy-refiner.io" in u for u in result_uris)
+
+    def test_ontology_diversity_prefers_navigated_over_generic(self):
+        """Diversity injection should pick structurally navigated candidates
+        over generic direct seeds within the same ontology family.
+
+        Reproduces the PHI/Consent pattern: OMRSE Human Social Role (generic,
+        empty path, higher confidence) vs MAXO Medical Action subclasses
+        (domain-specific, navigated path, lower confidence).  The navigated
+        candidate should win because longer path = more specific.
+        """
+        obo_base = "http://purl.obolibrary.org/obo/"
+        # Generic OBO candidate: high confidence, no structural navigation
+        generic_obo = {
+            "uri": f"{obo_base}OMRSE_00000001",
+            "effective_confidence": 0.80,
+            "path": [],  # direct relatedMatch seed
+            "vocabulary_concept": "eu-aiact:AISubject",
+        }
+        # Domain-specific OBO candidates: lower confidence, navigated paths
+        specific_obo = [
+            {"uri": f"{obo_base}MAXO_000000{i}",
+             "effective_confidence": 0.72,
+             "path": [f"{obo_base}MAXO_0000001", f"{obo_base}MAXO_000000{i}"],
+             "vocabulary_concept": "sector-health:ClinicalCare"}
+            for i in range(1, 4)
+        ]
+        # CSO candidates fill structural slots
+        cso_base = "http://taxonomy-refiner.io/ontologies/cso#"
+        cso = [
+            {"uri": f"{cso_base}Priv{i}", "effective_confidence": 0.81,
+             "path": [f"{cso_base}PrivacyViolation", f"{cso_base}Priv{i}"],
+             "vocabulary_concept": "eu-rights:T2-DataProtection"}
+            for i in range(8)
+        ]
+        structural = cso + [generic_obo] + specific_obo
+
+        result = merge_tiered(structural, [], [])
+        result_uris = {c["uri"] for c in result}
+
+        # The navigated MAXO candidate should be picked, not generic OMRSE
+        assert any("MAXO" in u for u in result_uris), (
+            "Diversity injection picked generic OMRSE over navigated MAXO"
+        )
+        assert f"{obo_base}OMRSE_00000001" not in result_uris, (
+            "Generic OMRSE selected despite navigated MAXO candidates available"
+        )
+
+
+class TestResolveAxisGroups:
+    def test_resolves_valid_groups(self):
+        id_to_uri = {"C1": "http://ex/A", "C2": "http://ex/B", "C3": "http://ex/C"}
+        valid_uris = {"http://ex/A", "http://ex/B", "http://ex/C"}
+        raw_groups = [["C1", "C2"], ["C2", "C3"]]
+
+        result = _resolve_axis_groups(raw_groups, id_to_uri, valid_uris)
+
+        assert result == [["http://ex/A", "http://ex/B"], ["http://ex/B", "http://ex/C"]]
+
+    def test_filters_invalid_ids(self):
+        id_to_uri = {"C1": "http://ex/A", "C2": "http://ex/B"}
+        valid_uris = {"http://ex/A", "http://ex/B"}
+        raw_groups = [["C1", "C99"], ["C1", "C2"]]
+
+        result = _resolve_axis_groups(raw_groups, id_to_uri, valid_uris)
+
+        assert result == [["http://ex/A", "http://ex/B"]]
+
+    def test_filters_invalid_uris(self):
+        id_to_uri = {"C1": "http://ex/A", "C2": "http://ex/B"}
+        valid_uris = {"http://ex/A"}
+        raw_groups = [["C1", "C2"]]
+
+        result = _resolve_axis_groups(raw_groups, id_to_uri, valid_uris)
+
+        assert result == []
+
+    def test_empty_groups(self):
+        result = _resolve_axis_groups([], {}, set())
+        assert result == []
