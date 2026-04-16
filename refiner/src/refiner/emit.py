@@ -75,7 +75,7 @@ def sample_axes(
 
     k = axes_per_prompt
     if k is None:
-        k = len(usable_axes)
+        k = 3  # default from PipelineConfig.axes_per_prompt
 
     weights_per_axis = {
         a.cco_class_uri: relevance_weights(a.enumerations) for a in usable_axes

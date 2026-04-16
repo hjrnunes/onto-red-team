@@ -608,6 +608,7 @@ def anchor(
 
     results: list[RiskVariationAxes] = []
     axes_cache: dict[str, list[VariationAxis]] = {}  # risk_id -> cached axes
+    groups_cache: dict[str, list[list[str]]] = {}  # risk_id -> cached axis_groups
     vocab_cache: dict[str, dict] = {}  # risk_id -> vocabulary context
 
     for mapping in risk_mappings:
@@ -621,6 +622,7 @@ def anchor(
                     risk_name=rm.risk_name,
                     policy_concept=mapping.policy_concept,
                     axes=axes_cache[rm.risk_id],
+                    axis_groups=groups_cache.get(rm.risk_id, []),
                 ))
                 continue
 
@@ -738,6 +740,7 @@ def anchor(
                 if report:
                     report.events.append({"stage": "anchor", "event": "empty_axes", "risk_id": rm.risk_id})
                 axes_cache[rm.risk_id] = []
+                groups_cache[rm.risk_id] = []
                 results.append(RiskVariationAxes(
                     risk_id=rm.risk_id,
                     risk_name=rm.risk_name,
@@ -851,13 +854,14 @@ def anchor(
                     roles=[],  # backward compat
                 ))
 
-            # Cache axes by risk_id for deduplication
+            # Cache axes and groups by risk_id for deduplication
             axes_cache[rm.risk_id] = valid_axes
 
             # Resolve axis groups
             valid_uris = {a.cco_class_uri for a in valid_axes}
             raw_groups = [g.axis_ids for g in result.groups] if result.groups else []
             axis_groups = _resolve_axis_groups(raw_groups, id_to_uri, valid_uris)
+            groups_cache[rm.risk_id] = axis_groups
 
             # Stitch back metadata the LLM doesn't need to produce
             results.append(RiskVariationAxes(

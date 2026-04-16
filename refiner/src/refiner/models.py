@@ -93,7 +93,6 @@ class PipelineConfig(BaseModel):
     weak_match_threshold: float = 0.4
     max_axes_per_risk: int = 8
     enumerations_per_axis: int = 8
-    axes_per_prompt: int = 3
 
 
 class RiskSummary(BaseModel):

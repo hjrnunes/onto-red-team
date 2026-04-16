@@ -669,7 +669,7 @@ def emit(
         None, "--technique-weights",
         help="JSON string with technique weight overrides, e.g. '{\"pretexting\": 2, \"analytical_reframing\": 1}'",
     ),
-    axes_per_prompt: int = typer.Option(None, "--axes-per-prompt", help="Number of axes per prompt (default: use all)"),
+    axes_per_prompt: int = typer.Option(None, "--axes-per-prompt", help="Number of axes per prompt (default: 3)"),
 ):
     """Emit an sdg_hub-ready JSONL dataset from domain context profiles."""
     if not output_dir.is_dir():
