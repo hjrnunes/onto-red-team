@@ -143,3 +143,28 @@ def test_needs_reindex_stale(chroma_dir, mock_risks):
     idx.index_risks(mock_risks)
     # Simulate adding a new risk
     assert idx.needs_reindex(len(mock_risks) + 1) is True
+
+
+def test_needs_reindex_version_mismatch(chroma_dir, mock_risks):
+    from nexus_mcp.risk_index import SCHEMA_VERSION
+
+    idx = RiskIndex(chroma_dir)
+    idx.index_risks(mock_risks)
+    assert idx.needs_reindex(len(mock_risks)) is False
+
+    # Simulate old schema by overwriting collection metadata
+    collection = idx._client.get_collection(name="risk_entries")
+    # Delete and recreate with old version
+    idx._client.delete_collection("risk_entries")
+    old_col = idx._client.create_collection(
+        name="risk_entries",
+        metadata={"hnsw:space": "cosine", "schema_version": SCHEMA_VERSION - 1},
+    )
+    # Add a dummy doc so count matches
+    old_col.upsert(
+        ids=[r.id for r in mock_risks],
+        documents=[r.name for r in mock_risks],
+        metadatas=[{"id": r.id, "name": r.name, "description": "", "concern": "",
+                     "taxonomy": "", "risk_type": "", "group": ""} for r in mock_risks],
+    )
+    assert idx.needs_reindex(len(mock_risks)) is True

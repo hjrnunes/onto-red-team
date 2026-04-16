@@ -5,6 +5,7 @@ from typing import Any
 import chromadb
 
 COLLECTION_NAME = "risk_entries"
+SCHEMA_VERSION = 2  # bump when document format changes
 
 
 def build_structural_context(
@@ -93,7 +94,7 @@ class RiskIndex:
         self._chroma_dir = Path(chroma_dir)
         self._client = chromadb.PersistentClient(path=str(self._chroma_dir))
 
-    def index_risks(self, risks: list) -> None:
+    def index_risks(self, risks: list, structural_context: dict[str, str] | None = None) -> None:
         """Index risk entries into ChromaDB. Overwrites existing collection."""
         try:
             self._client.delete_collection(COLLECTION_NAME)
@@ -102,7 +103,7 @@ class RiskIndex:
 
         collection = self._client.create_collection(
             name=COLLECTION_NAME,
-            metadata={"hnsw:space": "cosine"},
+            metadata={"hnsw:space": "cosine", "schema_version": SCHEMA_VERSION},
         )
 
         if not risks:
@@ -116,6 +117,8 @@ class RiskIndex:
             if risk.concern:
                 doc_parts.append(f"Concern: {risk.concern}")
             doc = ". ".join(doc_parts)
+            if structural_context and risk.id in structural_context:
+                doc = f"{doc}. {structural_context[risk.id]}"
 
             ids.append(risk.id)
             documents.append(doc)
@@ -144,7 +147,11 @@ class RiskIndex:
     def needs_reindex(self, expected_count: int) -> bool:
         """Check if the index needs rebuilding."""
         try:
-            return self.count() != expected_count
+            collection = self._client.get_collection(name=COLLECTION_NAME)
+            if collection.count() != expected_count:
+                return True
+            version = collection.metadata.get("schema_version", 1)
+            return version != SCHEMA_VERSION
         except Exception:
             return True
 
