@@ -168,3 +168,32 @@ def test_needs_reindex_version_mismatch(chroma_dir, mock_risks):
                      "taxonomy": "", "risk_type": "", "group": ""} for r in mock_risks],
     )
     assert idx.needs_reindex(len(mock_risks)) is True
+
+
+def test_index_with_structural_context(chroma_dir, mock_risks, mock_groups, mock_actions):
+    risks_by_id = {r.id: r for r in mock_risks}
+    actions_by_id = {a.id: a for a in mock_actions}
+    ctx = build_structural_context(risks_by_id, mock_groups, actions_by_id)
+
+    idx = RiskIndex(chroma_dir)
+    idx.index_risks(mock_risks, structural_context=ctx)
+
+    assert idx.count() == len(mock_risks)
+
+    # Search should still return valid results with expected fields
+    results = idx.search("prompt injection attack", top_k=3)
+    assert len(results) <= 3
+    for r in results:
+        assert "id" in r
+        assert "name" in r
+        assert "distance" in r
+
+
+def test_index_without_structural_context(chroma_dir, mock_risks):
+    """Calling index_risks without structural_context still works."""
+    idx = RiskIndex(chroma_dir)
+    idx.index_risks(mock_risks)
+    assert idx.count() == len(mock_risks)
+
+    results = idx.search("prompt injection", top_k=3)
+    assert len(results) > 0
