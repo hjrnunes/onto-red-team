@@ -166,6 +166,29 @@ def test_structure_deduplicates_entries_by_id():
     assert "nist-fraud" in entry.get("related_mappings", [])
 
 
+def test_structure_deduplicates_by_risk_id_not_name():
+    """Same risk_id with different LLM-generated names should produce one entry."""
+    risk_mappings = [
+        PolicyRiskMapping(
+            policy_concept="Security",
+            matched_risks=[RiskMatch(risk_id="credo-026", risk_name="Fraud and scams", relevance="primary", justification="j")],
+        ),
+        PolicyRiskMapping(
+            policy_concept="Fraud",
+            matched_risks=[
+                RiskMatch(risk_id="credo-026", risk_name="Facilitating fraud", relevance="primary", justification="j"),
+                RiskMatch(risk_id="mit-4.3", risk_name="Fraud and scams", relevance="supporting", justification="j"),
+            ],
+        ),
+    ]
+    domain_context = DomainContext()
+    taxonomy, _ = structure("test", risk_mappings, domain_context)
+    risk_ids = [e["risk_id"] for e in taxonomy["entries"]]
+    assert risk_ids.count("credo-026") == 1
+    assert risk_ids.count("mit-4.3") == 1
+    assert len(taxonomy["entries"]) == 2
+
+
 def test_structure_emits_cross_mapping_filtered():
     """When cross-mapping target is not in valid_risk_ids, emit cross_mapping_filtered."""
     risk_mappings, related_risks, domain_context = _make_state_data()

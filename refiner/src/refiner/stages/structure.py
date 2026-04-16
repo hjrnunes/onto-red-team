@@ -49,16 +49,16 @@ def structure(
             "isDefinedByTaxonomy": taxonomy_id,
         })
 
-    # Build entries from risk mappings, deduplicating by entry ID
-    entries_by_id: dict[str, dict] = {}
+    # Build entries from risk mappings, deduplicating by risk_id
+    entries_by_risk_id: dict[str, dict] = {}
     for mapping in risk_mappings:
         group_slug = slugify(mapping.policy_concept)
         group_id = f"{taxonomy_id}-{group_slug}"
 
         for rm in mapping.matched_risks:
-            entry_id = f"{taxonomy_id}-{slugify(rm.risk_name)}"
-            if entry_id not in entries_by_id:
-                entries_by_id[entry_id] = {
+            if rm.risk_id not in entries_by_risk_id:
+                entry_id = f"{taxonomy_id}-{slugify(rm.risk_name)}"
+                entries_by_risk_id[rm.risk_id] = {
                     "id": entry_id,
                     "name": rm.risk_name,
                     "risk_id": rm.risk_id,
@@ -68,7 +68,7 @@ def structure(
                     "isPartOf": group_id,
                     "tag": slugify(rm.risk_name),
                 }
-            entry = entries_by_id[entry_id]
+            entry = entries_by_risk_id[rm.risk_id]
             # Add cross-mappings from knowledge graph ground truth
             if related_risks:
                 for rel in related_risks.get(rm.risk_id, []):
@@ -109,7 +109,7 @@ def structure(
                         "source_ontologies": sorted(all_ontologies),
                         "axes": axes_summary,
                     }
-    entries = list(entries_by_id.values())
+    entries = list(entries_by_risk_id.values())
 
     taxonomy = {
         "curie_map": CURIE_MAP,

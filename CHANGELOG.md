@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 17 (current)
+## Gen 18 (current)
+
+### Fixed
+
+- **Taxonomy dedup by risk_id, not LLM name** — `structure.py` deduplicated taxonomy entries by
+  `slugify(rm.risk_name)`, the LLM-generated short name. When the same risk was matched to multiple
+  policy concepts, the LLM could produce different names (e.g. `credo-risk-026` → "Fraud, scams, and
+  manipulation" under Security & Malware, but "Facilitating fraudulent activities" under Fraud),
+  creating duplicate entries. Meanwhile, a different risk (`mit-ai-risk-subdomain-4.3`) with the same
+  LLM-generated name was silently dropped by the slug collision. Fixed by deduplicating on `risk_id`
+  instead.
+
+## Gen 17
 
 ### Added
 
