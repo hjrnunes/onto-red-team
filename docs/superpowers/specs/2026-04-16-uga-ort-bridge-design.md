@@ -21,57 +21,62 @@ Both systems consume the same knowledge graph (AI Atlas Nexus), use SKOS predica
 2. Makes ORT's outputs interpretable by UGA (enabling guardrail validation and risk recalibration)
 3. Keeps both systems independent — the bridge is metadata, not coupling
 
-## Approach: SSSOM Bridge Artifacts
+## Approach: Nexus Term Adoption + SSSOM Bridge
 
-The bridge follows the same pattern both systems already use for risk cross-mappings: SSSOM files with SKOS predicates and provenance metadata. No schema changes to either system.
+The input envelope (system, stakeholders, domain, regulations) is near-identical between UGA and ORT. Rather than maintaining an SSSOM translation layer for what is effectively terminological drift, ORT adopts the nexus LinkML terms directly for its input models. The bridge then only exists where there is a genuine semantic gap: the Risk → Policy projection.
 
-**Why not extend the nexus LinkML schema?** The nexus is IBM-maintained. Adding ORT-specific classes would couple ORT's evolution to the nexus release cycle and require upstream buy-in. The bridge approach works with the nexus as-is.
+For the output direction, ORT's pipeline produces genuinely new knowledge (ontological grounding, adversarial prompts, evaluation metrics) that has no nexus equivalent. An SSSOM file documents what aligns back and what doesn't.
+
+**Why not extend the nexus LinkML schema?** The nexus is IBM-maintained. Adding ORT-specific classes would couple ORT's evolution to the nexus release cycle and require upstream buy-in.
 
 **Why not JSON-LD?** Both systems already serialize to YAML/JSON. JSON-LD would add boilerplate without practical benefit — neither system requires SPARQL access, and LinkML's known limitation with nested `@type` directives would cause friction.
 
 ## Bridge Structure
 
-Three artifacts, co-located with ORT's existing SSSOM files:
+Two artifacts plus this spec:
 
 ```
 refiner/data/
   risk-to-vocabulary.sssom.tsv          # existing Layer 1
   vocabulary-to-ontology.sssom.tsv      # existing Layer 2
   ontology-to-bfo.sssom.tsv            # existing Layer 3
-  uga-to-ort.sssom.tsv                 # new — input projection
   ort-to-uga.sssom.tsv                 # new — output alignment
 ```
 
-This spec (the prose projection specification) serves as the third artifact.
+No `uga-to-ort.sssom.tsv` is needed — the input envelope uses nexus terms natively, and the Risk → Policy projection is specified in prose below (it's a semantic transformation, not a field mapping).
 
 ---
 
 ## Layer A: UGA → ORT Input Projection
 
-Maps UGA's use-case output (AiSystem + Questionnaire responses + Risk assessment) onto ORT's `PolicyProfile` input schema.
+### Nexus Term Adoption (Input Envelope)
 
-### Direct Mappings
+ORT adopts nexus LinkML terms directly for its input models. The mapping table from the original design showed near-identity (`exactMatch` at 0.90-0.95) for the input envelope — maintaining a separate SSSOM translation layer for this would be documenting terminological drift, not semantic correspondence.
 
-| UGA (nexus LinkML) | SKOS Predicate | ORT (Pydantic) | Confidence | Notes |
-|---|---|---|---|---|
-| `AiSystem.name` | `skos:exactMatch` | `GovernedSystem.name` | 0.95 | |
-| `AiSystem.description` | `skos:exactMatch` | `GovernedSystem.description` | 0.95 | |
-| `AiSystem.hasPurpose` | `skos:exactMatch` | `GovernedSystem.purpose` | 0.95 | |
-| `AiSystem.hasEuRiskCategory` | `skos:closeMatch` | `GovernedSystem.risk_level` | 0.80 | UGA: EU AI Act categories; ORT: high/limited/minimal/unclassified. Requires value normalization. |
-| `AiSystem.isDevelopedBy` | `skos:exactMatch` | `PolicyProfile.organization` (role: `airo:AIProvider`) | 0.90 | |
-| `AiSystem.isDeployedBy` | `skos:exactMatch` | `Stakeholder` (role: `airo:AIDeployer`) | 0.90 | |
-| `AIUser` | `skos:exactMatch` | `Stakeholder` (role: `airo:AIUser`) | 0.95 | Same AIRO class |
-| `AISubject` | `skos:exactMatch` | `Stakeholder` (role: `airo:AISubject`) | 0.95 | Same AIRO class |
-| `AiSystem.isAppliedWithinDomain` | `skos:closeMatch` | `PolicyProfile.domain` | 0.75 | UGA: structured enum; ORT: free text string |
-| `RiskControl` | `skos:relatedMatch` | `Policy.risk_controls` | 0.70 | UGA: structured entity with `hasRelatedAction`; ORT: string list |
-| `Action.description` | `skos:closeMatch` | `Policy.risk_controls[]` | 0.80 | UGA's action descriptions map to ORT's control strings |
-| `Prohibition` | `skos:closeMatch` | `Policy` | 0.75 | UGA's governance rules map to ORT policy concepts |
-| `Obligation` | `skos:closeMatch` | `Policy` | 0.75 | |
-| `AiSystem.hasRelatedRisk → Risk` | `skos:broadMatch` | `Policy.policy_concept` | 0.70 | Key semantic gap — see projection logic below |
+**Adopted terms:**
 
-### Risk → Policy Projection
+| Nexus LinkML | ORT adoption | Notes |
+|---|---|---|
+| `AiSystem` | Replaces `GovernedSystem` | Fields: `name`, `description`, `hasPurpose`, `hasEuRiskCategory` |
+| `AiSystem.isDevelopedBy` | Replaces `PolicyProfile.organization` | Producer/developer stakeholder |
+| `AiSystem.isDeployedBy` | Maps to `Stakeholder` (role: `airo:AIDeployer`) | |
+| `AiSystem.isAppliedWithinDomain` | Replaces `PolicyProfile.domain` | ORT accepts nexus structured enum or free text |
+| `AISubject` | Already used | Same AIRO class, same CURIEs |
+| `AIUser` | Already used | Same AIRO class, same CURIEs |
+| `AIDeployer` | Already used | Same AIRO class, same CURIEs |
+| `AIDeveloper` | Already used | Same AIRO class, same CURIEs |
+| `RiskControl` | Replaces `Policy.risk_controls` (string list) | ORT accepts nexus structured entity or string fallback |
+| `Action` | Replaces inline control descriptions | Nexus `Action.description` consumed directly |
 
-UGA outputs prioritized `Risk` entities (with severity: High/Medium/Low). ORT expects `Policy` objects (`policy_concept` + `concept_definition`). These aren't equivalent — a risk describes what can go wrong; a policy describes what's prohibited.
+**Stakeholder encoding:** UGA uses a class hierarchy (`AISubject`, `AIOperator` → `AIDeployer`, `AIDeveloper`, `AIUser`). ORT flattens this into `list[Stakeholder]` with AIRO role CURIEs. Both use the same AIRO ontology — the encoding difference (class hierarchy vs role CURIEs) is resolved at ingestion by assigning the corresponding CURIE to each nexus stakeholder subclass.
+
+**Regulatory references:** UGA encodes regulation implicitly via `hasEuAiSystemType` and `hasEuRiskCategory`. ORT accepts these and can also extract explicit `RegulatoryReference` entries from them.
+
+**What ORT can accept natively from UGA:** A nexus `AiSystem` YAML/JSON blob can be consumed directly as an ORT pipeline input for the envelope portion. No adapter code needed for these fields.
+
+### Risk → Policy Projection (The Genuine Semantic Gap)
+
+This is where the bridge does real work. UGA outputs prioritized `Risk` entities (with severity: High/Medium/Low). ORT expects `Policy` objects (`policy_concept` + `concept_definition`). These aren't equivalent — a risk describes what can go wrong; a policy describes what's prohibited.
 
 **Projection logic:**
 
@@ -81,14 +86,7 @@ UGA outputs prioritized `Risk` entities (with severity: High/Medium/Low). ORT ex
 
 **Severity → Relevance:** UGA's High/Medium/Low severity does not map directly to ORT's primary/supporting/tangential relevance (which is determined by ORT's own risk matching). However, UGA severity can be carried as metadata to inform downstream prioritization — e.g., emit more prompts for High-severity risks.
 
-### Cardinality Differences
-
-| Aspect | UGA | ORT | Resolution |
-|---|---|---|---|
-| AI systems | Single `AiSystem` per use-case | `list[GovernedSystem]` | Wrap single system in list |
-| Stakeholders | Class hierarchy (`AISubject`, `AIOperator` → `AIDeployer`, `AIDeveloper`, `AIUser`) | Flat `list[Stakeholder]` with role CURIEs | Flatten hierarchy, assign role CURIEs |
-| Risks | `AiSystem.hasRelatedRisk` (multivalued) | `list[Policy]` (each with concept + definition) | One Policy per risk, projected via concern field |
-| Regulations | Implicit via `hasEuAiSystemType`, `hasEuRiskCategory` | Explicit `list[RegulatoryReference]` | Extract from EU AI Act classification |
+**Governance rules → Policies:** UGA's `Prohibition` and `Obligation` entities express what's forbidden or required. These map naturally to ORT `Policy` objects — a `Prohibition` is essentially a policy concept with its rule text as the definition.
 
 ### What Doesn't Map (UGA → ORT)
 
@@ -100,6 +98,17 @@ These UGA elements have no ORT input equivalent:
 - `AiSystem.hasCapability` — ORT doesn't reason about model capabilities.
 
 These are not semantic gaps to fix — they reflect the systems' different concerns. ORT tests policies, not models.
+
+### ORT-Specific Enrichment (Post-Ingestion)
+
+After accepting nexus input, ORT's ingest stage enriches the data with fields that have no nexus source:
+
+- `Policy.boundary_examples` — examples of acceptable vs unacceptable uses
+- `Policy.acceptable_uses` — explicitly permitted uses
+- `Policy.human_involvement` — human oversight requirements
+- `PolicyDecomposition` (agent/activity/entity) — grammatical decomposition of the policy
+
+These are generated by ORT's ingest LLM pass. They flow downstream into the pipeline but are not part of the bridge — they're ORT's value-add on top of the nexus input.
 
 ---
 
@@ -187,7 +196,7 @@ UGA Phase                          Bridge                         ORT Phase
                                    
 3. UGA recommends guardrails       
    → RiskControl, Action entities  
-                                   uga-to-ort.sssom.tsv
+                                   Nexus terms adopted natively
                                    + Risk.concern → Policy projection
                                    ─────────────────────►
                                                           4. ORT ingests as PolicyProfile
