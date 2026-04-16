@@ -9,6 +9,7 @@ import yaml
 from refiner import debug
 from refiner.llm import LLMConfig, TokenTracker, create_client
 from refiner.models import Policy, PolicyProfile, RunReport
+from refiner.nexus_adapter import detect_nexus_format, nexus_to_policy_profile
 from refiner.pipeline import run_pipeline, STAGES
 from refiner.export import export_taxonomy
 
@@ -178,11 +179,16 @@ def run(
         typer.echo(f"Error: --until must be one of: {', '.join(STAGES)}", err=True)
         raise typer.Exit(1)
 
-    # Load policies — detect flat array vs enriched PolicyProfile
+    # Load policies — detect flat array vs nexus format vs enriched PolicyProfile
     raw = json.loads(policy_json.read_text())
     if isinstance(raw, list):
         policies = [Policy(**p) for p in raw]
         policy_profile = None
+    elif detect_nexus_format(raw):
+        doc = nexus_to_policy_profile(raw)
+        policies = doc.policies
+        policy_profile = doc
+        typer.echo(f"Detected nexus format: {len(policies)} risks projected to policies")
     else:
         doc = PolicyProfile(**raw)
         policies = doc.policies

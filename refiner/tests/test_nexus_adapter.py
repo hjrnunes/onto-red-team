@@ -1,3 +1,5 @@
+import json
+
 from refiner.nexus_adapter import project_risk_to_policy
 
 
@@ -107,3 +109,55 @@ def test_nexus_to_policy_profile_risk_controls():
     }
     profile = nexus_to_policy_profile(payload)
     assert profile.policies[0].risk_controls == ["Run fairness benchmarks before deployment."]
+
+
+from refiner.nexus_adapter import detect_nexus_format
+from refiner.models import PolicyProfile
+
+
+def test_detect_nexus_format(tmp_path):
+    nexus_payload = {
+        "ai_system": {"name": "Test"},
+        "risks": [{"id": "r1", "name": "Risk", "concern": "Concern."}],
+    }
+    path = tmp_path / "use-case.json"
+    path.write_text(json.dumps(nexus_payload))
+    raw = json.loads(path.read_text())
+    assert detect_nexus_format(raw) is True
+
+    flat_array = [{"policy_concept": "Fraud", "concept_definition": "..."}]
+    assert detect_nexus_format(flat_array) is False
+
+    profile = {"airo_version": "0.2", "policies": []}
+    assert detect_nexus_format(profile) is False
+
+
+def test_nexus_payload_roundtrip_to_profile():
+    payload = {
+        "ai_system": {
+            "name": "Fraud Detection System",
+            "isAppliedWithinDomain": "finance",
+            "isDevelopedBy": {"name": "FinTech Corp"},
+            "hasAISubject": [{"name": "Bank Customer"}],
+            "hasEuRiskCategory": "high",
+        },
+        "risks": [
+            {
+                "id": "atlas-social-engineering",
+                "name": "Social Engineering",
+                "concern": "An AI model may generate content used to manipulate individuals.",
+            },
+        ],
+        "risk_controls": [
+            {"name": "Content filtering", "description": "Apply output content filters."},
+        ],
+    }
+    profile = nexus_to_policy_profile(payload)
+
+    # Verify full roundtrip to dict and back
+    d = profile.model_dump()
+    restored = PolicyProfile(**d)
+    assert restored.domain == "finance"
+    assert restored.ai_systems[0].name == "Fraud Detection System"
+    assert restored.policies[0].policy_concept == "Social Engineering"
+    assert restored.policies[0].risk_controls == ["Apply output content filters."]

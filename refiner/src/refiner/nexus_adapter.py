@@ -11,6 +11,22 @@ from refiner.models import (
 )
 
 
+def detect_nexus_format(raw: dict | list) -> bool:
+    """Detect whether a parsed JSON payload is in nexus format.
+
+    Nexus format is a dict with 'risks' key (list of Risk entities)
+    and optionally 'ai_system'. Distinguished from PolicyProfile
+    (which has 'policies') and flat arrays.
+    """
+    if isinstance(raw, list):
+        return False
+    if not isinstance(raw, dict):
+        return False
+    if "policies" in raw:
+        return False
+    return "risks" in raw
+
+
 def project_risk_to_policy(risk: dict) -> Policy:
     """Project a nexus Risk entity into an ORT Policy.
 
