@@ -133,9 +133,13 @@ def _create_risk_handlers(nexus_base_dir: str, nexus_chroma_dir: Path) -> dict:
     groups = nexus.get_all("groups")
     chroma_dir = nexus_chroma_dir
     chroma_dir.mkdir(parents=True, exist_ok=True)
+
+    from nexus_mcp.risk_index import build_structural_context
+
     idx = RiskIndex(chroma_dir)
     if idx.needs_reindex(len(all_risks)):
-        idx.index_risks(all_risks)
+        ctx = build_structural_context(risks_by_id, groups, actions_by_id)
+        idx.index_risks(all_risks, structural_context=ctx)
     return create_tool_handlers(
         risk_index=idx, risks_by_id=risks_by_id, actions_by_id=actions_by_id,
         taxonomies=taxonomies, groups=groups,
