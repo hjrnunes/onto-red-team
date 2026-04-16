@@ -17,6 +17,7 @@ from refiner.models import (
     RunReport,
 )
 from refiner import debug
+from refiner.stages.identify_domains import derive_source_ontology
 
 logger = logging.getLogger(__name__)
 
@@ -76,6 +77,61 @@ def _find_policy(policies: list[Policy] | None, policy_concept: str) -> Policy |
     return None
 
 
+def _collect_ontology_enumerations(
+    axis_uri: str,
+    onto_handlers: dict,
+    selected_domains: list[str] | None,
+    max_enumerations: int = 10,
+) -> list[AxisEnumeration]:
+    """Collect enumerations from ontology subclasses, with sibling fallback for leaf nodes."""
+    enumerations: list[AxisEnumeration] = []
+
+    subclasses = onto_handlers["get_subclasses"](axis_uri, depth=1)
+    for sc in subclasses:
+        uri = sc.get("uri", "")
+        if not uri:
+            continue
+        domain = derive_source_ontology(uri)
+        if selected_domains and domain and domain not in selected_domains:
+            continue
+        defn = onto_handlers["get_class_definition"](uri)
+        if defn is None:
+            continue
+        label = defn.get("label", sc.get("label", ""))
+        if not label:
+            continue
+        enumerations.append(AxisEnumeration(
+            class_uri=uri, class_label=label,
+            source_ontology=domain or "unknown", relevance="high", provenance="subclass",
+        ))
+        if len(enumerations) >= max_enumerations:
+            break
+
+    if not enumerations:
+        siblings = onto_handlers["get_siblings"](axis_uri)
+        for sib in siblings:
+            uri = sib.get("uri", "")
+            if not uri or uri == axis_uri:
+                continue
+            domain = derive_source_ontology(uri)
+            if selected_domains and domain and domain not in selected_domains:
+                continue
+            defn = onto_handlers["get_class_definition"](uri)
+            if defn is None:
+                continue
+            label = defn.get("label", sib.get("label", ""))
+            if not label:
+                continue
+            enumerations.append(AxisEnumeration(
+                class_uri=uri, class_label=label,
+                source_ontology=domain or "unknown", relevance="medium", provenance="sibling",
+            ))
+            if len(enumerations) >= max_enumerations:
+                break
+
+    return enumerations
+
+
 def contextualize(
     variation_axes: list[RiskVariationAxes],
     client: instructor.Instructor,
@@ -89,6 +145,7 @@ def contextualize(
     run_slug: str = "",
     timestamp: str = "",
     risk_landscape: RiskLandscape | None = None,
+    enumerations_per_axis: int = 8,
 ) -> DomainContext:
     # Extract fields from RiskLandscape if provided
     if risk_landscape is not None:
@@ -115,7 +172,7 @@ def contextualize(
     for rva in variation_axes:
         if rva.risk_id in context_cache:
             logger.debug("Cache hit for risk_id=%s, reusing context", rva.risk_id)
-            grounding = RiskGrounding(risk_id=rva.risk_id, axes=context_cache[rva.risk_id])
+            grounding = RiskGrounding(risk_id=rva.risk_id, axes=context_cache[rva.risk_id], axis_groups=rva.axis_groups)
             policy_groundings.setdefault(rva.policy_concept, []).append(grounding)
             seen_risk_ids.add(rva.risk_id)
             risk_names[rva.risk_id] = rva.risk_name
@@ -123,7 +180,7 @@ def contextualize(
 
         if not rva.axes:
             context_cache[rva.risk_id] = []
-            grounding = RiskGrounding(risk_id=rva.risk_id, axes=[])
+            grounding = RiskGrounding(risk_id=rva.risk_id, axes=[], axis_groups=[])
             policy_groundings.setdefault(rva.policy_concept, []).append(grounding)
             seen_risk_ids.add(rva.risk_id)
             risk_names[rva.risk_id] = rva.risk_name
@@ -138,87 +195,123 @@ def contextualize(
 
         populated_axes = []
         for axis in rva.axes:
-            # Get optional subclass examples as reference
-            subclass_examples = []
-            subclasses = onto_handlers["get_subclasses"](axis.cco_class_uri, depth=1)
-            for sc in subclasses[:5]:
-                defn = onto_handlers["get_class_definition"](sc.get("uri", ""))
-                if defn:
-                    subclass_examples.append(defn.get("label", sc.get("label", "")))
-
-            # Build prompt
-            vocab_block = _format_vocabulary_context(vocab_ctx)
-            bfo_tag = f" [{axis.bfo_category}]" if axis.bfo_category else ""
-            vocab_tag = ""
-            if axis.vocabulary_concept:
-                vocab_tag = f" (via {axis.vocabulary_label or axis.vocabulary_concept})"
-
-            axis_block = (
-                f"Axis: {axis.cco_class_label}{bfo_tag}{vocab_tag}\n"
-                f"Rationale: {axis.rationale}\n"
+            # Collect ontology enumerations first
+            onto_enums = _collect_ontology_enumerations(
+                axis.cco_class_uri, onto_handlers, selected_domains, max_enumerations=enumerations_per_axis
             )
-            if subclass_examples:
-                axis_block += f"Ontology examples: {', '.join(subclass_examples)}\n"
-
-            policy_block = ""
-            if policy:
-                policy_block = f"\nPolicy: {policy.policy_concept}\n"
-                policy_block += f"Definition: {policy.concept_definition}\n"
-                if policy.boundary_examples:
-                    boundary = policy.boundary_examples[0]
-                    policy_block += f"Prohibited: {boundary.prohibited}\n"
-                    policy_block += f"Acceptable: {boundary.acceptable}\n"
-                if policy.acceptable_uses:
-                    policy_block += f"Acceptable uses: {', '.join(policy.acceptable_uses[:3])}\n"
-                if policy.risk_controls:
-                    policy_block += f"Controls: {', '.join(policy.risk_controls[:3])}\n"
-
-            user_content = (
-                f"Risk: {rva.risk_name}\n"
-                f"Description: {description}\n"
-                + (f"Concern: {concern}\n" if concern else "")
-                + "\n"
-                + axis_block
-                + (f"\n{vocab_block}\n" if vocab_block else "")
-                + policy_block
-            )
-
-            messages = [
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": user_content},
-            ]
-            result = client.chat.completions.create(
-                model=config.model,
-                response_model=_ContextResponse,
-                messages=messages,
-                temperature=config.temperature,
-                max_retries=config.max_retries,
-                max_tokens=config.max_tokens,
-            )
-            debug.log_call("contextualize", messages, result, context={
-                "risk_id": rva.risk_id,
-                "axis_uri": axis.cco_class_uri,
-                "axis_label": axis.cco_class_label,
-            })
 
             if report:
+                subclass_count = sum(1 for e in onto_enums if e.provenance == "subclass")
+                sibling_count = sum(1 for e in onto_enums if e.provenance == "sibling")
                 report.events.append({
-                    "stage": "contextualize", "event": "variations_generated",
+                    "stage": "contextualize", "event": "ontology_enumerations",
                     "risk_id": rva.risk_id,
                     "axis_uri": axis.cco_class_uri,
-                    "count": len(result.variations),
+                    "subclass_count": subclass_count,
+                    "sibling_count": sibling_count,
                 })
 
             enumerations = []
-            for var in result.variations:
-                enumerations.append(AxisEnumeration(
-                    class_uri=f"generated:{var.instance.lower().replace(' ', '_')}",
-                    class_label=var.instance,
-                    source_ontology="generated",
-                    relevance=var.relevance,
-                    provenance="generated",
-                    generated_by=config.model,
-                ))
+            # If we have enough ontology enumerations, skip LLM
+            if len(onto_enums) >= enumerations_per_axis:
+                enumerations = onto_enums[:enumerations_per_axis]
+            else:
+                # Hybrid: supplement with LLM
+                needed = enumerations_per_axis - len(onto_enums)
+
+                # Get subclass examples for prompt
+                subclass_examples = []
+                subclasses = onto_handlers["get_subclasses"](axis.cco_class_uri, depth=1)
+                for sc in subclasses[:5]:
+                    defn = onto_handlers["get_class_definition"](sc.get("uri", ""))
+                    if defn:
+                        subclass_examples.append(defn.get("label", sc.get("label", "")))
+
+                # Build prompt
+                vocab_block = _format_vocabulary_context(vocab_ctx)
+                bfo_tag = f" [{axis.bfo_category}]" if axis.bfo_category else ""
+                vocab_tag = ""
+                if axis.vocabulary_concept:
+                    vocab_tag = f" (via {axis.vocabulary_label or axis.vocabulary_concept})"
+
+                axis_block = (
+                    f"Axis: {axis.cco_class_label}{bfo_tag}{vocab_tag}\n"
+                    f"Rationale: {axis.rationale}\n"
+                )
+
+                # Adjust prompt based on whether we already have ontology enums
+                if onto_enums:
+                    onto_labels = [e.class_label for e in onto_enums]
+                    axis_block += f"Already found from ontology: {', '.join(onto_labels)}\n"
+                    axis_block += f"Generate {needed} additional diverse variations.\n"
+                elif subclass_examples:
+                    axis_block += f"Ontology examples: {', '.join(subclass_examples)}\n"
+
+                policy_block = ""
+                if policy:
+                    policy_block = f"\nPolicy: {policy.policy_concept}\n"
+                    policy_block += f"Definition: {policy.concept_definition}\n"
+                    if policy.boundary_examples:
+                        boundary = policy.boundary_examples[0]
+                        policy_block += f"Prohibited: {boundary.prohibited}\n"
+                        policy_block += f"Acceptable: {boundary.acceptable}\n"
+                    if policy.acceptable_uses:
+                        policy_block += f"Acceptable uses: {', '.join(policy.acceptable_uses[:3])}\n"
+                    if policy.risk_controls:
+                        policy_block += f"Controls: {', '.join(policy.risk_controls[:3])}\n"
+
+                user_content = (
+                    f"Risk: {rva.risk_name}\n"
+                    f"Description: {description}\n"
+                    + (f"Concern: {concern}\n" if concern else "")
+                    + "\n"
+                    + axis_block
+                    + (f"\n{vocab_block}\n" if vocab_block else "")
+                    + policy_block
+                )
+
+                messages = [
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_content},
+                ]
+                llm_response = client.chat.completions.create(
+                    model=config.model,
+                    response_model=_ContextResponse,
+                    messages=messages,
+                    temperature=config.temperature,
+                    max_retries=config.max_retries,
+                    max_tokens=config.max_tokens,
+                )
+                debug.log_call("contextualize", messages, llm_response, context={
+                    "risk_id": rva.risk_id,
+                    "axis_uri": axis.cco_class_uri,
+                    "axis_label": axis.cco_class_label,
+                })
+
+                llm_enums = []
+                for var in llm_response.variations[:needed]:
+                    llm_enums.append(AxisEnumeration(
+                        class_uri=f"generated:{var.instance.lower().replace(' ', '_')}",
+                        class_label=var.instance,
+                        source_ontology="generated",
+                        relevance=var.relevance,
+                        provenance="generated",
+                        generated_by=config.model,
+                    ))
+
+                enumerations = onto_enums + llm_enums
+
+            if report:
+                onto_count = sum(1 for e in enumerations if e.provenance in ("subclass", "sibling"))
+                generated_count = sum(1 for e in enumerations if e.provenance == "generated")
+                report.events.append({
+                    "stage": "contextualize", "event": "enumerations_populated",
+                    "risk_id": rva.risk_id,
+                    "axis_uri": axis.cco_class_uri,
+                    "total": len(enumerations),
+                    "ontology": onto_count,
+                    "generated": generated_count,
+                })
 
             if enumerations:
                 populated_axes.append(DomainContextAxis(
@@ -241,7 +334,12 @@ def contextualize(
 
         context_cache[rva.risk_id] = populated_axes
 
-        grounding = RiskGrounding(risk_id=rva.risk_id, axes=context_cache[rva.risk_id])
+        # Filter axis_groups to only include axes that survived
+        populated_uris = {a.cco_class_uri for a in populated_axes}
+        filtered_groups = [[uri for uri in group if uri in populated_uris] for group in rva.axis_groups]
+        filtered_groups = [g for g in filtered_groups if len(g) >= 2]
+
+        grounding = RiskGrounding(risk_id=rva.risk_id, axes=context_cache[rva.risk_id], axis_groups=filtered_groups)
         policy_groundings.setdefault(rva.policy_concept, []).append(grounding)
         seen_risk_ids.add(rva.risk_id)
         risk_names[rva.risk_id] = rva.risk_name
