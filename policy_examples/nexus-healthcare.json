@@ -1,0 +1,40 @@
+{
+  "ai_system": {
+    "name": "Medical Triage Chatbot",
+    "description": "An AI-assisted system for initial patient symptom assessment and triage prioritization in emergency departments.",
+    "hasPurpose": ["symptom assessment", "triage prioritization", "patient routing"],
+    "isAppliedWithinDomain": "healthcare",
+    "isDevelopedBy": {"name": "HealthTech Solutions"},
+    "isDeployedBy": {"name": "City General Hospital"},
+    "hasAIUser": [
+      {"name": "Emergency nurse"},
+      {"name": "Triage coordinator"}
+    ],
+    "hasAISubject": [
+      {"name": "Emergency patient"},
+      {"name": "Patient family member"}
+    ],
+    "hasEuRiskCategory": "high"
+  },
+  "risks": [
+    {
+      "id": "atlas-generating-inaccurate-output",
+      "name": "Generating Inaccurate Output",
+      "concern": "An AI model may produce medically inaccurate triage recommendations, potentially leading to incorrect prioritization of patient severity and delayed treatment for critical cases."
+    },
+    {
+      "id": "atlas-personal-information-in-prompt",
+      "name": "Personal Information in Prompt",
+      "concern": "Protected health information (PHI) including patient symptoms, medical history, and identifying details may be included in prompts sent to the AI model, risking HIPAA violations."
+    },
+    {
+      "id": "atlas-societal-bias",
+      "name": "Societal Bias",
+      "concern": "The triage system may exhibit bias based on patient demographics such as race, gender, or socioeconomic status, leading to inequitable care prioritization."
+    }
+  ],
+  "risk_controls": [
+    {"name": "Clinical validation", "description": "All AI triage recommendations must be reviewed by a qualified healthcare professional before acting on them."},
+    {"name": "PHI minimization", "description": "Minimize protected health information in prompts through de-identification and data masking techniques."}
+  ]
+}

@@ -1,0 +1,28 @@
+# curie_map:
+#   ort: https://taxonomy-refiner.io/schema/
+#   nexus: https://ibm.github.io/ai-atlas-nexus/
+#   airo: https://w3id.org/airo#
+#   skos: http://www.w3.org/2004/02/skos/core#
+#   semapv: https://w3id.org/semapv/vocab/
+#
+# mapping_set_id: ort-to-uga-output-alignment
+# mapping_set_description: Maps ORT pipeline outputs to AI Atlas Nexus LinkML schema classes for UGA consumption
+# mapping_set_version: 0.1
+# mapping_date: 2026-04-16
+# mapping_tool: manual
+# license: https://creativecommons.org/licenses/by/4.0/
+subject_id	subject_label	predicate_id	object_id	object_label	mapping_justification	confidence
+ort:RiskDetail.risk_id	Risk Detail ID	skos:exactMatch	nexus:Risk.id	Risk ID	semapv:ManualMappingCuration	0.95
+ort:RiskDetail.risk_name	Risk Detail Name	skos:exactMatch	nexus:Risk.name	Risk Name	semapv:ManualMappingCuration	0.95
+ort:RiskDetail.cross_mappings	Risk Cross Mappings	skos:exactMatch	nexus:Risk.related_mappings	Risk Related Mappings	semapv:ManualMappingCuration	0.95
+ort:RiskDetail.related_actions	Risk Related Actions	skos:exactMatch	nexus:Risk.hasRelatedAction	Risk Has Related Action	semapv:ManualMappingCuration	0.95
+ort:PolicyRiskMapping.distance	Match Distance	skos:relatedMatch	nexus:AiEvalResult.value	Evaluation Result Value	semapv:ManualMappingCuration	0.70
+ort:JudgeScore.subtlety	Judge Subtlety Score	skos:closeMatch	nexus:AiEvalResult	AI Evaluation Result	semapv:ManualMappingCuration	0.80
+ort:JudgeScore.plausibility	Judge Plausibility Score	skos:closeMatch	nexus:AiEvalResult	AI Evaluation Result	semapv:ManualMappingCuration	0.80
+ort:JudgeScore.domain_grounding	Judge Domain Grounding Score	skos:closeMatch	nexus:AiEvalResult	AI Evaluation Result	semapv:ManualMappingCuration	0.80
+ort:JudgeScore.policy_relevance	Judge Policy Relevance Score	skos:closeMatch	nexus:AiEvalResult	AI Evaluation Result	semapv:ManualMappingCuration	0.80
+ort:EmittedPrompt	Emitted Adversarial Prompt	skos:broadMatch	nexus:Fact.value	Fact Value	semapv:ManualMappingCuration	0.60
+ort:EmittedPrompt.risk_id	Emitted Prompt Risk ID	skos:exactMatch	nexus:Risk.id	Risk ID	semapv:ManualMappingCuration	0.95
+ort:Coverage.risks_matched	Risks Matched Count	skos:relatedMatch	nexus:AiEvalResult	AI Evaluation Result	semapv:ManualMappingCuration	0.65
+ort:PromptMetrics.semantic_diversity	Semantic Diversity Score	skos:relatedMatch	nexus:AiEvalResult	AI Evaluation Result	semapv:ManualMappingCuration	0.60
+ort:RiskLandscape.framework_coverage	Framework Coverage	skos:relatedMatch	nexus:Risk.isDefinedByTaxonomy	Risk Taxonomy Source	semapv:ManualMappingCuration	0.65
