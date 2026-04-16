@@ -15,7 +15,7 @@ def _context_confidence(doc: PolicyProfile) -> dict:
     ctx["organization"] = "green" if doc.organization and doc.organization.name else "red"
     ctx["domain"] = "green" if doc.domain else "red"
     ctx["purpose"] = "green" if doc.purpose else "red"
-    ctx["governed_systems"] = "green" if doc.governed_systems else "red"
+    ctx["ai_systems"] = "green" if doc.ai_systems else "red"
 
     if not doc.stakeholders:
         ctx["stakeholders"] = "red"

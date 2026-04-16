@@ -9,7 +9,7 @@ from pydantic import BaseModel
 from refiner.llm import LLMConfig
 from refiner.models import (
     BoundaryExample,
-    GovernedSystem,
+    AiSystem,
     Policy,
     PolicyDecomposition,
     PolicyProfile,
@@ -398,7 +398,7 @@ def _build_document(context: _SlimContext, policies: list[Policy]) -> PolicyProf
         organization=Stakeholder(name=context.organization) if context.organization else None,
         domain=context.domain,
         purpose=context.purpose,
-        governed_systems=[GovernedSystem(name=s) for s in context.ai_systems],
+        ai_systems=[AiSystem(name=s) for s in context.ai_systems],
         stakeholders=stakeholders,
         regulations=[RegulatoryReference(name=r) for r in context.governing_regulations],
         policies=policies,

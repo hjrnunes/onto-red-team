@@ -6,6 +6,14 @@ from refiner.models import (
     RiskGrounding, PolicyDomainContext, DomainContext,
 )
 
+def test_ai_system_creation():
+    from refiner.models import AiSystem
+    system = AiSystem(name="Medical Triage Chatbot", description="Patient triage", purpose=["symptom assessment"], risk_level="high")
+    assert system.name == "Medical Triage Chatbot"
+    assert system.purpose == ["symptom assessment"]
+    assert system.risk_level == "high"
+
+
 def test_policy_creation():
     p = Policy(policy_concept="Fraud", concept_definition="Prompts about fraud")
     assert p.policy_concept == "Fraud"
@@ -455,6 +463,27 @@ def test_risk_landscape_yaml_round_trip(tmp_path):
     landscape2 = RiskLandscape(**loaded)
     assert landscape2.risks[0].risk_id == "r1"
     assert landscape2.policy_mappings[0].policy_concept == "Policy A"
+
+
+def test_policy_profile_governed_systems_backward_compat():
+    from refiner.models import PolicyProfile
+    data = {
+        "governed_systems": [{"name": "Legacy System"}],
+        "policies": [],
+    }
+    profile = PolicyProfile(**data)
+    assert len(profile.ai_systems) == 1
+    assert profile.ai_systems[0].name == "Legacy System"
+
+
+def test_policy_profile_ai_systems_field():
+    from refiner.models import AiSystem, PolicyProfile
+    profile = PolicyProfile(
+        ai_systems=[AiSystem(name="New System")],
+        policies=[],
+    )
+    assert len(profile.ai_systems) == 1
+    assert profile.ai_systems[0].name == "New System"
 
 
 def test_risk_landscape_defaults():

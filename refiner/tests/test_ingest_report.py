@@ -5,7 +5,7 @@ import json
 from refiner.ingest_report import build_report_data
 from refiner.models import (
     BoundaryExample,
-    GovernedSystem,
+    AiSystem,
     Policy,
     PolicyDecomposition,
     PolicyProfile,
@@ -39,7 +39,7 @@ def _full_doc():
         organization=Stakeholder(name="Acme Corp"),
         domain="finance",
         purpose=["chatbot"],
-        governed_systems=[GovernedSystem(name="ChatGPT")],
+        ai_systems=[AiSystem(name="ChatGPT")],
         stakeholders=[
             Stakeholder(name="staff", roles=["airo:AIUser"]),
             Stakeholder(name="customers", roles=["airo:AISubject"]),
@@ -73,7 +73,7 @@ def test_context_confidence_all_green():
     assert ctx["organization"] == "green"
     assert ctx["domain"] == "green"
     assert ctx["purpose"] == "green"
-    assert ctx["governed_systems"] == "green"
+    assert ctx["ai_systems"] == "green"
     assert ctx["stakeholders"] == "green"
     assert ctx["regulations"] == "green"
 
@@ -85,7 +85,7 @@ def test_context_confidence_missing_fields():
     assert ctx["organization"] == "red"
     assert ctx["domain"] == "red"
     assert ctx["purpose"] == "red"
-    assert ctx["governed_systems"] == "red"
+    assert ctx["ai_systems"] == "red"
     assert ctx["stakeholders"] == "red"
     assert ctx["regulations"] == "red"
 
@@ -96,7 +96,7 @@ def test_context_confidence_regulations_amber():
         organization=Stakeholder(name="Acme"),
         domain="finance",
         purpose=["chatbot"],
-        governed_systems=[GovernedSystem(name="ChatGPT")],
+        ai_systems=[AiSystem(name="ChatGPT")],
         stakeholders=[Stakeholder(name="staff", roles=["airo:AIUser"])],
         regulations=[RegulatoryReference(name="GDPR")],
     )
@@ -110,7 +110,7 @@ def test_context_confidence_stakeholders_amber():
         organization=Stakeholder(name="Acme"),
         domain="finance",
         purpose=["chatbot"],
-        governed_systems=[GovernedSystem(name="ChatGPT")],
+        ai_systems=[AiSystem(name="ChatGPT")],
         stakeholders=[
             Stakeholder(name="staff", roles=["airo:AIUser"]),
             Stakeholder(name="patients", roles=["airo:AISubject"]),

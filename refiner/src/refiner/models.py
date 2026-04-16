@@ -1,6 +1,6 @@
 from typing import Literal
 from dataclasses import dataclass, field
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, model_validator
 
 
 class BoundaryExample(BaseModel):
@@ -23,11 +23,15 @@ class Stakeholder(BaseModel):
     description: str | None = None
 
 
-class GovernedSystem(BaseModel):
+class AiSystem(BaseModel):
     name: str
     description: str | None = None
     purpose: list[str] = []
     risk_level: Literal["high", "limited", "minimal", "unclassified"] | None = None
+
+
+# Backward-compatible alias
+GovernedSystem = AiSystem
 
 
 class RegulatoryReference(BaseModel):
@@ -60,7 +64,7 @@ class PolicyProfile(BaseModel):
     organization: Stakeholder | None = None
     domain: str | None = None
     purpose: list[str] = []
-    governed_systems: list[GovernedSystem] = []
+    ai_systems: list[AiSystem] = []
     stakeholders: list[Stakeholder] = []
     regulations: list[RegulatoryReference] = []
     policies: list[Policy] = []
@@ -71,6 +75,13 @@ class PolicyProfile(BaseModel):
         if isinstance(v, str):
             return Stakeholder(name=v) if v else None
         return v
+
+    @model_validator(mode="before")
+    @classmethod
+    def _migrate_governed_systems(cls, data):
+        if isinstance(data, dict) and "governed_systems" in data and "ai_systems" not in data:
+            data["ai_systems"] = data.pop("governed_systems")
+        return data
 
 
 class VocabularyContext(BaseModel):

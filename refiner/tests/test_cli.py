@@ -197,7 +197,7 @@ def _make_enriched_policy_file(tmp_path: Path) -> Path:
         "organization": {"name": "Test Org", "roles": [], "description": None},
         "domain": "healthcare",
         "purpose": [],
-        "governed_systems": [],
+        "ai_systems": [],
         "stakeholders": [],
         "regulations": [],
         "policies": [

@@ -61,7 +61,7 @@ def test_policy_document_defaults():
     assert doc.organization is None
     assert doc.domain is None
     assert doc.purpose == []
-    assert doc.governed_systems == []
+    assert doc.ai_systems == []
     assert doc.stakeholders == []
     assert doc.regulations == []
     assert doc.policies == []
