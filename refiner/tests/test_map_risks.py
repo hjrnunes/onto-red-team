@@ -331,3 +331,51 @@ def test_map_risks_actions_skips_empty_descriptions(mock_client, mock_config, mo
         classifications, mock_client, mock_config, mock_risk_handlers,
     )
     assert risk_actions["atlas-fraud"] == ["Real description"]
+
+
+from refiner.stages.map_risks import compute_gap_score
+
+
+def test_gap_score_all_distant_no_primary():
+    """High distance + no primary match + decomposition = high gap score."""
+    from refiner.models import PolicyDecomposition
+    score = compute_gap_score(
+        min_distance=0.7,
+        primary_count=0,
+        has_decomposition=True,
+    )
+    # 0.45*0.7 + 0.35*1.0 + 0.20*1.0 = 0.315 + 0.35 + 0.20 = 0.865
+    assert abs(score - 0.865) < 0.01
+
+
+def test_gap_score_close_match_with_primary():
+    """Low distance + primary match = low gap score."""
+    score = compute_gap_score(
+        min_distance=0.15,
+        primary_count=2,
+        has_decomposition=True,
+    )
+    # 0.45*0.15 + 0.35*0.0 + 0.20*1.0 = 0.0675 + 0 + 0.20 = 0.2675
+    assert score < 0.4
+
+
+def test_gap_score_no_decomposition_still_works():
+    """Without decomposition, the score degrades gracefully (lower ceiling)."""
+    score = compute_gap_score(
+        min_distance=0.8,
+        primary_count=0,
+        has_decomposition=False,
+    )
+    # 0.45*0.8 + 0.35*1.0 + 0.20*0.0 = 0.36 + 0.35 + 0 = 0.71
+    assert abs(score - 0.71) < 0.01
+
+
+def test_gap_score_moderate_distance_tangential_only():
+    """Moderate distance, no primary but has matches = moderate score."""
+    score = compute_gap_score(
+        min_distance=0.5,
+        primary_count=0,
+        has_decomposition=True,
+    )
+    # 0.45*0.5 + 0.35*1.0 + 0.20*1.0 = 0.225 + 0.35 + 0.20 = 0.775
+    assert 0.7 < score < 0.85

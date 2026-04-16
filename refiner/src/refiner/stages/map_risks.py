@@ -14,6 +14,20 @@ from refiner import debug
 logger = logging.getLogger(__name__)
 
 WEAK_MATCH_THRESHOLD = 0.6
+GAP_SCORE_THRESHOLD = 0.65
+
+
+def compute_gap_score(
+    min_distance: float,
+    primary_count: int,
+    has_decomposition: bool,
+) -> float:
+    return (
+        0.45 * min_distance
+        + 0.35 * (1.0 if primary_count == 0 else 0.0)
+        + 0.20 * (1.0 if has_decomposition else 0.0)
+    )
+
 
 SYSTEM_PROMPT = """\
 You are mapping client content policies to known AI risk entries from a knowledge graph.
