@@ -10,6 +10,15 @@ from refiner.models import (
     Stakeholder,
 )
 
+# Nexus EuAiRiskCategory enum → ORT risk_level Literal
+_EU_RISK_MAP = {
+    "HIGH_RISK": "high",
+    "HIGH_RISK_EXCEPTION": "high",
+    "LIMITED_OR_LOW_RISK": "limited",
+    "EXCLUDED": "minimal",
+    "PROHIBITED": "high",
+}
+
 
 def detect_nexus_format(raw: dict | list) -> bool:
     """Detect whether a parsed JSON payload is in nexus format.
@@ -63,7 +72,7 @@ def nexus_to_policy_profile(payload: dict) -> PolicyProfile:
     if dev:
         org_name = dev if isinstance(dev, str) else dev.get("name", "")
         if org_name:
-            organization = Stakeholder(name=org_name, roles=["airo:AIProvider"])
+            organization = Stakeholder(name=org_name, roles=["airo:AIDeveloper"])
 
     ai_systems = []
     if ai_system_data and ai_system_data.get("name"):
@@ -74,7 +83,10 @@ def nexus_to_policy_profile(payload: dict) -> PolicyProfile:
             name=ai_system_data.get("name", ""),
             description=ai_system_data.get("description"),
             purpose=purpose_raw,
-            risk_level=ai_system_data.get("hasEuRiskCategory"),
+            risk_level=_EU_RISK_MAP.get(
+                ai_system_data.get("hasEuRiskCategory", ""),
+                ai_system_data.get("hasEuRiskCategory"),
+            ),
         ))
 
     domain_raw = ai_system_data.get("isAppliedWithinDomain")

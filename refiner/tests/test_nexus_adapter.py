@@ -71,7 +71,7 @@ def test_nexus_to_policy_profile_basic():
     profile = nexus_to_policy_profile(payload)
     assert profile.domain == "healthcare"
     assert profile.organization.name == "HealthCo"
-    assert profile.organization.roles == ["airo:AIProvider"]
+    assert profile.organization.roles == ["airo:AIDeveloper"]
     assert len(profile.ai_systems) == 1
     assert profile.ai_systems[0].name == "Medical Triage Bot"
     assert profile.ai_systems[0].risk_level == "high"
@@ -84,6 +84,30 @@ def test_nexus_to_policy_profile_basic():
     assert "Nurse" in user_names
     subject_names = [s.name for s in profile.stakeholders if "airo:AISubject" in s.roles]
     assert "Patient" in subject_names
+
+
+def test_nexus_to_policy_profile_normalizes_eu_risk_category():
+    payload = {
+        "ai_system": {
+            "name": "Test System",
+            "hasEuRiskCategory": "HIGH_RISK",
+        },
+        "risks": [{"id": "r1", "name": "R", "concern": "C"}],
+    }
+    profile = nexus_to_policy_profile(payload)
+    assert profile.ai_systems[0].risk_level == "high"
+
+
+def test_nexus_to_policy_profile_passes_through_ort_risk_level():
+    payload = {
+        "ai_system": {
+            "name": "Test System",
+            "hasEuRiskCategory": "limited",
+        },
+        "risks": [{"id": "r1", "name": "R", "concern": "C"}],
+    }
+    profile = nexus_to_policy_profile(payload)
+    assert profile.ai_systems[0].risk_level == "limited"
 
 
 def test_nexus_to_policy_profile_minimal():

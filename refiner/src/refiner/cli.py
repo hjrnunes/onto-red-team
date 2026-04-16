@@ -18,6 +18,20 @@ app = typer.Typer()
 INGEST_PASSES = ("context", "policies", "enrichment")
 
 
+def _load_policies(path: Path) -> tuple[list[Policy], PolicyProfile | None]:
+    """Load policies from flat array, nexus format, or PolicyProfile JSON."""
+    raw = json.loads(path.read_text())
+    if isinstance(raw, list):
+        return [Policy(**p) for p in raw], None
+    elif detect_nexus_format(raw):
+        doc = nexus_to_policy_profile(raw)
+        typer.echo(f"Detected nexus format: {len(doc.policies)} risks projected to policies")
+        return doc.policies, doc
+    else:
+        doc = PolicyProfile(**raw)
+        return doc.policies, doc
+
+
 def _echo_token_usage(tracker: TokenTracker) -> None:
     if tracker.calls == 0:
         return
@@ -180,19 +194,7 @@ def run(
         raise typer.Exit(1)
 
     # Load policies — detect flat array vs nexus format vs enriched PolicyProfile
-    raw = json.loads(policy_json.read_text())
-    if isinstance(raw, list):
-        policies = [Policy(**p) for p in raw]
-        policy_profile = None
-    elif detect_nexus_format(raw):
-        doc = nexus_to_policy_profile(raw)
-        policies = doc.policies
-        policy_profile = doc
-        typer.echo(f"Detected nexus format: {len(policies)} risks projected to policies")
-    else:
-        doc = PolicyProfile(**raw)
-        policies = doc.policies
-        policy_profile = doc
+    policies, policy_profile = _load_policies(policy_json)
     typer.echo(f"Loaded {len(policies)} policies from {policy_json.name}")
 
     if not base_url or not model:
@@ -453,12 +455,10 @@ def map_risks_cmd(
         typer.echo("Error: --nexus-base-dir is required", err=True)
         raise typer.Exit(1)
 
-    raw = json.loads(policy_json.read_text())
-    if isinstance(raw, list):
+    policies, doc = _load_policies(policy_json)
+    if doc is None:
         typer.echo("Error: expected enriched PolicyProfile, got flat array. Run 'refiner ingest' first.", err=True)
         raise typer.Exit(1)
-    doc = PolicyProfile(**raw)
-    policies = doc.policies
 
     config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
     tracker = TokenTracker()
@@ -545,9 +545,7 @@ def ground(
     from refiner.models import RiskLandscape
     landscape = RiskLandscape(**yaml.safe_load(risk_landscape_yaml.read_text()))
 
-    raw = json.loads(policies.read_text())
-    doc = PolicyProfile(**raw) if isinstance(raw, dict) else None
-    policy_list = doc.policies if doc else [Policy(**p) for p in raw]
+    policy_list, doc = _load_policies(policies)
 
     config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
     tracker = TokenTracker()
