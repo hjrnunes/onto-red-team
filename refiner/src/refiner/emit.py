@@ -107,7 +107,6 @@ def sample_axes(
                 bfo_category=axis.bfo_category,
                 vocabulary_concept=axis.vocabulary_concept,
                 vocabulary_label=axis.vocabulary_label,
-                roles=axis.roles,
                 sampled_uri=chosen.class_uri,
                 sampled_label=chosen.class_label,
                 source_ontology=chosen.source_ontology,
@@ -159,8 +158,6 @@ def build_prompt(
             slot = resolve_slot_label(frame, sa.bfo_category) if frame else None
             if slot:
                 lines.append(f"- {slot}: {label} (a type of {class_label})")
-            elif sa.roles:
-                lines.append(f"- {'/'.join(sa.roles)}: a {label} (a type of {class_label})")
             else:
                 lines.append(f"- {label} (a type of {class_label})")
         axis_lines = "\n".join(lines)

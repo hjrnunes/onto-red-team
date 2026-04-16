@@ -28,8 +28,8 @@ def test_policy_risk_mapping():
     assert prm.matched_risks == []
 
 def test_variation_axis():
-    va = VariationAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"], rationale="Actors who commit fraud")
-    assert va.roles == ["agent"]
+    va = VariationAxis(cco_class_uri="http://example.org/Person", cco_class_label="Person", rationale="Actors who commit fraud")
+    assert va.cco_class_label == "Person"
 
 def test_risk_variation_axes():
     rva = RiskVariationAxes(risk_id="r1", risk_name="Fraud", policy_concept="Fraud", axes=[])
@@ -45,14 +45,12 @@ def test_sampled_axis_creation():
     sa = SampledAxis(
         cco_class_uri="http://example.org/Person",
         cco_class_label="Person",
-        roles=["agent"],
         sampled_uri="http://example.org/Manager",
         sampled_label="Manager",
         source_ontology="FIBO",
         relevance="high",
     )
     assert sa.sampled_label == "Manager"
-    assert sa.roles == ["agent"]
 
 
 def test_sampled_axis_rejects_invalid_relevance():
@@ -62,7 +60,6 @@ def test_sampled_axis_rejects_invalid_relevance():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",

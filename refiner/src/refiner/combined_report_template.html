@@ -369,7 +369,7 @@
             <li><strong>Ingests</strong> a content policy document (what the AI system should and should not do)</li>
             <li><strong>Matches</strong> each policy concept to known AI safety risks from standards frameworks (NIST AI RMF, OWASP, MITRE ATLAS, etc.)</li>
             <li><strong>Anchors</strong> each risk to ontology classes (formal knowledge representations) and enumerates specific domain values</li>
-            <li><strong>Contextualizes</strong> the risk by assigning semantic roles (agent, object, instrument, etc.) and relevance scores</li>
+            <li><strong>Contextualizes</strong> the risk by enumerating domain-specific values for each axis and assigning relevance scores</li>
             <li><strong>Generates</strong> adversarial test prompts using LLM, grounded in the domain context</li>
             <li><strong>Evaluates</strong> prompt quality via automated metrics and LLM-as-judge scoring</li>
           </ol>
@@ -488,17 +488,6 @@
                   <div class="flex justify-between">
                     <dt class="text-gray-400"><span class="tip" data-tip="Risks where the pipeline found zero ontology classes to use as variation axes. These risks can't generate diverse prompts — all prompts will lack domain grounding.">Empty axes</span></dt>
                     <dd class="font-mono text-amber-600" x-text="info.empty_axes"></dd>
-                  </div>
-                </template>
-                <template x-if="info.role_derivation">
-                  <div class="flex justify-between">
-                    <dt class="text-gray-400"><span class="tip" data-tip="How semantic roles (agent, object, instrument, etc.) were assigned to variation axes. 'Derived' = deterministically from ontology hierarchy (reliable). 'LLM' = assigned by language model (less reliable).">Role derivation</span></dt>
-                    <dd>
-                      <span class="text-green-600 font-mono" x-text="info.role_derivation.derived"></span>
-                      <span class="text-gray-400 mx-1">derived /</span>
-                      <span class="text-amber-600 font-mono" x-text="info.role_derivation.llm_fallback"></span>
-                      <span class="text-gray-400 ml-1">LLM</span>
-                    </dd>
                   </div>
                 </template>
                 <template x-if="info.sibling_fallbacks">
@@ -799,19 +788,6 @@
                 <template x-for="[tech, count] in Object.entries(data.generation_metrics?.technique_distribution || {})" :key="tech">
                   <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-indigo-100 text-indigo-800">
                     <span x-text="tech"></span>
-                    <span class="font-mono font-semibold" x-text="count"></span>
-                  </span>
-                </template>
-              </div>
-            </div>
-            <!-- Role distribution (shown when available, legacy) -->
-            <div x-show="Object.keys(data.generation_metrics?.role_distribution || {}).length" class="mb-3">
-              <p class="text-xs text-gray-400 uppercase mb-1"><span class="tip" data-tip="Semantic roles assigned to axes: agent (who acts), object (what is acted upon), instrument (tool/method used), location (where it happens), temporal (when it happens). Derived from ontology class hierarchy.">Role</span></p>
-              <div class="flex flex-wrap gap-2">
-                <template x-for="[role, count] in Object.entries(data.generation_metrics?.role_distribution || {})" :key="role">
-                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded text-xs"
-                    :class="roleColor(role)">
-                    <span x-text="role"></span>
                     <span class="font-mono font-semibold" x-text="count"></span>
                   </span>
                 </template>
@@ -1251,7 +1227,7 @@
             <li><strong>Risk name</strong> (amber badge) — the AI safety risk this prompt tests</li>
             <li><strong>Fidelity badge</strong> — whether the LLM used the domain context it was given: <span class="text-green-700">full</span> (all terms used), <span class="text-yellow-700">partial</span> (some), <span class="text-red-700">improv</span> (none)</li>
             <li><strong>Warning icon</strong> — <span class="text-red-700">red &#x26A0;</span> hard red flag (overt jailbreak pattern), <span class="text-amber-700">amber &#x26A0;</span> soft red flag (hedging language, may be technique-appropriate), or gear icon (ontology jargon leaked into prompt)</li>
-            <li><strong>Axis tags</strong> (bottom) — the ontology concepts sampled for this prompt's scenario, with their semantic roles</li>
+            <li><strong>Axis tags</strong> (bottom) — the ontology concepts sampled for this prompt's scenario</li>
           </ul>
           <p><strong>Filters</strong> (sidebar) let you narrow by policy, risk, quality metrics, or keyword search within prompt text.</p>
         </div>
@@ -1532,7 +1508,6 @@
                 <div class="flex flex-wrap gap-1 text-xs min-w-0">
                   <template x-for="ax in (record.sampled_axes || [])" :key="ax.sampled_uri">
                     <span class="inline-flex items-center px-1.5 py-0.5 rounded bg-gray-100 text-gray-600">
-                      <span class="text-gray-400 mr-1" x-text="ax.roles ? ax.roles[0] : (ax.role || '')"></span>
                       <span x-text="ax.sampled_label"></span>
                     </span>
                   </template>
@@ -1820,7 +1795,7 @@
           <ul class="list-disc ml-4 space-y-1">
             <li><strong>Entries</strong> — individual risks from AI safety standards, organized into groups</li>
             <li><strong>Cross-mappings</strong> — ground-truth links to equivalent risks in other frameworks (from the knowledge graph, not LLM): <span class="text-green-700">exact</span>, <span class="text-blue-700">broad</span>, <span class="text-orange-700">narrow</span>, <span class="text-purple-700">related</span></li>
-            <li><strong>Variation axes</strong> — ontology-anchored dimensions of prompt diversity, each with a BFO category and semantic roles (agent, instrument, object)</li>
+            <li><strong>Variation axes</strong> — ontology-anchored dimensions of prompt diversity, each with a BFO category</li>
             <li><strong>Enumerations</strong> — concrete values for each axis. High-relevance values are sampled 3x more often during prompt generation</li>
             <li><strong>Origin</strong> — where each enumeration came from: an ontology with discovery method, or "LLM-generated"</li>
           </ul>
@@ -2026,9 +2001,6 @@
                             <div class="flex items-center gap-2 mb-3">
                               <span class="tip font-bold text-gray-900" data-tip="CCO class — the ontological anchor for this variation axis" x-text="axis.cco_class_label"></span>
                               <span x-show="axis.bfo_category" class="tip px-2 py-1 bg-teal-100 text-teal-800 rounded text-xs font-medium" data-tip="BFO/CCO category" x-text="axis.bfo_category"></span>
-                              <template x-for="r in (axis.roles || [])" :key="r">
-                                <span class="tip px-2 py-1 rounded text-xs font-medium" :class="roleColor(r)" :data-tip="dcRoleTip(r)" x-text="r"></span>
-                              </template>
                             </div>
 
                             <!-- Vocabulary Context -->
@@ -2137,9 +2109,6 @@
                             <div class="font-medium text-sm text-gray-900" x-text="axis.class"></div>
                             <div class="text-xs font-mono text-gray-500 mt-0.5" x-text="axis.uri"></div>
                             <div class="flex flex-wrap gap-1 mt-2">
-                              <template x-for="role in (axis.roles || [])" :key="role">
-                                <span class="px-1.5 py-0.5 text-xs font-medium rounded" :class="roleColor(role)" x-text="role"></span>
-                              </template>
                               <span class="px-1.5 py-0.5 text-xs font-medium rounded bg-gray-100 text-gray-600">
                                 <span x-text="axis.enumeration_count"></span> enumerations
                               </span>
@@ -2187,9 +2156,6 @@
                         <div class="flex items-center gap-2 mb-2">
                           <span class="font-bold text-gray-900" x-text="axis.cco_class_label"></span>
                           <span x-show="axis.bfo_category" class="px-2 py-1 bg-teal-100 text-teal-800 rounded text-xs font-medium" x-text="axis.bfo_category"></span>
-                          <template x-for="r in (axis.roles || [])" :key="r">
-                            <span class="px-2 py-1 rounded text-xs font-medium" :class="roleColor(r)" x-text="r"></span>
-                          </template>
                         </div>
                         <div class="text-xs text-gray-500">
                           <span class="font-semibold text-gray-600" x-text="(axis.enumerations || []).length"></span> enumerations
@@ -2722,9 +2688,7 @@
             <template x-for="(dcAxis, ai) in (selectedRecord?.domain_context_axes || [])" :key="ai">
               <div class="rounded-lg border border-gray-200 overflow-hidden">
                 <div class="bg-gray-50 px-3 py-2 flex items-center gap-2 border-b border-gray-200">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold shrink-0"
-                    :class="roleColor((dcAxis.roles || [])[0] || '')"
-                    x-text="(dcAxis.roles || []).join('/')"></span>
+                  <span x-show="dcAxis.bfo_category" class="inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold shrink-0 bg-teal-100 text-teal-800" x-text="dcAxis.bfo_category"></span>
                   <span class="text-sm font-medium text-gray-800" x-text="dcAxis.cco_class_label"></span>
                   <span class="text-xs text-gray-400 truncate" x-text="dcAxis.cco_class_uri"></span>
                 </div>
@@ -2822,8 +2786,6 @@ function computeMetrics(record) {
   const hasSoftRedFlag = prompt ? SOFT_RED_FLAG_RE.test(prompt) : false;
   const hasRedFlag = hasHardRedFlag || hasSoftRedFlag;
   const hasJargon = prompt ? JARGON_RE.test(prompt) : false;
-  const roles = new Set();
-  for (const sa of axes) for (const r of (sa.roles || [])) roles.add(r);
   const relevanceProfile = { high: 0, medium: 0, low: 0 };
   for (const sa of axes) { const rel = sa.relevance || 'low'; if (rel in relevanceProfile) relevanceProfile[rel]++; }
   const ontSet = new Set();
@@ -2840,7 +2802,7 @@ function computeMetrics(record) {
       if (enumMatch && enumMatch.provenance === 'sibling') sibCount++;
     }
   }
-  return { fidelity, fidelityClass, hasRedFlag, hasHardRedFlag, hasSoftRedFlag, hasJargon, wordCount: words.length, roleCount: roles.size, axisCount: axes.length, relevanceProfile, sourceOntologies: [...ontSet].sort(), namedEntities, siblingFraction: totalSampled > 0 ? sibCount / totalSampled : 0 };
+  return { fidelity, fidelityClass, hasRedFlag, hasHardRedFlag, hasSoftRedFlag, hasJargon, wordCount: words.length, axisCount: axes.length, relevanceProfile, sourceOntologies: [...ontSet].sort(), namedEntities, siblingFraction: totalSampled > 0 ? sibCount / totalSampled : 0 };
 }
 
 function formatMessages(messages) {
@@ -3427,11 +3389,6 @@ function app() {
       return map[cls] || map['improvised'];
     },
 
-    roleColor(role) {
-      const map = { 'agent': 'bg-teal-100 text-teal-800', 'object': 'bg-blue-100 text-blue-800', 'instrument': 'bg-violet-100 text-violet-800', 'location': 'bg-emerald-100 text-emerald-800', 'temporal': 'bg-amber-100 text-amber-800' };
-      return map[role] || 'bg-gray-100 text-gray-800';
-    },
-
     mappingTypeColor(mt) {
       const map = { 'exact': 'bg-green-100 text-green-700', 'close': 'bg-blue-100 text-blue-700', 'broad': 'bg-yellow-100 text-yellow-700', 'narrow': 'bg-orange-100 text-orange-700', 'related': 'bg-gray-100 text-gray-600' };
       return map[mt] || 'bg-gray-100 text-gray-600';
@@ -3470,11 +3427,6 @@ function app() {
       if (derivation.effective_confidence > 0) return (derivation.effective_confidence * 100).toFixed(0) + '%';
       if (derivation.best_distance != null) return ((1 - derivation.best_distance) * 100).toFixed(0) + '% (search)';
       return 'N/A';
-    },
-
-    dcRoleTip(role) {
-      const tips = { 'agent': 'Agent — the actor performing or causing the action', 'instrument': 'Instrument — the tool or means used', 'object': 'Object — the entity being acted upon' };
-      return tips[role] || role;
     },
 
     dcOriginLabel(item) {

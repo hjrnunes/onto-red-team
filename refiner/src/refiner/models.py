@@ -186,8 +186,6 @@ class VariationAxis(BaseModel):
     vocabulary_label: str = ""
     rationale: str
     derivation: AxisDerivation | None = None
-    # Kept for backward compatibility with emit stage
-    roles: list[str] = []
 
 
 class RiskVariationAxes(BaseModel):
@@ -216,8 +214,6 @@ class DomainContextAxis(BaseModel):
     vocabulary_context: VocabularyContext = VocabularyContext()
     derivation: AxisDerivation | None = None
     enumerations: list[AxisEnumeration]
-    # Kept for backward compatibility with emit stage
-    roles: list[str] = []
 
     @field_validator("vocabulary_context", mode="before")
     @classmethod
@@ -262,8 +258,6 @@ class SampledAxis(BaseModel):
     source_ontology: str
     relevance: Literal["high", "medium", "low"]
     provenance: str = "generated"
-    # Kept for backward compatibility with emit stage
-    roles: list[str] = []
 
 
 @dataclass

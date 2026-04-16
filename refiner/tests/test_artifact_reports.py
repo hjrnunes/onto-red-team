@@ -52,7 +52,7 @@ def test_build_domain_context_report(tmp_path):
             {"policy_concept": "Fraud", "risk_groundings": [
                 {"risk_id": "atlas-r1", "axes": [
                     {"cco_class_label": "Person", "cco_class_uri": "http://ex/Person",
-                     "bfo_category": "Object", "roles": ["agent"],
+                     "bfo_category": "Object",
                      "enumerations": [
                          {"class_label": "Employee", "source_ontology": "CCO",
                           "relevance": "high", "provenance": "subclass"},
@@ -114,13 +114,13 @@ def test_build_dataset_report(tmp_path):
          "technique": "pretexting", "risk_framework": "IBM Risk Atlas",
          "sampled_axes": [
              {"cco_class_label": "Person", "sampled_label": "Employee",
-              "source_ontology": "CCO", "relevance": "high", "roles": ["agent"]},
+              "source_ontology": "CCO", "relevance": "high"},
          ]},
         {"policy_concept": "Fraud", "risk_id": "atlas-r1", "risk_name": "R1",
          "technique": "analytical_reframing", "risk_framework": "IBM Risk Atlas",
          "sampled_axes": [
              {"cco_class_label": "Person", "sampled_label": "Manager",
-              "source_ontology": "CCO", "relevance": "medium", "roles": ["agent"]},
+              "source_ontology": "CCO", "relevance": "medium"},
          ]},
     ]
     out = tmp_path / "swb-dataset.html"

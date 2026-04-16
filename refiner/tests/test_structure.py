@@ -51,7 +51,7 @@ def _make_state_data():
                         risk_id="atlas-fraud",
                         axes=[
                             DomainContextAxis(
-                                cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
+                                cco_class_uri="http://example.org/Person", cco_class_label="Person",
                                 enumerations=[
                                     AxisEnumeration(class_uri="http://example.org/Employee", class_label="Employee", source_ontology="CCO", relevance="high"),
                                 ],
@@ -228,14 +228,14 @@ def test_structure_summary_with_multiple_axes():
                         risk_id="atlas-fraud",
                         axes=[
                             DomainContextAxis(
-                                cco_class_uri="http://example.org/Person", cco_class_label="Person", roles=["agent"],
+                                cco_class_uri="http://example.org/Person", cco_class_label="Person",
                                 enumerations=[
                                     AxisEnumeration(class_uri="http://example.org/E1", class_label="E1", source_ontology="CCO", relevance="high"),
                                     AxisEnumeration(class_uri="http://example.org/E2", class_label="E2", source_ontology="CCO", relevance="medium"),
                                 ],
                             ),
                             DomainContextAxis(
-                                cco_class_uri="http://example.org/Instrument", cco_class_label="Instrument", roles=["instrument"],
+                                cco_class_uri="http://example.org/Instrument", cco_class_label="Instrument",
                                 enumerations=[
                                     AxisEnumeration(class_uri="http://example.org/E3", class_label="E3", source_ontology="FIBO", relevance="high"),
                                 ],

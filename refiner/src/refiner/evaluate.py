@@ -257,7 +257,6 @@ _SOFT_RED_FLAG_RE = re.compile("|".join(SOFT_RED_FLAG_PATTERNS), re.IGNORECASE)
 
 
 def compute_generation_metrics(emit_rows: list[dict], dc_profiles: list[dict]) -> dict:
-    role_counts: dict[str, int] = defaultdict(int)
     relevance_counts: dict[str, int] = defaultdict(int)
     diversity_data: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
     samples_per_risk: dict[str, int] = defaultdict(int)
@@ -266,8 +265,6 @@ def compute_generation_metrics(emit_rows: list[dict], dc_profiles: list[dict]) -
         risk_id = row["risk_id"]
         samples_per_risk[risk_id] += 1
         for sa in row.get("sampled_axes", []):
-            for role in sa.get("roles", []):
-                role_counts[role] += 1
             relevance_counts[sa.get("relevance", "unknown")] += 1
             diversity_data[risk_id][sa.get("cco_class_uri", "")].add(sa.get("sampled_uri", ""))
 
@@ -310,7 +307,6 @@ def compute_generation_metrics(emit_rows: list[dict], dc_profiles: list[dict]) -
 
     return {
         "axis_diversity": {"per_risk": diversity_per_risk, "overall_mean": round(overall_diversity, 3)},
-        "role_distribution": dict(role_counts),
         "relevance_distribution": dict(relevance_counts),
         "technique_distribution": dict(technique_counts),
         "dedup_saturation": dedup_per_risk,

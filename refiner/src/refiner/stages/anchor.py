@@ -867,7 +867,6 @@ def anchor(
                     vocabulary_label=vocab_l,
                     rationale=axis.rationale,
                     derivation=derivation,
-                    roles=[],  # removed in g8.1; slot labels (emit.py) replaced role system
                 ))
 
             # Cache axes and groups by risk_id for deduplication

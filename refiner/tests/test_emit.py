@@ -49,7 +49,6 @@ def _make_axes():
         DomainContextAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            roles=["agent"],
             enumerations=[
                 _enum("high"),
                 AxisEnumeration(class_uri="http://example.org/Manager", class_label="Manager", source_ontology="FIBO", relevance="medium"),
@@ -58,7 +57,6 @@ def _make_axes():
         DomainContextAxis(
             cco_class_uri="http://example.org/Instrument",
             cco_class_label="Instrument",
-            roles=["instrument"],
             enumerations=[
                 AxisEnumeration(class_uri="http://example.org/Bond", class_label="Bond", source_ontology="FIBO", relevance="high"),
             ],
@@ -90,7 +88,6 @@ def test_sample_axes_returns_sampled_axes():
         assert len(sample) == 2  # two axes
         for sa in sample:
             assert isinstance(sa, SampledAxis)
-            assert sa.roles in (["agent"], ["instrument"])
 
 
 def test_sample_axes_deduplicates():
@@ -99,7 +96,6 @@ def test_sample_axes_deduplicates():
         DomainContextAxis(
             cco_class_uri="http://example.org/A",
             cco_class_label="A",
-            roles=["agent"],
             enumerations=[_enum("high")],
         ),
     ]
@@ -112,20 +108,17 @@ def test_sample_axes_skips_empty_axes():
         DomainContextAxis(
             cco_class_uri="http://example.org/A",
             cco_class_label="A",
-            roles=["agent"],
             enumerations=[_enum("high")],
         ),
         DomainContextAxis(
             cco_class_uri="http://example.org/B",
             cco_class_label="B",
-            roles=["object"],
             enumerations=[],  # empty — should be skipped
         ),
     ]
     samples = sample_axes(axes, n=5)
     for sample in samples:
         assert len(sample) == 1  # only the non-empty axis
-        assert sample[0].roles == ["agent"]
 
 
 def test_sample_axes_reproducible_with_seed():
@@ -143,7 +136,6 @@ def test_build_prompt_returns_messages():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
@@ -169,7 +161,6 @@ def test_build_prompt_user_message_has_policy():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
@@ -188,7 +179,6 @@ def test_build_prompt_user_message_has_axes():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
@@ -197,7 +187,6 @@ def test_build_prompt_user_message_has_axes():
         SampledAxis(
             cco_class_uri="http://example.org/Instrument",
             cco_class_label="Instrument",
-            roles=["instrument"],
             sampled_uri="http://example.org/Bond",
             sampled_label="Bond",
             source_ontology="FIBO",
@@ -206,10 +195,8 @@ def test_build_prompt_user_message_has_axes():
     ]
     messages = build_prompt("X", "Y", "Z", axes)
     user = messages[1]["content"]
-    assert "agent" in user
     assert "Manager" in user
     assert "Person" in user
-    assert "instrument" in user
     assert "Bond" in user
 
 
@@ -362,7 +349,6 @@ def _write_test_files(tmp_path):
                             {
                                 "cco_class_uri": "http://example.org/Person",
                                 "cco_class_label": "Person",
-                                "roles": ["agent"],
                                 "enumerations": [
                                     {"class_uri": "http://example.org/Manager", "class_label": "Manager", "source_ontology": "FIBO", "relevance": "high"},
                                     {"class_uri": "http://example.org/Employee", "class_label": "Employee", "source_ontology": "CCO", "relevance": "medium"},
@@ -495,7 +481,6 @@ def test_emit_skips_missing_policy_concept(tmp_path):
                             {
                                 "cco_class_uri": "http://example.org/A",
                                 "cco_class_label": "A",
-                                "roles": ["agent"],
                                 "enumerations": [
                                     {
                                         "class_uri": "http://example.org/E1",
@@ -616,7 +601,6 @@ def test_strip_obo_suffix_in_prompt():
         SampledAxis(
             cco_class_uri="http://purl.obolibrary.org/obo/DOID_0001",
             cco_class_label="Adverse Event",
-            roles=["object"],
             sampled_uri="http://purl.obolibrary.org/obo/DOID_0002",
             sampled_label="Somnambulism AE",
             source_ontology="OBO",
@@ -634,7 +618,6 @@ def test_strip_framework_suffix_in_prompt():
         SampledAxis(
             cco_class_uri="http://d3fend.mitre.org/ontologies/d3fend.owl#T1234",
             cco_class_label="Offensive Technique - ATLAS",
-            roles=["instrument"],
             sampled_uri="http://d3fend.mitre.org/ontologies/d3fend.owl#T5678",
             sampled_label="Extract AI Model - ATLAS",
             source_ontology="D3FEND",
@@ -796,7 +779,6 @@ def test_build_prompt_without_frame_backward_compat():
         SampledAxis(
             cco_class_uri="http://example.org/Person",
             cco_class_label="Person",
-            roles=["agent"],
             sampled_uri="http://example.org/Manager",
             sampled_label="Manager",
             source_ontology="FIBO",
@@ -805,7 +787,7 @@ def test_build_prompt_without_frame_backward_compat():
     ]
     messages = build_prompt("Fraud", "About fraud", "Financial Fraud", axes, frame=None)
     user = messages[1]["content"]
-    assert "agent" in user
+    assert "Manager" in user
     assert "Adversarial technique:" not in user
 
 
@@ -847,13 +829,11 @@ def test_sample_axes_caps_at_combinatorial_space():
         DomainContextAxis(
             cco_class_uri="http://example.org/A",
             cco_class_label="A",
-            roles=["agent"],
             enumerations=[_enum("high"), _enum("medium")],
         ),
         DomainContextAxis(
             cco_class_uri="http://example.org/B",
             cco_class_label="B",
-            roles=["object"],
             enumerations=[_enum("high")],
         ),
     ]

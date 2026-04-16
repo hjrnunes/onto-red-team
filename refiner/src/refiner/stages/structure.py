@@ -101,7 +101,6 @@ def structure(
                         axes_summary.append({
                             "class": axis.cco_class_label,
                             "uri": axis.cco_class_uri,
-                            "roles": axis.roles,
                             "enumeration_count": enum_count,
                         })
                     entry["domain_context_summary"] = {

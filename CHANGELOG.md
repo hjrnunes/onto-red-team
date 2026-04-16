@@ -26,6 +26,14 @@ All notable changes to this project will be documented in this file.
   - Added guidance to prefer a mix of categories for diverse test scenarios
   - Prompt now requests a rationale for each axis group (`_AxisGroup.rationale`)
 
+### Removed
+
+- **Axis semantic roles** — removed the `roles` field from `VariationAxis`, `DomainContextAxis`, and
+  `SampledAxis` models. The role system (`_CATEGORY_ROLES` + `derive_roles()`) was removed in g8.1
+  and replaced by ontology-grounded slot labels per adversarial technique frame. The field has been
+  `roles: []` on 100% of axes since then. Also removed: `role_distribution` from evaluation metrics,
+  role badge UI from combined and evaluation report templates, `roleColor()`/`dcRoleTip()` JS helpers.
+
 ### Fixed
 
 - **Enriched taxonomy profile matching** — taxonomy entries whose client-policy name differs from the

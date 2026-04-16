@@ -32,7 +32,7 @@ def test_pipeline_threads_state(mock_client, mock_config, mock_risk_handlers, mo
     anchor_axes = [
         RiskVariationAxes(
             risk_id="r1", risk_name="R1", policy_concept="Fraud",
-            axes=[VariationAxis(cco_class_uri="http://ex/P", cco_class_label="P", roles=["agent"], rationale="r")],
+            axes=[VariationAxis(cco_class_uri="http://ex/P", cco_class_label="P", rationale="r")],
         ),
     ]
     anchor_vocab = {"r1": {"stakeholders": [{"concept": "eu-aiact:AISubject", "label": "AI Subject"}]}}
