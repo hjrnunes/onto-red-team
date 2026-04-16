@@ -1,4 +1,5 @@
 import json
+import random
 
 import yaml
 
@@ -861,3 +862,79 @@ def test_sample_axes_caps_at_combinatorial_space():
     random.seed(42)
     samples = sample_axes(axes, n=100)
     assert len(samples) <= 2
+
+
+class TestAxisGroupSampling:
+    def _make_axis(self, uri, label, enumerations):
+        return DomainContextAxis(
+            cco_class_uri=uri,
+            cco_class_label=label,
+            bfo_category="Role",
+            enumerations=[
+                AxisEnumeration(
+                    class_uri=f"{uri}/enum/{i}",
+                    class_label=e,
+                    source_ontology="test",
+                    relevance="high",
+                    provenance="subclass",
+                )
+                for i, e in enumerate(enumerations)
+            ],
+        )
+
+    def test_samples_axes_from_groups(self):
+        axes = [
+            self._make_axis("http://ex/A", "A", ["a1", "a2"]),
+            self._make_axis("http://ex/B", "B", ["b1", "b2"]),
+            self._make_axis("http://ex/C", "C", ["c1", "c2"]),
+            self._make_axis("http://ex/D", "D", ["d1", "d2"]),
+        ]
+        groups = [["http://ex/A", "http://ex/B"], ["http://ex/C", "http://ex/D"]]
+        random.seed(42)
+        results = sample_axes(axes, n=10, axis_groups=groups, axes_per_prompt=2)
+        for sample in results:
+            uris = {sa.cco_class_uri for sa in sample}
+            assert uris <= {"http://ex/A", "http://ex/B"} or uris <= {"http://ex/C", "http://ex/D"}
+
+    def test_axes_per_prompt_limits_selection(self):
+        axes = [
+            self._make_axis("http://ex/A", "A", ["a1"]),
+            self._make_axis("http://ex/B", "B", ["b1"]),
+            self._make_axis("http://ex/C", "C", ["c1"]),
+        ]
+        groups = [["http://ex/A", "http://ex/B", "http://ex/C"]]
+        random.seed(42)
+        results = sample_axes(axes, n=5, axis_groups=groups, axes_per_prompt=2)
+        for sample in results:
+            assert len(sample) == 2
+
+    def test_no_groups_falls_back_to_full_pool(self):
+        axes = [
+            self._make_axis("http://ex/A", "A", ["a1", "a2"]),
+            self._make_axis("http://ex/B", "B", ["b1", "b2"]),
+            self._make_axis("http://ex/C", "C", ["c1", "c2"]),
+        ]
+        random.seed(42)
+        results = sample_axes(axes, n=5, axis_groups=None, axes_per_prompt=2)
+        for sample in results:
+            assert len(sample) == 2
+
+    def test_backward_compat_no_new_params(self):
+        axes = [
+            self._make_axis("http://ex/A", "A", ["a1", "a2"]),
+            self._make_axis("http://ex/B", "B", ["b1", "b2"]),
+        ]
+        random.seed(42)
+        results = sample_axes(axes, n=3)
+        for sample in results:
+            assert len(sample) == 2
+
+    def test_dedup_includes_axis_identity(self):
+        axes = [
+            self._make_axis("http://ex/A", "A", ["shared"]),
+            self._make_axis("http://ex/B", "B", ["shared"]),
+            self._make_axis("http://ex/C", "C", ["shared"]),
+        ]
+        groups = [["http://ex/A", "http://ex/B"], ["http://ex/A", "http://ex/C"]]
+        results = sample_axes(axes, n=5, axis_groups=groups, axes_per_prompt=2)
+        assert len(results) == 2

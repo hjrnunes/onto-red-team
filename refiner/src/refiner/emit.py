@@ -51,26 +51,55 @@ def relevance_weights(enumerations: list[AxisEnumeration]) -> list[float]:
 def sample_axes(
     axes: list[DomainContextAxis],
     n: int,
+    axis_groups: list[list[str]] | None = None,
+    axes_per_prompt: int | None = None,
 ) -> list[list[SampledAxis]]:
-    # Filter to axes with enumerations
+    from math import comb
+
     usable_axes = [a for a in axes if a.enumerations]
     if not usable_axes:
         return []
 
-    # Cap at combinatorial space to avoid wasting generation budget on duplicates
-    space = 1
-    for axis in usable_axes:
-        space *= len(axis.enumerations)
-    effective_n = min(n, space)
+    axes_by_uri = {a.cco_class_uri: a for a in usable_axes}
+    usable_uris = set(axes_by_uri.keys())
 
-    weights_per_axis = [relevance_weights(a.enumerations) for a in usable_axes]
+    resolved_groups: list[list[DomainContextAxis]] = []
+    if axis_groups:
+        for group in axis_groups:
+            group_axes = [axes_by_uri[uri] for uri in group if uri in usable_uris]
+            if len(group_axes) >= 2:
+                resolved_groups.append(group_axes)
 
-    seen: set[tuple[str, ...]] = set()
+    if not resolved_groups:
+        resolved_groups = [usable_axes]
+
+    k = axes_per_prompt
+    if k is None:
+        k = len(usable_axes)
+
+    weights_per_axis = {
+        a.cco_class_uri: relevance_weights(a.enumerations) for a in usable_axes
+    }
+
+    seen: set[tuple[tuple[str, str], ...]] = set()
     results: list[list[SampledAxis]] = []
 
-    for _ in range(effective_n * 3):  # oversample to account for dedup
+    space = 0
+    for group_axes in resolved_groups:
+        gk = min(k, len(group_axes))
+        axis_combos = comb(len(group_axes), gk)
+        avg_enums = max(1, sum(len(a.enumerations) for a in group_axes) // len(group_axes))
+        space += axis_combos * (avg_enums ** gk)
+    effective_n = min(n, max(space, 1))
+
+    for _ in range(effective_n * 3):
+        group_axes = random.choice(resolved_groups)
+        gk = min(k, len(group_axes))
+        selected = random.sample(group_axes, gk)
+
         sample = []
-        for axis, weights in zip(usable_axes, weights_per_axis):
+        for axis in selected:
+            weights = weights_per_axis[axis.cco_class_uri]
             chosen = random.choices(axis.enumerations, weights=weights, k=1)[0]
             sample.append(SampledAxis(
                 cco_class_uri=axis.cco_class_uri,
@@ -86,7 +115,7 @@ def sample_axes(
                 provenance=chosen.provenance,
             ))
 
-        key = tuple(sa.sampled_uri for sa in sample)
+        key = tuple(sorted((sa.cco_class_uri, sa.sampled_uri) for sa in sample))
         if key not in seen:
             seen.add(key)
             results.append(sample)
@@ -255,6 +284,7 @@ def emit(
     output_path: Path,
     seed: int | None = None,
     technique_weights: dict[str, float] | None = None,
+    axes_per_prompt: int | None = None,
 ) -> None:
     dc_path = _discover_domain_context(output_dir)
     doc = load_domain_context(dc_path)
@@ -294,7 +324,11 @@ def emit(
             risk_framework = risk.risk_framework if risk else ""
             cross_mappings = risk.cross_mappings if risk else []
 
-            samples = sample_axes(grounding.axes, n=samples_per_risk)
+            samples = sample_axes(
+                grounding.axes, n=samples_per_risk,
+                axis_groups=grounding.axis_groups if grounding.axis_groups else None,
+                axes_per_prompt=axes_per_prompt,
+            )
             if not samples:
                 logger.warning("Skipping risk %s — no usable axes", grounding.risk_id)
                 continue

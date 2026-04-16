@@ -669,6 +669,7 @@ def emit(
         None, "--technique-weights",
         help="JSON string with technique weight overrides, e.g. '{\"pretexting\": 2, \"analytical_reframing\": 1}'",
     ),
+    axes_per_prompt: int = typer.Option(None, "--axes-per-prompt", help="Number of axes per prompt (default: use all)"),
 ):
     """Emit an sdg_hub-ready JSONL dataset from domain context profiles."""
     if not output_dir.is_dir():
@@ -694,7 +695,7 @@ def emit(
 
     from refiner.emit import emit as do_emit
     do_emit(output_dir, policies, samples_per_risk, out_path, seed=seed,
-            technique_weights=parsed_weights)
+            technique_weights=parsed_weights, axes_per_prompt=axes_per_prompt)
     typer.echo(f"Dataset written to {out_path}")
 
     # Build dataset HTML report
