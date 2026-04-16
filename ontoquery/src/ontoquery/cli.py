@@ -10,19 +10,19 @@ app = typer.Typer()
 
 @app.command()
 def index(
-    directories: list[Path] = typer.Argument(..., help="Directories containing ontology files"),
+    directories: list[Path] = typer.Argument(..., help="Directories or files containing ontology data"),
     chroma_dir: Path = typer.Option(Path(".chroma"), "--chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="ChromaDB directory"),
 ):
-    """Index all ontology files from one or more directories into ChromaDB."""
+    """Index all ontology files from one or more directories (or individual files) into ChromaDB."""
     for d in directories:
         if not d.exists():
-            typer.echo(f"Error: directory {d} does not exist", err=True)
+            typer.echo(f"Error: path {d} does not exist", err=True)
             raise typer.Exit(1)
 
     files = []
     for d in directories:
         files.extend(find_ontology_files(d))
-    typer.echo(f"Found {len(files)} ontology files across {len(directories)} director{'y' if len(directories) == 1 else 'ies'}")
+    typer.echo(f"Found {len(files)} ontology files across {len(directories)} source path{'s' if len(directories) != 1 else ''}")
 
     chroma = chroma_dir
     chroma.mkdir(parents=True, exist_ok=True)

@@ -4,7 +4,26 @@ All notable changes to this project will be documented in this file.
 
 ## Gen 18 (current)
 
+### Improved
+
+- **Axis fidelity metric robustness** — replaced substring keyword matching with three-tier
+  matching: (1) stemmed keyword match on sampled label using prefix-based stemming and
+  British→American spelling normalization, (2) stemmed keyword match on axis class label as
+  fallback when the LLM instantiates the concept rather than parroting the label (e.g. "Ponzi
+  Scheme" misses but "Financial Fraud" class matches), (3) semantic embedding fallback unchanged.
+  Eliminates false negatives from morphological variants ("urgency"/"urgent",
+  "organisation"/"organization") and concept instantiation. Gen17 battery-wide fidelity
+  recovers ~+0.09 from this change alone.
+
 ### Fixed
+
+- **D3FEND ontology never indexed** — `find_ontology_files()` only handled directory paths via
+  `Path.rglob()`, but the justfile passes D3FEND as a single file (`d3fend-protege.ttl`).
+  `rglob()` on a file silently returns `[]`, so D3FEND was never loaded into the graph or
+  ChromaDB — zero triples across seven generations. The SSSOM seeds (`ATLASTechnique`,
+  `OffensiveTechnique`, `AML.T0048`, etc.) entered the anchor pipeline but produced no
+  candidates, getting crowded out during merge. Fixed `find_ontology_files()` to handle both
+  single files and directories. Requires re-indexing (`just index-ontologies`).
 
 - **Cross-ontology axis deduplication** — candidates with the same label from different ontologies
   (e.g. CCO `Person` vs FIBO `person`) were both presented to the LLM, which selected both as

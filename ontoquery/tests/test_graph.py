@@ -18,6 +18,20 @@ def test_find_ontology_files_recursive(tmp_path):
     assert len(files) == 2
 
 
+def test_find_ontology_files_single_file(tmp_path):
+    f = tmp_path / "single.ttl"
+    f.write_text("")
+    files = find_ontology_files(f)
+    assert files == [f]
+
+
+def test_find_ontology_files_single_file_wrong_ext(tmp_path):
+    f = tmp_path / "readme.txt"
+    f.write_text("")
+    files = find_ontology_files(f)
+    assert files == []
+
+
 def test_load_graph(sample_ontology_dir):
     graph = load_graph(sample_ontology_dir)
     assert len(graph) > 0

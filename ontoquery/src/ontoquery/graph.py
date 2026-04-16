@@ -10,12 +10,20 @@ D3F = Namespace("http://d3fend.mitre.org/ontologies/d3fend.owl#")
 FORMAT_MAP = {".ttl": "turtle", ".rdf": "xml", ".owl": "xml"}
 
 
-def find_ontology_files(directory: Path) -> list[Path]:
-    """Recursively find all .ttl and .rdf files under directory."""
-    directory = Path(directory)
+def find_ontology_files(path: Path) -> list[Path]:
+    """Find ontology files from a path (file or directory).
+
+    If *path* is a single file with a recognised extension, return it directly.
+    If *path* is a directory, recursively find all .ttl, .rdf and .owl files.
+    """
+    path = Path(path)
+    if path.is_file():
+        if path.suffix in FORMAT_MAP:
+            return [path]
+        return []
     files = []
     for ext in ("*.ttl", "*.rdf", "*.owl"):
-        files.extend(directory.rglob(ext))
+        files.extend(path.rglob(ext))
     return sorted(files)
 
 
