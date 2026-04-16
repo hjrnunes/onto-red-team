@@ -266,6 +266,82 @@ class TestMergeTiered:
         )
 
 
+    def test_label_dedup_prefers_domain_specific(self):
+        """When FIBO is in selected_domains, FIBO person wins over CCO Person."""
+        structural = [
+            {"uri": "https://www.commoncoreontologies.org/ont00001262",
+             "label": "Person", "effective_confidence": 0.7, "path": [],
+             "vocabulary_concept": "eu-aiact:AISubject"},
+            {"uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/Person",
+             "label": "person", "effective_confidence": 0.56,
+             "path": ["ont00001262", "fibo-person"],
+             "vocabulary_concept": "eu-aiact:AISubject"},
+        ]
+        result = merge_tiered(structural, [], [],
+                              selected_domains=["CCO", "Commons", "D3FEND", "CSO", "LKIF", "FIBO"])
+        person_results = [c for c in result if "person" in c.get("label", "").lower()]
+        assert len(person_results) == 1
+        assert "fibo" in person_results[0]["uri"].lower()
+
+    def test_label_dedup_prefers_foundational_when_no_domain(self):
+        """Without domain-specific ontologies, CCO Person wins over FIBO person."""
+        structural = [
+            {"uri": "https://www.commoncoreontologies.org/ont00001262",
+             "label": "Person", "effective_confidence": 0.7, "path": [],
+             "vocabulary_concept": "eu-aiact:AISubject"},
+            {"uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/Person",
+             "label": "person", "effective_confidence": 0.56,
+             "path": ["ont00001262", "fibo-person"],
+             "vocabulary_concept": "eu-aiact:AISubject"},
+        ]
+        result = merge_tiered(structural, [], [],
+                              selected_domains=["CCO", "Commons", "D3FEND", "CSO", "LKIF"])
+        person_results = [c for c in result if "person" in c.get("label", "").lower()]
+        assert len(person_results) == 1
+        assert "commoncoreontologies" in person_results[0]["uri"]
+
+    def test_label_dedup_both_domain_specific_uses_confidence(self):
+        """When both are domain-specific, higher confidence wins."""
+        structural = [
+            {"uri": "http://purl.obolibrary.org/obo/OBO_Person",
+             "label": "Person", "effective_confidence": 0.8, "path": [],
+             "vocabulary_concept": "pd:X"},
+            {"uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/Person",
+             "label": "person", "effective_confidence": 0.9, "path": [],
+             "vocabulary_concept": "pd:X"},
+        ]
+        result = merge_tiered(structural, [], [],
+                              selected_domains=["CCO", "Commons", "D3FEND", "CSO", "LKIF", "FIBO", "OBO"])
+        person_results = [c for c in result if "person" in c.get("label", "").lower()]
+        assert len(person_results) == 1
+        assert "fibo" in person_results[0]["uri"].lower()
+
+    def test_label_dedup_no_selected_domains(self):
+        """With no selected_domains at all, higher confidence wins."""
+        structural = [
+            {"uri": "https://www.commoncoreontologies.org/ont00001262",
+             "label": "Person", "effective_confidence": 0.7, "path": [],
+             "vocabulary_concept": "eu-aiact:AISubject"},
+            {"uri": "https://spec.edmcouncil.org/fibo/ontology/FND/AgentsAndPeople/People/Person",
+             "label": "person", "effective_confidence": 0.9, "path": [],
+             "vocabulary_concept": "eu-aiact:AISubject"},
+        ]
+        result = merge_tiered(structural, [], [], selected_domains=None)
+        person_results = [c for c in result if "person" in c.get("label", "").lower()]
+        assert len(person_results) == 1
+
+    def test_label_dedup_different_labels_not_collapsed(self):
+        """Candidates with genuinely different labels are not affected."""
+        structural = [
+            {"uri": "uri1", "label": "Person", "effective_confidence": 0.7,
+             "path": [], "vocabulary_concept": "pd:X"},
+            {"uri": "uri2", "label": "Organisation", "effective_confidence": 0.8,
+             "path": [], "vocabulary_concept": "pd:X"},
+        ]
+        result = merge_tiered(structural, [], [])
+        assert len(result) == 2
+
+
 class TestResolveAxisGroups:
     def test_resolves_valid_groups(self):
         id_to_uri = {"C1": "http://ex/A", "C2": "http://ex/B", "C3": "http://ex/C"}

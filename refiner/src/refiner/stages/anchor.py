@@ -12,7 +12,7 @@ from refiner.models import (
     VariationAxis,
 )
 from refiner import debug
-from refiner.stages.identify_domains import derive_source_ontology
+from refiner.stages.identify_domains import ALWAYS_INCLUDED, derive_source_ontology
 from refiner.ontology_seeds import resolve_seeds
 
 logger = logging.getLogger(__name__)
@@ -147,6 +147,50 @@ def derive_bfo_category(
     if bfo_fallbacks and class_uri in bfo_fallbacks:
         return bfo_fallbacks[class_uri]
     return ""
+
+
+_ALWAYS_INCLUDED_SET = set(ALWAYS_INCLUDED)
+
+
+def _dedup_by_label(
+    candidates: list[dict],
+    selected_domains: list[str] | None,
+) -> list[dict]:
+    """Collapse candidates that share a label (case-insensitive) across ontologies.
+
+    When two candidates have the same label but different URIs (e.g. CCO Person
+    vs FIBO person), keep the one most relevant to the use case:
+    1. If a domain-specific ontology is in selected_domains, prefer it.
+    2. Otherwise prefer the foundational (always-included) ontology.
+    3. Tie-break on effective_confidence.
+    """
+    domain_specific = (
+        set(selected_domains) - _ALWAYS_INCLUDED_SET
+        if selected_domains else set()
+    )
+
+    def _preference(c: dict) -> tuple:
+        ont = derive_source_ontology(c.get("uri", ""))
+        in_domain = ont in domain_specific
+        in_foundation = ont in _ALWAYS_INCLUDED_SET
+        conf = c.get("effective_confidence", 0)
+        # Higher = better: domain-specific first, then foundational, then other
+        return (in_domain, in_foundation, conf)
+
+    groups: dict[str, list[dict]] = {}
+    for c in candidates:
+        label = c.get("label", "").strip().lower()
+        key = label if label else c["uri"]
+        groups.setdefault(key, []).append(c)
+
+    result = []
+    for group in groups.values():
+        if len(group) == 1:
+            result.append(group[0])
+        else:
+            best = max(group, key=_preference)
+            result.append(best)
+    return result
 
 
 def navigate_from_seeds(
@@ -297,7 +341,7 @@ def navigate_from_seeds(
         uri = c["uri"]
         if uri not in seen or c["effective_confidence"] > seen[uri]["effective_confidence"]:
             seen[uri] = c
-    return list(seen.values())
+    return _dedup_by_label(list(seen.values()), selected_domains)
 
 
 def constrained_search(
@@ -384,6 +428,7 @@ def merge_tiered(
         search_connected: list[dict],
         search_only: list[dict],
         max_total: int = 12,
+        selected_domains: list[str] | None = None,
 ) -> list[dict]:
     """Three-tier merge with ontology and vocabulary diversity guarantees."""
     result = []
@@ -459,7 +504,7 @@ def merge_tiered(
                 if len(vocab_categories) >= 2:
                     break
 
-    return result
+    return _dedup_by_label(result, selected_domains)
 
 
 _LABEL_SUFFIX_RE = re.compile(r"\s*(?:--\s*(?:structural|search)|\[[\w/]+\])\s*$")
@@ -687,7 +732,8 @@ def anchor(
                     search_only.append(sc)
 
             # Merge tiers
-            candidates = merge_tiered(structural, search_connected, search_only)
+            candidates = merge_tiered(structural, search_connected, search_only,
+                                      selected_domains=selected_domains)
 
             tier_data = {
                 "seeds": len(ontology_seeds),

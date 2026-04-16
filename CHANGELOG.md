@@ -6,6 +6,13 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Cross-ontology axis deduplication** — candidates with the same label from different ontologies
+  (e.g. CCO `Person` vs FIBO `person`) were both presented to the LLM, which selected both as
+  separate axes. Added `_dedup_by_label()` to `navigate_from_seeds` and `merge_tiered` that
+  collapses label-equivalent candidates using domain-aware preference: domain-specific ontology
+  wins when selected (e.g. FIBO Person for financial policies), foundational ontology wins
+  otherwise (e.g. CCO Person for generic policies), confidence as tie-breaker.
+
 - **Taxonomy dedup by risk_id, not LLM name** — `structure.py` deduplicated taxonomy entries by
   `slugify(rm.risk_name)`, the LLM-generated short name. When the same risk was matched to multiple
   policy concepts, the LLM could produce different names (e.g. `credo-risk-026` → "Fraud, scams, and
