@@ -61,6 +61,7 @@ def structure(
                 entries_by_id[entry_id] = {
                     "id": entry_id,
                     "name": rm.risk_name,
+                    "risk_id": rm.risk_id,
                     "type": "Risk",
                     "class_uri": "airo:Risk",
                     "isDefinedByTaxonomy": taxonomy_id,

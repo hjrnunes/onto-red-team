@@ -168,6 +168,24 @@ def build_combined_report(
                 })
         dc_data["profiles"] = profiles
 
+    # Enrich taxonomy entries with risk_id when missing (retroactive for
+    # runs generated before structure.py emitted risk_id)
+    if tax_data and dc_data:
+        # Build axis-URI-set → risk_id from domain context groundings
+        axis_uris_to_rid: dict[frozenset[str], str] = {}
+        for ctx in dc_data.get("policy_contexts", []):
+            for grounding in ctx.get("risk_groundings", []):
+                uris = frozenset(a.get("cco_class_uri", "") for a in grounding.get("axes", []))
+                if uris:
+                    axis_uris_to_rid[uris] = grounding["risk_id"]
+        for entry in tax_data.get("entries", []):
+            if entry.get("risk_id"):
+                continue
+            summary = entry.get("domain_context_summary", {})
+            entry_uris = frozenset(a.get("uri", "") for a in summary.get("axes", []))
+            if entry_uris and entry_uris in axis_uris_to_rid:
+                entry["risk_id"] = axis_uris_to_rid[entry_uris]
+
     # Substitute placeholders
     html = template
     html = html.replace("__REPORT_TITLE__", title)

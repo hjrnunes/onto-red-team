@@ -2,7 +2,87 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 15 (current)
+## Gen 17 (current)
+
+### Fixed
+
+- **Enriched taxonomy profile matching** — taxonomy entries whose client-policy name differs from the
+  nexus canonical name (e.g. "Compromised personally identifiable information" vs "Compromised PII")
+  now correctly resolve their domain context profile. `dcProfileForEntry` matches by `risk_id` first,
+  falling back to name. `structure.py` emits `risk_id` on each taxonomy entry, and
+  `build_combined_report.py` retroactively enriches existing runs via axis-URI matching.
+
+## Gen 16
+
+### Added
+
+- **UGA–ORT semantic bridge** — Nexus adapter module (`nexus_adapter.py`) converts AI Atlas Nexus
+  payloads (AiSystem + Risk entities) into ORT `PolicyProfile` inputs. Three functions: `detect_nexus_format()`
+  identifies nexus payloads, `project_risk_to_policy()` maps `Risk.concern` → `Policy.concept_definition`,
+  and `nexus_to_policy_profile()` handles the full conversion including stakeholder role mapping (AIRO
+  CURIEs), domain extraction, purpose, and risk control broadcast. Enables UGA-captured use-cases as
+  direct ORT pipeline inputs without hand-authored policy JSON.
+  See `docs/superpowers/specs/2026-04-16-uga-ort-bridge-design.md`.
+
+- **Nexus format in CLI** — `refiner run`, `refiner map-risks`, and `refiner ground` now accept
+  nexus-format JSON (dict with `risks` key) alongside existing flat-array and PolicyProfile formats.
+  Three-way detection extracted into `_load_policies()` helper. Nexus input auto-detected with
+  "Detected nexus format: N risks projected to policies" echo.
+
+- **SSSOM output alignment** — `refiner/data/ort-to-uga.sssom.tsv` documents 14 mappings from ORT
+  pipeline outputs to AI Atlas Nexus LinkML schema classes (Layer B of the bridge). Covers risk
+  details (`exactMatch`), judge scores (`closeMatch`), coverage metrics (`relatedMatch`), and
+  emitted prompts (`broadMatch`). Uses same SKOS predicates and `semapv:` justifications as
+  existing SSSOM files.
+
+- **Nexus example policy** — `policy_examples/nexus-healthcare.json` provides a medical triage
+  chatbot example in nexus format (AiSystem with 3 risks and 2 risk controls) for testing and
+  documentation.
+
+- **EU risk category normalization** — Adapter maps nexus `EuAiRiskCategory` enum values
+  (`HIGH_RISK`, `LIMITED_OR_LOW_RISK`, etc.) to ORT's `risk_level` literals (`high`, `limited`,
+  `minimal`). Both nexus and ORT-native values accepted.
+
+- **Structural context in risk embeddings** — New `build_structural_context()` in `nexus-mcp/risk_index.py`
+  enriches risk embedding documents with knowledge graph relationships before ChromaDB indexes them.
+  Each risk document is appended with group membership (`PartOf: Robustness`), sibling risks within
+  the same group (capped at 8 with overflow), cross-framework SKOS mappings resolved to human-readable
+  names (`Exact: LLM01: Prompt Injection`), and related actions (`Actions: Input validation`). Risks
+  with no structural signals are left unchanged. Targets AIR 2024's 314 structurally-isolated risks
+  (0% cross-mappings, mean distance 0.5625, 35% above 0.6 threshold) which account for 68% of all
+  weak matches.
+
+- **Schema versioning for risk index** — `SCHEMA_VERSION` constant on the risk index collection
+  metadata. `needs_reindex()` now checks both document count and schema version, triggering automatic
+  reindexing when the document format changes. Bump version when embedding content structure changes.
+
+### Changed
+
+- **`index_risks()` accepts structural context** — Optional `structural_context: dict[str, str]`
+  parameter. When provided, context strings are appended to each risk's document text before embedding.
+  Backward compatible — callers that omit it get identical behavior to before.
+
+- **Callers wire up structural context** — Both `server.py:_get_handlers()` (MCP server) and
+  `cli.py:_create_risk_handlers()` (pipeline CLI) now build structural context from the knowledge
+  graph and pass it to `index_risks()` during reindexing.
+
+- **`GovernedSystem` → `AiSystem`** — Renamed to adopt nexus terminology. Backward-compatible
+  alias `GovernedSystem = AiSystem` preserved. `PolicyProfile.governed_systems` field migrated to
+  `ai_systems` via `model_validator(mode="before")` — existing serialized data loads without changes.
+
+- **Report templates updated** — HTML comments, help text, tooltips, and badge labels in both
+  `combined_report_template.html` and `ingest_report_template.html` now use "AI systems" instead of
+  "governed systems". Data bindings were already correct (`ai_systems`).
+
+- **`isDevelopedBy` role** — Maps to `airo:AIDeveloper` (matching the nexus LinkML schema range),
+  not `airo:AIProvider`.
+
+- **Contextualize prompt style** — adjusted LLM enumeration prompt to generate concept-level terms
+  (short categorical noun phrases matching ontology class label style) instead of concrete scenarios
+  with named entities. Prevents outputs like "Drafting a personalized morphine dosage schedule for
+  patient Jane Doe" in favor of ontology-aligned terms like "palliative sedation therapy".
+
+## Gen 15
 
 ### Added
 

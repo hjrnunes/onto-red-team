@@ -3524,17 +3524,23 @@ function app() {
     taxonomy: TAXONOMY,
 
     get _dcProfileIndex() {
-      const idx = {};
+      const byId = {};
+      const byName = {};
       for (const p of (this.domainContext.profiles || [])) {
-        const key = (p.risk_name || '').toLowerCase().trim();
-        if (!idx[key]) idx[key] = p;
+        const rid = (p.risk_id || '').toLowerCase().trim();
+        const name = (p.risk_name || '').toLowerCase().trim();
+        if (rid && !byId[rid]) byId[rid] = p;
+        if (name && !byName[name]) byName[name] = p;
       }
-      return idx;
+      return { byId, byName };
     },
 
     dcProfileForEntry(entry) {
+      const { byId, byName } = this._dcProfileIndex;
+      const rid = (entry.risk_id || '').toLowerCase().trim();
+      if (rid && byId[rid]) return byId[rid];
       const key = (entry.name || '').toLowerCase().trim();
-      return this._dcProfileIndex[key] || null;
+      return byName[key] || null;
     },
 
     get taxonomyFilteredEntries() {
@@ -3547,8 +3553,13 @@ function app() {
     },
 
     get dcUnmatchedProfiles() {
+      const entryIds = new Set((this.taxonomy.entries || []).map(e => (e.risk_id || '').toLowerCase().trim()).filter(Boolean));
       const entryNames = new Set((this.taxonomy.entries || []).map(e => (e.name || '').toLowerCase().trim()));
-      return (this.domainContext.profiles || []).filter(p => !entryNames.has((p.risk_name || '').toLowerCase().trim()));
+      return (this.domainContext.profiles || []).filter(p => {
+        const rid = (p.risk_id || '').toLowerCase().trim();
+        const name = (p.risk_name || '').toLowerCase().trim();
+        return (!rid || !entryIds.has(rid)) && !entryNames.has(name);
+      });
     },
 
     // --- Policy ---
