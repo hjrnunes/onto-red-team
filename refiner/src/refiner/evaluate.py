@@ -1279,3 +1279,58 @@ def format_summary(evaluation: dict) -> str:
         )
 
     return "\n".join(lines)
+
+
+def compute_pair_completeness(
+    redteam_rows: list[dict], utility_rows: list[dict],
+) -> dict:
+    rt_ids = {r["pair_id"] for r in redteam_rows if "pair_id" in r}
+    ut_ids = {r["pair_id"] for r in utility_rows if "pair_id" in r}
+    all_ids = rt_ids | ut_ids
+    if not all_ids:
+        return {"completeness": 1.0, "total_pairs": 0, "missing_in_redteam": 0, "missing_in_utility": 0}
+    matched = rt_ids & ut_ids
+    return {
+        "completeness": round(len(matched) / len(all_ids), 3),
+        "total_pairs": len(all_ids),
+        "matched_pairs": len(matched),
+        "missing_in_redteam": len(ut_ids - rt_ids),
+        "missing_in_utility": len(rt_ids - ut_ids),
+    }
+
+
+def compute_frame_correspondence(
+    redteam_rows: list[dict], utility_rows: list[dict],
+) -> dict[tuple[str, str], int]:
+    ut_by_id = {r["pair_id"]: r for r in utility_rows if "pair_id" in r}
+    counts: dict[tuple[str, str], int] = {}
+    for rt in redteam_rows:
+        pid = rt.get("pair_id")
+        if pid and pid in ut_by_id:
+            pair = (rt.get("technique", ""), ut_by_id[pid].get("technique", ""))
+            counts[pair] = counts.get(pair, 0) + 1
+    return counts
+
+
+def compute_lexical_overlap(
+    redteam_rows: list[dict], utility_rows: list[dict],
+) -> dict:
+    ut_by_id = {r["pair_id"]: r for r in utility_rows if "pair_id" in r}
+    overlaps = []
+    for rt in redteam_rows:
+        pid = rt.get("pair_id")
+        if pid and pid in ut_by_id:
+            rt_msgs = rt.get("generation_prompt", [])
+            ut_msgs = ut_by_id[pid].get("generation_prompt", [])
+            rt_text = " ".join(m.get("content", "") for m in rt_msgs if m.get("role") == "user")
+            ut_text = " ".join(m.get("content", "") for m in ut_msgs if m.get("role") == "user")
+            rt_tokens = set(rt_text.lower().split())
+            ut_tokens = set(ut_text.lower().split())
+            if rt_tokens or ut_tokens:
+                jaccard = len(rt_tokens & ut_tokens) / len(rt_tokens | ut_tokens)
+            else:
+                jaccard = 0.0
+            overlaps.append({"pair_id": pid, "jaccard": round(jaccard, 3)})
+
+    mean_j = round(sum(o["jaccard"] for o in overlaps) / len(overlaps), 3) if overlaps else 0.0
+    return {"mean_jaccard": mean_j, "per_pair": overlaps}
