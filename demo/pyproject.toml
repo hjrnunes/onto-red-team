@@ -1,0 +1,27 @@
+[project]
+name = "demo"
+version = "0.1.0"
+description = "ORT demo pipeline: generate datasets, run garak, build ART reports"
+requires-python = ">=3.11,<3.14"
+dependencies = [
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+]
+
+[project.optional-dependencies]
+scan = [
+    "garak @ git+https://github.com/trustyai-explainability/garak@automated-red-teaming",
+]
+
+[project.scripts]
+demo = "demo.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/demo"]
