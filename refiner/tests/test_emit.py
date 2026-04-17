@@ -1155,3 +1155,56 @@ def test_emit_mode_paired_different_prompts(tmp_path):
     rt_row = json.loads(redteam_path.read_text().strip().split("\n")[0])
     ut_row = json.loads(utility_path.read_text().strip().split("\n")[0])
     assert rt_row["generation_prompt"] != ut_row["generation_prompt"]
+
+
+def test_emit_cli_mode_utility(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "test-dataset-utility.jsonl"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "2",
+        "--seed", "42",
+        "--output", str(out_path),
+        "--mode", "utility",
+    ])
+    assert result.exit_code == 0, result.output
+    assert out_path.exists()
+    row = json.loads(out_path.read_text().strip().split("\n")[0])
+    assert row["mode"] == "utility"
+
+
+def test_emit_cli_mode_paired(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    rt_path = tmp_path / "test-dataset-redteam.jsonl"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "2",
+        "--seed", "42",
+        "--output", str(rt_path),
+        "--mode", "paired",
+    ])
+    assert result.exit_code == 0, result.output
+    assert rt_path.exists()
+    ut_path = tmp_path / "test-dataset-utility.jsonl"
+    assert ut_path.exists()
+
+
+def test_emit_cli_mode_default_is_redteam(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "1",
+        "--seed", "42",
+        "--output", str(out_path),
+    ])
+    assert result.exit_code == 0, result.output
+    row = json.loads(out_path.read_text().strip().split("\n")[0])
+    assert "mode" not in row
+    assert "pair_id" not in row

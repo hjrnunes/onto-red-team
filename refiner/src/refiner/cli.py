@@ -679,6 +679,11 @@ def emit(
         help="JSON string with technique weight overrides, e.g. '{\"pretexting\": 2, \"analytical_reframing\": 1}'",
     ),
     axes_per_prompt: int = typer.Option(None, "--axes-per-prompt", help="Number of axes per prompt (default: 3)"),
+    mode: str = typer.Option("redteam", "--mode", help="Generation mode: redteam, utility, or paired"),
+    benign_weights: str = typer.Option(
+        None, "--benign-weights",
+        help="JSON string with benign frame weight overrides, e.g. '{\"routine_practice\": 2}'",
+    ),
 ):
     """Emit an sdg_hub-ready JSONL dataset from domain context profiles."""
     if not output_dir.is_dir():
@@ -687,12 +692,20 @@ def emit(
     if not policies.exists():
         typer.echo(f"Error: {policies} does not exist", err=True)
         raise typer.Exit(1)
+    if mode not in ("redteam", "utility", "paired"):
+        typer.echo(f"Error: --mode must be redteam, utility, or paired (got '{mode}')", err=True)
+        raise typer.Exit(1)
 
     if output:
         out_path = output
     else:
         slug = _discover_slug(output_dir)
-        out_path = output_dir / f"{slug}-dataset.jsonl"
+        if mode == "paired":
+            out_path = output_dir / f"{slug}-dataset-redteam.jsonl"
+        elif mode == "utility":
+            out_path = output_dir / f"{slug}-dataset-utility.jsonl"
+        else:
+            out_path = output_dir / f"{slug}-dataset.jsonl"
 
     parsed_weights = None
     if technique_weights:
@@ -702,9 +715,18 @@ def emit(
             typer.echo(f"Error: invalid JSON for --technique-weights: {e}", err=True)
             raise typer.Exit(1)
 
+    parsed_benign_weights = None
+    if benign_weights:
+        try:
+            parsed_benign_weights = json.loads(benign_weights)
+        except json.JSONDecodeError as e:
+            typer.echo(f"Error: invalid JSON for --benign-weights: {e}", err=True)
+            raise typer.Exit(1)
+
     from refiner.emit import emit as do_emit
     do_emit(output_dir, policies, samples_per_risk, out_path, seed=seed,
-            technique_weights=parsed_weights, axes_per_prompt=axes_per_prompt)
+            technique_weights=parsed_weights, axes_per_prompt=axes_per_prompt,
+            mode=mode, benign_weights=parsed_benign_weights)
     typer.echo(f"Dataset written to {out_path}")
 
     # Build dataset HTML report
