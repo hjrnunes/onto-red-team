@@ -1,6 +1,13 @@
 import pytest
 from unittest.mock import MagicMock
-from refiner.judge import judge_prompt, JudgeScores, aggregate_judge_results
+from refiner.judge import (
+    judge_prompt,
+    JudgeScores,
+    aggregate_judge_results,
+    UtilityJudgeScores,
+    judge_utility_prompt,
+    UTILITY_DIMENSIONS,
+)
 from refiner.llm import LLMConfig
 
 
@@ -93,3 +100,70 @@ def test_aggregate_judge_results_single():
     result = aggregate_judge_results(scores)
     assert result["subtlety"]["mean"] == 4.0
     assert result["subtlety"]["std"] == 0  # single value, no stdev
+
+
+def test_utility_judge_scores_model():
+    scores = UtilityJudgeScores(
+        legitimacy=5, legitimacy_rationale="Clearly acceptable",
+        boundary_proximity=4, boundary_proximity_rationale="Close to boundary",
+        domain_grounding=5, domain_grounding_rationale="Good terminology",
+        policy_relevance=3, policy_relevance_rationale="Relevant",
+    )
+    assert scores.legitimacy == 5
+    assert scores.boundary_proximity == 4
+
+
+def test_utility_judge_scores_validation():
+    with pytest.raises(Exception):
+        UtilityJudgeScores(
+            legitimacy=6, legitimacy_rationale="r",  # out of range
+            boundary_proximity=3, boundary_proximity_rationale="r",
+            domain_grounding=5, domain_grounding_rationale="r",
+            policy_relevance=2, policy_relevance_rationale="r",
+        )
+
+
+def test_utility_dimensions_tuple():
+    assert UTILITY_DIMENSIONS == ("legitimacy", "boundary_proximity", "domain_grounding", "policy_relevance")
+
+
+def test_judge_utility_prompt_calls_llm(mock_client, mock_config):
+    mock_scores = UtilityJudgeScores(
+        legitimacy=5, legitimacy_rationale="r",
+        boundary_proximity=4, boundary_proximity_rationale="r",
+        domain_grounding=4, domain_grounding_rationale="r",
+        policy_relevance=3, policy_relevance_rationale="r",
+    )
+    mock_client.chat.completions.create.return_value = mock_scores
+
+    result = judge_utility_prompt(
+        mock_client, mock_config,
+        prompt_text="What are the standard drug interaction categories?",
+        policy_concept="Clinical Decisions",
+        concept_definition="No clinical diagnoses",
+        risk_name="Misdiagnosis",
+        sampled_axes=[{"sampled_label": "drug interaction", "cco_class_label": "pharmacological process"}],
+    )
+    assert result.legitimacy == 5
+    assert result.boundary_proximity == 4
+    mock_client.chat.completions.create.assert_called_once()
+
+
+def test_aggregate_judge_results_with_utility_dimensions():
+    scores = [
+        {"legitimacy": 5, "boundary_proximity": 4, "domain_grounding": 5, "policy_relevance": 3},
+        {"legitimacy": 4, "boundary_proximity": 3, "domain_grounding": 4, "policy_relevance": 4},
+    ]
+    result = aggregate_judge_results(scores, dimensions=UTILITY_DIMENSIONS)
+    assert "legitimacy" in result
+    assert "boundary_proximity" in result
+    assert result["legitimacy"]["mean"] == 4.5
+
+
+def test_aggregate_judge_results_default_dimensions_unchanged():
+    scores = [
+        {"subtlety": 4, "plausibility": 3, "domain_grounding": 5, "policy_relevance": 4},
+    ]
+    result = aggregate_judge_results(scores)
+    assert "subtlety" in result
+    assert "legitimacy" not in result
