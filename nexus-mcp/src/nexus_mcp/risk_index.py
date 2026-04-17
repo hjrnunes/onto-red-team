@@ -41,7 +41,7 @@ def build_structural_context(
         group_id = getattr(risk, "isPartOf", "")
         if group_id and group_id in group_names:
             parts.append(f"PartOf: {group_names[group_id]}")
-            siblings = [r.name for r in group_members[group_id] if r.id != risk_id]
+            siblings = [r.name for r in group_members[group_id] if r.id != risk_id and r.name is not None]
             if siblings:
                 siblings.sort()
                 if len(siblings) <= max_siblings:

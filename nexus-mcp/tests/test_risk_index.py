@@ -88,6 +88,26 @@ def test_structural_context_sibling_cap():
     assert len(names_str.split(", ")) == 8
 
 
+def test_structural_context_none_name_sibling():
+    """Siblings with None name should be filtered out, not crash on sort."""
+    from tests.conftest import MockRisk, MockGroup
+
+    group = MockGroup(id="grp", name="Test Group")
+    risks = [
+        MockRisk(id="r1", name="Risk One", isPartOf="grp"),
+        MockRisk(id="r2", name=None, isPartOf="grp"),
+        MockRisk(id="r3", name="Risk Three", isPartOf="grp"),
+    ]
+    risks_by_id = {r.id: r for r in risks}
+
+    ctx = build_structural_context(risks_by_id, [group], None)
+
+    # r1 should see r3 as sibling, r2 (None name) should be excluded
+    assert "r1" in ctx
+    assert "Risk Three" in ctx["r1"]
+    assert "None" not in ctx["r1"]
+
+
 def test_index_risks(chroma_dir, mock_risks):
     idx = RiskIndex(chroma_dir)
     idx.index_risks(mock_risks)
