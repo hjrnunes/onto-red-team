@@ -6,6 +6,15 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Parallel LLM calls** — new `--max-concurrent N` option on `refiner run` enables concurrent LLM
+  requests within each pipeline stage (`map_risks`, `anchor`, `contextualize`). Designed to leverage
+  vLLM's automatic prefix caching (shared system prompts get KV cache hits) and continuous batching
+  (concurrent requests are batched more efficiently than sequential ones, even on a single GPU).
+  Default is `1` (sequential, preserving existing behavior). Battery config supports
+  `max_concurrent` key (default `4`). Thread-safety added to `TokenTracker` and debug counter.
+  Per-policy parallelism in `map_risks`, per-unique-risk parallelism in `anchor` and `contextualize`.
+
+
 - **Prompt IDs in emit output** — every emitted JSONL row now carries a `prompt_id` field with format
   `{risk_id}:{technique-slug}:{index}` (e.g. `r1:pretexting:0`). Provides stable, unique identifiers
   for end-to-end traceability from refiner emit through garak scan results. Works across all modes

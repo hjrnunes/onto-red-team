@@ -1,3 +1,4 @@
+import threading
 from dataclasses import dataclass, field
 
 import instructor
@@ -12,6 +13,7 @@ class LLMConfig:
     temperature: float = 0.3
     max_retries: int = 3
     max_tokens: int = 8192
+    max_concurrent: int = 1
 
 
 @dataclass
@@ -21,6 +23,7 @@ class TokenTracker:
     total_tokens: int = 0
     calls: int = 0
     per_stage: dict[str, dict[str, int]] = field(default_factory=dict)
+    _lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     def add(self, usage, stage: str | None = None) -> None:
         if usage is None:
@@ -28,16 +31,17 @@ class TokenTracker:
         pt = getattr(usage, "prompt_tokens", 0) or 0
         ct = getattr(usage, "completion_tokens", 0) or 0
         tt = getattr(usage, "total_tokens", 0) or 0
-        self.prompt_tokens += pt
-        self.completion_tokens += ct
-        self.total_tokens += tt
-        self.calls += 1
-        if stage:
-            s = self.per_stage.setdefault(stage, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0})
-            s["prompt_tokens"] += pt
-            s["completion_tokens"] += ct
-            s["total_tokens"] += tt
-            s["calls"] += 1
+        with self._lock:
+            self.prompt_tokens += pt
+            self.completion_tokens += ct
+            self.total_tokens += tt
+            self.calls += 1
+            if stage:
+                s = self.per_stage.setdefault(stage, {"prompt_tokens": 0, "completion_tokens": 0, "total_tokens": 0, "calls": 0})
+                s["prompt_tokens"] += pt
+                s["completion_tokens"] += ct
+                s["total_tokens"] += tt
+                s["calls"] += 1
 
     def to_dict(self) -> dict:
         return {

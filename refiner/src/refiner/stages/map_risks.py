@@ -1,4 +1,6 @@
 import logging
+from concurrent.futures import ThreadPoolExecutor
+from dataclasses import dataclass, field
 from typing import Literal
 
 import instructor
@@ -173,6 +175,216 @@ def characterize_gap(
     return result
 
 
+@dataclass
+class _PolicyResult:
+    mapping: PolicyRiskMapping
+    risk_details: dict[str, dict] = field(default_factory=dict)
+    seen_ids: set[str] = field(default_factory=set)
+    related: dict[str, list[dict]] = field(default_factory=dict)
+    actions: dict[str, list[str]] = field(default_factory=dict)
+    gaps: list[CoverageGap] = field(default_factory=list)
+
+
+def _process_single_policy(
+    pol: Policy,
+    client: instructor.Instructor,
+    config: LLMConfig,
+    risk_handlers: dict,
+    report=None,
+) -> _PolicyResult:
+    candidates = _expand_search(
+        pol.concept_definition, risk_handlers["search_risks"],
+        top_k=5, concept_name=pol.policy_concept,
+    )
+    logger.debug(
+        "Perspective expansion for '%s': %d unique candidates",
+        pol.policy_concept, len(candidates),
+    )
+    if report:
+        by_source: dict[str, int] = {}
+        per_candidate: dict[str, dict] = {}
+        for c in candidates:
+            sd = c.get("_source_distances", {})
+            sq = c.get("_source_queries", [])
+            for src in sq:
+                by_source[src] = by_source.get(src, 0) + 1
+            per_candidate[c["id"]] = {
+                "sources": sq,
+                "distances": {k: round(v, 4) for k, v in sd.items()},
+                "best_distance": round(c.get("distance") or 1.0, 4),
+            }
+        exclusive = sum(1 for pc in per_candidate.values() if len(pc["sources"]) == 1)
+        multi = sum(1 for pc in per_candidate.values() if len(pc["sources"]) > 1)
+        report.events.append({
+            "stage": "map_risks", "event": "perspective_expansion",
+            "policy_concept": pol.policy_concept,
+            "candidate_count": len(candidates),
+            "perspectives": len(PERSPECTIVES) + 2,
+            "by_source": by_source,
+            "exclusive_count": exclusive,
+            "multi_perspective_count": multi,
+            "per_candidate": per_candidate,
+        })
+
+    risk_details_local: dict[str, dict] = {}
+    seen_ids_local: set[str] = set()
+    related_local: dict[str, list[dict]] = {}
+    actions_local: dict[str, list[str]] = {}
+
+    enriched_candidates = []
+    for c in candidates:
+        details = risk_handlers["get_risk_details"](c["id"])
+        if details is None:
+            continue
+        risk_details_local[c["id"]] = details
+        seen_ids_local.add(c["id"])
+        related = risk_handlers["get_related_risks"](c["id"])
+        related_local[c["id"]] = related
+        for r in related:
+            seen_ids_local.add(r["id"])
+        actions = risk_handlers["get_related_actions"](c["id"])
+        actions_local[c["id"]] = [a.get("description", "") for a in actions if a.get("description")]
+        enriched_candidates.append({**details, "distance": c.get("distance"), "related": related})
+
+    if not enriched_candidates:
+        return _PolicyResult(
+            mapping=PolicyRiskMapping(policy_concept=pol.policy_concept, matched_risks=[]),
+            risk_details=risk_details_local,
+            seen_ids=seen_ids_local,
+            related=related_local,
+            actions=actions_local,
+        )
+
+    index_to_id = {}
+    index_to_distance = {}
+    candidate_lines = []
+    for i, ec in enumerate(enriched_candidates, 1):
+        index_to_id[i] = ec['id']
+        index_to_distance[i] = ec.get('distance')
+        name = ec['name']
+        desc = ec.get('description', '')
+        line = f"- {i}: {name} — {desc}"
+        if ec.get("concern"):
+            line += f" (Concern: {ec['concern']})"
+        candidate_lines.append(line)
+
+    user_content = (
+            f"Policy: {pol.policy_concept}\n"
+            f"Definition: {pol.concept_definition}\n\n"
+            f"Candidate risks:\n" + "\n".join(candidate_lines)
+    )
+
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_content},
+    ]
+    result = client.chat.completions.create(
+        model=config.model,
+        response_model=_RiskSelection,
+        messages=messages,
+        temperature=config.temperature,
+        max_retries=config.max_retries,
+        max_tokens=config.max_tokens,
+    )
+    debug.log_call("map_risks", messages, result, context={
+        "policy_concept": pol.policy_concept,
+        "num_candidates": len(enriched_candidates),
+    })
+
+    valid_risks = []
+    for rm in result.matched_risks:
+        actual_id = index_to_id.get(rm.risk_index)
+        if actual_id is not None:
+            distance = index_to_distance.get(rm.risk_index)
+            valid_risks.append(RiskMatch(
+                risk_id=actual_id,
+                risk_name=rm.risk_name,
+                relevance=rm.relevance,
+                justification=rm.justification,
+                match_distance=distance,
+            ))
+            if distance is not None and distance > WEAK_MATCH_THRESHOLD:
+                logger.warning(
+                    "Weak match for policy '%s': risk '%s' (distance=%.3f > %.2f)",
+                    pol.policy_concept, actual_id, distance, WEAK_MATCH_THRESHOLD,
+                )
+                if report:
+                    report.events.append({
+                        "stage": "map_risks", "event": "weak_match",
+                        "risk_id": actual_id, "distance": distance,
+                    })
+        else:
+            logger.warning("Filtering invalid risk_index: %s", rm.risk_index)
+            if report:
+                report.events.append({
+                    "stage": "map_risks", "event": "invalid_risk_index",
+                    "raw_index": rm.risk_index,
+                })
+
+    if report:
+        report.events.append({
+            "stage": "map_risks", "event": "match_count",
+            "policy_concept": pol.policy_concept, "count": len(valid_risks),
+        })
+
+    gaps_local: list[CoverageGap] = []
+    min_distance = min(
+        (ec.get("distance") or 0.0) for ec in enriched_candidates
+    ) if enriched_candidates else 1.0
+    primary_count = sum(1 for r in valid_risks if r.relevance == "primary")
+    has_decomposition = (
+        pol.decomposition is not None
+        and bool(pol.decomposition.agent or pol.decomposition.activity or pol.decomposition.entity)
+    )
+
+    gap_score = compute_gap_score(min_distance, primary_count, has_decomposition)
+    if gap_score >= GAP_SCORE_THRESHOLD:
+        nearest = [
+            {"id": ec["id"], "name": ec.get("name", ""), "distance": ec.get("distance")}
+            for ec in enriched_candidates[:3]
+        ]
+        classification = characterize_gap(
+            pol.policy_concept,
+            pol.concept_definition,
+            enriched_candidates[:5],
+            client,
+            config,
+        )
+        adjusted_confidence = gap_score * GAP_TYPE_WEIGHTS[classification.gap_type]
+        gap = CoverageGap(
+            policy_concept=pol.policy_concept,
+            concept_definition=pol.concept_definition,
+            gap_type=classification.gap_type,
+            confidence=round(adjusted_confidence, 3),
+            nearest_risks=nearest,
+            reasoning=classification.reasoning,
+            decomposition=pol.decomposition,
+        )
+        gaps_local.append(gap)
+        logger.info(
+            "Coverage gap detected for '%s': type=%s confidence=%.3f",
+            pol.policy_concept, classification.gap_type, adjusted_confidence,
+        )
+        if report:
+            report.events.append({
+                "stage": "map_risks", "event": "coverage_gap",
+                "policy_concept": pol.policy_concept,
+                "gap_type": classification.gap_type,
+                "confidence": round(adjusted_confidence, 3),
+                "gap_score_raw": round(gap_score, 3),
+                "nearest_risks": nearest,
+            })
+
+    return _PolicyResult(
+        mapping=PolicyRiskMapping(policy_concept=pol.policy_concept, matched_risks=valid_risks),
+        risk_details=risk_details_local,
+        seen_ids=seen_ids_local,
+        related=related_local,
+        actions=actions_local,
+        gaps=gaps_local,
+    )
+
+
 def map_risks(
         policies: list[Policy],
         client: instructor.Instructor,
@@ -183,199 +395,29 @@ def map_risks(
     if not policies:
         return [], {}, set(), {}, {}, []
 
+    max_workers = min(config.max_concurrent, len(policies))
+
+    if max_workers > 1:
+        logger.info("map_risks: processing %d policies with %d parallel workers", len(policies), max_workers)
+        with ThreadPoolExecutor(max_workers=max_workers) as executor:
+            policy_results = list(executor.map(
+                lambda pol: _process_single_policy(pol, client, config, risk_handlers, report),
+                policies,
+            ))
+    else:
+        policy_results = [_process_single_policy(pol, client, config, risk_handlers, report) for pol in policies]
+
+    mappings = [r.mapping for r in policy_results]
     risk_details_cache: dict[str, dict] = {}
-    seen_risk_ids: set[str] = set()  # all risk IDs shown to the model (candidates + related)
-    related_risks: dict[str, list[dict]] = {}  # risk_id -> related risk entries from knowledge graph
+    seen_risk_ids: set[str] = set()
+    related_risks: dict[str, list[dict]] = {}
     risk_actions_cache: dict[str, list[str]] = {}
     coverage_gaps: list[CoverageGap] = []
-    mappings: list[PolicyRiskMapping] = []
-
-    for pol in policies:
-        # 1. Perspective-expanded semantic search for candidate risks
-        candidates = _expand_search(
-            pol.concept_definition, risk_handlers["search_risks"],
-            top_k=5, concept_name=pol.policy_concept,
-        )
-        logger.debug(
-            "Perspective expansion for '%s': %d unique candidates",
-            pol.policy_concept, len(candidates),
-        )
-        if report:
-            by_source: dict[str, int] = {}
-            per_candidate: dict[str, dict] = {}
-            for c in candidates:
-                sd = c.get("_source_distances", {})
-                sq = c.get("_source_queries", [])
-                for src in sq:
-                    by_source[src] = by_source.get(src, 0) + 1
-                per_candidate[c["id"]] = {
-                    "sources": sq,
-                    "distances": {k: round(v, 4) for k, v in sd.items()},
-                    "best_distance": round(c.get("distance") or 1.0, 4),
-                }
-            exclusive = sum(1 for pc in per_candidate.values() if len(pc["sources"]) == 1)
-            multi = sum(1 for pc in per_candidate.values() if len(pc["sources"]) > 1)
-            report.events.append({
-                "stage": "map_risks", "event": "perspective_expansion",
-                "policy_concept": pol.policy_concept,
-                "candidate_count": len(candidates),
-                "perspectives": len(PERSPECTIVES) + 2,
-                "by_source": by_source,
-                "exclusive_count": exclusive,
-                "multi_perspective_count": multi,
-                "per_candidate": per_candidate,
-            })
-
-        # 2. Get full details for each candidate
-        enriched_candidates = []
-        for c in candidates:
-            details = risk_handlers["get_risk_details"](c["id"])
-            if details is None:
-                continue
-            risk_details_cache[c["id"]] = details
-            seen_risk_ids.add(c["id"])
-            # 3. Get cross-framework mappings (stored for structure stage)
-            related = risk_handlers["get_related_risks"](c["id"])
-            related_risks[c["id"]] = related
-            for r in related:
-                seen_risk_ids.add(r["id"])
-            # 4. Get related actions (stored for anchor stage)
-            actions = risk_handlers["get_related_actions"](c["id"])
-            risk_actions_cache[c["id"]] = [a.get("description", "") for a in actions if a.get("description")]
-            enriched_candidates.append({**details, "distance": c.get("distance"), "related": related})
-
-        if not enriched_candidates:
-            mappings.append(PolicyRiskMapping(
-                policy_concept=pol.policy_concept,
-                matched_risks=[],
-            ))
-            continue
-
-        # Build context for LLM — use sequential indices instead of IDs
-        index_to_id = {}
-        index_to_distance = {}
-        candidate_lines = []
-        for i, ec in enumerate(enriched_candidates, 1):
-            index_to_id[i] = ec['id']
-            index_to_distance[i] = ec.get('distance')
-            name = ec['name']
-            desc = ec.get('description', '')
-            line = f"- {i}: {name} — {desc}"
-            if ec.get("concern"):
-                line += f" (Concern: {ec['concern']})"
-            candidate_lines.append(line)
-
-        user_content = (
-                f"Policy: {pol.policy_concept}\n"
-                f"Definition: {pol.concept_definition}\n\n"
-                f"Candidate risks:\n" + "\n".join(candidate_lines)
-        )
-
-        messages = [
-            {"role": "system", "content": SYSTEM_PROMPT},
-            {"role": "user", "content": user_content},
-        ]
-        result = client.chat.completions.create(
-            model=config.model,
-            response_model=_RiskSelection,
-            messages=messages,
-            temperature=config.temperature,
-            max_retries=config.max_retries,
-            max_tokens=config.max_tokens,
-        )
-        debug.log_call("map_risks", messages, result, context={
-            "policy_concept": pol.policy_concept,
-            "num_candidates": len(enriched_candidates),
-        })
-
-        # Post-processing: map indices back to risk IDs
-        valid_risks = []
-        for rm in result.matched_risks:
-            actual_id = index_to_id.get(rm.risk_index)
-            if actual_id is not None:
-                distance = index_to_distance.get(rm.risk_index)
-                valid_risks.append(RiskMatch(
-                    risk_id=actual_id,
-                    risk_name=rm.risk_name,
-                    relevance=rm.relevance,
-                    justification=rm.justification,
-                    match_distance=distance,
-                ))
-                if distance is not None and distance > WEAK_MATCH_THRESHOLD:
-                    logger.warning(
-                        "Weak match for policy '%s': risk '%s' (distance=%.3f > %.2f)",
-                        pol.policy_concept, actual_id, distance, WEAK_MATCH_THRESHOLD,
-                    )
-                    if report:
-                        report.events.append({
-                            "stage": "map_risks", "event": "weak_match",
-                            "risk_id": actual_id, "distance": distance,
-                        })
-            else:
-                logger.warning("Filtering invalid risk_index: %s", rm.risk_index)
-                if report:
-                    report.events.append({
-                        "stage": "map_risks", "event": "invalid_risk_index",
-                        "raw_index": rm.risk_index,
-                    })
-
-        # Stitch back metadata the LLM doesn't need to produce
-        if report:
-            report.events.append({
-                "stage": "map_risks", "event": "match_count",
-                "policy_concept": pol.policy_concept, "count": len(valid_risks),
-            })
-        mappings.append(PolicyRiskMapping(
-            policy_concept=pol.policy_concept,
-            matched_risks=valid_risks,
-        ))
-
-        # --- Coverage gap detection ---
-        min_distance = min(
-            (ec.get("distance") or 0.0) for ec in enriched_candidates
-        ) if enriched_candidates else 1.0
-        primary_count = sum(1 for r in valid_risks if r.relevance == "primary")
-        has_decomposition = (
-            pol.decomposition is not None
-            and bool(pol.decomposition.agent or pol.decomposition.activity or pol.decomposition.entity)
-        )
-
-        gap_score = compute_gap_score(min_distance, primary_count, has_decomposition)
-        if gap_score >= GAP_SCORE_THRESHOLD:
-            nearest = [
-                {"id": ec["id"], "name": ec.get("name", ""), "distance": ec.get("distance")}
-                for ec in enriched_candidates[:3]
-            ]
-            classification = characterize_gap(
-                pol.policy_concept,
-                pol.concept_definition,
-                enriched_candidates[:5],
-                client,
-                config,
-            )
-            adjusted_confidence = gap_score * GAP_TYPE_WEIGHTS[classification.gap_type]
-            gap = CoverageGap(
-                policy_concept=pol.policy_concept,
-                concept_definition=pol.concept_definition,
-                gap_type=classification.gap_type,
-                confidence=round(adjusted_confidence, 3),
-                nearest_risks=nearest,
-                reasoning=classification.reasoning,
-                decomposition=pol.decomposition,
-            )
-            coverage_gaps.append(gap)
-            logger.info(
-                "Coverage gap detected for '%s': type=%s confidence=%.3f",
-                pol.policy_concept, classification.gap_type, adjusted_confidence,
-            )
-            if report:
-                report.events.append({
-                    "stage": "map_risks", "event": "coverage_gap",
-                    "policy_concept": pol.policy_concept,
-                    "gap_type": classification.gap_type,
-                    "confidence": round(adjusted_confidence, 3),
-                    "gap_score_raw": round(gap_score, 3),
-                    "nearest_risks": nearest,
-                })
+    for r in policy_results:
+        risk_details_cache.update(r.risk_details)
+        seen_risk_ids.update(r.seen_ids)
+        related_risks.update(r.related)
+        risk_actions_cache.update(r.actions)
+        coverage_gaps.extend(r.gaps)
 
     return mappings, risk_details_cache, seen_risk_ids, related_risks, risk_actions_cache, coverage_gaps

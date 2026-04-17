@@ -1,11 +1,13 @@
 import json
 import logging
 import re
+import threading
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
 _call_counter = 0
+_counter_lock = threading.Lock()
 _debug_dir: Path | None = None
 
 
@@ -25,7 +27,9 @@ def log_call(
     context: dict | None = None,
 ) -> None:
     global _call_counter
-    _call_counter += 1
+    with _counter_lock:
+        _call_counter += 1
+        call_num = _call_counter
 
     # Build slug from context (reused for JSON filename and span name)
     slug = ""
@@ -46,7 +50,7 @@ def log_call(
     # JSON file (existing behavior)
     if _debug_dir is not None:
         entry = {
-            "call_number": _call_counter,
+            "call_number": call_num,
             "stage": stage,
             "messages": messages,
             "response": response_data,
@@ -54,12 +58,12 @@ def log_call(
         if context:
             entry["context"] = context
 
-        filename = f"{_call_counter:02d}-{stage}{slug}.json"
+        filename = f"{call_num:02d}-{stage}{slug}.json"
         path = _debug_dir / filename
         path.write_text(json.dumps(entry, indent=2, default=str))
         logger.debug("Debug log written to %s", path)
 
-    # MLflow tracing (conditional)
+    # MLflow tracing (conditional — not threadsafe, skip under concurrency)
     try:
         import mlflow
         if mlflow.active_run():
@@ -83,7 +87,9 @@ def log_event(
 ) -> None:
     """Log a non-LLM pipeline event (e.g. candidate tier reporting)."""
     global _call_counter
-    _call_counter += 1
+    with _counter_lock:
+        _call_counter += 1
+        call_num = _call_counter
 
     slug = ""
     if context:
@@ -94,7 +100,7 @@ def log_event(
 
     if _debug_dir is not None:
         entry = {
-            "call_number": _call_counter,
+            "call_number": call_num,
             "stage": stage,
             "messages": [],
             "response": data,
@@ -102,7 +108,7 @@ def log_event(
         if context:
             entry["context"] = context
 
-        filename = f"{_call_counter:02d}-{stage}{slug}.json"
+        filename = f"{call_num:02d}-{stage}{slug}.json"
         path = _debug_dir / filename
         path.write_text(json.dumps(entry, indent=2, default=str))
         logger.debug("Debug event written to %s", path)

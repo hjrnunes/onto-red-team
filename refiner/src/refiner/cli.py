@@ -178,6 +178,7 @@ def run(
     nexus_base_dir: str = typer.Option(None, "--nexus-base-dir", envvar="NEXUS_BASE_DIR", help="Path to ai-atlas-nexus repo"),
     ontoquery_chroma_dir: Path = typer.Option(Path(".chroma"), "--ontoquery-chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="Ontoquery ChromaDB directory"),
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR", help="Nexus ChromaDB directory"),
+    max_concurrent: int = typer.Option(1, "--max-concurrent", help="Max parallel LLM calls per stage (default: 1 = sequential)"),
     search_strategy: str = typer.Option("llm", "--search-strategy", help="Search merge strategy: llm (default), weighted, or grouped"),
     track: bool = typer.Option(False, "--track", help="Enable MLflow tracking + tracing"),
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
@@ -201,7 +202,7 @@ def run(
         typer.echo("Error: --base-url and --model are required (or set REFINER_BASE_URL / REFINER_MODEL)", err=True)
         raise typer.Exit(1)
 
-    config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
+    config = LLMConfig(base_url=base_url, model=model, api_key=api_key, max_concurrent=max_concurrent)
     tracker = TokenTracker()
     client = create_client(config, tracker=tracker)
     debug.configure(debug_dir)

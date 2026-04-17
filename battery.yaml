@@ -6,7 +6,17 @@ ontoquery_chroma_dir: ontoquery/.chroma
 nexus_chroma_dir: nexus-mcp/.chroma
 
 samples_per_risk: 15
+max_concurrent: 4  # parallel LLM calls per stage (vLLM prefix caching + continuous batching)
 #tracking_uri: https://mlflow.taxonomy-refiner.orb.local
+
+# Judge evaluation settings for evaluate stage.
+# Uses a separate model to score prompts on subtlety, plausibility,
+# domain_grounding, and policy_relevance (1-5 scale).
+judge:
+  enabled: true
+  model: gemma-4-26b-a4b-it
+  base_url: https://gemma-4-26b-a4b-it-model-serving.apps.rosa.u1q6z7t9c5c9x9t.262f.p3.openshiftapps.com/v1
+  sample: 30  # score N random prompts per run (omit for full scoring)
 
 # Adversarial technique frame weights for emit stage.
 # Default: uniform distribution across all 5 frames.
@@ -41,6 +51,6 @@ policies:
 
 models:
 #  gemma-2-9b-it: https://gemma-2-9b-it-model-serving.apps.rosa.hnunes-421.0o92.p3.openshiftapps.com/v1
-  gemma-3-12b-it: https://gemma-3-12b-it-model-serving.apps.rosa.hnunes-421.0o92.p3.openshiftapps.com/v1
+#  gemma-3-12b-it: https://gemma-3-12b-it-model-serving.apps.rosa.hnunes-421.0o92.p3.openshiftapps.com/v1
   mistral-small-3-1-24b: https://mistral-small-3-1-24b-model-serving.apps.rosa.u1q6z7t9c5c9x9t.262f.p3.openshiftapps.com/v1
   gemma-4-26b-a4b-it: https://gemma-4-26b-a4b-it-model-serving.apps.rosa.u1q6z7t9c5c9x9t.262f.p3.openshiftapps.com/v1

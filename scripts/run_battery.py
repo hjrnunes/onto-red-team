@@ -115,6 +115,7 @@ def build_refine_cmd(
         nexus_chroma: Path,
         tracking_uri: str,
         tags: list[str],
+        max_concurrent: int = 1,
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "refiner", "run", str(input_file),
@@ -130,6 +131,8 @@ def build_refine_cmd(
         "--ontoquery-chroma-dir", str(onto_chroma),
         "--nexus-chroma-dir", str(nexus_chroma),
     ])
+    if max_concurrent > 1:
+        cmd.extend(["--max-concurrent", str(max_concurrent)])
     if tracking_uri:
         cmd.extend(["--track", "--tracking-uri", tracking_uri])
     for tag in tags:
@@ -393,6 +396,7 @@ def _run_policy(
             model_url=model_url, api_key=api_key, nexus_base_dir=cfg["nexus_base_dir"],
             onto_chroma=tmp_onto, nexus_chroma=tmp_nexus,
             tracking_uri=cfg["tracking_uri"], tags=tags,
+            max_concurrent=cfg.get("max_concurrent", 1),
         )
         _run_stage(cmd, cwd, **stage_kw)
 
