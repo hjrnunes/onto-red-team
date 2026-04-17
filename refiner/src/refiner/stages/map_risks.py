@@ -23,6 +23,14 @@ PERSPECTIVES = [
     "regulator assessing compliance of: {definition}",
 ]
 
+QUERY_SOURCES = {
+    "base_definition": None,
+    "concept_name": None,
+    "deployer": PERSPECTIVES[0],
+    "affected_subject": PERSPECTIVES[1],
+    "regulator": PERSPECTIVES[2],
+}
+
 
 def _expand_search(
     definition: str,
@@ -30,20 +38,35 @@ def _expand_search(
     top_k: int = 5,
     concept_name: str | None = None,
 ) -> list[dict]:
-    """Run perspective-based queries and merge candidates, keeping best distance per risk."""
+    """Run perspective-based queries and merge candidates, keeping best distance per risk.
+
+    Returns candidates enriched with ``_source_distances`` (source -> distance)
+    and ``_source_queries`` (list of source labels that surfaced the candidate).
+    """
     best: dict[str, dict] = {}
+    source_distances: dict[str, dict[str, float]] = {}
 
-    queries = [definition]
+    labelled_queries: list[tuple[str, str]] = [("base_definition", definition)]
     if concept_name and concept_name != definition:
-        queries.append(concept_name)
-    for perspective in PERSPECTIVES:
-        queries.append(perspective.format(definition=definition))
+        labelled_queries.append(("concept_name", concept_name))
+    for source, template in list(QUERY_SOURCES.items())[2:]:
+        labelled_queries.append((source, template.format(definition=definition)))
 
-    for query in queries:
+    for source, query in labelled_queries:
         for candidate in search_fn(query, top_k=top_k):
             rid = candidate["id"]
-            if rid not in best or (candidate.get("distance") or 1.0) < (best[rid].get("distance") or 1.0):
+            dist = candidate.get("distance") or 1.0
+            if rid not in source_distances:
+                source_distances[rid] = {}
+            prev = source_distances[rid].get(source)
+            if prev is None or dist < prev:
+                source_distances[rid][source] = dist
+            if rid not in best or dist < (best[rid].get("distance") or 1.0):
                 best[rid] = candidate
+
+    for rid, candidate in best.items():
+        candidate["_source_distances"] = source_distances.get(rid, {})
+        candidate["_source_queries"] = sorted(source_distances.get(rid, {}).keys())
 
     return sorted(best.values(), key=lambda c: c.get("distance") or 1.0)
 
@@ -178,11 +201,29 @@ def map_risks(
             pol.policy_concept, len(candidates),
         )
         if report:
+            by_source: dict[str, int] = {}
+            per_candidate: dict[str, dict] = {}
+            for c in candidates:
+                sd = c.get("_source_distances", {})
+                sq = c.get("_source_queries", [])
+                for src in sq:
+                    by_source[src] = by_source.get(src, 0) + 1
+                per_candidate[c["id"]] = {
+                    "sources": sq,
+                    "distances": {k: round(v, 4) for k, v in sd.items()},
+                    "best_distance": round(c.get("distance") or 1.0, 4),
+                }
+            exclusive = sum(1 for pc in per_candidate.values() if len(pc["sources"]) == 1)
+            multi = sum(1 for pc in per_candidate.values() if len(pc["sources"]) > 1)
             report.events.append({
                 "stage": "map_risks", "event": "perspective_expansion",
                 "policy_concept": pol.policy_concept,
                 "candidate_count": len(candidates),
                 "perspectives": len(PERSPECTIVES) + 2,
+                "by_source": by_source,
+                "exclusive_count": exclusive,
+                "multi_perspective_count": multi,
+                "per_candidate": per_candidate,
             })
 
         # 2. Get full details for each candidate

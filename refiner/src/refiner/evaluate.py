@@ -113,6 +113,16 @@ def aggregate_stage_quality(events: list[dict]) -> dict:
             s["restriction_contexts_added"] = s.get("restriction_contexts_added", 0) + 1
         elif etype == "variations_generated":
             s["variations_generated"] = s.get("variations_generated", 0) + event.get("count", 0)
+        elif etype == "perspective_expansion":
+            expansions = s.setdefault("perspective_expansions", [])
+            expansions.append({
+                "policy_concept": event["policy_concept"],
+                "candidate_count": event["candidate_count"],
+                "by_source": event.get("by_source", {}),
+                "exclusive_count": event.get("exclusive_count", 0),
+                "multi_perspective_count": event.get("multi_perspective_count", 0),
+                "per_candidate": event.get("per_candidate", {}),
+            })
 
     return result
 

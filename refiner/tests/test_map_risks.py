@@ -597,8 +597,53 @@ def test_expand_search_empty_results():
     assert results == []
 
 
+def test_expand_search_source_tracking():
+    """Each candidate carries _source_distances and _source_queries."""
+    def perspective_search(query, top_k=5):
+        if "deployer" in query:
+            return [{"id": "risk-a", "name": "A", "distance": 0.1}]
+        if "affected" in query:
+            return [
+                {"id": "risk-a", "name": "A", "distance": 0.3},
+                {"id": "risk-b", "name": "B", "distance": 0.2},
+            ]
+        if "regulator" in query:
+            return [{"id": "risk-b", "name": "B", "distance": 0.15}]
+        return [{"id": "risk-a", "name": "A", "distance": 0.5}]
+
+    results = _expand_search("test", perspective_search, top_k=5)
+    a = next(r for r in results if r["id"] == "risk-a")
+    assert "base_definition" in a["_source_queries"]
+    assert "deployer" in a["_source_queries"]
+    assert "affected_subject" in a["_source_queries"]
+    assert a["_source_distances"]["deployer"] == 0.1
+    assert a["_source_distances"]["base_definition"] == 0.5
+
+    b = next(r for r in results if r["id"] == "risk-b")
+    assert "affected_subject" in b["_source_queries"]
+    assert "regulator" in b["_source_queries"]
+    assert b["_source_distances"]["regulator"] == 0.15
+    assert b["distance"] == 0.15
+
+
+def test_expand_search_exclusive_candidates():
+    """Candidates found by only one perspective are correctly tracked."""
+    def perspective_search(query, top_k=5):
+        if "regulator" in query:
+            return [{"id": "risk-reg-only", "name": "Reg", "distance": 0.2}]
+        return [{"id": "risk-common", "name": "Common", "distance": 0.3}]
+
+    results = _expand_search("test", perspective_search, top_k=5)
+    reg = next(r for r in results if r["id"] == "risk-reg-only")
+    assert reg["_source_queries"] == ["regulator"]
+    assert len(reg["_source_distances"]) == 1
+
+    common = next(r for r in results if r["id"] == "risk-common")
+    assert len(common["_source_queries"]) > 1
+
+
 def test_map_risks_perspective_expansion_report_event(mock_client, mock_config, mock_risk_handlers):
-    """Perspective expansion emits a report event with candidate count."""
+    """Perspective expansion emits a report event with full breakdown."""
     pol = _make_policy()
     mock_risk_handlers["search_risks"].return_value = [
         {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
@@ -615,7 +660,17 @@ def test_map_risks_perspective_expansion_report_event(mock_client, mock_config, 
     map_risks([pol], mock_client, mock_config, mock_risk_handlers, report=report)
     expansion_events = [e for e in report.events if e["event"] == "perspective_expansion"]
     assert len(expansion_events) == 1
-    assert expansion_events[0]["perspectives"] == 5
+    ev = expansion_events[0]
+    assert ev["perspectives"] == 5
+    assert "by_source" in ev
+    assert "per_candidate" in ev
+    assert "exclusive_count" in ev
+    assert "multi_perspective_count" in ev
+    assert "atlas-fraud" in ev["per_candidate"]
+    pc = ev["per_candidate"]["atlas-fraud"]
+    assert "sources" in pc
+    assert "distances" in pc
+    assert pc["best_distance"] == 0.2
 
 
 def test_map_risks_perspectives_widen_candidate_pool(mock_client, mock_config, mock_risk_handlers):

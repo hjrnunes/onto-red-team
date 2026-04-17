@@ -173,6 +173,58 @@
                   </dd>
                 </div>
               </template>
+              <!-- perspective_expansions -->
+              <template x-if="info.perspective_expansions?.length">
+                <div>
+                  <dt class="text-gray-400 text-xs uppercase">
+                    <span class="tip" data-tip="Breakdown of how each search perspective (base definition, concept name, deployer, affected-subject, regulator) contributed to the candidate pool. Shows which perspectives surfaced unique risks vs. which found risks already seen by other perspectives.">Perspective Breakdown</span>
+                  </dt>
+                  <dd class="mt-1 space-y-2">
+                    <template x-for="pe in info.perspective_expansions" :key="pe.policy_concept">
+                      <div class="bg-gray-50 rounded p-2">
+                        <div class="text-xs font-medium text-gray-700 mb-1" x-text="pe.policy_concept"></div>
+                        <div class="flex flex-wrap gap-1 mb-1">
+                          <template x-for="[src, count] in Object.entries(pe.by_source || {}).sort((a,b) => b[1]-a[1])" :key="src">
+                            <span class="px-2 py-0.5 rounded text-xs bg-blue-100 text-blue-800">
+                              <span x-text="src.replace('_',' ')"></span>
+                              <span class="font-mono font-semibold ml-1" x-text="count"></span>
+                            </span>
+                          </template>
+                        </div>
+                        <div class="flex gap-3 text-xs text-gray-500">
+                          <span>
+                            <span class="font-mono text-green-600" x-text="pe.multi_perspective_count"></span>
+                            <span class="tip" data-tip="Risks found by 2+ different perspectives. These are higher-confidence candidates since multiple viewpoints agree on their relevance."> multi-perspective</span>
+                          </span>
+                          <span>
+                            <span class="font-mono text-amber-600" x-text="pe.exclusive_count"></span>
+                            <span class="tip" data-tip="Risks found by only one perspective. These are candidates that would have been missed without perspective expansion (unless from the base definition)."> exclusive</span>
+                          </span>
+                        </div>
+                        <!-- Per-candidate detail (collapsed) -->
+                        <details class="mt-1">
+                          <summary class="text-xs text-gray-400 cursor-pointer hover:text-gray-600">Per-candidate sources</summary>
+                          <div class="mt-1 space-y-0.5">
+                            <template x-for="[rid, info] in Object.entries(pe.per_candidate || {}).sort((a,b) => a[1].best_distance - b[1].best_distance)" :key="rid">
+                              <div class="flex items-center gap-2 text-xs bg-white rounded px-2 py-0.5">
+                                <span class="font-mono text-gray-600 truncate" style="max-width:180px" x-text="rid"></span>
+                                <span class="text-gray-400 font-mono" x-text="'d=' + info.best_distance.toFixed(3)"></span>
+                                <span class="flex gap-0.5 ml-auto">
+                                  <template x-for="src in info.sources" :key="src">
+                                    <span class="px-1 py-0 rounded text-[10px]"
+                                          :class="Object.keys(info.distances).length === 1 ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-700'"
+                                          x-text="src.replace('_',' ')"></span>
+                                  </template>
+                                </span>
+                              </div>
+                            </template>
+                          </div>
+                        </details>
+                      </div>
+                    </template>
+                  </dd>
+                </div>
+              </template>
               <!-- domain_filtered -->
               <template x-if="info.domain_filtered">
                 <div class="flex justify-between">

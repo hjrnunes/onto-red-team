@@ -13,6 +13,16 @@ All notable changes to this project will be documented in this file.
   Inspired by stakeholder-driven paraphrase approach in Yadav et al. 2025 ("Who Sees the Risk?",
   arXiv:2511.03152). Reports a `perspective_expansion` event with candidate count.
 
+- **Per-perspective breakdown in reports** — `_expand_search` now tracks which query source
+  (base_definition, concept_name, deployer, affected_subject, regulator) surfaced each candidate
+  and at what distance. The `perspective_expansion` event carries `by_source` (per-perspective
+  candidate counts), `exclusive_count` / `multi_perspective_count` (single vs. multi-perspective
+  hits), and `per_candidate` (full per-risk source attribution with per-source distances).
+  `aggregate_stage_quality()` aggregates into `perspective_expansions`. Both report templates
+  render a "Perspective Breakdown" card per policy concept: blue badges with source contribution
+  counts, green/amber multi-perspective vs. exclusive indicators, and a collapsible per-candidate
+  detail view showing which perspectives found each risk and at what distance.
+
 - **Concept-name search in risk retrieval** — `_expand_search` now also queries ChromaDB with the
   `policy_concept` name alongside the definition and perspective queries. Long definitions (e.g.
   enumerating 13 protected characteristics) dilute the embedding vector away from the core concept,

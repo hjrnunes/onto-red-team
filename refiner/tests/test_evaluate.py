@@ -31,6 +31,14 @@ def _sample_events():
         {"stage": "contextualize", "event": "empty_enumerations", "risk_id": "r2", "axis_uri": "http://ex/C"},
         {"stage": "contextualize", "event": "self_reference_filtered", "axis_uri": "http://ex/D"},
         {"stage": "structure", "event": "cross_mapping_filtered", "target_id": "r99"},
+        {"stage": "map_risks", "event": "perspective_expansion",
+         "policy_concept": "Fraud", "candidate_count": 5, "perspectives": 5,
+         "by_source": {"base_definition": 3, "deployer": 4, "regulator": 2},
+         "exclusive_count": 2, "multi_perspective_count": 3,
+         "per_candidate": {
+             "risk-a": {"sources": ["base_definition", "deployer"], "distances": {"base_definition": 0.3, "deployer": 0.2}, "best_distance": 0.2},
+             "risk-b": {"sources": ["regulator"], "distances": {"regulator": 0.4}, "best_distance": 0.4},
+         }},
     ]
 
 
@@ -47,6 +55,13 @@ def test_aggregate_stage_quality():
     assert result["contextualize"]["empty_enumerations"] == 1
     assert result["contextualize"]["self_references_filtered"] == 1
     assert result["structure"]["cross_mappings_filtered"] == 1
+    pe = result["map_risks"]["perspective_expansions"]
+    assert len(pe) == 1
+    assert pe[0]["policy_concept"] == "Fraud"
+    assert pe[0]["by_source"]["deployer"] == 4
+    assert pe[0]["exclusive_count"] == 2
+    assert pe[0]["multi_perspective_count"] == 3
+    assert "risk-a" in pe[0]["per_candidate"]
 
 
 def test_aggregate_stage_quality_empty():
