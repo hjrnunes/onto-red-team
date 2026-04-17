@@ -13,6 +13,15 @@ All notable changes to this project will be documented in this file.
   Inspired by stakeholder-driven paraphrase approach in Yadav et al. 2025 ("Who Sees the Risk?",
   arXiv:2511.03152). Reports a `perspective_expansion` event with candidate count.
 
+- **Concept-name search in risk retrieval** — `_expand_search` now also queries ChromaDB with the
+  `policy_concept` name alongside the definition and perspective queries. Long definitions (e.g.
+  enumerating 13 protected characteristics) dilute the embedding vector away from the core concept,
+  causing relevant risks to miss the top-k. The concept name — typically a tight semantic summary
+  like "Discriminatory Profiling & Protected Characteristics" — retrieves risks that the definition
+  search misses. In gen18, this caused `ai-risk-taxonomy-profiling` (distance 0.31) to be absent
+  from candidates while irrelevant risks at 0.39+ were shown to the LLM. No new LLM calls; one
+  additional ChromaDB query per policy.
+
 ### Fixed
 
 - **Domain term hit rate false negatives from framework suffixes** — `compute_adversarial_metrics`

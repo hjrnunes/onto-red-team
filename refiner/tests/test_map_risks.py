@@ -39,7 +39,7 @@ def test_map_risks_calls_search_and_details(mock_client, mock_config, mock_risk_
     assert len(mappings) == 1
     assert mappings[0].matched_risks[0].risk_id == "atlas-fraud"
     assert mappings[0].policy_concept == "Fraud"
-    mock_risk_handlers["search_risks"].assert_called_once()
+    assert mock_risk_handlers["search_risks"].call_count == 5  # 1 base + 1 concept name + 3 perspectives
     mock_risk_handlers["get_risk_details"].assert_called_once_with("atlas-fraud")
 
 
@@ -527,3 +527,123 @@ def test_map_risks_empty_returns_six_tuple(mock_client, mock_config, mock_risk_h
         [], mock_client, mock_config, mock_risk_handlers,
     )
     assert coverage_gaps == []
+
+
+# --- Perspective expansion tests ---
+
+from refiner.stages.map_risks import _expand_search, PERSPECTIVES
+from unittest.mock import MagicMock
+
+
+def test_expand_search_merges_duplicates():
+    """Same risk from multiple perspectives keeps best distance."""
+    search_fn = MagicMock(return_value=[
+        {"id": "risk-a", "name": "A", "distance": 0.3},
+    ])
+    results = _expand_search("test definition", search_fn, top_k=5)
+    assert len(results) == 1
+    assert results[0]["id"] == "risk-a"
+    assert results[0]["distance"] == 0.3
+    assert search_fn.call_count == 4  # 1 base + 3 perspectives
+
+
+def test_expand_search_keeps_best_distance():
+    """When perspectives return the same risk at different distances, keep the closest."""
+    def varying_search(query, top_k=5):
+        if "deployer" in query:
+            return [{"id": "risk-a", "name": "A", "distance": 0.1}]
+        return [{"id": "risk-a", "name": "A", "distance": 0.5}]
+
+    results = _expand_search("test", varying_search, top_k=5)
+    assert len(results) == 1
+    assert results[0]["distance"] == 0.1
+
+
+def test_expand_search_surfaces_new_candidates():
+    """Different perspectives can surface risks the base query misses."""
+    def perspective_search(query, top_k=5):
+        if "regulator" in query:
+            return [{"id": "risk-compliance", "name": "Compliance", "distance": 0.2}]
+        if "affected" in query:
+            return [{"id": "risk-harm", "name": "Harm", "distance": 0.25}]
+        return [{"id": "risk-base", "name": "Base Risk", "distance": 0.15}]
+
+    results = _expand_search("content moderation", perspective_search, top_k=5)
+    ids = {r["id"] for r in results}
+    assert ids == {"risk-base", "risk-compliance", "risk-harm"}
+    assert results[0]["id"] == "risk-base"  # sorted by distance
+
+
+def test_expand_search_sorted_by_distance():
+    """Results are sorted by ascending distance."""
+    def multi_search(query, top_k=5):
+        if "deployer" in query:
+            return [{"id": "risk-b", "name": "B", "distance": 0.4}]
+        if "affected" in query:
+            return [{"id": "risk-c", "name": "C", "distance": 0.1}]
+        if "regulator" in query:
+            return [{"id": "risk-d", "name": "D", "distance": 0.6}]
+        return [{"id": "risk-a", "name": "A", "distance": 0.3}]
+
+    results = _expand_search("test", multi_search, top_k=5)
+    distances = [r["distance"] for r in results]
+    assert distances == sorted(distances)
+
+
+def test_expand_search_empty_results():
+    """Handles search returning no results gracefully."""
+    search_fn = MagicMock(return_value=[])
+    results = _expand_search("test", search_fn, top_k=5)
+    assert results == []
+
+
+def test_map_risks_perspective_expansion_report_event(mock_client, mock_config, mock_risk_handlers):
+    """Perspective expansion emits a report event with candidate count."""
+    pol = _make_policy()
+    mock_risk_handlers["search_risks"].return_value = [
+        {"id": "atlas-fraud", "name": "Fraud", "description": "Fraud risk", "distance": 0.2},
+    ]
+    mock_risk_handlers["get_risk_details"].return_value = {
+        "id": "atlas-fraud", "name": "Fraud", "description": "d", "concern": "c",
+        "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[_SlimRiskMatch(risk_index=1, risk_name="Fraud", relevance="primary", justification="j")],
+    )
+    report = RunReport(model="m", policy_set="p", timestamp="t")
+    map_risks([pol], mock_client, mock_config, mock_risk_handlers, report=report)
+    expansion_events = [e for e in report.events if e["event"] == "perspective_expansion"]
+    assert len(expansion_events) == 1
+    assert expansion_events[0]["perspectives"] == 5
+
+
+def test_map_risks_perspectives_widen_candidate_pool(mock_client, mock_config, mock_risk_handlers):
+    """Perspectives surface candidates the base query doesn't find."""
+    pol = _make_policy("Content moderation")
+
+    def perspective_search(query, top_k=5):
+        if "regulator" in query:
+            return [
+                {"id": "atlas-compliance", "name": "Compliance gap", "description": "Regulatory compliance", "distance": 0.25},
+            ]
+        return [
+            {"id": "atlas-toxicity", "name": "Toxic output", "description": "Toxic content", "distance": 0.2},
+        ]
+
+    mock_risk_handlers["search_risks"].side_effect = perspective_search
+    mock_risk_handlers["get_risk_details"].side_effect = lambda rid: {
+        "id": rid, "name": rid.replace("atlas-", "").title(),
+        "description": "desc", "concern": "c", "risk_type": "output", "taxonomy": "ibm-risk-atlas",
+    }
+    mock_risk_handlers["get_related_risks"].return_value = []
+    mock_client.chat.completions.create.return_value = _RiskSelection(
+        matched_risks=[
+            _SlimRiskMatch(risk_index=1, risk_name="Toxic output", relevance="primary", justification="j"),
+            _SlimRiskMatch(risk_index=2, risk_name="Compliance", relevance="supporting", justification="j"),
+        ],
+    )
+    mappings, details, _, _, _, _ = map_risks([pol], mock_client, mock_config, mock_risk_handlers)
+    matched_ids = {r.risk_id for r in mappings[0].matched_risks}
+    assert "atlas-toxicity" in matched_ids
+    assert "atlas-compliance" in matched_ids

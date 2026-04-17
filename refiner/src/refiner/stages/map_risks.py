@@ -17,6 +17,36 @@ logger = logging.getLogger(__name__)
 WEAK_MATCH_THRESHOLD = 0.6
 GAP_SCORE_THRESHOLD = 0.65
 
+PERSPECTIVES = [
+    "deployer: {definition}",
+    "affected individuals harmed by: {definition}",
+    "regulator assessing compliance of: {definition}",
+]
+
+
+def _expand_search(
+    definition: str,
+    search_fn,
+    top_k: int = 5,
+    concept_name: str | None = None,
+) -> list[dict]:
+    """Run perspective-based queries and merge candidates, keeping best distance per risk."""
+    best: dict[str, dict] = {}
+
+    queries = [definition]
+    if concept_name and concept_name != definition:
+        queries.append(concept_name)
+    for perspective in PERSPECTIVES:
+        queries.append(perspective.format(definition=definition))
+
+    for query in queries:
+        for candidate in search_fn(query, top_k=top_k):
+            rid = candidate["id"]
+            if rid not in best or (candidate.get("distance") or 1.0) < (best[rid].get("distance") or 1.0):
+                best[rid] = candidate
+
+    return sorted(best.values(), key=lambda c: c.get("distance") or 1.0)
+
 
 def compute_gap_score(
     min_distance: float,
@@ -138,8 +168,22 @@ def map_risks(
     mappings: list[PolicyRiskMapping] = []
 
     for pol in policies:
-        # 1. Semantic search for candidate risks
-        candidates = risk_handlers["search_risks"](pol.concept_definition, top_k=5)
+        # 1. Perspective-expanded semantic search for candidate risks
+        candidates = _expand_search(
+            pol.concept_definition, risk_handlers["search_risks"],
+            top_k=5, concept_name=pol.policy_concept,
+        )
+        logger.debug(
+            "Perspective expansion for '%s': %d unique candidates",
+            pol.policy_concept, len(candidates),
+        )
+        if report:
+            report.events.append({
+                "stage": "map_risks", "event": "perspective_expansion",
+                "policy_concept": pol.policy_concept,
+                "candidate_count": len(candidates),
+                "perspectives": len(PERSPECTIVES) + 2,
+            })
 
         # 2. Get full details for each candidate
         enriched_candidates = []
