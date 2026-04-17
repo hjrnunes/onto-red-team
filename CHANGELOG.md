@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 20  (current)
+## Gen 19  (current)
 
 ### Added
 
@@ -13,7 +13,6 @@ All notable changes to this project will be documented in this file.
   Default is `1` (sequential, preserving existing behavior). Battery config supports
   `max_concurrent` key (default `4`). Thread-safety added to `TokenTracker` and debug counter.
   Per-policy parallelism in `map_risks`, per-unique-risk parallelism in `anchor` and `contextualize`.
-
 
 - **Prompt IDs in emit output** — every emitted JSONL row now carries a `prompt_id` field with format
   `{risk_id}:{technique-slug}:{index}` (e.g. `r1:pretexting:0`). Provides stable, unique identifiers
@@ -52,10 +51,6 @@ All notable changes to this project will be documented in this file.
 
 - **Battery config** — `emit_mode` and `benign_weights` keys in `battery.yaml` (commented out by
   default), passed through `run_battery.py` to emit, generate, and evaluate stages.
-
-## Gen 19
-
-### Added
 
 - **Perspective-based query expansion** — `map_risks` now runs 3 additional ChromaDB searches per
   policy, reframing the concept definition from deployer, affected-subject, and regulator
