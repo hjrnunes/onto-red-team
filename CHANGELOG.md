@@ -2,7 +2,39 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 19  (current)
+## Gen 20  (current)
+
+### Added
+
+- **Utility assessment datasets** — `refiner emit --mode utility|paired` generates boundary-adjacent
+  legitimate professional queries alongside red-team datasets. Utility prompts share the same
+  `risk × axis × enumeration` grounding as their adversarial twins but use benign frames
+  (routine_practice, training_education, compliance_documentation, applied_research, client_service)
+  instead of adversarial techniques. In `paired` mode, both files carry matching `pair_id` fields
+  for direct comparison. Motivation: measure guardrail over-refusal (false positives) at the policy
+  boundary, complementing red-team false-negative testing.
+
+- **Benign frames module** (`refiner/src/refiner/benign_frames.py`) — five frames mirroring the
+  adversarial frames in `frames.py`, with risk-affinity boosting, BFO slot labels, and example
+  prompts. Each benign frame corresponds thematically to an adversarial counterpart
+  (e.g. compliance_documentation ↔ delegated_authority).
+
+- **Utility judge rubric** — `judge_utility_prompt()` in `judge.py` scores utility prompts on
+  legitimacy, boundary_proximity, domain_grounding, and policy_relevance (1-5 scale).
+  `aggregate_judge_results()` and `compute_score_distribution()` now accept a `dimensions`
+  parameter to work with either rubric.
+
+- **Paired-mode evaluation metrics** — `compute_pair_completeness()`,
+  `compute_frame_correspondence()`, and `compute_lexical_overlap()` in `evaluate.py` for analyzing
+  red-team/utility dataset pairs. Wired into `evaluate --mode paired` CLI output.
+
+- **CLI options** — `--mode redteam|utility|paired` and `--benign-weights` on `refiner emit`;
+  `--mode` on `refiner evaluate`. Default `--mode redteam` preserves backward compatibility.
+
+- **Battery config** — `emit_mode` and `benign_weights` keys in `battery.yaml` (commented out by
+  default), passed through `run_battery.py` to emit, generate, and evaluate stages.
+
+## Gen 19
 
 ### Added
 

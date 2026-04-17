@@ -918,3 +918,314 @@ class TestAxisGroupSampling:
         groups = [["http://ex/A", "http://ex/B"], ["http://ex/A", "http://ex/C"]]
         results = sample_axes(axes, n=5, axis_groups=groups, axes_per_prompt=2)
         assert len(results) == 2
+
+
+from refiner.emit import build_utility_prompt, UTILITY_SYSTEM_MESSAGE
+from refiner.benign_frames import BENIGN_FRAMES
+
+
+def test_build_utility_prompt_returns_messages():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", axes)
+    assert isinstance(messages, list)
+    assert len(messages) == 2
+    assert messages[0]["role"] == "system"
+    assert messages[1]["role"] == "user"
+
+
+def test_build_utility_prompt_system_message_content():
+    messages = build_utility_prompt("X", "Y", "Z", [])
+    system = messages[0]["content"]
+    assert "utility-testing scenario writer" in system
+    assert "authenticity" in system.lower()
+    assert "red-team" not in system.lower()
+
+
+def test_build_utility_prompt_user_message_has_policy():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", axes)
+    user = messages[1]["content"]
+    assert "Fraud" in user
+    assert "About fraud" in user
+    assert "Financial Fraud" in user
+
+
+def test_build_utility_prompt_user_message_has_axes():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+        SampledAxis(
+            cco_class_uri="http://example.org/Instrument",
+            cco_class_label="Instrument",
+            sampled_uri="http://example.org/Bond",
+            sampled_label="Bond",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("X", "Y", "Z", axes)
+    user = messages[1]["content"]
+    assert "Manager" in user
+    assert "Bond" in user
+
+
+def test_build_utility_prompt_inverted_instructions():
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", [])
+    user = messages[1]["content"]
+    assert "AI SHOULD comply" in user
+    assert "Be clearly within acceptable use" in user
+
+
+def test_build_utility_prompt_with_benign_frame():
+    frame = BENIGN_FRAMES["routine_practice"]
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            bfo_category="Role",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", axes, frame=frame)
+    user = messages[1]["content"]
+    assert "practitioner: Manager" in user
+    assert "Legitimate use-case pattern:" in user
+
+
+def test_build_utility_prompt_with_boundary_examples():
+    from refiner.models import Policy, BoundaryExample, PolicyProfile
+
+    policy = Policy(
+        policy_concept="Clinical",
+        concept_definition="No clinical decisions",
+        boundary_examples=[
+            BoundaryExample(prohibited="care plan for John", acceptable="summarise guidelines")
+        ],
+        acceptable_uses=["General health concepts"],
+    )
+    doc_ctx = PolicyProfile(
+        organization="NHS Trust",
+        domain="healthcare",
+        stakeholders=[Stakeholder(name="patients", roles=["airo:AISubject"])],
+    )
+
+    messages = build_utility_prompt(
+        "Clinical", "No clinical decisions", "Misdiagnosis", [],
+        policy=policy, policy_profile=doc_ctx,
+    )
+    user = messages[1]["content"]
+    assert "PROHIBITED: care plan for John" in user
+    assert "ACCEPTABLE: summarise guidelines" in user
+    assert "General health concepts" in user
+    assert "NHS Trust" in user
+
+
+def test_build_utility_prompt_without_frame_no_technique_block():
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", [], frame=None)
+    user = messages[1]["content"]
+    assert "Legitimate use-case pattern:" not in user
+    assert "Adversarial technique:" not in user
+
+
+def test_emit_mode_redteam_default_unchanged(tmp_path):
+    """Default mode produces identical output to current behavior — no pair_id, no mode field."""
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=out_path, seed=42)
+    lines = out_path.read_text().strip().split("\n")
+    for line in lines:
+        row = json.loads(line)
+        assert "pair_id" not in row
+        assert "mode" not in row
+
+
+def test_emit_mode_utility_writes_utility_file(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "test-dataset-utility.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=out_path, seed=42, mode="utility")
+    assert out_path.exists()
+    lines = out_path.read_text().strip().split("\n")
+    assert len(lines) > 0
+    for line in lines:
+        row = json.loads(line)
+        assert row["mode"] == "utility"
+        assert "pair_id" not in row
+        assert row["technique"] in {
+            "routine_practice", "training_education", "compliance_documentation",
+            "applied_research", "client_service",
+        }
+
+
+def test_emit_mode_utility_system_message(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "test-dataset-utility.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=1, output_path=out_path, seed=42, mode="utility")
+    row = json.loads(out_path.read_text().strip().split("\n")[0])
+    system = row["generation_prompt"][0]["content"]
+    assert "utility-testing" in system
+    assert "red-team" not in system.lower()
+
+
+def test_emit_mode_paired_writes_two_files(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+    assert redteam_path.exists()
+    assert utility_path.exists()
+
+
+def test_emit_mode_paired_has_pair_ids(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+
+    rt_lines = redteam_path.read_text().strip().split("\n")
+    ut_lines = utility_path.read_text().strip().split("\n")
+    assert len(rt_lines) == len(ut_lines)
+
+    for rt_line, ut_line in zip(rt_lines, ut_lines):
+        rt_row = json.loads(rt_line)
+        ut_row = json.loads(ut_line)
+        assert "pair_id" in rt_row
+        assert "pair_id" in ut_row
+        assert rt_row["pair_id"] == ut_row["pair_id"]
+        assert rt_row["mode"] == "redteam"
+        assert ut_row["mode"] == "utility"
+
+
+def test_emit_mode_paired_same_sampled_axes(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+
+    rt_lines = redteam_path.read_text().strip().split("\n")
+    ut_lines = utility_path.read_text().strip().split("\n")
+
+    for rt_line, ut_line in zip(rt_lines, ut_lines):
+        rt_row = json.loads(rt_line)
+        ut_row = json.loads(ut_line)
+        assert rt_row["sampled_axes"] == ut_row["sampled_axes"]
+        assert rt_row["risk_id"] == ut_row["risk_id"]
+        assert rt_row["policy_concept"] == ut_row["policy_concept"]
+
+
+def test_emit_mode_paired_different_prompts(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=1, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+
+    rt_row = json.loads(redteam_path.read_text().strip().split("\n")[0])
+    ut_row = json.loads(utility_path.read_text().strip().split("\n")[0])
+    assert rt_row["generation_prompt"] != ut_row["generation_prompt"]
+
+
+def test_emit_cli_mode_utility(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "test-dataset-utility.jsonl"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "2",
+        "--seed", "42",
+        "--output", str(out_path),
+        "--mode", "utility",
+    ])
+    assert result.exit_code == 0, result.output
+    assert out_path.exists()
+    row = json.loads(out_path.read_text().strip().split("\n")[0])
+    assert row["mode"] == "utility"
+
+
+def test_emit_cli_mode_paired(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    rt_path = tmp_path / "test-dataset-redteam.jsonl"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "2",
+        "--seed", "42",
+        "--output", str(rt_path),
+        "--mode", "paired",
+    ])
+    assert result.exit_code == 0, result.output
+    assert rt_path.exists()
+    ut_path = tmp_path / "test-dataset-utility.jsonl"
+    assert ut_path.exists()
+
+
+def test_emit_cli_mode_default_is_redteam(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    result = runner.invoke(app, [
+        "emit", str(tmp_path),
+        "--policies", str(pol_path),
+        "--samples-per-risk", "1",
+        "--seed", "42",
+        "--output", str(out_path),
+    ])
+    assert result.exit_code == 0, result.output
+    row = json.loads(out_path.read_text().strip().split("\n")[0])
+    assert "mode" not in row
+    assert "pair_id" not in row
+
+
+def test_evaluate_cli_accepts_mode(tmp_path):
+    """Evaluate CLI should accept --mode without crashing (no judge, no adversarial)."""
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+
+    # First emit in paired mode to create the files
+    rt_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=2, output_path=rt_path, seed=42, mode="paired")
+
+    # Write a minimal run report so evaluate doesn't crash
+    report_path = tmp_path / "test-run-report.yaml"
+    report_path.write_text(yaml.dump({"model": "test", "policy_set": "test", "timestamp": "now", "stages_completed": [], "events": []}))
+
+    result = runner.invoke(app, [
+        "evaluate", str(tmp_path),
+        "--policies", str(pol_path),
+        "--mode", "paired",
+    ])
+    assert result.exit_code == 0, result.output

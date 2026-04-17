@@ -679,6 +679,11 @@ def emit(
         help="JSON string with technique weight overrides, e.g. '{\"pretexting\": 2, \"analytical_reframing\": 1}'",
     ),
     axes_per_prompt: int = typer.Option(None, "--axes-per-prompt", help="Number of axes per prompt (default: 3)"),
+    mode: str = typer.Option("redteam", "--mode", help="Generation mode: redteam, utility, or paired"),
+    benign_weights: str = typer.Option(
+        None, "--benign-weights",
+        help="JSON string with benign frame weight overrides, e.g. '{\"routine_practice\": 2}'",
+    ),
 ):
     """Emit an sdg_hub-ready JSONL dataset from domain context profiles."""
     if not output_dir.is_dir():
@@ -687,12 +692,20 @@ def emit(
     if not policies.exists():
         typer.echo(f"Error: {policies} does not exist", err=True)
         raise typer.Exit(1)
+    if mode not in ("redteam", "utility", "paired"):
+        typer.echo(f"Error: --mode must be redteam, utility, or paired (got '{mode}')", err=True)
+        raise typer.Exit(1)
 
     if output:
         out_path = output
     else:
         slug = _discover_slug(output_dir)
-        out_path = output_dir / f"{slug}-dataset.jsonl"
+        if mode == "paired":
+            out_path = output_dir / f"{slug}-dataset-redteam.jsonl"
+        elif mode == "utility":
+            out_path = output_dir / f"{slug}-dataset-utility.jsonl"
+        else:
+            out_path = output_dir / f"{slug}-dataset.jsonl"
 
     parsed_weights = None
     if technique_weights:
@@ -702,9 +715,18 @@ def emit(
             typer.echo(f"Error: invalid JSON for --technique-weights: {e}", err=True)
             raise typer.Exit(1)
 
+    parsed_benign_weights = None
+    if benign_weights:
+        try:
+            parsed_benign_weights = json.loads(benign_weights)
+        except json.JSONDecodeError as e:
+            typer.echo(f"Error: invalid JSON for --benign-weights: {e}", err=True)
+            raise typer.Exit(1)
+
     from refiner.emit import emit as do_emit
     do_emit(output_dir, policies, samples_per_risk, out_path, seed=seed,
-            technique_weights=parsed_weights, axes_per_prompt=axes_per_prompt)
+            technique_weights=parsed_weights, axes_per_prompt=axes_per_prompt,
+            mode=mode, benign_weights=parsed_benign_weights)
     typer.echo(f"Dataset written to {out_path}")
 
     # Build dataset HTML report
@@ -730,6 +752,7 @@ def evaluate(
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
     description: str = typer.Option(None, "--description", help="Human-readable description for this run"),
     tags: list[str] = typer.Option([], "--tag", help="MLflow tags as key=value (repeatable)"),
+    mode: str = typer.Option("redteam", "--mode", help="Evaluation mode: redteam, utility, or paired"),
 ):
     """Evaluate pipeline outputs with metrics and optional judge scoring."""
     if not output_dir.is_dir():
@@ -741,6 +764,13 @@ def evaluate(
         output_dir, emit_path=emit_path, adversarial_path=adversarial_path,
         policies_path=policies_path,
     )
+
+    # Mode-aware utility emit path discovery
+    utility_emit_path = None
+    if mode in ("utility", "paired"):
+        utility_candidates = list(output_dir.glob("*-dataset-utility.jsonl"))
+        if utility_candidates:
+            utility_emit_path = utility_candidates[0]
 
     if judge and adversarial_path:
         import json as json_mod
@@ -805,6 +835,66 @@ def evaluate(
                 fw: aggregate_judge_results(fw_scores)
                 for fw, fw_scores in sorted(scores_by_framework.items())
             },
+        }
+
+    if judge and utility_emit_path and mode in ("utility", "paired"):
+        import json as json_mod
+        import random
+        from refiner.judge import judge_utility_prompt as jup, aggregate_judge_results, compute_score_distribution, UTILITY_DIMENSIONS
+        from refiner.llm import LLMConfig, create_client
+
+        j_base = judge_base_url or os.environ.get("REFINER_BASE_URL", "")
+        j_model = judge_model or os.environ.get("REFINER_MODEL", "")
+        j_key = judge_api_key or os.environ.get("REFINER_API_KEY", "none")
+        j_config = LLMConfig(base_url=j_base, model=j_model, api_key=j_key)
+        j_client = create_client(j_config)
+
+        util_rows = [json_mod.loads(line) for line in utility_emit_path.read_text().strip().split("\n") if line]
+        if judge_sample and judge_sample < len(util_rows):
+            util_rows = random.sample(util_rows, judge_sample)
+
+        util_scores = []
+        for row in util_rows:
+            prompt_text = row.get("prompt", "")
+            if not prompt_text:
+                msgs = row.get("generation_prompt", [])
+                prompt_text = msgs[-1].get("content", "") if msgs else ""
+            s = jup(
+                j_client, j_config,
+                prompt_text=prompt_text,
+                policy_concept=row.get("policy_concept", ""),
+                concept_definition=row.get("concept_definition", ""),
+                risk_name=row.get("risk_name", ""),
+                sampled_axes=row.get("sampled_axes", []),
+            )
+            util_scores.append({
+                "legitimacy": s.legitimacy, "boundary_proximity": s.boundary_proximity,
+                "domain_grounding": s.domain_grounding, "policy_relevance": s.policy_relevance,
+            })
+
+        evaluation["utility_judge_evaluation"] = {
+            "model": j_model,
+            "prompts_scored": len(util_scores),
+            "aggregates": aggregate_judge_results(util_scores, dimensions=UTILITY_DIMENSIONS),
+            "score_distribution": compute_score_distribution(util_scores, dimensions=UTILITY_DIMENSIONS),
+        }
+
+    # Pair analysis metrics for paired mode
+    if mode == "paired" and emit_path and utility_emit_path:
+        import json as json_mod
+        from refiner.evaluate import compute_pair_completeness, compute_frame_correspondence, compute_lexical_overlap
+
+        rt_rows = [json_mod.loads(line) for line in emit_path.read_text().strip().split("\n") if line]
+        ut_rows = [json_mod.loads(line) for line in utility_emit_path.read_text().strip().split("\n") if line]
+
+        frame_corr = compute_frame_correspondence(rt_rows, ut_rows)
+        evaluation["pair_analysis"] = {
+            "pair_completeness": compute_pair_completeness(rt_rows, ut_rows),
+            "frame_correspondence": {
+                f"{adv}|{ben}": count
+                for (adv, ben), count in sorted(frame_corr.items())
+            },
+            "lexical_overlap": compute_lexical_overlap(rt_rows, ut_rows),
         }
 
     summary = format_summary(evaluation)
