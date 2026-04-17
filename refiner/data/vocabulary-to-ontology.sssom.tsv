@@ -19,13 +19,13 @@ pd:CreditScore	Credit Score	skos:relatedMatch	https://spec.edmcouncil.org/fibo/o
 pd:MedicalHealth	Medical Health	skos:broadMatch	http://purl.obolibrary.org/obo/OGMS_0000031	Disease	semapv:LLMBasedMatching	0.85
 pd:MedicalHealth	Medical Health	skos:broadMatch	http://purl.obolibrary.org/obo/MAXO_0000001	Medical Action	semapv:LLMBasedMatching	0.80
 pd:Financial	Financial	skos:broadMatch	https://spec.edmcouncil.org/fibo/ontology/FBC/ProductsAndServices/FinancialProductsAndServices/FinancialProduct	Financial Product	semapv:LLMBasedMatching	0.85
-eu-aiact:AISubject	AI Subject	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.90
+eu-aiact:AISubject	AI Subject	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.70
 eu-aiact:AISubject	AI Subject	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:LLMBasedMatching	0.80
-eu-aiact:AIDeployer	AI Deployer	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:LLMBasedMatching	0.85
-eu-aiact:AIProvider	AI Provider	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:LLMBasedMatching	0.85
+eu-aiact:AIDeployer	AI Deployer	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:LLMBasedMatching	0.65
+eu-aiact:AIProvider	AI Provider	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001180	Organization	semapv:LLMBasedMatching	0.65
 risk:Threat	Threat	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#DangerousInformation	Dangerous Information	semapv:LLMBasedMatching	0.90
 risk:Threat	Threat	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception	Fraud and Deception	semapv:LLMBasedMatching	0.85
-risk:Vulnerability	Vulnerability	skos:relatedMatch	https://www.commoncoreontologies.org/ont00000958	Information Content Entity	semapv:LLMBasedMatching	0.75
+risk:Vulnerability	Vulnerability	skos:relatedMatch	https://www.commoncoreontologies.org/ont00000958	Information Content Entity	semapv:LLMBasedMatching	0.60
 eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:LLMBasedMatching	0.80
 eu-aiact:ConformityAssessment	Conformity Assessment	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentBody	Government Body	semapv:LLMBasedMatching	0.75
 eu-rights:T3-Equality	Equality	skos:relatedMatch	http://purl.obolibrary.org/obo/GSSO_012003	Persons by Sexual Orientation	semapv:LLMBasedMatching	0.85
@@ -35,10 +35,29 @@ sector-finance:CreditChecking	Credit Checking	skos:relatedMatch	https://spec.edm
 sector-law:CriminalLawEnforcement	Criminal Law Enforcement	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:LLMBasedMatching	0.70
 ibm-risk-atlas-robustness-model-behavior-manipulation	Robustness	skos:relatedMatch	http://taxonomy-refiner.io/ontologies/cso#DangerousInformation	Dangerous Information	semapv:LLMBasedMatching	0.85
 ibm-risk-atlas-intellectual-property	Intellectual Property	skos:broadMatch	http://taxonomy-refiner.io/ontologies/cso#IntellectualProperty	Intellectual Property	semapv:LLMBasedMatching	0.90
-eu-aiact:AIUser	AI User	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.85
+eu-aiact:AIUser	AI User	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.70
 eu-aiact:AIUser	AI User	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:LLMBasedMatching	0.75
 eu-aiact:DeepFake	Deep Fake	skos:relatedMatch	http://taxonomy-refiner.io/ontologies/cso#FraudAndDeception	Fraud and Deception	semapv:LLMBasedMatching	0.85
 eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	skos:relatedMatch	https://spec.edmcouncil.org/fibo/ontology/BE/GovernmentEntities/GovernmentEntities/GovernmentBody	Government Body	semapv:LLMBasedMatching	0.80
 eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	skos:relatedMatch	http://www.estrellaproject.org/lkif-core/norm.owl#Regulation	Regulation	semapv:LLMBasedMatching	0.75
-pd:Biometric	Biometric	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.80
+pd:Biometric	Biometric	skos:relatedMatch	https://www.commoncoreontologies.org/ont00001262	Person	semapv:LLMBasedMatching	0.65
 pd:Biometric	Biometric	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000001	Human Social Role	semapv:LLMBasedMatching	0.70
+# --- Health Sector ---
+sector-health:ClinicalCare	Clinical Care	skos:broadMatch	http://purl.obolibrary.org/obo/MAXO_0000001	Medical Action	semapv:ManualMappingCuration	0.90
+sector-health:ClinicalCare	Clinical Care	skos:relatedMatch	http://purl.obolibrary.org/obo/OGMS_0000097	Patient Role	semapv:ManualMappingCuration	0.85
+sector-health:ClinicalCare	Clinical Care	skos:broadMatch	http://purl.obolibrary.org/obo/OGMS_0000031	Disease	semapv:ManualMappingCuration	0.80
+sector-health:PatientTreatment	Patient Treatment	skos:broadMatch	http://purl.obolibrary.org/obo/MAXO_0000001	Medical Action	semapv:ManualMappingCuration	0.90
+sector-health:PatientTreatment	Patient Treatment	skos:relatedMatch	http://purl.obolibrary.org/obo/OMRSE_00000054	Healthcare Provider Role	semapv:ManualMappingCuration	0.85
+sector-health:PatientTreatment	Patient Treatment	skos:broadMatch	http://purl.obolibrary.org/obo/OGMS_0000031	Disease	semapv:ManualMappingCuration	0.85
+sector-health:HealthDataGovernance	Health Data Governance	skos:broadMatch	http://purl.obolibrary.org/obo/DUO_0000001	Data Use Permission	semapv:ManualMappingCuration	0.85
+sector-health:HealthDataGovernance	Health Data Governance	skos:relatedMatch	http://purl.obolibrary.org/obo/OGMS_0000097	Patient Role	semapv:ManualMappingCuration	0.80
+sector-health:HealthDataGovernance	Health Data Governance	skos:relatedMatch	http://purl.obolibrary.org/obo/DUO_0000006	Health or Medical or Biomedical Research	semapv:ManualMappingCuration	0.80
+# --- D3FEND / ATLAS (AI/ML attack techniques) ---
+risk:Threat	Threat	skos:broadMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#ATLASTechnique	ATLAS Technique	semapv:ManualMappingCuration	0.90
+risk:Threat	Threat	skos:relatedMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#OffensiveTechnique	Offensive Technique	semapv:ManualMappingCuration	0.80
+risk:Vulnerability	Vulnerability	skos:broadMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#Weakness	Weakness	semapv:ManualMappingCuration	0.85
+risk:Vulnerability	Vulnerability	skos:relatedMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#DigitalArtifact	Digital Artifact	semapv:ManualMappingCuration	0.70
+eu-aiact:DeepFake	Deep Fake	skos:relatedMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0088	Generate Deepfakes	semapv:ManualMappingCuration	0.90
+eu-aiact:AISubject	AI Subject	skos:relatedMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#AML.T0048	External Harms	semapv:ManualMappingCuration	0.80
+eu-aiact:AIProvider	AI Provider	skos:relatedMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#DefensiveTechnique	Defensive Technique	semapv:ManualMappingCuration	0.75
+eu-aiact:AIProvider	AI Provider	skos:relatedMatch	http://d3fend.mitre.org/ontologies/d3fend.owl#ContentFiltering	Content Filtering	semapv:ManualMappingCuration	0.85

@@ -50,6 +50,7 @@ ibm-risk-atlas-robustness	Robustness	skos:relatedMatch	risk:Threat	Threat	semapv
 ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.90
 ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.85
 ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	eu-aiact:MarketSurveillanceAuthority	Market Surveillance Authority	semapv:LLMBasedMatching	0.75
+ibm-risk-atlas-legal-compliance	Legal Compliance	skos:relatedMatch	sector-health:HealthDataGovernance	Health Data Governance	semapv:ManualMappingCuration	0.70
 # --- ibm-risk-atlas-value-alignment ---
 ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
 ibm-risk-atlas-value-alignment	Value Alignment	skos:relatedMatch	pd:EthnicOrigin	Ethnic Origin	semapv:LLMBasedMatching	0.85
@@ -60,9 +61,12 @@ ibm-risk-atlas-explainability	Explainability	skos:relatedMatch	eu-aiact:AISubjec
 # --- ibm-risk-atlas-transparency ---
 ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
 ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-transparency	Transparency	skos:relatedMatch	sector-health:PatientTreatment	Patient Treatment	semapv:ManualMappingCuration	0.70
 # --- ibm-risk-atlas-governance ---
 ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.90
 ibm-risk-atlas-governance	Governance	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.80
+ibm-risk-atlas-governance	Governance	skos:relatedMatch	sector-health:ClinicalCare	Clinical Care	semapv:ManualMappingCuration	0.75
+ibm-risk-atlas-governance	Governance	skos:relatedMatch	sector-health:HealthDataGovernance	Health Data Governance	semapv:ManualMappingCuration	0.75
 # --- ibm-risk-atlas-intellectual-property ---
 ibm-risk-atlas-intellectual-property	Intellectual Property	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
 # --- ibm-risk-atlas-societal-impact ---
@@ -73,6 +77,8 @@ ibm-risk-atlas-societal-impact	Societal Impact	skos:relatedMatch	eu-rights:T3-Eq
 ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
 ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
 ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.75
+ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	sector-health:ClinicalCare	Clinical Care	semapv:ManualMappingCuration	0.80
+ibm-risk-atlas-accuracy	Accuracy	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.75
 # --- ibm-risk-atlas-computational-inefficiency (NEW) ---
 ibm-risk-atlas-computational-inefficiency	Computational Inefficiency	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.80
 ibm-risk-atlas-computational-inefficiency	Computational Inefficiency	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.70
@@ -202,12 +208,15 @@ ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:re
 ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.85
 ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.85
 ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.80
+ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	sector-health:ClinicalCare	Clinical Care	semapv:ManualMappingCuration	0.80
+ai-risk-taxonomy-advice-in-heavily-regulated-industries	Regulated Advice	skos:relatedMatch	sector-health:PatientTreatment	Patient Treatment	semapv:ManualMappingCuration	0.80
 # --- Automated Decision-Making ---
 ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
 ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
 ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.80
 ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:CreditScore	Credit Score	semapv:LLMBasedMatching	0.80
 ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:LLMBasedMatching	0.75
+ai-risk-taxonomy-automated-decision-making	Automated Decision-Making	skos:relatedMatch	sector-health:ClinicalCare	Clinical Care	semapv:ManualMappingCuration	0.80
 # --- Security & Integrity ---
 ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.90
 ai-risk-taxonomy-integrity	Integrity	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
@@ -266,8 +275,10 @@ credo-rg-environmental-harm	Environmental Harm	skos:relatedMatch	eu-aiact:AISubj
 credo-rg-legal	Legal	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
 credo-rg-legal	Legal	skos:relatedMatch	eu-aiact:ConformityAssessment	Conformity Assessment	semapv:LLMBasedMatching	0.85
 credo-rg-legal	Legal	skos:relatedMatch	sector-law:CriminalLawEnforcement	Criminal Law Enforcement	semapv:LLMBasedMatching	0.75
+credo-rg-legal	Legal	skos:relatedMatch	sector-health:HealthDataGovernance	Health Data Governance	semapv:ManualMappingCuration	0.70
 credo-rg-operational	Operational	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
 credo-rg-operational	Operational	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
+credo-rg-operational	Operational	skos:relatedMatch	sector-health:ClinicalCare	Clinical Care	semapv:ManualMappingCuration	0.70
 credo-rg-performance-and-robustness	Performance and Robustness	skos:relatedMatch	eu-aiact:AIProvider	AI Provider	semapv:LLMBasedMatching	0.85
 credo-rg-performance-and-robustness	Performance and Robustness	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.85
 credo-rg-third-party	Third Party	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.85
@@ -285,6 +296,8 @@ mit-ai-risk-domain-1	Discrimination and Toxicity	skos:relatedMatch	eu-rights:T3-
 mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
 mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	eu-rights:T2-DataProtection	Data Protection	semapv:LLMBasedMatching	0.90
 mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	risk:Vulnerability	Vulnerability	semapv:LLMBasedMatching	0.80
+mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	sector-health:HealthDataGovernance	Health Data Governance	semapv:ManualMappingCuration	0.70
+mit-ai-risk-domain-2	Privacy and Security	skos:relatedMatch	pd:MedicalHealth	Medical Health	semapv:ManualMappingCuration	0.70
 mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	risk:Threat	Threat	semapv:LLMBasedMatching	0.85
 mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
 mit-ai-risk-domain-3	Misinformation	skos:relatedMatch	eu-aiact:DeepFake	Deep Fake	semapv:LLMBasedMatching	0.75
@@ -293,6 +306,7 @@ mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	sector-law:CriminalLawEn
 mit-ai-risk-domain-4	Malicious Actors	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.80
 mit-ai-risk-domain-5	Human-Computer Interaction	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.90
 mit-ai-risk-domain-5	Human-Computer Interaction	skos:relatedMatch	eu-aiact:AIDeployer	AI Deployer	semapv:LLMBasedMatching	0.80
+mit-ai-risk-domain-5	Human-Computer Interaction	skos:relatedMatch	sector-health:PatientTreatment	Patient Treatment	semapv:ManualMappingCuration	0.70
 mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	eu-aiact:AISubject	AI Subject	semapv:LLMBasedMatching	0.85
 mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	eu-rights:T3-Equality	Equality	semapv:LLMBasedMatching	0.80
 mit-ai-risk-domain-6	Socioeconomic and Environmental	skos:relatedMatch	pd:Financial	Financial	semapv:LLMBasedMatching	0.75
