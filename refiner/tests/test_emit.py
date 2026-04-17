@@ -1208,3 +1208,24 @@ def test_emit_cli_mode_default_is_redteam(tmp_path):
     row = json.loads(out_path.read_text().strip().split("\n")[0])
     assert "mode" not in row
     assert "pair_id" not in row
+
+
+def test_evaluate_cli_accepts_mode(tmp_path):
+    """Evaluate CLI should accept --mode without crashing (no judge, no adversarial)."""
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+
+    # First emit in paired mode to create the files
+    rt_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=2, output_path=rt_path, seed=42, mode="paired")
+
+    # Write a minimal run report so evaluate doesn't crash
+    report_path = tmp_path / "test-run-report.yaml"
+    report_path.write_text(yaml.dump({"model": "test", "policy_set": "test", "timestamp": "now", "stages_completed": [], "events": []}))
+
+    result = runner.invoke(app, [
+        "evaluate", str(tmp_path),
+        "--policies", str(pol_path),
+        "--mode", "paired",
+    ])
+    assert result.exit_code == 0, result.output
