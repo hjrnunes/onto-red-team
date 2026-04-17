@@ -912,9 +912,9 @@
             <p class="text-2xl font-bold text-indigo-600" x-text="data.prompt_metrics?.mean_prompt_length || 0"></p>
             <p class="text-xs text-gray-400">Mean Prompt Length</p>
           </div>
-          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Fraction of sampled ontology labels whose keywords actually appear in the generated prompt text. Higher = the LLM incorporated the domain context it was given.">
-            <p class="text-2xl font-bold text-teal-600" x-text="data.prompt_metrics?.domain_term_hit_rate || 0"></p>
-            <p class="text-xs text-gray-400">Domain Term Hit Rate</p>
+          <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Average axis fidelity: how well generated prompts incorporate sampled ontology concepts. Uses stemmed keyword matching with class-label fallback and semantic similarity. Higher = the LLM faithfully reflected the domain context.">
+            <p class="text-2xl font-bold text-teal-600" x-text="data.prompt_metrics?.axis_fidelity?.mean_fidelity || 0"></p>
+            <p class="text-xs text-gray-400">Axis Fidelity</p>
           </div>
           <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Hard red flags: overt jailbreak patterns ('pretend you are', 'ignore previous instructions', 'jailbreak'). These are always problematic regardless of technique.">
             <p class="text-2xl font-bold" :class="(data.prompt_metrics?.red_flag_hard || 0) > 0 ? 'text-red-600' : 'text-green-600'" x-text="data.prompt_metrics?.red_flag_hard || 0"></p>

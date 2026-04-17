@@ -930,6 +930,22 @@ def compute_sibling_relevance(profiles: list[dict]) -> dict:
     }
 
 
+_FRAMEWORK_SUFFIXES = [
+    " - ATLAS", " - ATTACK ICS", " - ATTACK Mobile", " - ATTACK", " - SPARTA",
+]
+_ONTOLOGY_SUFFIXES = [" AE", " HP", " GO"]
+
+
+def _strip_label_suffixes(label: str) -> str:
+    for suffix in _FRAMEWORK_SUFFIXES:
+        if label.endswith(suffix):
+            return label[: -len(suffix)]
+    for suffix in _ONTOLOGY_SUFFIXES:
+        if label.endswith(suffix):
+            return label[: -len(suffix)]
+    return label
+
+
 def compute_adversarial_metrics(rows: list[dict]) -> dict:
     if not rows:
         return {
@@ -963,7 +979,7 @@ def compute_adversarial_metrics(rows: list[dict]) -> dict:
             red_flag_soft += 1
         prompt_lower = prompt.lower()
         for sa in row.get("sampled_axes", []):
-            label = sa.get("sampled_label", "")
+            label = _strip_label_suffixes(sa.get("sampled_label", ""))
             if label:
                 term_total += 1
                 if label.lower() in prompt_lower:
@@ -1234,8 +1250,8 @@ def format_summary(evaluation: dict) -> str:
         if jlr:
             extra += f", {jlr.get('jargon_prompts', 0)} jargon leak(s)"
         af = pm.get("axis_fidelity", {})
-        if af:
-            extra += f", fidelity {af.get('mean_fidelity', 0)} ({af.get('improvised', 0)} improvised)"
+        if af and af.get("improvised", 0) > 0:
+            extra += f", {af.get('improvised', 0)} improvised"
         neu = pm.get("named_entity_utilization", {})
         if neu:
             extra += f", entity utilization {neu.get('utilization_rate', 0)}"
@@ -1247,7 +1263,7 @@ def format_summary(evaluation: dict) -> str:
             extra += f", semantic diversity {sd.get('mean_pairwise_distance', 0)}"
         lines.append(
             f"  Prompts: TTR {pm.get('lexical_diversity', 0)}, "
-            f"domain hit rate {pm.get('domain_term_hit_rate', 0)}, "
+            f"fidelity {af.get('mean_fidelity', 0)}, "
             f"{pm.get('red_flag_count', 0)} red flags ({pm.get('red_flag_hard', 0)} hard, {pm.get('red_flag_soft', 0)} soft)"
             f"{extra}"
         )

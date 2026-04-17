@@ -612,9 +612,9 @@
           <p class="text-2xl font-bold text-indigo-600" x-text="data.prompt_metrics?.mean_prompt_length || 0"></p>
           <p class="text-xs text-gray-400">Mean Prompt Length</p>
         </div>
-        <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Fraction of sampled domain terms (from ontology enumerations) that actually appear in the generated prompts. Higher = the LLM successfully incorporated the domain context. Low values suggest the model ignored the provided entities.">
-          <p class="text-2xl font-bold text-teal-600" x-text="data.prompt_metrics?.domain_term_hit_rate || 0"></p>
-          <p class="text-xs text-gray-400">Domain Term Hit Rate</p>
+        <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Average axis fidelity: how well generated prompts incorporate sampled ontology concepts. Uses stemmed keyword matching with class-label fallback and semantic similarity. Higher = the LLM faithfully reflected the domain context.">
+          <p class="text-2xl font-bold text-teal-600" x-text="data.prompt_metrics?.axis_fidelity?.mean_fidelity || 0"></p>
+          <p class="text-xs text-gray-400">Axis Fidelity</p>
         </div>
         <div class="text-center p-3 bg-gray-50 rounded-lg tip" data-tip="Number of prompts containing obvious jailbreak/attack patterns (e.g. 'hypothetically', 'ignore previous instructions', 'for educational purposes'). Ideally 0 &mdash; red flags make prompts trivially detectable by content filters.">
           <p class="text-2xl font-bold" :class="(data.prompt_metrics?.red_flag_count || 0) > 0 ? 'text-red-600' : 'text-green-600'" x-text="data.prompt_metrics?.red_flag_count || 0"></p>

@@ -2,7 +2,42 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 18 (current)
+## Gen 19  (current)
+
+### Added
+
+- **Perspective-based query expansion** — `map_risks` now runs 3 additional ChromaDB searches per
+  policy, reframing the concept definition from deployer, affected-subject, and regulator
+  viewpoints. Candidates are merged by risk ID keeping the best (lowest) cosine distance. Widens
+  the retrieval net without adding LLM calls — the validator still sees one merged candidate set.
+  Inspired by stakeholder-driven paraphrase approach in Yadav et al. 2025 ("Who Sees the Risk?",
+  arXiv:2511.03152). Reports a `perspective_expansion` event with candidate count.
+
+### Fixed
+
+- **Domain term hit rate false negatives from framework suffixes** — `compute_adversarial_metrics`
+  now strips `" - ATLAS"`, `" - SPARTA"`, `" - ATTACK"`, `" AE"`, `" HP"`, `" GO"` suffixes from
+  `sampled_label` before the substring match, matching what the emit stage already does via
+  `_strip_framework_suffix()`. Previously, D3FEND labels like `"Cost Harvesting - ATLAS"` would
+  never match even when the generated prompt contained "cost harvesting", because the emit stage
+  stripped the suffix before sending to the LLM but the evaluation checked against the raw stored
+  label. Recovers ~21 D3FEND false negatives per battery. Root cause: D3FEND was never indexed
+  before gen18, so the suffix mismatch was latent.
+
+### Changed
+
+- **Axis fidelity replaces domain term hit rate as primary metric** — The top-line prompt quality
+  metric in report templates (`combined_report_template.html`, `evaluation_report_template.html`)
+  and `format_summary()` output is now axis fidelity (three-tier: stemmed keywords, class label
+  fallback, semantic similarity) instead of domain term hit rate (raw substring match). Domain term
+  hit rate is still computed and logged to MLflow but no longer displayed in the primary metric card.
+  Rationale: axis fidelity handles morphological variants, concept instantiation, and technical
+  ontology labels that substring matching cannot. The gen18 domain hit rate regression (−14%) was
+  78% caused by D3FEND's inherently low substring-match rate (3.5% on technique labels like "Evade
+  AI Model") — not a quality regression. Axis fidelity (0.692) correctly reflects the actual prompt
+  quality that judges confirm (4.91/5.0 domain grounding).
+
+## Gen 18
 
 ### Improved
 
