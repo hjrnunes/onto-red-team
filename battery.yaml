@@ -17,6 +17,20 @@ samples_per_risk: 15
 #   delegated_authority: 0.15
 #   comparative_benchmark: 0.10
 
+# Emit mode: redteam (default), utility, or paired.
+# In paired mode, both redteam and utility datasets are generated
+# with matching pair_ids for boundary analysis.
+# emit_mode: paired
+
+# Benign frame weights for utility/paired emit mode.
+# Default: uniform distribution across all 5 frames.
+# benign_weights:
+#   routine_practice: 0.20
+#   training_education: 0.20
+#   compliance_documentation: 0.20
+#   applied_research: 0.20
+#   client_service: 0.20
+
 policies:
   - swb
   - generic

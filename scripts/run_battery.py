@@ -141,16 +141,29 @@ def build_emit_cmd(
     *, run_dir: Path, policy_file: Path, samples_per_risk: int,
     policy: str,
     technique_weights: dict[str, float] | None = None,
+    emit_mode: str | None = None,
+    benign_weights: dict[str, float] | None = None,
 ) -> tuple[list[str], str]:
+    if emit_mode == "paired":
+        output_file = f"{policy}-dataset-redteam.jsonl"
+    elif emit_mode == "utility":
+        output_file = f"{policy}-dataset-utility.jsonl"
+    else:
+        output_file = f"{policy}-dataset.jsonl"
     cmd = [
         "uv", "run", "refiner", "emit", str(run_dir),
         "--policies", str(policy_file),
         "--samples-per-risk", str(samples_per_risk),
-        "--output", str(run_dir / f"{policy}-dataset.jsonl"),
+        "--output", str(run_dir / output_file),
     ]
+    if emit_mode:
+        cmd.extend(["--mode", emit_mode])
     if technique_weights:
         import json as _json
         cmd.extend(["--technique-weights", _json.dumps(technique_weights)])
+    if benign_weights:
+        import json as _json
+        cmd.extend(["--benign-weights", _json.dumps(benign_weights)])
     return cmd, "refiner"
 
 
@@ -169,14 +182,33 @@ def build_generate_cmd(
 
 
 def build_evaluate_cmd(
-        *, run_dir: Path, policy: str, policy_file: Path, tracking_uri: str, tags: list[str]
+        *, run_dir: Path, policy: str, policy_file: Path, tracking_uri: str, tags: list[str],
+        judge_cfg: dict | None = None,
+        emit_mode: str | None = None,
 ) -> tuple[list[str], str]:
+    emit_file = f"{policy}-dataset.jsonl"
+    if emit_mode == "paired":
+        emit_file = f"{policy}-dataset-redteam.jsonl"
+    elif emit_mode == "utility":
+        emit_file = f"{policy}-dataset-utility.jsonl"
     cmd = [
         "uv", "run", "refiner", "evaluate", str(run_dir),
-        "--emit", str(run_dir / f"{policy}-dataset.jsonl"),
+        "--emit", str(run_dir / emit_file),
         "--adversarial", str(run_dir / f"{policy}-adversarial-prompts.jsonl"),
         "--policies", str(policy_file),
     ]
+    if emit_mode:
+        cmd.extend(["--mode", emit_mode])
+    if judge_cfg and judge_cfg.get("enabled"):
+        cmd.append("--judge")
+        if judge_cfg.get("model"):
+            cmd.extend(["--judge-model", judge_cfg["model"]])
+        if judge_cfg.get("base_url"):
+            cmd.extend(["--judge-base-url", judge_cfg["base_url"]])
+        if judge_cfg.get("api_key"):
+            cmd.extend(["--judge-api-key", judge_cfg["api_key"]])
+        if judge_cfg.get("sample"):
+            cmd.extend(["--judge-sample", str(judge_cfg["sample"])])
     if tracking_uri:
         cmd.extend(["--track", "--tracking-uri", tracking_uri])
     for tag in tags:
@@ -362,6 +394,8 @@ def _run_policy(
     cmd, cwd = build_emit_cmd(
         run_dir=run_dir, policy_file=policy_file, samples_per_risk=cfg["samples_per_risk"],
         policy=policy, technique_weights=cfg.get("technique_weights"),
+        emit_mode=cfg.get("emit_mode"),
+        benign_weights=cfg.get("benign_weights"),
     )
     _run_stage(cmd, cwd, **stage_kw)
 
@@ -379,6 +413,7 @@ def _run_policy(
         cmd, cwd = build_evaluate_cmd(
             run_dir=run_dir, policy=policy, policy_file=policy_file,
             tracking_uri=cfg["tracking_uri"], tags=tags,
+            emit_mode=cfg.get("emit_mode"),
         )
         _run_stage(cmd, cwd, **stage_kw)
 
