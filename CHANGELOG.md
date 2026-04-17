@@ -6,6 +6,16 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **Prompt IDs in emit output** — every emitted JSONL row now carries a `prompt_id` field with format
+  `{risk_id}:{technique-slug}:{index}` (e.g. `r1:pretexting:0`). Provides stable, unique identifiers
+  for end-to-end traceability from refiner emit through garak scan results. Works across all modes
+  (redteam, utility, paired); adversarial and benign technique namespaces are naturally disjoint.
+
+- **Garak stub-id passthrough** — `demo/prepare.py` now uses the emitted `prompt_id` when available
+  (falling back to local generation for older datasets) and writes garak CAS intent stub files in
+  dict format (`{"content": ..., "id": ...}`) instead of plain strings, enabling garak's stub-id
+  support to trace scan results back to individual generated prompts.
+
 - **Utility assessment datasets** — `refiner emit --mode utility|paired` generates boundary-adjacent
   legitimate professional queries alongside red-team datasets. Utility prompts share the same
   `risk × axis × enumeration` grounding as their adversarial twins but use benign frames

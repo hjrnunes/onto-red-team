@@ -1,6 +1,7 @@
 import json
 import logging
 import random
+from collections import defaultdict
 from pathlib import Path
 
 import yaml
@@ -30,6 +31,11 @@ _FRAMEWORK_SUFFIXES = [
 ]
 
 _ONTOLOGY_SUFFIXES = [" AE", " HP", " GO"]
+
+
+def _generate_prompt_id(risk_id: str, technique: str, index: int) -> str:
+    technique_slug = technique.replace("_", "-")
+    return f"{risk_id}:{technique_slug}:{index}"
 
 
 def _strip_framework_suffix(label: str) -> str:
@@ -431,6 +437,7 @@ def emit(
 
     redteam_rows: list[dict] = []
     utility_rows: list[dict] = []
+    prompt_counters: dict[tuple[str, str], int] = defaultdict(int)
 
     for pc in doc.policy_contexts:
         policy = policy_map.get(pc.policy_concept)
@@ -497,7 +504,11 @@ def emit(
                         policy_profile=policy_profile,
                         frame=frame,
                     )
+                    rt_key = (grounding.risk_id, frame.name)
+                    rt_idx = prompt_counters[rt_key]
+                    prompt_counters[rt_key] += 1
                     rt_row = {
+                        "prompt_id": _generate_prompt_id(grounding.risk_id, frame.name, rt_idx),
                         **base_row,
                         "generation_prompt": prompt,
                         "technique": frame.name,
@@ -524,7 +535,11 @@ def emit(
                         policy_profile=policy_profile,
                         frame=benign_frame,
                     )
+                    ut_key = (grounding.risk_id, benign_frame.name)
+                    ut_idx = prompt_counters[ut_key]
+                    prompt_counters[ut_key] += 1
                     ut_row = {
+                        "prompt_id": _generate_prompt_id(grounding.risk_id, benign_frame.name, ut_idx),
                         **base_row,
                         "generation_prompt": utility_prompt,
                         "technique": benign_frame.name,

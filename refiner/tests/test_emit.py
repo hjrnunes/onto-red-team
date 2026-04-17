@@ -1054,6 +1054,49 @@ def test_build_utility_prompt_without_frame_no_technique_block():
     assert "Adversarial technique:" not in user
 
 
+def test_emit_writes_prompt_id(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=out_path, seed=42)
+    lines = out_path.read_text().strip().split("\n")
+    seen_ids = set()
+    for line in lines:
+        row = json.loads(line)
+        assert "prompt_id" in row
+        pid = row["prompt_id"]
+        assert pid not in seen_ids, f"duplicate prompt_id: {pid}"
+        seen_ids.add(pid)
+        # Format: {risk_id}:{technique-slug}:{index}
+        parts = pid.split(":")
+        assert len(parts) == 3
+        assert parts[0] == row["risk_id"]
+        assert parts[2].isdigit()
+
+
+def test_emit_prompt_id_paired_mode(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    rt_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=rt_path, seed=42, mode="paired")
+    ut_path = tmp_path / "test-dataset-utility.jsonl"
+
+    rt_ids = set()
+    for line in rt_path.read_text().strip().split("\n"):
+        row = json.loads(line)
+        assert "prompt_id" in row
+        rt_ids.add(row["prompt_id"])
+
+    ut_ids = set()
+    for line in ut_path.read_text().strip().split("\n"):
+        row = json.loads(line)
+        assert "prompt_id" in row
+        ut_ids.add(row["prompt_id"])
+
+    # Redteam and utility prompt_ids should not collide (different technique namespaces)
+    assert rt_ids.isdisjoint(ut_ids)
+
+
 def test_emit_mode_redteam_default_unchanged(tmp_path):
     """Default mode produces identical output to current behavior — no pair_id, no mode field."""
     _write_test_files(tmp_path)

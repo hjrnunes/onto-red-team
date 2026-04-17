@@ -421,6 +421,7 @@ def _run_policy(
         cmd, cwd = build_evaluate_cmd(
             run_dir=run_dir, policy=policy, policy_file=policy_file,
             tracking_uri=cfg["tracking_uri"], tags=tags,
+            judge_cfg=cfg.get("judge"),
             emit_mode=cfg.get("emit_mode"),
         )
         _run_stage(cmd, cwd, **stage_kw)
