@@ -119,7 +119,16 @@
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__click",
       "WebFetch(domain:eval-hub.github.io)",
       "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_console_messages",
-      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages"
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__list_pages",
+      "mcp__plugin_chrome-devtools-mcp_chrome-devtools__new_page",
+      "Bash(/Users/hjrnunes/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/scripts/start-server.sh *)",
+      "Bash(/Users/hjrnunes/.claude/plugins/cache/claude-plugins-official/superpowers/5.0.7/skills/brainstorming/scripts/start-server.sh *)",
+      "Bash(/bin/ls /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/runs/swb-gemma-4-26b-a4b-it-g13/)",
+      "Bash(/bin/ls /Users/hjrnunes/workspace/redhat/hjrnunes/taxonomy-refiner/runs/)",
+      "Bash(/bin/ls *)",
+      "WebFetch(domain:linkml.io)",
+      "WebFetch(domain:ibm.github.io)",
+      "Bash(/opt/homebrew/bin/grm \"/Users/hjrnunes/Obsidian/Red Hat/AI Atlas Nexus - ORT Pipeline Without Ontologies.md\")"
     ]
   }
 }
