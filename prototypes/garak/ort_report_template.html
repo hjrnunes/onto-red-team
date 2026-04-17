@@ -93,6 +93,7 @@
     <a href="#behavior-by-probe" data-nav>Behavior by Probe</a>
     <a href="#risk-policy" data-nav>Risk &amp; Policy Analysis</a>
     <a href="#behavior-by-technique" data-nav>Behavior by Technique</a>
+    <a href="#heatmaps" data-nav>Attack Surface Heatmaps</a>
     <a href="#cross-framework" data-nav>Cross-Framework Reach</a>
     <a href="#domain-vocab" data-nav>Domain Vocabulary</a>
     <a href="#probe-details" data-nav>Probe Details</a>
@@ -190,40 +191,46 @@
             {{ group.risk_ids | length }} risk{{ "s" if group.risk_ids | length != 1 }}
           </div>
 
-          {% if group.definition %}
-          <div style="margin: 8px 0 12px; padding: 10px 14px; background: var(--pf-t--global--background--color--primary); border-left: 3px solid var(--pf-t--global--border--color--default); font-size: 13px; line-height: 1.5; color: var(--pf-t--global--text--color--regular);">
-            {{ group.definition }}
-          </div>
-          {% endif %}
+          {% if group.definition or group.boundary_examples or group.risk_controls %}
+          <details style="margin-bottom: 12px;">
+            <summary style="cursor: pointer; font-size: 12px; font-weight: 600; color: var(--pf-t--global--text--color--subtle); text-transform: uppercase; letter-spacing: 0.04em;">Policy Language</summary>
 
-          {% if group.boundary_examples %}
-          <div style="margin-bottom: 10px;">
-            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Policy Boundaries</strong>
-            <table class="report-table" style="margin-top: 4px; font-size: 12px;">
-              <thead>
-                <tr><th style="color: #c9190b;">Prohibited</th><th style="color: #3e8635;">Acceptable</th></tr>
-              </thead>
-              <tbody>
-                {% for ex in group.boundary_examples %}
-                <tr>
-                  <td>{{ ex.prohibited }}</td>
-                  <td>{{ ex.acceptable }}</td>
-                </tr>
+            {% if group.definition %}
+            <div style="margin: 8px 0 12px; padding: 10px 14px; background: var(--pf-t--global--background--color--primary); border-left: 3px solid var(--pf-t--global--border--color--default); font-size: 13px; line-height: 1.5; color: var(--pf-t--global--text--color--regular);">
+              {{ group.definition }}
+            </div>
+            {% endif %}
+
+            {% if group.boundary_examples %}
+            <div style="margin-bottom: 10px;">
+              <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Policy Boundaries</strong>
+              <table class="report-table" style="margin-top: 4px; font-size: 12px;">
+                <thead>
+                  <tr><th style="color: #c9190b;">Prohibited</th><th style="color: #3e8635;">Acceptable</th></tr>
+                </thead>
+                <tbody>
+                  {% for ex in group.boundary_examples %}
+                  <tr>
+                    <td>{{ ex.prohibited }}</td>
+                    <td>{{ ex.acceptable }}</td>
+                  </tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+            {% endif %}
+
+            {% if group.risk_controls %}
+            <div style="margin-bottom: 6px;">
+              <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Required Controls</strong>
+              <ul style="margin: 4px 0 0; padding-left: 20px; font-size: 12px; color: var(--pf-t--global--text--color--regular);">
+                {% for ctrl in group.risk_controls %}
+                <li>{{ ctrl }}</li>
                 {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          {% endif %}
-
-          {% if group.risk_controls %}
-          <div style="margin-bottom: 12px;">
-            <strong style="font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--pf-t--global--text--color--subtle);">Required Controls</strong>
-            <ul style="margin: 4px 0 0; padding-left: 20px; font-size: 12px; color: var(--pf-t--global--text--color--regular);">
-              {% for ctrl in group.risk_controls %}
-              <li>{{ ctrl }}</li>
-              {% endfor %}
-            </ul>
-          </div>
+              </ul>
+            </div>
+            {% endif %}
+          </details>
           {% endif %}
 
           <table class="report-table">
@@ -255,6 +262,30 @@
       </div>
     </div>
 
+    <!-- ═══════════════ ATTACK SURFACE HEATMAPS ═══════════════ -->
+    <div id="heatmaps" class="section-anchor">
+      <div class="section-card">
+        <h2>Attack Surface Heatmaps</h2>
+        <p class="section-subtitle">Attack success rates across ORT dimensions &mdash; revealing which combinations of risk, technique, ontology, and BFO category are most exploitable</p>
+
+        <h3 style="font-size: 15px; margin: 20px 0 8px;">Risk &times; Technique</h3>
+        <p style="font-size: 12px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 8px;">Which adversarial techniques are most effective against which risks</p>
+        <div id="hm-risk-tech" class="chart-container"></div>
+
+        <h3 style="font-size: 15px; margin: 20px 0 8px;">Risk &times; Source Ontology</h3>
+        <p style="font-size: 12px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 8px;">Which ontological knowledge domains produce the most successful attacks per risk</p>
+        <div id="hm-risk-onto" class="chart-container"></div>
+
+        <h3 style="font-size: 15px; margin: 20px 0 8px;">Risk &times; BFO Category</h3>
+        <p style="font-size: 12px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 8px;">Whether entity-framed, process-framed, or role-framed attacks differ in effectiveness</p>
+        <div id="hm-risk-bfo" class="chart-container"></div>
+
+        <h3 style="font-size: 15px; margin: 20px 0 8px;">Technique &times; Source Ontology</h3>
+        <p style="font-size: 12px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 8px;">Which technique + ontology combinations are most dangerous</p>
+        <div id="hm-tech-onto" class="chart-container"></div>
+      </div>
+    </div>
+
     <!-- ═══════════════ SECTION A: CROSS-FRAMEWORK REACH ═══════════════ -->
     <div id="cross-framework" class="section-anchor">
       <div class="section-card">
@@ -278,29 +309,31 @@
 
         <div id="chart-cf-lens" class="chart-container"></div>
 
-        <h3 style="font-size: 15px; margin: 20px 0 8px;">Detailed Mappings</h3>
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Tested Risk</th>
-              <th class="num">ASR</th>
-              <th>Mapped Risk</th>
-              <th>Type</th>
-              <th>Mapped Framework</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for row in cross_framework_matrix %}
-            <tr>
-              <td>{{ row.tested_risk }} <span style="font-size: 11px; color: var(--pf-t--global--text--color--subtle);">({{ row.tested_framework }})</span></td>
-              <td class="num {% if row.tested_asr > 10 %}asr-high{% elif row.tested_asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ row.tested_asr }}%</td>
-              <td>{{ row.mapped_risk }}</td>
-              <td><span class="mapping-badge mapping-badge--{{ row.mapping_type }}">{{ row.mapping_type }}</span></td>
-              <td>{{ row.mapped_framework }}</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <details>
+          <summary style="cursor: pointer; font-size: 15px; font-weight: 700; margin: 20px 0 8px;">Detailed Mappings <span style="font-size: 12px; font-weight: 400; color: var(--pf-t--global--text--color--subtle);">({{ cross_framework_matrix | length }})</span></summary>
+          <table class="report-table" style="margin-top: 8px;">
+            <thead>
+              <tr>
+                <th>Tested Risk</th>
+                <th class="num">ASR</th>
+                <th>Mapped Risk</th>
+                <th>Type</th>
+                <th>Mapped Framework</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in cross_framework_matrix %}
+              <tr>
+                <td>{{ row.tested_risk }} <span style="font-size: 11px; color: var(--pf-t--global--text--color--subtle);">({{ row.tested_framework }})</span></td>
+                <td class="num {% if row.tested_asr > 10 %}asr-high{% elif row.tested_asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ row.tested_asr }}%</td>
+                <td>{{ row.mapped_risk }}</td>
+                <td><span class="mapping-badge mapping-badge--{{ row.mapping_type }}">{{ row.mapping_type }}</span></td>
+                <td>{{ row.mapped_framework }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </details>
       </div>
     </div>
 
@@ -312,30 +345,33 @@
 
         <div id="chart-domain-vocab" class="chart-container"></div>
 
-        <table class="report-table">
-          <thead>
-            <tr>
-              <th>Axis</th>
-              <th>BFO Category</th>
-              <th>Source Ontology</th>
-              <th class="num">Stubs</th>
-              <th class="num">Complied</th>
-              <th class="num">ASR</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for v in domain_vocabulary %}
-            <tr>
-              <td title="{{ v.axis_uri }}">{{ v.axis_label }}</td>
-              <td>{{ v.bfo_category }}</td>
-              <td>{{ v.source_ontology }}</td>
-              <td class="num">{{ v.total }}</td>
-              <td class="num">{{ v.complied }}</td>
-              <td class="num {% if v.asr > 10 %}asr-high{% elif v.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ v.asr }}%</td>
-            </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+        <details>
+          <summary style="cursor: pointer; font-size: 15px; font-weight: 700; margin: 20px 0 8px;">Detailed Axes <span style="font-size: 12px; font-weight: 400; color: var(--pf-t--global--text--color--subtle);">({{ domain_vocabulary | length }})</span></summary>
+          <table class="report-table" style="margin-top: 8px;">
+            <thead>
+              <tr>
+                <th>Axis</th>
+                <th>BFO Category</th>
+                <th>Source Ontology</th>
+                <th class="num">Stubs</th>
+                <th class="num">Complied</th>
+                <th class="num">ASR</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for v in domain_vocabulary %}
+              <tr>
+                <td title="{{ v.axis_uri }}">{{ v.axis_label }}</td>
+                <td>{{ v.bfo_category }}</td>
+                <td>{{ v.source_ontology }}</td>
+                <td class="num">{{ v.total }}</td>
+                <td class="num">{{ v.complied }}</td>
+                <td class="num {% if v.asr > 10 %}asr-high{% elif v.asr > 0 %}asr-mid{% else %}asr-low{% endif %}">{{ v.asr }}%</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </details>
       </div>
     </div>
 
@@ -616,6 +652,51 @@
       },
       "config": { "view": { "stroke": null } }
     }, opts).catch(console.error);
+
+    // ── Heatmap helper: reusable spec for all four heatmaps ──
+    function renderHeatmap(el, data, xField, yField, xTitle, yTitle) {
+      vegaEmbed(el, {
+        "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+        "data": { "values": data },
+        "width": "container",
+        "height": { "step": 30 },
+        "mark": { "type": "rect", "stroke": "#fff", "strokeWidth": 1 },
+        "encoding": {
+          "x": {
+            "field": "x", "type": "nominal", "title": xTitle,
+            "axis": { "labelAngle": -35, "labelLimit": 160 },
+            "scale": { "paddingInner": 0.03 }
+          },
+          "y": {
+            "field": "y", "type": "nominal", "title": yTitle,
+            "axis": { "labelLimit": 220 },
+            "scale": { "paddingInner": 0.03 }
+          },
+          "color": {
+            "condition": [
+              { "test": "datum.total === 0", "value": "#f0f0f0" }
+            ],
+            "field": "asr", "type": "quantitative",
+            "title": "ASR %",
+            "scale": { "scheme": "yelloworangered", "domain": [0, 15] },
+            "legend": { "format": ".0f" }
+          },
+          "tooltip": [
+            { "field": "y", "title": yTitle },
+            { "field": "x", "title": xTitle },
+            { "field": "total", "title": "Attempts" },
+            { "field": "complied", "title": "Complied" },
+            { "field": "asr", "title": "ASR %", "format": ".1f" }
+          ]
+        },
+        "config": { "axis": { "grid": false }, "view": { "stroke": null } }
+      }, opts).catch(console.error);
+    }
+
+    renderHeatmap('#hm-risk-tech',  {{ hm_risk_tech | tojson }},  'x', 'y', 'Technique', 'Risk');
+    renderHeatmap('#hm-risk-onto',  {{ hm_risk_onto | tojson }},  'x', 'y', 'Source Ontology', 'Risk');
+    renderHeatmap('#hm-risk-bfo',   {{ hm_risk_bfo | tojson }},   'x', 'y', 'BFO Category', 'Risk');
+    renderHeatmap('#hm-tech-onto',  {{ hm_tech_onto | tojson }},  'x', 'y', 'Source Ontology', 'Technique');
 
     // ── Cross-framework lens: dropdown switches framework perspective ──
     var cfLens = {{ cf_lens_data | tojson }};

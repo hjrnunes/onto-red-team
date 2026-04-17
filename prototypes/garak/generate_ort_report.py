@@ -412,6 +412,104 @@ def domain_vocab_chart_data(vocab: list[dict]) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Heatmap data builders
+# ---------------------------------------------------------------------------
+
+
+def _heatmap_cells(
+    attempts: list[dict],
+    stubs: dict[str, dict],
+    x_key: str,
+    y_key: str,
+    x_from: str = "stub",
+    y_from: str = "attempt",
+) -> list[dict]:
+    """Build heatmap cell data: one row per (x, y) with total, complied, ASR.
+
+    ``x_from``/``y_from`` indicate where the field lives:
+    ``"attempt"`` reads from the attempt dict, ``"stub"`` reads from the
+    matched stub dict, ``"axis"`` iterates over ``sampled_axes``.
+    """
+
+    def _get_field(a: dict, stub: dict, key: str, source: str) -> list[str]:
+        if source == "attempt":
+            return [a.get(key, "")]
+        elif source == "stub":
+            return [stub.get(key, "unknown")]
+        elif source == "axis":
+            return [ax.get(key, "") for ax in stub.get("sampled_axes", []) if ax.get(key)]
+        return [""]
+
+    cells: dict[tuple[str, str], dict] = {}
+    for a in attempts:
+        stub = stubs.get(a["stub_id"], {})
+        x_vals = _get_field(a, stub, x_key, x_from)
+        y_vals = _get_field(a, stub, y_key, y_from)
+        for xv in x_vals:
+            for yv in y_vals:
+                if not xv or not yv:
+                    continue
+                k = (xv, yv)
+                if k not in cells:
+                    cells[k] = {"x": xv, "y": yv, "total": 0, "complied": 0}
+                cells[k]["total"] += 1
+                if a["outcome"] == "complied":
+                    cells[k]["complied"] += 1
+
+    result: list[dict] = []
+    for cell in cells.values():
+        t = cell["total"]
+        c = cell["complied"]
+        asr = round(c / t * 100, 1) if t > 0 else 0.0
+        result.append({**cell, "asr": asr})
+    return result
+
+
+def heatmap_risk_technique(
+    attempts: list[dict], stubs: dict[str, dict],
+) -> list[dict]:
+    """Heatmap: risk name (Y) x adversarial technique (X), colored by ASR."""
+    return _heatmap_cells(
+        attempts, stubs,
+        x_key="technique", y_key="risk_name",
+        x_from="stub", y_from="attempt",
+    )
+
+
+def heatmap_risk_ontology(
+    attempts: list[dict], stubs: dict[str, dict],
+) -> list[dict]:
+    """Heatmap: risk name (Y) x source ontology (X), colored by ASR."""
+    return _heatmap_cells(
+        attempts, stubs,
+        x_key="source_ontology", y_key="risk_name",
+        x_from="axis", y_from="attempt",
+    )
+
+
+def heatmap_risk_bfo(
+    attempts: list[dict], stubs: dict[str, dict],
+) -> list[dict]:
+    """Heatmap: risk name (Y) x BFO category (X), colored by ASR."""
+    return _heatmap_cells(
+        attempts, stubs,
+        x_key="bfo_category", y_key="risk_name",
+        x_from="axis", y_from="attempt",
+    )
+
+
+def heatmap_technique_ontology(
+    attempts: list[dict], stubs: dict[str, dict],
+) -> list[dict]:
+    """Heatmap: technique (Y) x source ontology (X), colored by ASR."""
+    return _heatmap_cells(
+        attempts, stubs,
+        x_key="source_ontology", y_key="technique",
+        x_from="axis", y_from="stub",
+    )
+
+
+# ---------------------------------------------------------------------------
 # Original ART charts: behavior-by-probe, behavior-by-intent, probe details
 # ---------------------------------------------------------------------------
 
@@ -675,6 +773,12 @@ def render_report(
     rg_chart = risk_group_chart_data(rg_stats)
     dv_chart = domain_vocab_chart_data(vocab)
 
+    # Heatmaps
+    hm_risk_tech = heatmap_risk_technique(attempts, stubs)
+    hm_risk_onto = heatmap_risk_ontology(attempts, stubs)
+    hm_risk_bfo = heatmap_risk_bfo(attempts, stubs)
+    hm_tech_onto = heatmap_technique_ontology(attempts, stubs)
+
     policy_source = mapping.get("policy_source", {})
     ort_run = mapping.get("ort_run", "")
 
@@ -704,6 +808,11 @@ def render_report(
         # ORT-specific charts
         risk_group_chart_data=rg_chart,
         domain_vocab_chart_data=dv_chart,
+        # Heatmaps
+        hm_risk_tech=hm_risk_tech,
+        hm_risk_onto=hm_risk_onto,
+        hm_risk_bfo=hm_risk_bfo,
+        hm_tech_onto=hm_tech_onto,
     )
 
 
