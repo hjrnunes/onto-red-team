@@ -7,7 +7,7 @@ import yaml
 
 from refiner.curie_registry import CURIE_MAP
 from refiner.frames import DEFAULT_WEIGHTS, AdversarialFrame, resolve_slot_label, select_frame
-from refiner.benign_frames import BenignFrame, resolve_slot_label as resolve_benign_slot_label
+from refiner.benign_frames import BenignFrame, DEFAULT_BENIGN_WEIGHTS, resolve_slot_label as resolve_benign_slot_label, select_benign_frame
 from refiner.provenance import write_provenance
 from refiner.models import (
     AxisEnumeration,
@@ -397,6 +397,13 @@ def _discover_domain_context(output_dir: Path) -> Path:
     return matches[0]
 
 
+def _write_jsonl(rows: list[dict], path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with open(path, "w") as f:
+        for row in rows:
+            f.write(json.dumps(row) + "\n")
+
+
 def emit(
     output_dir: Path,
     policies_path: Path,
@@ -405,6 +412,8 @@ def emit(
     seed: int | None = None,
     technique_weights: dict[str, float] | None = None,
     axes_per_prompt: int | None = None,
+    mode: str = "redteam",
+    benign_weights: dict[str, float] | None = None,
 ) -> None:
     dc_path = _discover_domain_context(output_dir)
     doc = load_domain_context(dc_path)
@@ -414,12 +423,15 @@ def emit(
         random.seed(seed)
 
     weights = technique_weights or DEFAULT_WEIGHTS
+    ben_weights = benign_weights or DEFAULT_BENIGN_WEIGHTS
     logger.info("Loaded %d policy_contexts from %s", len(doc.policy_contexts), dc_path.name)
 
     # Build risk lookup
     risk_by_id = {r.risk_id: r for r in doc.risks}
 
-    rows: list[dict] = []
+    redteam_rows: list[dict] = []
+    utility_rows: list[dict] = []
+
     for pc in doc.policy_contexts:
         policy = policy_map.get(pc.policy_concept)
         if policy is None:
@@ -453,23 +465,9 @@ def emit(
                 logger.warning("Skipping risk %s — no usable axes", grounding.risk_id)
                 continue
 
-            for sampled in samples:
-                frame = select_frame(
-                    weights,
-                    risk_name=risk_name,
-                    risk_description=risk_description or "",
-                )
-                prompt = build_prompt(
-                    pc.policy_concept,
-                    policy.concept_definition,
-                    risk_name,
-                    sampled,
-                    policy=policy,
-                    policy_profile=policy_profile,
-                    frame=frame,
-                )
-                row = {
-                    "generation_prompt": prompt,
+            for idx, sampled in enumerate(samples):
+                # Build base row with shared fields
+                base_row = {
                     "policy_concept": pc.policy_concept,
                     "concept_definition": policy.concept_definition,
                     "decomposition": policy.decomposition.model_dump() if policy.decomposition else None,
@@ -479,20 +477,84 @@ def emit(
                     "risk_concern": risk_concern,
                     "risk_framework": risk_framework,
                     "cross_mappings": cross_mappings,
-                    "technique": frame.name,
-                    "technique_description": frame.description,
                     "sampled_axes": [sa.model_dump() for sa in sampled],
                     "domain_context_axes": [a.model_dump() for a in grounding.axes],
                 }
-                rows.append(row)
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
-        for row in rows:
-            f.write(json.dumps(row) + "\n")
+                # Build redteam row if mode is redteam or paired
+                if mode in ("redteam", "paired"):
+                    frame = select_frame(
+                        weights,
+                        risk_name=risk_name,
+                        risk_description=risk_description or "",
+                    )
+                    prompt = build_prompt(
+                        pc.policy_concept,
+                        policy.concept_definition,
+                        risk_name,
+                        sampled,
+                        policy=policy,
+                        policy_profile=policy_profile,
+                        frame=frame,
+                    )
+                    rt_row = {
+                        **base_row,
+                        "generation_prompt": prompt,
+                        "technique": frame.name,
+                        "technique_description": frame.description,
+                    }
+                    if mode == "paired":
+                        rt_row["pair_id"] = f"{grounding.risk_id}:{idx}"
+                        rt_row["mode"] = "redteam"
+                    redteam_rows.append(rt_row)
+
+                # Build utility row if mode is utility or paired
+                if mode in ("utility", "paired"):
+                    benign_frame = select_benign_frame(
+                        ben_weights,
+                        risk_name=risk_name,
+                        risk_description=risk_description or "",
+                    )
+                    utility_prompt = build_utility_prompt(
+                        pc.policy_concept,
+                        policy.concept_definition,
+                        risk_name,
+                        sampled,
+                        policy=policy,
+                        policy_profile=policy_profile,
+                        frame=benign_frame,
+                    )
+                    ut_row = {
+                        **base_row,
+                        "generation_prompt": utility_prompt,
+                        "technique": benign_frame.name,
+                        "technique_description": benign_frame.description,
+                        "mode": "utility",
+                    }
+                    if mode == "paired":
+                        ut_row["pair_id"] = f"{grounding.risk_id}:{idx}"
+                    utility_rows.append(ut_row)
+
+    # Write files based on mode
+    if mode == "redteam":
+        _write_jsonl(redteam_rows, output_path)
+        logger.info("Wrote %d redteam rows to %s", len(redteam_rows), output_path)
+    elif mode == "utility":
+        _write_jsonl(utility_rows, output_path)
+        logger.info("Wrote %d utility rows to %s", len(utility_rows), output_path)
+    elif mode == "paired":
+        _write_jsonl(redteam_rows, output_path)
+        # Derive utility path
+        if "-redteam.jsonl" in str(output_path):
+            utility_path = Path(str(output_path).replace("-redteam.jsonl", "-utility.jsonl"))
+        else:
+            utility_path = output_path.parent / f"{output_path.stem}-utility.jsonl"
+        _write_jsonl(utility_rows, utility_path)
+        logger.info("Wrote %d redteam rows to %s", len(redteam_rows), output_path)
+        logger.info("Wrote %d utility rows to %s", len(utility_rows), utility_path)
 
     # Write curie_map sidecar for URI expansion
-    slug = output_path.stem.removesuffix("-dataset")
+    slug = output_path.stem.removesuffix("-dataset").removesuffix("-redteam")
     if slug != output_path.stem:
         curie_path = output_path.parent / f"{slug}-curie-map.json"
         prov_path = output_path.parent / f"{slug}-provenance.jsonl"
@@ -505,6 +567,5 @@ def emit(
     # Write provenance sidecar
     write_provenance(dc_path, output_path, prov_path)
 
-    logger.info("Wrote %d rows to %s", len(rows), output_path)
     logger.info("Wrote curie_map to %s", curie_path)
     logger.info("Wrote provenance to %s", prov_path)

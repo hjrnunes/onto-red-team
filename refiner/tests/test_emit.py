@@ -1052,3 +1052,106 @@ def test_build_utility_prompt_without_frame_no_technique_block():
     user = messages[1]["content"]
     assert "Legitimate use-case pattern:" not in user
     assert "Adversarial technique:" not in user
+
+
+def test_emit_mode_redteam_default_unchanged(tmp_path):
+    """Default mode produces identical output to current behavior — no pair_id, no mode field."""
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "dataset.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=out_path, seed=42)
+    lines = out_path.read_text().strip().split("\n")
+    for line in lines:
+        row = json.loads(line)
+        assert "pair_id" not in row
+        assert "mode" not in row
+
+
+def test_emit_mode_utility_writes_utility_file(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "test-dataset-utility.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=out_path, seed=42, mode="utility")
+    assert out_path.exists()
+    lines = out_path.read_text().strip().split("\n")
+    assert len(lines) > 0
+    for line in lines:
+        row = json.loads(line)
+        assert row["mode"] == "utility"
+        assert "pair_id" not in row
+        assert row["technique"] in {
+            "routine_practice", "training_education", "compliance_documentation",
+            "applied_research", "client_service",
+        }
+
+
+def test_emit_mode_utility_system_message(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    out_path = tmp_path / "test-dataset-utility.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=1, output_path=out_path, seed=42, mode="utility")
+    row = json.loads(out_path.read_text().strip().split("\n")[0])
+    system = row["generation_prompt"][0]["content"]
+    assert "utility-testing" in system
+    assert "red-team" not in system.lower()
+
+
+def test_emit_mode_paired_writes_two_files(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+    assert redteam_path.exists()
+    assert utility_path.exists()
+
+
+def test_emit_mode_paired_has_pair_ids(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+
+    rt_lines = redteam_path.read_text().strip().split("\n")
+    ut_lines = utility_path.read_text().strip().split("\n")
+    assert len(rt_lines) == len(ut_lines)
+
+    for rt_line, ut_line in zip(rt_lines, ut_lines):
+        rt_row = json.loads(rt_line)
+        ut_row = json.loads(ut_line)
+        assert "pair_id" in rt_row
+        assert "pair_id" in ut_row
+        assert rt_row["pair_id"] == ut_row["pair_id"]
+        assert rt_row["mode"] == "redteam"
+        assert ut_row["mode"] == "utility"
+
+
+def test_emit_mode_paired_same_sampled_axes(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=3, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+
+    rt_lines = redteam_path.read_text().strip().split("\n")
+    ut_lines = utility_path.read_text().strip().split("\n")
+
+    for rt_line, ut_line in zip(rt_lines, ut_lines):
+        rt_row = json.loads(rt_line)
+        ut_row = json.loads(ut_line)
+        assert rt_row["sampled_axes"] == ut_row["sampled_axes"]
+        assert rt_row["risk_id"] == ut_row["risk_id"]
+        assert rt_row["policy_concept"] == ut_row["policy_concept"]
+
+
+def test_emit_mode_paired_different_prompts(tmp_path):
+    _write_test_files(tmp_path)
+    pol_path = tmp_path / "policies.json"
+    redteam_path = tmp_path / "test-dataset-redteam.jsonl"
+    emit(tmp_path, pol_path, samples_per_risk=1, output_path=redteam_path, seed=42, mode="paired")
+    utility_path = tmp_path / "test-dataset-utility.jsonl"
+
+    rt_row = json.loads(redteam_path.read_text().strip().split("\n")[0])
+    ut_row = json.loads(utility_path.read_text().strip().split("\n")[0])
+    assert rt_row["generation_prompt"] != ut_row["generation_prompt"]
