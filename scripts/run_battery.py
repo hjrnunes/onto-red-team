@@ -168,10 +168,17 @@ def build_emit_cmd(
 
 
 def build_generate_cmd(
-        *, run_dir: Path, policy: str, model_name: str, model_url: str, api_key: str
+        *, run_dir: Path, policy: str, model_name: str, model_url: str, api_key: str,
+        emit_mode: str | None = None,
 ) -> tuple[list[str], str]:
+    if emit_mode == "paired":
+        dataset_file = f"{policy}-dataset-redteam.jsonl"
+    elif emit_mode == "utility":
+        dataset_file = f"{policy}-dataset-utility.jsonl"
+    else:
+        dataset_file = f"{policy}-dataset.jsonl"
     cmd = [
-        "uv", "run", "redteam", str(run_dir / f"{policy}-dataset.jsonl"),
+        "uv", "run", "redteam", str(run_dir / dataset_file),
         "--model", f"hosted_vllm/{model_name}",
         "--api-base", model_url,
     ]
@@ -404,6 +411,7 @@ def _run_policy(
         cmd, cwd = build_generate_cmd(
             run_dir=run_dir, policy=policy, model_name=model_name,
             model_url=model_url, api_key=api_key,
+            emit_mode=cfg.get("emit_mode"),
         )
         _run_stage(cmd, cwd, **stage_kw)
 

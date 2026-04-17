@@ -879,6 +879,24 @@ def evaluate(
             "score_distribution": compute_score_distribution(util_scores, dimensions=UTILITY_DIMENSIONS),
         }
 
+    # Pair analysis metrics for paired mode
+    if mode == "paired" and emit_path and utility_emit_path:
+        import json as json_mod
+        from refiner.evaluate import compute_pair_completeness, compute_frame_correspondence, compute_lexical_overlap
+
+        rt_rows = [json_mod.loads(line) for line in emit_path.read_text().strip().split("\n") if line]
+        ut_rows = [json_mod.loads(line) for line in utility_emit_path.read_text().strip().split("\n") if line]
+
+        frame_corr = compute_frame_correspondence(rt_rows, ut_rows)
+        evaluation["pair_analysis"] = {
+            "pair_completeness": compute_pair_completeness(rt_rows, ut_rows),
+            "frame_correspondence": {
+                f"{adv}|{ben}": count
+                for (adv, ben), count in sorted(frame_corr.items())
+            },
+            "lexical_overlap": compute_lexical_overlap(rt_rows, ut_rows),
+        }
+
     summary = format_summary(evaluation)
     typer.echo(summary)
 
