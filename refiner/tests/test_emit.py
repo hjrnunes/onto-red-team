@@ -918,3 +918,137 @@ class TestAxisGroupSampling:
         groups = [["http://ex/A", "http://ex/B"], ["http://ex/A", "http://ex/C"]]
         results = sample_axes(axes, n=5, axis_groups=groups, axes_per_prompt=2)
         assert len(results) == 2
+
+
+from refiner.emit import build_utility_prompt, UTILITY_SYSTEM_MESSAGE
+from refiner.benign_frames import BENIGN_FRAMES
+
+
+def test_build_utility_prompt_returns_messages():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", axes)
+    assert isinstance(messages, list)
+    assert len(messages) == 2
+    assert messages[0]["role"] == "system"
+    assert messages[1]["role"] == "user"
+
+
+def test_build_utility_prompt_system_message_content():
+    messages = build_utility_prompt("X", "Y", "Z", [])
+    system = messages[0]["content"]
+    assert "utility-testing scenario writer" in system
+    assert "authenticity" in system.lower()
+    assert "red-team" not in system.lower()
+
+
+def test_build_utility_prompt_user_message_has_policy():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", axes)
+    user = messages[1]["content"]
+    assert "Fraud" in user
+    assert "About fraud" in user
+    assert "Financial Fraud" in user
+
+
+def test_build_utility_prompt_user_message_has_axes():
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+        SampledAxis(
+            cco_class_uri="http://example.org/Instrument",
+            cco_class_label="Instrument",
+            sampled_uri="http://example.org/Bond",
+            sampled_label="Bond",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("X", "Y", "Z", axes)
+    user = messages[1]["content"]
+    assert "Manager" in user
+    assert "Bond" in user
+
+
+def test_build_utility_prompt_inverted_instructions():
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", [])
+    user = messages[1]["content"]
+    assert "AI SHOULD comply" in user
+    assert "Be clearly within acceptable use" in user
+
+
+def test_build_utility_prompt_with_benign_frame():
+    frame = BENIGN_FRAMES["routine_practice"]
+    axes = [
+        SampledAxis(
+            cco_class_uri="http://example.org/Person",
+            cco_class_label="Person",
+            bfo_category="Role",
+            sampled_uri="http://example.org/Manager",
+            sampled_label="Manager",
+            source_ontology="FIBO",
+            relevance="high",
+        ),
+    ]
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", axes, frame=frame)
+    user = messages[1]["content"]
+    assert "practitioner: Manager" in user
+    assert "Legitimate use-case pattern:" in user
+
+
+def test_build_utility_prompt_with_boundary_examples():
+    from refiner.models import Policy, BoundaryExample, PolicyProfile
+
+    policy = Policy(
+        policy_concept="Clinical",
+        concept_definition="No clinical decisions",
+        boundary_examples=[
+            BoundaryExample(prohibited="care plan for John", acceptable="summarise guidelines")
+        ],
+        acceptable_uses=["General health concepts"],
+    )
+    doc_ctx = PolicyProfile(
+        organization="NHS Trust",
+        domain="healthcare",
+        stakeholders=[Stakeholder(name="patients", roles=["airo:AISubject"])],
+    )
+
+    messages = build_utility_prompt(
+        "Clinical", "No clinical decisions", "Misdiagnosis", [],
+        policy=policy, policy_profile=doc_ctx,
+    )
+    user = messages[1]["content"]
+    assert "PROHIBITED: care plan for John" in user
+    assert "ACCEPTABLE: summarise guidelines" in user
+    assert "General health concepts" in user
+    assert "NHS Trust" in user
+
+
+def test_build_utility_prompt_without_frame_no_technique_block():
+    messages = build_utility_prompt("Fraud", "About fraud", "Financial Fraud", [], frame=None)
+    user = messages[1]["content"]
+    assert "Legitimate use-case pattern:" not in user
+    assert "Adversarial technique:" not in user
