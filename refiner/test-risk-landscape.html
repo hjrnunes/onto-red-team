@@ -122,7 +122,7 @@
         <span class="tip" data-tip="High-level counts of risks matched, frameworks covered, policy-risk mappings, and match quality concerns.">Overview</span>
         <span class="tip-icon tip" data-tip="High-level counts of risks matched, frameworks covered, policy-risk mappings, and match quality concerns.">i</span>
       </h2>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
         <div class="tip text-center p-4 bg-gray-50 rounded-lg" data-tip="Total unique AI safety risks matched from the knowledge graph. Each risk comes from a specific standards framework (IBM, NIST, OWASP, etc.).">
           <p class="text-3xl font-bold text-indigo-600" x-text="(data.risks || []).length"></p>
           <p class="text-xs text-gray-400 mt-1">Total Risks</p>
@@ -140,6 +140,12 @@
              :class="(data.weak_matches || []).length > 0 ? 'text-amber-600' : 'text-green-600'"
              x-text="(data.weak_matches || []).length"></p>
           <p class="text-xs text-gray-400 mt-1">Weak Matches</p>
+        </div>
+        <div class="tip text-center p-4 bg-gray-50 rounded-lg" data-tip="Policy concerns that could not be well-matched to any existing risk in the knowledge graph. May indicate taxonomy gaps.">
+          <p class="text-3xl font-bold"
+             :class="(data.coverage_gaps || []).length > 0 ? 'text-purple-600' : 'text-green-600'"
+             x-text="(data.coverage_gaps || []).length"></p>
+          <p class="text-xs text-gray-400 mt-1">Coverage Gaps</p>
         </div>
       </div>
     </section>
@@ -176,17 +182,17 @@
         <template x-for="(risk, idx) in data.risks || []" :key="risk.risk_id">
           <div class="border border-gray-200 rounded-lg"
                x-data="{ expanded: false }">
-            <div class="flex items-center justify-between p-3 cursor-pointer hover:bg-gray-50"
+            <div class="flex items-start justify-between p-3 cursor-pointer hover:bg-gray-50"
                  @click="expanded = !expanded">
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <span class="tip font-mono text-sm text-gray-700" data-tip="Risk identifier from the source framework" x-text="risk.risk_id"></span>
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1 mb-1">
                   <span class="font-semibold text-gray-900" x-text="risk.risk_name"></span>
-                  <span class="tip px-2 py-0.5 rounded text-xs"
+                  <span class="tip px-2 py-0.5 rounded text-xs shrink-0"
                         :class="frameworkColor(risk.risk_framework)"
                         data-tip="Source risk framework"
                         x-text="risk.risk_framework"></span>
                 </div>
+                <div class="font-mono text-xs text-gray-500 break-all" x-text="risk.risk_id"></div>
                 <template x-if="!expanded && risk.cross_mappings?.length">
                   <div class="flex flex-wrap gap-1 mt-1">
                     <template x-for="cm in risk.cross_mappings.slice(0, 3)" :key="cm.id">
@@ -344,10 +350,103 @@
       </div>
     </section>
 
+    <!-- Coverage Gaps -->
+    <section x-show="(data.coverage_gaps || []).length > 0" class="bg-purple-50 rounded-xl shadow-sm border border-purple-200 p-5">
+      <h2 class="text-sm font-semibold text-purple-900 uppercase tracking-wide mb-3">
+        <span class="tip" data-tip="Policy concerns that could not be well-matched to any existing risk in the knowledge graph. These may represent taxonomy gaps — risks not yet catalogued in any framework. Gap types: domain_specialization (existing risk needs narrowing), compositional (combination of existing risks, downweighted), novel (fundamentally new failure mode).">Coverage Gaps</span>
+        <span class="tip-icon tip" data-tip="Policy concerns with no good risk match — potential taxonomy gaps.">i</span>
+      </h2>
+      <div class="space-y-3">
+        <template x-for="gap in data.coverage_gaps || []" :key="gap.policy_concept">
+          <div class="border border-purple-200 rounded-lg bg-white"
+               x-data="{ expanded: false }">
+            <div class="flex items-start justify-between p-3 cursor-pointer hover:bg-purple-50/50"
+                 @click="expanded = !expanded">
+              <div class="flex-1 min-w-0">
+                <div class="flex flex-wrap items-center gap-2 mb-1">
+                  <span class="font-semibold text-gray-900" x-text="gap.policy_concept"></span>
+                  <span class="tip px-2 py-0.5 rounded text-xs font-medium"
+                        :class="{
+                          'bg-blue-100 text-blue-800': gap.gap_type === 'domain_specialization',
+                          'bg-gray-200 text-gray-600': gap.gap_type === 'compositional',
+                          'bg-red-100 text-red-800': gap.gap_type === 'novel'
+                        }"
+                        :data-tip="gap.gap_type === 'domain_specialization' ? 'Existing risk needs domain narrowing' : gap.gap_type === 'compositional' ? 'Combination of existing risks (downweighted confidence)' : 'Fundamentally new failure mode'"
+                        x-text="gap.gap_type.replace('_', ' ')"></span>
+                  <span class="tip px-2 py-0.5 rounded text-xs font-mono"
+                        :class="{
+                          'bg-red-100 text-red-800': gap.confidence >= 0.8,
+                          'bg-amber-100 text-amber-800': gap.confidence >= 0.5 && gap.confidence < 0.8,
+                          'bg-gray-100 text-gray-600': gap.confidence < 0.5
+                        }"
+                        data-tip="Confidence that this is a genuine taxonomy gap (0-1). Compositional gaps are discounted by 0.6x."
+                        x-text="`conf: ${gap.confidence.toFixed(3)}`"></span>
+                </div>
+                <p class="text-sm text-gray-600 line-clamp-1" x-text="gap.concept_definition"></p>
+              </div>
+              <svg class="w-5 h-5 text-gray-400 transition-transform mt-1"
+                   :class="expanded ? 'rotate-180' : ''"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </div>
+            <div x-show="expanded" class="px-3 pb-3 pt-0 space-y-3 border-t border-purple-100">
+              <div>
+                <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Full definition of the policy concern that was not matched.">Definition</p>
+                <p class="text-sm text-gray-700" x-text="gap.concept_definition"></p>
+              </div>
+              <div>
+                <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Why this was classified as this gap type.">Reasoning</p>
+                <p class="text-sm text-gray-700" x-text="gap.reasoning"></p>
+              </div>
+              <template x-if="gap.decomposition">
+                <div>
+                  <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Agent/activity/entity decomposition from policy enrichment — confirms the policy concern is coherent.">Decomposition</p>
+                  <div class="flex flex-wrap gap-2 text-xs">
+                    <template x-if="gap.decomposition.agent">
+                      <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">
+                        <span class="font-medium">Agent:</span> <span x-text="gap.decomposition.agent"></span>
+                      </span>
+                    </template>
+                    <template x-if="gap.decomposition.activity">
+                      <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">
+                        <span class="font-medium">Activity:</span> <span x-text="gap.decomposition.activity"></span>
+                      </span>
+                    </template>
+                    <template x-if="gap.decomposition.entity">
+                      <span class="px-2 py-1 rounded bg-purple-100 text-purple-800">
+                        <span class="font-medium">Entity:</span> <span x-text="gap.decomposition.entity"></span>
+                      </span>
+                    </template>
+                  </div>
+                </div>
+              </template>
+              <template x-if="gap.nearest_risks?.length">
+                <div>
+                  <p class="tip text-xs text-gray-400 uppercase mb-1" data-tip="Closest existing risks from the knowledge graph — all too distant for a confident match.">Nearest Risks</p>
+                  <div class="space-y-1">
+                    <template x-for="nr in gap.nearest_risks" :key="nr.id">
+                      <div class="flex items-center justify-between text-sm">
+                        <span class="font-mono text-xs text-gray-600" x-text="nr.id"></span>
+                        <span class="text-xs text-gray-500" x-text="nr.name"></span>
+                        <span class="tip px-2 py-0.5 rounded text-xs font-mono bg-red-100 text-red-800"
+                              data-tip="Semantic distance — all nearest risks are distant, confirming the gap."
+                              x-text="nr.distance?.toFixed(3) || '?'"></span>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+        </template>
+      </div>
+    </section>
+
   </div>
 
 <script>
-const DATA = {"version": "0.1", "model": "test-model", "timestamp": "", "run_slug": "", "selected_domains": [], "policy_source": null, "knowledge_base": null, "risks": [], "policy_mappings": [], "framework_coverage": {}, "weak_matches": []};
+const DATA = {"version": "0.1", "model": "test-model", "timestamp": "", "run_slug": "", "selected_domains": [], "policy_source": null, "knowledge_base": null, "risks": [], "policy_mappings": [], "framework_coverage": {}, "weak_matches": [], "coverage_gaps": []};
 
 function reportApp() {
   return {

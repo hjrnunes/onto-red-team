@@ -9,3 +9,4 @@ risks: []
 policy_mappings: []
 framework_coverage: {}
 weak_matches: []
+coverage_gaps: []
