@@ -13,6 +13,7 @@ Detailed docs in `docs/`:
 - `docs/nexus-mcp.md` — risk knowledge graph MCP server
 - `docs/ontologies.md` — ontology foundation, domain table, bridges, axiom extraction
 - `docs/redteam.md` — adversarial prompt generation
+- `demo/README.md` — ORT demo pipeline (policy → garak → ART report)
 
 Design specs and plans in `docs/superpowers/specs/` and `docs/superpowers/plans/`.
 
@@ -27,6 +28,7 @@ ontoquery/          # Ontology CLI + MCP server (rdflib, pyoxigraph, chromadb)
 nexus-mcp/          # AI Atlas Nexus MCP server (chromadb, ai-atlas-nexus)
 refiner/            # LLM pipeline + emit + evaluate (instructor, openai)
 redteam/            # Adversarial prompt generation (sdg_hub)
+demo/               # Self-contained ORT demo: policy + model → garak scan → ART report
 ontologies/         # Ontology files (CCO, Commons, FIBO, OBO, D3FEND, CSO, LKIF, DUO, GSSO, HANCESTRO, OMRSE, bridges)
 policy_examples/    # Sample policies: swb.json, generic.json, aramco.json, healthcare.json + md policies
 runs/               # Pipeline outputs (gitignored)
@@ -60,6 +62,24 @@ uv run refiner evaluate /tmp/out --policies ../policy_examples/swb.json
 ```
 
 Config: `battery.yaml` (policies, models, paths, settings).
+
+### ORT Demo (self-contained)
+
+```bash
+cd demo && uv sync
+
+# Full pipeline: policy + model → garak scan → ART report
+uv run demo run \
+  --policy ../policy_examples/rdash-nhs.json \
+  --model mistral-small-3-1-24b \
+  --model-url https://model-serving.example.com/v1 \
+  --config configs/garak.yaml
+
+# Dry run
+uv run demo run ... --dry-run
+```
+
+See `demo/README.md` for individual stage commands and notebook usage.
 
 ## Testing
 
@@ -116,6 +136,7 @@ cd refiner && uv run pytest      # ~313 tests
 | `ONTOQUERY_CHROMA_DIR` | ontoquery ChromaDB path     |
 | `NEXUS_CHROMA_DIR`     | nexus-mcp ChromaDB path     |
 | `MLFLOW_TRACKING_URI`  | MLflow server URL           |
+| `OPENAICOMPATIBLE_API_KEY` | Garak target/judge API key (demo scan) |
 
 ## Related Projects
 
