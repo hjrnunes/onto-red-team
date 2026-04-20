@@ -20,3 +20,9 @@ prototypes/garak/mock_runs/
 .idea/
 *.iml
 .worktrees/
+.claude/worktrees/
+.superpowers/
+demo/demo_runs/
+ontoquery/chroma_data/
+prototypes/garak/garak_runs/
+ontologies/ai-atlas-nexus/

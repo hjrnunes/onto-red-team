@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ORT Combined Report — {{ ort_run }}</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@patternfly/patternfly@6/patternfly.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>
+    body { margin: 0; background: var(--pf-t--global--background--color--primary); font-family: 'Red Hat Display', 'Red Hat Text', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .page-header { background: #1b1d21; color: #fff; padding: 20px 32px; }
+    .page-header h1 { font-size: 22px; font-weight: 700; margin: 0; }
+    .page-header .meta { font-size: 13px; color: #adb5bd; margin-top: 4px; }
+    .main-content { max-width: 1200px; margin: 0 auto; padding: 24px 32px; }
+    .section-card { background: #fff; border: 1px solid var(--pf-t--global--border--color--default); border-radius: 8px; padding: 24px; margin-bottom: 24px; }
+    .section-card h2 { font-size: 18px; font-weight: 700; margin: 0 0 4px; }
+    .section-card .section-subtitle { font-size: 13px; color: var(--pf-t--global--text--color--subtle); margin-bottom: 16px; }
+
+    /* Summary grid */
+    .summary-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .summary-card { background: #fff; border: 1px solid var(--pf-t--global--border--color--default); border-radius: 8px; padding: 20px; }
+    .summary-card h3 { font-size: 14px; font-weight: 700; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.03em; color: var(--pf-t--global--text--color--subtle); }
+    .summary-card .big-number { font-size: 36px; font-weight: 700; line-height: 1.1; }
+    .summary-card .big-label { font-size: 12px; color: var(--pf-t--global--text--color--subtle); text-transform: uppercase; letter-spacing: 0.03em; margin-top: 2px; }
+    .summary-card .detail-row { display: flex; justify-content: space-between; font-size: 13px; padding: 4px 0; border-top: 1px solid var(--pf-t--global--border--color--default); }
+    .summary-card .detail-row:first-of-type { margin-top: 12px; }
+
+    .asr-high { color: #c9190b; font-weight: 700; }
+    .asr-mid { color: #f0ab00; font-weight: 600; }
+    .asr-low { color: #3e8635; font-weight: 600; }
+
+    .refusal-high { color: #c9190b; font-weight: 700; }
+    .refusal-mid { color: #f0ab00; font-weight: 600; }
+    .refusal-low { color: #3e8635; font-weight: 600; }
+
+    /* Comparison table */
+    .cmp-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .cmp-table th { text-align: left; font-weight: 600; padding: 8px 12px; border-bottom: 2px solid var(--pf-t--global--border--color--default); color: var(--pf-t--global--text--color--subtle); font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; }
+    .cmp-table td { padding: 8px 12px; border-bottom: 1px solid var(--pf-t--global--border--color--default); vertical-align: top; }
+    .cmp-table tr:last-child td { border-bottom: none; }
+    .cmp-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+    .cmp-table .delta-good { color: #3e8635; font-size: 11px; }
+    .cmp-table .delta-bad { color: #c9190b; font-size: 11px; }
+
+    .chart-container { margin: 16px 0 24px; width: 100%; }
+    .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 600; }
+    .tag-redteam { background: #fce4e4; color: #7d1a1a; }
+    .tag-utility { background: #e7f1fa; color: #06509e; }
+    .tag-gr { border: 1px dashed #adb5bd; }
+  </style>
+</head>
+<body>
+
+  <div class="page-header">
+    <h1>ORT Combined Report</h1>
+    <div class="meta">
+      {{ policy_source.organization | default("") }}
+      {% if policy_source.domain %} &mdash; {{ policy_source.domain }}{% endif %}
+      {% if ort_run %} &mdash; {{ ort_run }}{% endif %}
+    </div>
+  </div>
+
+  <div class="main-content">
+
+    <!-- ═══════════════ SCAN SUMMARIES ═══════════════ -->
+    <div class="summary-grid">
+      {% for s in summaries %}
+      <div class="summary-card">
+        <h3>
+          {% if s.utility %}<span class="tag tag-utility">Utility</span>{% else %}<span class="tag tag-redteam">Red-Team</span>{% endif %}
+          {% if '_gr' in s.label %}<span class="tag tag-gr">Guardrailed</span>{% endif %}
+        </h3>
+        <div class="big-number {% if s.utility %}{% if s.rate >= 30 %}refusal-high{% elif s.rate >= 10 %}refusal-mid{% else %}refusal-low{% endif %}{% else %}{% if s.rate > 10 %}asr-high{% elif s.rate > 0 %}asr-mid{% else %}asr-low{% endif %}{% endif %}">
+          {{ s.rate }}%
+        </div>
+        <div class="big-label">{% if s.utility %}Over-Refusal Rate{% else %}Attack Success Rate{% endif %}</div>
+        <div class="detail-row">
+          <span>Prompts</span>
+          <span>{{ s.total }}</span>
+        </div>
+        <div class="detail-row">
+          <span>{% if s.utility %}Answered{% else %}Complied{% endif %}</span>
+          <span>{{ s.complied }}</span>
+        </div>
+        <div class="detail-row">
+          <span>{% if s.utility %}Over-Refused{% else %}Refused{% endif %}</span>
+          <span>{{ s.refused }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- ═══════════════ DATASET OVERVIEW ═══════════════ -->
+    <div class="section-card">
+      <h2>Dataset Overview</h2>
+      <p class="section-subtitle">Composition of the prompt datasets used in each scan configuration</p>
+
+      <div class="summary-grid">
+        {% for s in summaries %}
+        <div class="summary-card">
+          <h3>
+            {% if s.utility %}<span class="tag tag-utility">Utility</span>{% else %}<span class="tag tag-redteam">Red-Team</span>{% endif %}
+            {% if '_gr' in s.label %}<span class="tag tag-gr">Guardrailed</span>{% endif %}
+          </h3>
+          <div class="big-number" style="color: var(--pf-t--global--text--color--regular);">{{ s.dataset_eval.total_stubs }}</div>
+          <div class="big-label">Total Stubs</div>
+          <div class="detail-row">
+            <span>Risks Covered</span>
+            <span>{{ s.dataset_eval.unique_risks }}</span>
+          </div>
+          <div class="detail-row">
+            <span>{% if s.utility %}Prompt Styles{% else %}Techniques{% endif %}</span>
+            <span>{{ s.dataset_eval.unique_techniques }}</span>
+          </div>
+          <div class="detail-row">
+            <span>Policy Concepts</span>
+            <span>{{ s.dataset_eval.unique_concepts }}</span>
+          </div>
+          <div class="detail-row">
+            <span>Unique Labels</span>
+            <span>{{ s.dataset_eval.unique_labels }}</span>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+
+      <div id="chart-dataset-composition" class="chart-container"></div>
+    </div>
+
+    <!-- ═══════════════ BEFORE / AFTER COMPARISON CHART ═══════════════ -->
+    <div class="section-card">
+      <h2>Guardrails Impact</h2>
+      <p class="section-subtitle">Side-by-side comparison of key rates before and after guardrails</p>
+      <div id="chart-comparison" class="chart-container"></div>
+    </div>
+
+    <!-- ═══════════════ PER-RISK COMPARISON TABLE ═══════════════ -->
+    <div class="section-card">
+      <h2>Per-Risk Comparison</h2>
+      <p class="section-subtitle">Attack success / over-refusal rates per risk across all scan configurations</p>
+      <div id="chart-risk-comparison" class="chart-container"></div>
+      <details>
+        <summary style="cursor: pointer; font-size: 15px; font-weight: 700; margin: 20px 0 8px;">Detailed Table</summary>
+        <table class="cmp-table" style="margin-top: 8px;">
+          <thead>
+            <tr>
+              <th>Risk ID</th>
+              {% for label in scan_labels %}
+              <th class="num">{{ label }}</th>
+              {% endfor %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in risk_comparison %}
+            <tr>
+              <td><code title="{{ row.risk_name }}">{{ row.risk_id }}</code></td>
+              {% for label in scan_labels %}
+              <td class="num">
+                {% if row[label] %}
+                  {{ row[label].asr }}%
+                  <span style="font-size: 11px; color: var(--pf-t--global--text--color--subtle);">({{ row[label].complied }}/{{ row[label].total }})</span>
+                {% else %}
+                  <span style="color: var(--pf-t--global--text--color--subtle);">&mdash;</span>
+                {% endif %}
+              </td>
+              {% endfor %}
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+    </div>
+
+    <!-- ═══════════════ INDIVIDUAL REPORTS ═══════════════ -->
+    <div class="section-card">
+      <h2>Individual Reports</h2>
+      <p class="section-subtitle">Links to the full detailed reports for each scan</p>
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        {% for s in summaries %}
+        <a href="{{ s.label }}/report.html" style="display: inline-block; padding: 10px 20px; border: 1px solid var(--pf-t--global--border--color--default); border-radius: 6px; text-decoration: none; color: var(--pf-t--global--text--color--regular); font-size: 14px; font-weight: 600;">
+          {% if s.utility %}<span class="tag tag-utility">Utility</span>{% else %}<span class="tag tag-redteam">Red-Team</span>{% endif %}
+          {% if '_gr' in s.label %}<span class="tag tag-gr">Guardrailed</span>{% endif %}
+          &rarr;
+        </a>
+        {% endfor %}
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    var opts = { renderer: 'svg', actions: false, width: 'container' };
+
+    // ── Dataset composition chart ──
+    var summaries = {{ summaries | tojson }};
+    var dsCompData = [];
+    summaries.forEach(function(s) {
+      var scanType = s.utility ? 'Utility' : 'Red-Team';
+      var variant = s.label.indexOf('_gr') !== -1 ? ' (GR)' : '';
+      var scanName = scanType + variant;
+      s.dataset_eval.techniques.forEach(function(t) {
+        dsCompData.push({ scan: scanName, category: t.name, count: t.count, type: s.utility ? 'Prompt Style' : 'Technique' });
+      });
+    });
+
+    vegaEmbed('#chart-dataset-composition', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "title": { "text": "Dataset Composition by Scan", "fontSize": 14 },
+      "data": { "values": dsCompData },
+      "width": "container", "height": 250,
+      "mark": { "type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3 },
+      "encoding": {
+        "x": { "field": "scan", "type": "nominal", "title": null, "axis": { "labelAngle": 0 } },
+        "y": { "field": "count", "type": "quantitative", "title": "Stubs", "stack": "zero" },
+        "color": { "field": "category", "type": "nominal", "title": "Technique / Style" },
+        "tooltip": [
+          { "field": "scan", "title": "Scan" },
+          { "field": "category", "title": "Category" },
+          { "field": "count", "title": "Stubs" }
+        ]
+      },
+      "config": { "view": { "stroke": null } }
+    }, opts).catch(console.error);
+
+    // ── Guardrails impact comparison chart ──
+    var cmpData = [];
+    summaries.forEach(function (s) {
+      var mode = s.utility ? 'Utility' : 'Red-Team';
+      var variant = s.label.indexOf('_gr') !== -1 ? 'Guardrailed' : 'Raw Model';
+      var rateLabel = s.utility ? 'Over-Refusal Rate' : 'Attack Success Rate';
+      cmpData.push({
+        mode: mode,
+        variant: variant,
+        rate: s.rate,
+        label: mode + ' ' + variant,
+        total: s.total,
+        complied: s.complied,
+        refused: s.refused,
+        rate_type: rateLabel
+      });
+    });
+
+    vegaEmbed('#chart-comparison', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "data": { "values": cmpData },
+      "width": "container",
+      "height": 200,
+      "mark": { "type": "bar", "cornerRadiusTopLeft": 3, "cornerRadiusTopRight": 3 },
+      "encoding": {
+        "x": { "field": "mode", "type": "nominal", "title": null, "axis": { "labelAngle": 0 } },
+        "xOffset": { "field": "variant", "type": "nominal" },
+        "y": { "field": "rate", "type": "quantitative", "title": "Rate (%)" },
+        "color": {
+          "field": "variant", "type": "nominal", "title": "Configuration",
+          "scale": { "domain": ["Raw Model", "Guardrailed"], "range": ["#c9190b", "#3e8635"] }
+        },
+        "tooltip": [
+          { "field": "mode", "title": "Mode" },
+          { "field": "variant", "title": "Configuration" },
+          { "field": "rate", "title": "Rate %", "format": ".1f" },
+          { "field": "rate_type", "title": "Metric" },
+          { "field": "total", "title": "Total" },
+          { "field": "complied", "title": "Complied" },
+          { "field": "refused", "title": "Refused" }
+        ]
+      },
+      "config": { "view": { "stroke": null } }
+    }, opts).catch(console.error);
+
+    // ── Per-risk comparison grouped bar ──
+    var riskData = {{ risk_comparison | tojson }};
+    var scanLabels = {{ scan_labels | tojson }};
+    var riskChartData = [];
+    riskData.forEach(function(row) {
+      scanLabels.forEach(function(label) {
+        if (row[label]) {
+          riskChartData.push({
+            risk_id: row.risk_id,
+            risk_name: row.risk_name,
+            scan: label,
+            asr: row[label].asr,
+            total: row[label].total,
+            complied: row[label].complied
+          });
+        }
+      });
+    });
+
+    vegaEmbed('#chart-risk-comparison', {
+      "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+      "data": { "values": riskChartData },
+      "width": "container",
+      "height": { "step": 24 },
+      "mark": { "type": "bar", "cornerRadiusEnd": 3 },
+      "encoding": {
+        "y": { "field": "risk_id", "type": "nominal", "title": null, "axis": { "labelLimit": 250 },
+               "sort": { "field": "asr", "op": "max", "order": "descending" } },
+        "x": { "field": "asr", "type": "quantitative", "title": "Rate (%)" },
+        "yOffset": { "field": "scan", "type": "nominal" },
+        "color": {
+          "field": "scan", "type": "nominal", "title": "Scan",
+          "scale": { "range": ["#c9190b", "#3e8635", "#06509e", "#2b9af3"] }
+        },
+        "tooltip": [
+          { "field": "risk_id", "title": "Risk ID" },
+          { "field": "risk_name", "title": "Risk" },
+          { "field": "scan", "title": "Scan" },
+          { "field": "asr", "title": "Rate %", "format": ".1f" },
+          { "field": "complied", "title": "Complied" },
+          { "field": "total", "title": "Total" }
+        ]
+      },
+      "config": { "view": { "stroke": null } }
+    }, opts).catch(console.error);
+  </script>
+
+</body>
+</html>

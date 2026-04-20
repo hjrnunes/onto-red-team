@@ -6,6 +6,12 @@
       <excludeFolder url="file://$MODULE_DIR$/refiner/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/ontoquery/.venv" />
       <excludeFolder url="file://$MODULE_DIR$/redteam/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.claude/worktrees/category-aware-deep-semantics/ontoquery/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.claude/worktrees/category-aware-deep-semantics/refiner/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.claude/worktrees/feat+hybrid-enumeration-axis-sampling/refiner/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/.worktrees/utility-assessment/refiner/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/demo/.venv" />
+      <excludeFolder url="file://$MODULE_DIR$/prototypes/advisory/.venv" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

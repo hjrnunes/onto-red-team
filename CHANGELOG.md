@@ -45,7 +45,7 @@ All notable changes to this project will be documented in this file.
 - **`_BFO_CATEGORIES` migrated** — The 20-entry local dict in `anchor.py` replaced by import of
   `BFO_CATEGORY_MAP` from `ontoquery.bfo`. Single source of truth shared between indexing and refiner.
 
-## Gen 19
+## Gen 20
 
 ### Added
 
