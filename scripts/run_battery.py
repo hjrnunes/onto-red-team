@@ -103,6 +103,25 @@ def build_ingest_cmd(
     return cmd, "refiner"
 
 
+def build_landscape_cmd(
+        *, input_file: Path, run_dir: Path, policy: str, model_name: str, model_url: str,
+        api_key: str, nexus_base_dir: Path, nexus_chroma: Path, max_concurrent: int = 1,
+) -> tuple[list[str], str]:
+    cmd = [
+        "uv", "run", "risk-landscaper", "run", str(input_file),
+        "--output", str(run_dir),
+        "--base-url", model_url,
+        "--model", model_name,
+        "--nexus-base-dir", str(nexus_base_dir),
+        "--nexus-chroma-dir", str(nexus_chroma),
+    ]
+    if api_key:
+        cmd.extend(["--api-key", api_key])
+    if max_concurrent > 1:
+        cmd.extend(["--max-concurrent", str(max_concurrent)])
+    return cmd, "risk-landscaper"
+
+
 def build_refine_cmd(
         *,
         input_file: Path,
@@ -116,6 +135,7 @@ def build_refine_cmd(
         tracking_uri: str,
         tags: list[str],
         max_concurrent: int = 1,
+        landscape_path: Path | None = None,
 ) -> tuple[list[str], str]:
     cmd = [
         "uv", "run", "refiner", "run", str(input_file),
@@ -126,6 +146,8 @@ def build_refine_cmd(
     ]
     if api_key:
         cmd.extend(["--api-key", api_key])
+    if landscape_path:
+        cmd.extend(["--landscape", str(landscape_path)])
     cmd.extend([
         "--nexus-base-dir", str(nexus_base_dir),
         "--ontoquery-chroma-dir", str(onto_chroma),
@@ -364,6 +386,7 @@ def _run_policy(
     stages: list[str] = []
     if not skip_ingest:
         stages.append("ingest")
+        stages.append("landscape")
     if not skip_refine:
         stages.append("refine")
     stages.append("emit")
@@ -379,6 +402,7 @@ def _run_policy(
         stage_idx += 1
         return f"{prefix} ▸ {name} [{stage_idx}/{total_stages}]"
 
+    landscape_path = None
     if not skip_ingest:
         _progress(_stage_msg("ingest"))
         raw_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=False)
@@ -387,6 +411,18 @@ def _run_policy(
             model_name=model_name, model_url=model_url, api_key=api_key,
         )
         _run_stage(cmd, cwd, **stage_kw)
+
+        _progress(_stage_msg("landscape"))
+        input_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
+        cmd, cwd = build_landscape_cmd(
+            input_file=input_file, run_dir=run_dir, policy=policy,
+            model_name=model_name, model_url=model_url, api_key=api_key,
+            nexus_base_dir=cfg["nexus_base_dir"],
+            nexus_chroma=tmp_nexus,
+            max_concurrent=cfg.get("max_concurrent", 1),
+        )
+        _run_stage(cmd, cwd, **stage_kw)
+        landscape_path = run_dir / "risk-landscape.yaml"
 
     if not skip_refine:
         _progress(_stage_msg("refine"))
@@ -397,6 +433,7 @@ def _run_policy(
             onto_chroma=tmp_onto, nexus_chroma=tmp_nexus,
             tracking_uri=cfg["tracking_uri"], tags=tags,
             max_concurrent=cfg.get("max_concurrent", 1),
+            landscape_path=landscape_path,
         )
         _run_stage(cmd, cwd, **stage_kw)
 
