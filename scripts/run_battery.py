@@ -89,20 +89,6 @@ def resolve_policy_file(
     raise FileNotFoundError(f"No policy file found for '{policy}' in {policy_dir}")
 
 
-def build_ingest_cmd(
-        *, policy_file: Path, run_dir: Path, policy: str, model_name: str, model_url: str, api_key: str
-) -> tuple[list[str], str]:
-    cmd = [
-        "uv", "run", "refiner", "ingest", str(policy_file),
-        "--output", str(run_dir / f"{policy}-policy-document.json"),
-        "--base-url", model_url,
-        "--model", model_name,
-    ]
-    if api_key:
-        cmd.extend(["--api-key", api_key])
-    return cmd, "refiner"
-
-
 def build_landscape_cmd(
         *, input_file: Path, run_dir: Path, policy: str, model_name: str, model_url: str,
         api_key: str, nexus_base_dir: Path, nexus_chroma: Path, max_concurrent: int = 1,
@@ -385,7 +371,6 @@ def _run_policy(
     # Build list of active stages for numbering
     stages: list[str] = []
     if not skip_ingest:
-        stages.append("ingest")
         stages.append("landscape")
     if not skip_refine:
         stages.append("refine")
@@ -404,18 +389,10 @@ def _run_policy(
 
     landscape_path = None
     if not skip_ingest:
-        _progress(_stage_msg("ingest"))
-        raw_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=False)
-        cmd, cwd = build_ingest_cmd(
-            policy_file=raw_file, run_dir=run_dir, policy=policy,
-            model_name=model_name, model_url=model_url, api_key=api_key,
-        )
-        _run_stage(cmd, cwd, **stage_kw)
-
         _progress(_stage_msg("landscape"))
-        input_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=True)
+        raw_file = resolve_policy_file(policy, policy_dir, run_dir=run_dir, prefer_enriched=False)
         cmd, cwd = build_landscape_cmd(
-            input_file=input_file, run_dir=run_dir, policy=policy,
+            input_file=raw_file, run_dir=run_dir, policy=policy,
             model_name=model_name, model_url=model_url, api_key=api_key,
             nexus_base_dir=cfg["nexus_base_dir"],
             nexus_chroma=tmp_nexus,
