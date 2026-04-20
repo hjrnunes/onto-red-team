@@ -7,6 +7,7 @@ from refiner.stages.anchor import (
     check_structural_connection,
     merge_tiered,
     derive_bfo_category,
+    derive_role,
 )
 
 
@@ -193,3 +194,133 @@ class TestMergeTiered:
         ]
         result = merge_tiered(structural, [], [], max_total=12)
         assert len(result) <= 12
+
+
+class TestDeriveRole:
+    def test_process_participant_agent(self):
+        role = derive_role(
+            candidate_category="Agent",
+            seed_category="Process",
+            restriction_property="http://example.org/has_participant",
+        )
+        assert role == "agent"
+
+    def test_process_participant_material(self):
+        role = derive_role(
+            candidate_category="MaterialEntity",
+            seed_category="Process",
+            restriction_property="http://example.org/has_participant",
+        )
+        assert role == "patient"
+
+    def test_process_participant_ice(self):
+        role = derive_role(
+            candidate_category="InformationContentEntity",
+            seed_category="Process",
+            restriction_property="http://example.org/has_participant",
+        )
+        assert role == "information"
+
+    def test_process_realizes(self):
+        role = derive_role(
+            candidate_category="Disposition",
+            seed_category="Process",
+            restriction_property="http://example.org/realizes",
+        )
+        assert role == "obligation"
+
+    def test_process_input(self):
+        role = derive_role(
+            candidate_category="MaterialEntity",
+            seed_category="Process",
+            restriction_property="http://example.org/has_input",
+        )
+        assert role == "input"
+
+    def test_process_output(self):
+        role = derive_role(
+            candidate_category="InformationContentEntity",
+            seed_category="Process",
+            restriction_property="http://example.org/has_output",
+        )
+        assert role == "output"
+
+    def test_quality_inheres_in(self):
+        role = derive_role(
+            candidate_category="MaterialEntity",
+            seed_category="Quality",
+            restriction_property="http://example.org/inheres_in",
+        )
+        assert role == "bearer"
+
+    def test_role_inheres_in(self):
+        role = derive_role(
+            candidate_category="Agent",
+            seed_category="Role",
+            restriction_property="http://example.org/inheres_in",
+        )
+        assert role == "bearer"
+
+    def test_role_realized_in(self):
+        role = derive_role(
+            candidate_category="Process",
+            seed_category="Role",
+            restriction_property="http://example.org/realized_in",
+        )
+        assert role == "realization"
+
+    def test_ice_is_about(self):
+        role = derive_role(
+            candidate_category="Agent",
+            seed_category="InformationContentEntity",
+            restriction_property="http://example.org/is_about",
+        )
+        assert role == "subject"
+
+    def test_ice_depends_on(self):
+        role = derive_role(
+            candidate_category="MaterialEntity",
+            seed_category="InformationContentEntity",
+            restriction_property="http://example.org/generically_depends_on",
+        )
+        assert role == "medium"
+
+    def test_fallback_no_restriction(self):
+        role = derive_role(
+            candidate_category="Agent",
+            seed_category="",
+            restriction_property="",
+        )
+        assert role == "agent"
+
+    def test_fallback_process_category(self):
+        role = derive_role(
+            candidate_category="Process",
+            seed_category="",
+            restriction_property="",
+        )
+        assert role == "process"
+
+    def test_fallback_facility(self):
+        role = derive_role(
+            candidate_category="Facility",
+            seed_category="",
+            restriction_property="",
+        )
+        assert role == "location"
+
+    def test_fallback_unknown_category(self):
+        role = derive_role(
+            candidate_category="",
+            seed_category="",
+            restriction_property="",
+        )
+        assert role == ""
+
+    def test_unmatched_property_falls_back_to_category(self):
+        role = derive_role(
+            candidate_category="Agent",
+            seed_category="Process",
+            restriction_property="http://example.org/some_unknown_prop",
+        )
+        assert role == "agent"

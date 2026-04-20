@@ -11,10 +11,82 @@ from refiner.models import (
     VariationAxis,
 )
 from refiner import debug
+from ontoquery.bfo import CATEGORY_PATTERNS, match_property
 from refiner.stages.identify_domains import derive_source_ontology
 from refiner.ontology_seeds import resolve_seeds
 
 logger = logging.getLogger(__name__)
+
+# --- Semantic role derivation from BFO constitutive patterns ---
+
+_PARTICIPANT_ROLE_BY_CATEGORY: dict[str, str] = {
+    "Agent": "agent",
+    "MaterialEntity": "patient",
+    "MaterialArtifact": "patient",
+    "InformationContentEntity": "information",
+    "GenericallyDependentContinuant": "information",
+    "Quality": "quality",
+    "Role": "obligation",
+    "Disposition": "obligation",
+}
+
+_FALLBACK_ROLES: dict[str, str] = {
+    "Agent": "agent",
+    "Process": "process",
+    "Act": "process",
+    "InformationContentEntity": "information",
+    "GenericallyDependentContinuant": "information",
+    "Quality": "quality",
+    "Role": "role",
+    "Disposition": "disposition",
+    "MaterialEntity": "object",
+    "MaterialArtifact": "object",
+    "Facility": "location",
+    "Site": "location",
+}
+
+
+def derive_role(
+    candidate_category: str,
+    seed_category: str,
+    restriction_property: str,
+) -> str:
+    """Derive the semantic role of a candidate from BFO constitutive patterns.
+
+    When *seed_category* and *restriction_property* are both provided, looks up
+    the constitutive patterns for that seed category and matches the property
+    to determine a role.  The candidate's own BFO category further refines the
+    role (e.g. an Agent participating in a Process is an "agent", while a
+    MaterialEntity is a "patient").
+
+    When no restriction context is available (sibling discovery, embedding
+    search), falls back to category-only default roles via ``_FALLBACK_ROLES``.
+    """
+    if seed_category and restriction_property:
+        patterns = CATEGORY_PATTERNS.get(seed_category, [])
+        for cp in patterns:
+            if match_property(restriction_property, cp.property_patterns):
+                prefix_lower = cp.role_prefix.lower()
+                if "participant" in prefix_lower:
+                    return _PARTICIPANT_ROLE_BY_CATEGORY.get(
+                        candidate_category, "participant")
+                if "realizes" in prefix_lower:
+                    return "obligation"
+                if "input" in prefix_lower or "output" in prefix_lower:
+                    if match_property(restriction_property, ["has_input"]):
+                        return "input"
+                    return "output"
+                if "characterizes" in prefix_lower or "borne by" in prefix_lower:
+                    return "bearer"
+                if "realized in" in prefix_lower:
+                    return "realization"
+                if "about" in prefix_lower:
+                    return "subject"
+                if "carried by" in prefix_lower or "concretized" in prefix_lower:
+                    return "medium"
+                return cp.role_prefix.lower().replace("/", "_").replace(" ", "_")
+    return _FALLBACK_ROLES.get(candidate_category, "")
+
 
 # BFO classes are maximally abstract ontological primitives — useful for role
 # derivation via superclass chains but never appropriate as candidate axes
