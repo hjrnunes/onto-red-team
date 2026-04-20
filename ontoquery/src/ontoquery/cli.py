@@ -37,8 +37,13 @@ def index(
     # Project ontology structure for context-augmented embeddings
     from ontoquery.owl2vec import project_ontology
     from ontoquery.index import build_structural_context
+    from ontoquery.bfo import classify_bfo_categories
     projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
-    structural_context = build_structural_context(projected)
+
+    bfo_categories = classify_bfo_categories(projected)
+    typer.echo(f"Classified {len(bfo_categories)} classes into BFO categories")
+
+    structural_context = build_structural_context(projected, bfo_categories=bfo_categories)
     typer.echo(
         f"Projected {projected.edge_count()} structural + "
         f"{projected.literal_edge_count()} literal edges, "
@@ -64,6 +69,11 @@ def index(
         n_disjoint = sum(len(v) for v in axioms["disjointness"].values()) // 2
         n_equivalences = sum(len(v) for v in axioms["equivalences"].values())
         typer.echo(f"Axiom index: {n_restrictions} restrictions, {n_disjoint} disjoint pairs, {n_equivalences} equivalences")
+
+    # Save BFO categories sidecar for downstream consumers
+    sidecar_path = chroma / "bfo_categories.json"
+    sidecar_path.write_text(json.dumps(bfo_categories))
+    typer.echo(f"BFO categories sidecar saved to {sidecar_path}")
 
 
 @app.command()

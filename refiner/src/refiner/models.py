@@ -197,6 +197,7 @@ class VariationAxis(BaseModel):
     vocabulary_label: str = ""
     rationale: str
     derivation: AxisDerivation | None = None
+    semantic_role: str = ""
 
 
 class RiskVariationAxes(BaseModel):

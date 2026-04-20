@@ -14,10 +14,190 @@ from refiner.models import (
     VariationAxis,
 )
 from refiner import debug
+from ontoquery.bfo import BFO_CATEGORY_MAP, CATEGORY_PATTERNS, match_property
 from refiner.stages.identify_domains import ALWAYS_INCLUDED, derive_source_ontology
 from refiner.ontology_seeds import resolve_seeds
 
 logger = logging.getLogger(__name__)
+
+# --- Semantic role derivation from BFO constitutive patterns ---
+
+_PARTICIPANT_ROLE_BY_CATEGORY: dict[str, str] = {
+    "Agent": "agent",
+    "MaterialEntity": "patient",
+    "MaterialArtifact": "patient",
+    "InformationContentEntity": "information",
+    "GenericallyDependentContinuant": "information",
+    "Quality": "quality",
+    "Role": "obligation",
+    "Disposition": "obligation",
+}
+
+_FALLBACK_ROLES: dict[str, str] = {
+    "Agent": "agent",
+    "Process": "process",
+    "Act": "process",
+    "InformationContentEntity": "information",
+    "GenericallyDependentContinuant": "information",
+    "Quality": "quality",
+    "Role": "role",
+    "Disposition": "disposition",
+    "MaterialEntity": "object",
+    "MaterialArtifact": "object",
+    "Facility": "location",
+    "Site": "location",
+}
+
+
+def derive_role(
+    candidate_category: str,
+    seed_category: str,
+    restriction_property: str,
+) -> str:
+    """Derive the semantic role of a candidate from BFO constitutive patterns.
+
+    When *seed_category* and *restriction_property* are both provided, looks up
+    the constitutive patterns for that seed category and matches the property
+    to determine a role.  The candidate's own BFO category further refines the
+    role (e.g. an Agent participating in a Process is an "agent", while a
+    MaterialEntity is a "patient").
+
+    When no restriction context is available (sibling discovery, embedding
+    search), falls back to category-only default roles via ``_FALLBACK_ROLES``.
+    """
+    if seed_category and restriction_property:
+        patterns = CATEGORY_PATTERNS.get(seed_category, [])
+        for cp in patterns:
+            if match_property(restriction_property, cp.property_patterns):
+                prefix_lower = cp.role_prefix.lower()
+                if "participant" in prefix_lower:
+                    return _PARTICIPANT_ROLE_BY_CATEGORY.get(
+                        candidate_category, "participant")
+                if "realizes" in prefix_lower:
+                    return "obligation"
+                if "input" in prefix_lower or "output" in prefix_lower:
+                    if match_property(restriction_property, ["has_input"]):
+                        return "input"
+                    return "output"
+                if "characterizes" in prefix_lower or "borne by" in prefix_lower:
+                    return "bearer"
+                if "realized in" in prefix_lower:
+                    return "realization"
+                if "about" in prefix_lower:
+                    return "subject"
+                if "carried by" in prefix_lower or "concretized" in prefix_lower:
+                    return "medium"
+                return cp.role_prefix.lower().replace("/", "_").replace(" ", "_")
+    return _FALLBACK_ROLES.get(candidate_category, "")
+
+
+# --- Category-aware navigation dispatch ---
+
+_SIBLING_AGGRESSIVE = {"Quality", "Role", "Disposition", "RealizableEntity"}
+_SIBLING_CONDITIONAL = {"Process", "Act"}
+_SIBLING_SKIP = {"InformationContentEntity", "GenericallyDependentContinuant"}
+_CONDITIONAL_THRESHOLD = 4
+
+
+def _expand_by_category(
+    category: str,
+    seed_uri: str,
+    onto_handlers: dict,
+    candidates: list[dict],
+    bfo_categories: dict[str, str],
+    *,
+    seed_label: str,
+    confidence: float,
+    predicate: str,
+    vocab_concept: str | None,
+    vocab_label: str | None,
+    safety: set[str],
+    selected_domains: list[str] | None,
+) -> None:
+    patterns = CATEGORY_PATTERNS.get(category, [])
+    constitutive_props = set()
+    for cp in patterns:
+        for p in cp.property_patterns:
+            constitutive_props.add(p)
+
+    def _make_candidate(uri, label, conf, restriction_prop=""):
+        return {
+            "uri": uri,
+            "label": label,
+            "source": "structural",
+            "path": [seed_uri, uri],
+            "path_labels": [seed_label, label],
+            "seed_uri": seed_uri,
+            "seed_label": seed_label,
+            "effective_confidence": conf,
+            "predicate": predicate,
+            "vocabulary_concept": vocab_concept,
+            "vocabulary_label": vocab_label,
+            "restriction_property": restriction_prop,
+        }
+
+    # --- Restriction expansion ---
+    if onto_handlers.get("get_restrictions"):
+        for r in onto_handlers["get_restrictions"](seed_uri):
+            filler = r.get("filler", "")
+            prop = r.get("property", "")
+            if not filler or _is_excluded_uri(filler, safety):
+                continue
+            if selected_domains:
+                domain = derive_source_ontology(filler)
+                if domain and domain not in selected_domains:
+                    continue
+            filler_defn = onto_handlers["get_class_definition"](filler)
+            if not filler_defn:
+                continue
+            filler_label = filler_defn.get("label", "")
+
+            is_constitutive = bool(patterns) and match_property(
+                prop, list(constitutive_props))
+            conf_mult = 0.95 if is_constitutive else 0.8
+            candidates.append(
+                _make_candidate(filler, filler_label, confidence * conf_mult, prop))
+
+    # --- Sibling expansion ---
+    if category in _SIBLING_SKIP:
+        pass
+    elif category in _SIBLING_CONDITIONAL:
+        structural_count = len(candidates)
+        if structural_count < _CONDITIONAL_THRESHOLD:
+            for s in onto_handlers["get_siblings"](seed_uri):
+                s_uri = s["uri"]
+                if _is_excluded_uri(s_uri, safety):
+                    continue
+                if selected_domains:
+                    domain = derive_source_ontology(s_uri)
+                    if domain and domain not in selected_domains:
+                        continue
+                candidates.append(
+                    _make_candidate(s_uri, s.get("label", ""), confidence * 0.7))
+    elif category in _SIBLING_AGGRESSIVE:
+        for s in onto_handlers["get_siblings"](seed_uri):
+            s_uri = s["uri"]
+            if _is_excluded_uri(s_uri, safety):
+                continue
+            if selected_domains:
+                domain = derive_source_ontology(s_uri)
+                if domain and domain not in selected_domains:
+                    continue
+            candidates.append(
+                _make_candidate(s_uri, s.get("label", ""), confidence * 0.85))
+    else:
+        # Default / fallback (unknown category or MaterialEntity, Agent, etc.)
+        for s in onto_handlers["get_siblings"](seed_uri):
+            s_uri = s["uri"]
+            if _is_excluded_uri(s_uri, safety):
+                continue
+            if selected_domains:
+                domain = derive_source_ontology(s_uri)
+                if domain and domain not in selected_domains:
+                    continue
+            candidates.append(
+                _make_candidate(s_uri, s.get("label", ""), confidence * 0.8))
+
 
 # BFO classes are maximally abstract ontological primitives — useful for role
 # derivation via superclass chains but never appropriate as candidate axes
@@ -94,34 +274,6 @@ def build_generic_safety_uris(onto_handlers: dict) -> set[str]:
     return uris
 
 
-# --- BFO category labels for candidate enrichment ---
-
-_BFO_CATEGORIES: dict[str, str] = {
-    "http://purl.obolibrary.org/obo/BFO_0000040": "MaterialEntity",
-    "http://purl.obolibrary.org/obo/BFO_0000015": "Process",
-    "http://purl.obolibrary.org/obo/BFO_0000031": "GenericallyDependentContinuant",
-    "http://purl.obolibrary.org/obo/BFO_0000020": "Quality",
-    "http://purl.obolibrary.org/obo/BFO_0000023": "Role",
-    "http://purl.obolibrary.org/obo/BFO_0000016": "Disposition",
-    "http://purl.obolibrary.org/obo/BFO_0000017": "RealizableEntity",
-    "http://purl.obolibrary.org/obo/BFO_0000029": "Site",
-    "http://purl.obolibrary.org/obo/BFO_0000006": "SpatialRegion",
-    "http://purl.obolibrary.org/obo/BFO_0000141": "ImmaterialEntity",
-    "http://purl.obolibrary.org/obo/BFO_0000008": "TemporalRegion",
-    "http://purl.obolibrary.org/obo/BFO_0000019": "Quality",
-    # CCO shortcuts
-    "https://www.commoncoreontologies.org/ont00000958": "InformationContentEntity",
-    "https://www.commoncoreontologies.org/ont00001017": "Agent",
-    "https://www.commoncoreontologies.org/ont00000995": "MaterialArtifact",
-    "https://www.commoncoreontologies.org/ont00000192": "Facility",
-    "https://www.commoncoreontologies.org/ont00000005": "Act",
-    # CCO classes missing from superclass walk
-    "https://www.commoncoreontologies.org/ont00001262": "Agent",         # Person
-    "https://www.commoncoreontologies.org/ont00001180": "Agent",         # Organization
-    "https://www.commoncoreontologies.org/ont00000740": "MaterialEntity",  # Resource
-}
-
-
 def derive_bfo_category(
     class_uri: str,
     onto_handlers: dict,
@@ -136,8 +288,8 @@ def derive_bfo_category(
     visited = set()
     current = class_uri
     for _ in range(max_depth):
-        if current in _BFO_CATEGORIES:
-            return _BFO_CATEGORIES[current]
+        if current in BFO_CATEGORY_MAP:
+            return BFO_CATEGORY_MAP[current]
         if current in visited:
             break
         visited.add(current)
@@ -200,6 +352,7 @@ def navigate_from_seeds(
         onto_handlers: dict,
         selected_domains: list[str] | None,
         generic_safety_uris: set[str] | None = None,
+        bfo_categories: dict[str, str] | None = None,
 ) -> list[dict]:
     """Structural navigation from SSSOM seed URIs. Returns candidate dicts."""
     candidates = []
@@ -256,52 +409,22 @@ def navigate_from_seeds(
                     "vocabulary_concept": vocab_concept,
                     "vocabulary_label": vocab_label,
                 })
-            # Navigate restrictions
-            if onto_handlers.get("get_restrictions"):
-                for r in onto_handlers["get_restrictions"](seed_uri):
-                    filler = r.get("filler", "")
-                    if not filler or _is_excluded_uri(filler, safety):
-                        continue
-                    filler_defn = onto_handlers["get_class_definition"](filler)
-                    if filler_defn:
-                        filler_label = filler_defn.get("label", "")
-                        candidates.append({
-                            "uri": filler,
-                            "label": filler_label,
-                            "source": "structural",
-                            "path": [seed_uri, filler],
-                            "path_labels": [seed_label, filler_label],
-                            "seed_uri": seed_uri,
-                            "seed_label": seed_label,
-                            "effective_confidence": confidence * 0.9,
-                            "predicate": predicate,
-                            "vocabulary_concept": vocab_concept,
-                            "vocabulary_label": vocab_label,
-                            "restriction_property": r.get("property", ""),
-                        })
-            # Navigate siblings
-            for s in onto_handlers["get_siblings"](seed_uri):
-                s_uri = s["uri"]
-                if _is_excluded_uri(s_uri, safety):
-                    continue
-                if selected_domains:
-                    domain = derive_source_ontology(s_uri)
-                    if domain and domain not in selected_domains:
-                        continue
-                sibling_label = s.get("label", "")
-                candidates.append({
-                    "uri": s_uri,
-                    "label": sibling_label,
-                    "source": "structural",
-                    "path": [seed_uri, s_uri],
-                    "path_labels": [seed_label, sibling_label],
-                    "seed_uri": seed_uri,
-                    "seed_label": seed_label,
-                    "effective_confidence": confidence * 0.8,
-                    "predicate": predicate,
-                    "vocabulary_concept": vocab_concept,
-                    "vocabulary_label": vocab_label,
-                })
+            # Category-aware expansion
+            seed_category = bfo_categories.get(seed_uri, "") if bfo_categories else ""
+            _expand_by_category(
+                category=seed_category,
+                seed_uri=seed_uri,
+                onto_handlers=onto_handlers,
+                candidates=candidates,
+                bfo_categories=bfo_categories or {},
+                seed_label=mapping.get("object_label", ""),
+                confidence=confidence,
+                predicate=predicate,
+                vocab_concept=vocab_concept,
+                vocab_label=vocab_label,
+                safety=safety,
+                selected_domains=selected_domains,
+            )
 
         elif predicate in ("skos:exactMatch", "skos:closeMatch"):
             defn = onto_handlers["get_class_definition"](seed_uri)
@@ -643,6 +766,7 @@ def _process_single_risk(
     generic_safety_uris: set[str] | None,
     policy_lookup: dict[str, object],
     bfo_fallbacks: dict[str, str] | None,
+    bfo_categories_map: dict[str, str] | None = None,
 ) -> _RiskAnchorResult:
     details = risk_details.get(risk_id, {})
     description = details.get("description", risk_name)
@@ -663,6 +787,7 @@ def _process_single_risk(
         onto_handlers=onto_handlers,
         selected_domains=selected_domains,
         generic_safety_uris=generic_safety_uris,
+        bfo_categories=bfo_categories_map,
     )
 
     search_results = constrained_search(
@@ -718,6 +843,9 @@ def _process_single_risk(
         if not defn:
             continue
         bfo_cat = derive_bfo_category(c["uri"], onto_handlers, bfo_fallbacks=bfo_fallbacks)
+        restriction_prop = c.get("restriction_property", "")
+        seed_cat = bfo_categories_map.get(c.get("seed_uri", ""), "") if bfo_categories_map else ""
+        sem_role = derive_role(bfo_cat, seed_cat, restriction_prop)
         siblings = onto_handlers["get_siblings"](c["uri"])
         raw_path = c.get("path", [])
         path_labels = []
@@ -732,6 +860,7 @@ def _process_single_risk(
             "label": defn.get("label", c.get("label", "")),
             "definition": defn.get("definition", ""),
             "bfo_category": bfo_cat,
+            "semantic_role": sem_role,
             "source": c.get("source", ""),
             "vocabulary_concept": c.get("vocabulary_concept") or "",
             "vocabulary_label": c.get("vocabulary_label") or "",
@@ -758,7 +887,8 @@ def _process_single_risk(
     for e in enriched:
         id_to_uri[e["id"]] = e["uri"]
         via = f" (via {e['vocabulary_label']})" if e.get("vocabulary_label") else ""
-        cat_tag = f" [{e['bfo_category']}]" if e["bfo_category"] else ""
+        role_tag = f"/{e['semantic_role']}" if e.get("semantic_role") else ""
+        cat_tag = f" [{e['bfo_category']}{role_tag}]" if e["bfo_category"] else ""
         source_tag = f"-- {e['source']}{via}"
         block = f"## {e['id']}: {e['label']}{cat_tag} {source_tag}\n"
         if e["definition"]:
@@ -847,6 +977,7 @@ def _process_single_risk(
             vocabulary_label=vocab_l,
             rationale=axis.rationale,
             derivation=derivation,
+            semantic_role=enriched_match.get("semantic_role", "") if enriched_match else "",
         ))
 
     valid_uris = {a.cco_class_uri for a in valid_axes}
@@ -898,6 +1029,17 @@ def anchor(
     if not risk_mappings:
         return [], {}
 
+    # Load pre-computed BFO categories from sidecar (if available)
+    bfo_categories_map: dict[str, str] = {}
+    chroma_dir = onto_handlers.get("_chroma_dir")
+    if chroma_dir:
+        from pathlib import Path
+        sidecar = Path(chroma_dir) / "bfo_categories.json"
+        if sidecar.exists():
+            import json as _json
+            bfo_categories_map = _json.loads(sidecar.read_text())
+            logger.debug("Loaded %d BFO categories from sidecar", len(bfo_categories_map))
+
     policy_lookup: dict[str, object] = {}
     if policies:
         for p in policies:
@@ -929,6 +1071,7 @@ def anchor(
         generic_safety_uris=generic_safety_uris,
         policy_lookup=policy_lookup,
         bfo_fallbacks=bfo_fallbacks,
+        bfo_categories_map=bfo_categories_map,
     )
 
     def _do_risk(item: tuple[str, tuple[str, str]]) -> tuple[str, _RiskAnchorResult]:

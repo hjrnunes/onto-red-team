@@ -2,7 +2,50 @@
 
 All notable changes to this project will be documented in this file.
 
-## Gen 19  (current)
+## Gen 21 (current)
+
+### Added
+
+- **Category-aware structural context** — `build_structural_context()` now accepts a `bfo_categories`
+  parameter. When provided, properties matching constitutive patterns for each class's BFO category are
+  foregrounded under semantic role prefixes (e.g., `[Process] Participants: Agent. SubClassOf: ...`).
+  Non-constitutive properties appear after taxonomy, preserving all information but encoding ontological
+  significance into the embedding space. Based on Peixoto et al. (2025) "Deep Semantics" approach —
+  empirical evidence that ontological nature-driven entity selection outperforms graph-proximity (81% vs
+  28% correctness with fewer entities extracted).
+
+- **Shared BFO module** — New `ontoquery/src/ontoquery/bfo.py` centralizes BFO infrastructure:
+  `BFO_CATEGORY_MAP` (20 BFO/CCO URI → category label mappings), `CATEGORY_PATTERNS` (11 categories
+  with constitutive relationship patterns), `ConstitutivePattern` dataclass, `match_property()` with
+  token-boundary matching (prevents `has_part` matching `has_participant`), and
+  `classify_bfo_categories()` which walks SubClassOf edges in projected graphs via BFS.
+
+- **BFO categories sidecar** — The indexing pipeline now classifies all classes into BFO categories
+  at index time and saves `bfo_categories.json` alongside the ChromaDB directory. The refiner loads
+  this sidecar at pipeline start, avoiding redundant superclass walks during anchor.
+
+- **Category-aware navigation dispatch** — `_expand_by_category()` replaces uniform restriction +
+  sibling expansion in the `relatedMatch` branch of `navigate_from_seeds()`. Constitutive restrictions
+  (e.g., `has_participant` for a Process) get confidence × 0.95; non-constitutive get × 0.8. Sibling
+  behavior varies by category: aggressive for Quality/Role/Disposition (phase pattern), conditional
+  for Process/Act, skipped for ICE/GDC.
+
+- **Semantic role derivation** — `derive_role()` derives contextual roles from the intersection of
+  entity BFO category and discovery relationship. A Process's `has_participant` pointing to an Agent
+  yields role "agent"; pointing to a MaterialEntity yields "patient". Replaces the old static
+  `_CATEGORY_ROLES` table (removed in g8.1) with principled ontological derivation. New `semantic_role`
+  field on `VariationAxis`.
+
+- **Category/role tags in LLM prompt** — Candidate blocks in the anchor LLM prompt now show
+  `[Process/agent]` or `[Quality/bearer]` instead of just `[Process]`, giving the model richer
+  context about each candidate's ontological role.
+
+### Changed
+
+- **`_BFO_CATEGORIES` migrated** — The 20-entry local dict in `anchor.py` replaced by import of
+  `BFO_CATEGORY_MAP` from `ontoquery.bfo`. Single source of truth shared between indexing and refiner.
+
+## Gen 19
 
 ### Added
 

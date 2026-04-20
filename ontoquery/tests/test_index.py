@@ -301,3 +301,107 @@ ex:Dog a owl:Class ;
     results = idx.search_raw("parent class of dog", top_k=3)
     labels = [r["label"] for r in results]
     assert "Mammal" in labels
+
+
+def test_build_structural_context_category_aware():
+    from rdflib import Graph
+    from ontoquery.backend import RdflibBackend
+    from ontoquery.owl2vec import project_ontology
+    from ontoquery.bfo import classify_bfo_categories
+
+    ttl = """\
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/ont#> .
+@prefix bfo: <http://purl.obolibrary.org/obo/> .
+
+bfo:BFO_0000015 a owl:Class ; rdfs:label "process" .
+ex:DataCollection a owl:Class ; rdfs:label "DataCollection" ;
+    rdfs:subClassOf bfo:BFO_0000015 ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:has_participant ;
+        owl:someValuesFrom ex:Agent
+    ] ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:governed_by ;
+        owl:someValuesFrom ex:Regulation
+    ] .
+ex:Agent a owl:Class ; rdfs:label "Agent" .
+ex:Regulation a owl:Class ; rdfs:label "Regulation" .
+ex:has_participant a owl:ObjectProperty .
+ex:governed_by a owl:ObjectProperty .
+"""
+    g = Graph()
+    g.parse(data=ttl, format="turtle")
+    backend = RdflibBackend(g)
+    projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
+    bfo_cats = classify_bfo_categories(projected)
+    ctx = build_structural_context(projected, bfo_categories=bfo_cats)
+
+    dc_ctx = ctx["http://example.org/ont#DataCollection"]
+    assert "[Process]" in dc_ctx
+    assert "Participants: Agent" in dc_ctx
+    assert "governed_by" in dc_ctx
+    participants_pos = dc_ctx.index("Participants")
+    governed_pos = dc_ctx.index("governed_by")
+    assert participants_pos < governed_pos
+
+
+def test_build_structural_context_no_category_unchanged():
+    """When bfo_categories is None, output should be identical to current behavior."""
+    from rdflib import Graph
+    from ontoquery.backend import RdflibBackend
+    from ontoquery.owl2vec import project_ontology
+
+    ttl = """\
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/ont#> .
+
+ex:Animal a owl:Class ; rdfs:label "Animal" .
+ex:Mammal a owl:Class ; rdfs:label "Mammal" ; rdfs:subClassOf ex:Animal .
+"""
+    g = Graph()
+    g.parse(data=ttl, format="turtle")
+    backend = RdflibBackend(g)
+    projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
+    ctx_without = build_structural_context(projected)
+    ctx_with_none = build_structural_context(projected, bfo_categories=None)
+    assert ctx_without == ctx_with_none
+
+
+def test_build_structural_context_quality_characterizes():
+    from rdflib import Graph
+    from ontoquery.backend import RdflibBackend
+    from ontoquery.owl2vec import project_ontology
+    from ontoquery.bfo import classify_bfo_categories
+
+    ttl = """\
+@prefix owl: <http://www.w3.org/2002/07/owl#> .
+@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix ex: <http://example.org/ont#> .
+@prefix bfo: <http://purl.obolibrary.org/obo/> .
+
+bfo:BFO_0000020 a owl:Class ; rdfs:label "quality" .
+ex:ImageQuality a owl:Class ; rdfs:label "ImageQuality" ;
+    rdfs:subClassOf bfo:BFO_0000020 ;
+    rdfs:subClassOf [
+        a owl:Restriction ;
+        owl:onProperty ex:inheres_in ;
+        owl:someValuesFrom ex:Photo
+    ] .
+ex:Photo a owl:Class ; rdfs:label "Photo" .
+ex:inheres_in a owl:ObjectProperty .
+"""
+    g = Graph()
+    g.parse(data=ttl, format="turtle")
+    backend = RdflibBackend(g)
+    projected = project_ontology(backend, bidirectional_taxonomy=True, include_literals=True)
+    bfo_cats = classify_bfo_categories(projected)
+    ctx = build_structural_context(projected, bfo_categories=bfo_cats)
+
+    iq_ctx = ctx["http://example.org/ont#ImageQuality"]
+    assert "[Quality]" in iq_ctx
+    assert "Characterizes: Photo" in iq_ctx

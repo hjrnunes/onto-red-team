@@ -51,7 +51,8 @@ def _parse_results(results: dict, domain: str | None = None) -> list[dict]:
 
 
 def build_structural_context(
-    projected_graph, *, max_children: int = 8, max_properties: int = 6
+    projected_graph, *, bfo_categories: dict[str, str] | None = None,
+    max_children: int = 8, max_properties: int = 6,
 ) -> dict[str, str]:
     """Build a structural context string for each class from projected edges.
 
@@ -94,25 +95,66 @@ def build_structural_context(
             return ", ".join(items)
         return ", ".join(items[:limit]) + f" (+{len(items) - limit} more)"
 
+    if bfo_categories:
+        from ontoquery.bfo import CATEGORY_PATTERNS, match_property
+
     result: dict[str, str] = {}
     for uri in projected_graph.classes:
-        parts: list[str] = []
+        # Build taxonomy parts (always present)
+        taxonomy_parts: list[str] = []
         if uri in parents:
             parent_labels = sorted(set(_label(p) for p in parents[uri]))
-            parts.append(f"SubClassOf: {_cap(parent_labels, max_children)}")
+            taxonomy_parts.append(f"SubClassOf: {_cap(parent_labels, max_children)}")
         if uri in children:
             child_labels = sorted(set(_label(c) for c in children[uri]))
-            parts.append(f"HasSubClass: {_cap(child_labels, max_children)}")
+            taxonomy_parts.append(f"HasSubClass: {_cap(child_labels, max_children)}")
+
+        # Build property groups
+        prop_groups: dict[str, list[str]] = defaultdict(list)
+        prop_uris_by_name: dict[str, str] = {}
         if uri in properties:
-            prop_groups: dict[str, list[str]] = defaultdict(list)
             for prop_uri, target_uri in properties[uri]:
+                pname = _prop_label(prop_uri)
                 target_label = _label(target_uri)
-                if target_label not in prop_groups[_prop_label(prop_uri)]:
-                    prop_groups[_prop_label(prop_uri)].append(target_label)
-            for prop_name, targets in sorted(prop_groups.items())[:max_properties]:
-                parts.append(f"{prop_name}: {_cap(targets, max_children)}")
-        if parts:
-            result[uri] = ". ".join(parts)
+                if target_label not in prop_groups[pname]:
+                    prop_groups[pname].append(target_label)
+                if pname not in prop_uris_by_name:
+                    prop_uris_by_name[pname] = prop_uri
+
+        category = bfo_categories.get(uri, "") if bfo_categories else ""
+        cat_patterns = CATEGORY_PATTERNS.get(category, []) if bfo_categories and category else []
+
+        if cat_patterns:
+            constitutive_parts: list[str] = []
+            matched_prop_names: set[str] = set()
+
+            for cp in cat_patterns:
+                matched_targets: list[str] = []
+                for pname, targets in prop_groups.items():
+                    full_uri = prop_uris_by_name.get(pname, pname)
+                    if match_property(full_uri, cp.property_patterns):
+                        matched_targets.extend(targets)
+                        matched_prop_names.add(pname)
+                if matched_targets:
+                    unique = sorted(set(matched_targets))
+                    constitutive_parts.append(
+                        f"{cp.role_prefix}: {_cap(unique, max_children)}")
+
+            contextual_parts: list[str] = []
+            for pname, targets in sorted(prop_groups.items())[:max_properties]:
+                if pname not in matched_prop_names:
+                    contextual_parts.append(f"{pname}: {_cap(targets, max_children)}")
+
+            all_parts = constitutive_parts + taxonomy_parts + contextual_parts
+            if all_parts:
+                result[uri] = f"[{category}] " + ". ".join(all_parts)
+        else:
+            parts = taxonomy_parts[:]
+            for pname, targets in sorted(prop_groups.items())[:max_properties]:
+                parts.append(f"{pname}: {_cap(targets, max_children)}")
+            if parts:
+                result[uri] = ". ".join(parts)
+
     return result
 
 
