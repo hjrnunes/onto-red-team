@@ -1,6 +1,25 @@
 """Tests for ontoquery.bfo — BFO category map, constitutive patterns, and property matching."""
+import json
+from pathlib import Path
+
 from ontoquery.bfo import match_property, ConstitutivePattern, CATEGORY_PATTERNS, BFO_CATEGORY_MAP, classify_bfo_categories
 from ontoquery.owl2vec import ProjectedGraph, SUBCLASS_OF
+
+
+def test_sidecar_round_trip(tmp_path):
+    """Classify, save to JSON, reload — should be identical."""
+    graph = ProjectedGraph()
+    graph.edges.append(("http://example.org/MyProcess", SUBCLASS_OF, "http://purl.obolibrary.org/obo/BFO_0000015"))
+    graph.classes.add("http://example.org/MyProcess")
+    graph.classes.add("http://purl.obolibrary.org/obo/BFO_0000015")
+
+    categories = classify_bfo_categories(graph)
+    sidecar_path = tmp_path / "bfo_categories.json"
+    sidecar_path.write_text(json.dumps(categories))
+
+    reloaded = json.loads(sidecar_path.read_text())
+    assert reloaded == categories
+    assert reloaded["http://example.org/MyProcess"] == "Process"
 
 
 class TestMatchProperty:
