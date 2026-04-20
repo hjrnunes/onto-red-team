@@ -333,6 +333,7 @@ def navigate_from_seeds(
         onto_handlers: dict,
         selected_domains: list[str] | None,
         generic_safety_uris: set[str] | None = None,
+        bfo_categories: dict[str, str] | None = None,
 ) -> list[dict]:
     """Structural navigation from SSSOM seed URIs. Returns candidate dicts."""
     candidates = []
@@ -382,46 +383,22 @@ def navigate_from_seeds(
                     "vocabulary_concept": vocab_concept,
                     "vocabulary_label": vocab_label,
                 })
-            # Navigate restrictions
-            if onto_handlers.get("get_restrictions"):
-                for r in onto_handlers["get_restrictions"](seed_uri):
-                    filler = r.get("filler", "")
-                    if not filler or _is_excluded_uri(filler, safety):
-                        continue
-                    filler_defn = onto_handlers["get_class_definition"](filler)
-                    if filler_defn:
-                        candidates.append({
-                            "uri": filler,
-                            "label": filler_defn.get("label", ""),
-                            "source": "structural",
-                            "path": [seed_uri, filler],
-                            "seed_uri": seed_uri,
-                            "effective_confidence": confidence * 0.9,
-                            "predicate": predicate,
-                            "vocabulary_concept": vocab_concept,
-                            "vocabulary_label": vocab_label,
-                            "restriction_property": r.get("property", ""),
-                        })
-            # Navigate siblings
-            for s in onto_handlers["get_siblings"](seed_uri):
-                s_uri = s["uri"]
-                if _is_excluded_uri(s_uri, safety):
-                    continue
-                if selected_domains:
-                    domain = derive_source_ontology(s_uri)
-                    if domain and domain not in selected_domains:
-                        continue
-                candidates.append({
-                    "uri": s_uri,
-                    "label": s.get("label", ""),
-                    "source": "structural",
-                    "path": [seed_uri, s_uri],
-                    "seed_uri": seed_uri,
-                    "effective_confidence": confidence * 0.8,
-                    "predicate": predicate,
-                    "vocabulary_concept": vocab_concept,
-                    "vocabulary_label": vocab_label,
-                })
+            # Category-aware expansion
+            seed_category = bfo_categories.get(seed_uri, "") if bfo_categories else ""
+            _expand_by_category(
+                category=seed_category,
+                seed_uri=seed_uri,
+                onto_handlers=onto_handlers,
+                candidates=candidates,
+                bfo_categories=bfo_categories or {},
+                seed_label=mapping.get("object_label", ""),
+                confidence=confidence,
+                predicate=predicate,
+                vocab_concept=vocab_concept,
+                vocab_label=vocab_label,
+                safety=safety,
+                selected_domains=selected_domains,
+            )
 
         elif predicate in ("skos:exactMatch", "skos:closeMatch"):
             defn = onto_handlers["get_class_definition"](seed_uri)
@@ -679,6 +656,17 @@ def anchor(
     if not risk_mappings:
         return [], {}
 
+    # Load pre-computed BFO categories from sidecar (if available)
+    bfo_categories_map: dict[str, str] = {}
+    chroma_dir = onto_handlers.get("_chroma_dir")
+    if chroma_dir:
+        from pathlib import Path
+        sidecar = Path(chroma_dir) / "bfo_categories.json"
+        if sidecar.exists():
+            import json as _json
+            bfo_categories_map = _json.loads(sidecar.read_text())
+            logger.debug("Loaded %d BFO categories from sidecar", len(bfo_categories_map))
+
     # Build policy lookup for enriched context (concept_definition, boundary_examples)
     policy_lookup: dict[str, object] = {}
     if policies:
@@ -725,6 +713,7 @@ def anchor(
                 onto_handlers=onto_handlers,
                 selected_domains=selected_domains,
                 generic_safety_uris=generic_safety_uris,
+                bfo_categories=bfo_categories_map,
             )
 
             # Search candidates scoped to seed domains
@@ -783,6 +772,9 @@ def anchor(
                 if not defn:
                     continue
                 bfo_cat = derive_bfo_category(c["uri"], onto_handlers, bfo_fallbacks=bfo_fallbacks)
+                restriction_prop = c.get("restriction_property", "")
+                seed_cat = bfo_categories_map.get(c.get("seed_uri", ""), "") if bfo_categories_map else ""
+                sem_role = derive_role(bfo_cat, seed_cat, restriction_prop)
                 siblings = onto_handlers["get_siblings"](c["uri"])
                 # Resolve path URIs to human-readable labels
                 raw_path = c.get("path", [])
@@ -798,6 +790,7 @@ def anchor(
                     "label": defn.get("label", c.get("label", "")),
                     "definition": defn.get("definition", ""),
                     "bfo_category": bfo_cat,
+                    "semantic_role": sem_role,
                     "source": c.get("source", ""),
                     "vocabulary_concept": c.get("vocabulary_concept") or "",
                     "vocabulary_label": c.get("vocabulary_label") or "",
@@ -832,7 +825,8 @@ def anchor(
             for e in enriched:
                 id_to_uri[e["id"]] = e["uri"]
                 via = f" (via {e['vocabulary_label']})" if e.get("vocabulary_label") else ""
-                cat_tag = f" [{e['bfo_category']}]" if e["bfo_category"] else ""
+                role_tag = f"/{e['semantic_role']}" if e.get("semantic_role") else ""
+                cat_tag = f" [{e['bfo_category']}{role_tag}]" if e["bfo_category"] else ""
                 source_tag = f"-- {e['source']}{via}"
                 block = f"## {e['id']}: {e['label']}{cat_tag} {source_tag}\n"
                 if e["definition"]:
@@ -922,6 +916,7 @@ def anchor(
                     vocabulary_label=vocab_l,
                     rationale=axis.rationale,
                     derivation=derivation,
+                    semantic_role=enriched_match.get("semantic_role", "") if enriched_match else "",
                     roles=[],  # backward compat
                 ))
 

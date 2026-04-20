@@ -326,6 +326,77 @@ class TestDeriveRole:
         assert role == "agent"
 
 
+class TestNavigateCategoryAware:
+    def test_related_match_uses_category_dispatch(self, mock_onto):
+        """When bfo_categories is provided, relatedMatch should use _expand_by_category."""
+        mock_onto["get_restrictions"].return_value = [
+            {"property": "http://ex.org/has_participant", "filler": "http://ex.org/Agent"},
+        ]
+        mock_onto["get_class_definition"].side_effect = lambda uri: {
+            "uri": uri, "label": uri.split("/")[-1], "definition": "test"}
+        mock_onto["get_siblings"].return_value = []
+
+        seeds = [{
+            "object_id": "http://ex.org/DataCollection",
+            "object_label": "DataCollection",
+            "predicate_id": "skos:relatedMatch",
+            "effective_confidence": 0.9,
+            "vocabulary_concept": "risk:X",
+            "vocabulary_label": "X",
+        }]
+        bfo_cats = {"http://ex.org/DataCollection": "Process"}
+        result = navigate_from_seeds(
+            seeds, mock_onto, selected_domains=None,
+            bfo_categories=bfo_cats)
+
+        agent = [c for c in result if c["uri"] == "http://ex.org/Agent"]
+        assert len(agent) == 1
+        # Constitutive confidence: 0.9 * 0.95 = 0.855
+        assert abs(agent[0]["effective_confidence"] - 0.855) < 0.01
+
+    def test_broad_match_unchanged_with_categories(self, mock_onto):
+        """broadMatch should be unaffected by bfo_categories."""
+        mock_onto["get_subclasses"].return_value = [
+            {"uri": "http://ex.org/Sub1", "label": "Sub1"},
+        ]
+        seeds = [{
+            "object_id": "http://ex.org/Parent",
+            "object_label": "Parent",
+            "predicate_id": "skos:broadMatch",
+            "effective_confidence": 0.9,
+            "vocabulary_concept": None,
+            "vocabulary_label": None,
+        }]
+        result = navigate_from_seeds(
+            seeds, mock_onto, selected_domains=None,
+            bfo_categories={"http://ex.org/Parent": "Process"})
+        assert len(result) >= 1
+        assert result[0]["effective_confidence"] == 0.9
+
+    def test_backward_compat_no_categories(self, mock_onto):
+        """Without bfo_categories, behavior should be identical to before."""
+        mock_onto["get_restrictions"].return_value = [
+            {"property": "http://ex.org/prop", "filler": "http://ex.org/Filler"},
+        ]
+        mock_onto["get_class_definition"].side_effect = lambda uri: {
+            "uri": uri, "label": uri.split("/")[-1], "definition": "test"}
+        mock_onto["get_siblings"].return_value = [
+            {"uri": "http://ex.org/Sibling", "label": "Sibling"},
+        ]
+        seeds = [{
+            "object_id": "http://ex.org/Related",
+            "object_label": "Related",
+            "predicate_id": "skos:relatedMatch",
+            "effective_confidence": 0.8,
+            "vocabulary_concept": None,
+            "vocabulary_label": None,
+        }]
+        result = navigate_from_seeds(seeds, mock_onto, selected_domains=None)
+        uris = {c["uri"] for c in result}
+        assert "http://ex.org/Related" in uris
+        assert "http://ex.org/Filler" in uris
+
+
 from refiner.stages.anchor import _expand_by_category
 
 
