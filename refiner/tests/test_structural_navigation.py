@@ -1,5 +1,6 @@
 import pytest
 from unittest.mock import MagicMock
+from refiner.models import VariationAxis
 from refiner.stages.anchor import (
     navigate_from_seeds,
     constrained_search,
@@ -7,6 +8,25 @@ from refiner.stages.anchor import (
     merge_tiered,
     derive_bfo_category,
 )
+
+
+class TestVariationAxisSemanticRole:
+    def test_semantic_role_defaults_empty(self):
+        axis = VariationAxis(
+            cco_class_uri="http://example.org/X",
+            cco_class_label="X",
+            rationale="test",
+        )
+        assert axis.semantic_role == ""
+
+    def test_semantic_role_set(self):
+        axis = VariationAxis(
+            cco_class_uri="http://example.org/X",
+            cco_class_label="X",
+            rationale="test",
+            semantic_role="agent",
+        )
+        assert axis.semantic_role == "agent"
 
 
 @pytest.fixture

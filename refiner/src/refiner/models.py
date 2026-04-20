@@ -103,6 +103,7 @@ class VariationAxis(BaseModel):
     vocabulary_label: str = ""
     rationale: str
     derivation: AxisDerivation | None = None
+    semantic_role: str = ""
     # Kept for backward compatibility with emit stage
     roles: list[str] = []
 
