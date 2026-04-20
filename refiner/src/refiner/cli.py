@@ -9,24 +9,17 @@ import yaml
 from refiner import debug
 from refiner.llm import LLMConfig, TokenTracker, create_client
 from refiner.models import Policy, PolicyProfile, RunReport
-from refiner.nexus_adapter import detect_nexus_format, nexus_to_policy_profile
 from refiner.pipeline import run_pipeline, STAGES
 from refiner.export import export_taxonomy
 
 app = typer.Typer()
 
-INGEST_PASSES = ("context", "policies", "enrichment")
-
 
 def _load_policies(path: Path) -> tuple[list[Policy], PolicyProfile | None]:
-    """Load policies from flat array, nexus format, or PolicyProfile JSON."""
+    """Load policies from flat array or PolicyProfile JSON."""
     raw = json.loads(path.read_text())
     if isinstance(raw, list):
         return [Policy(**p) for p in raw], None
-    elif detect_nexus_format(raw):
-        doc = nexus_to_policy_profile(raw)
-        typer.echo(f"Detected nexus format: {len(doc.policies)} risks projected to policies")
-        return doc.policies, doc
     else:
         doc = PolicyProfile(**raw)
         return doc.policies, doc
@@ -46,93 +39,6 @@ def _parse_tags(tags: list[str]) -> dict[str, str]:
             k, v = t.split("=", 1)
             result[k] = v
     return result
-
-
-@app.command()
-def ingest(
-    document: Path = typer.Argument(..., help="Policy document (.md/.txt) or flat JSON (.json)"),
-    output: Path = typer.Option(None, "--output", "-o", help="Output path (default: <stem>-policy-profile.json)"),
-    base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL", help="LLM API base URL"),
-    model: str = typer.Option(None, "--model", envvar="REFINER_MODEL", help="LLM model name"),
-    api_key: str = typer.Option("none", "--api-key", envvar="REFINER_API_KEY", help="LLM API key"),
-    debug_dir: Path = typer.Option(None, "--debug", help="Directory for per-call debug logs"),
-    skip_enrichment: bool = typer.Option(False, "--skip-enrichment", help="Skip boundary enrichment (Pass 3)"),
-    domain: str = typer.Option(None, "--domain", help="Override inferred domain"),
-    organization: str = typer.Option(None, "--organization", help="Override inferred organization"),
-    until: str = typer.Option(None, "--until", help=f"Run up to this pass: {', '.join(INGEST_PASSES)}"),
-):
-    """Ingest a policy document or flat JSON into enriched PolicyProfile format."""
-    if not document.exists():
-        typer.echo(f"Error: {document} does not exist", err=True)
-        raise typer.Exit(1)
-
-    if until and until not in INGEST_PASSES:
-        typer.echo(f"Error: --until must be one of: {', '.join(INGEST_PASSES)}", err=True)
-        raise typer.Exit(1)
-
-    if not base_url or not model:
-        typer.echo("Error: --base-url and --model are required (or set REFINER_BASE_URL / REFINER_MODEL)", err=True)
-        raise typer.Exit(1)
-
-    # Detect input format
-    document_text = document.read_text()
-    if document.suffix == ".json":
-        raw = json.loads(document_text)
-        if isinstance(raw, dict) and "policies" in raw:
-            typer.echo("Error: Already an enriched PolicyProfile — use 'refiner run' directly.", err=True)
-            raise typer.Exit(1)
-        input_format = "json_array"
-    else:
-        input_format = "markdown"
-
-    config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
-    tracker = TokenTracker()
-    client = create_client(config, tracker=tracker)
-    debug.configure(debug_dir)
-
-    report = RunReport(
-        model=config.model,
-        policy_set=document.name,
-        timestamp=datetime.now(timezone.utc).isoformat(),
-    )
-
-    from refiner.stages.ingest import ingest as do_ingest
-    result = do_ingest(
-        document_text, input_format, client, config,
-        skip_enrichment=skip_enrichment, until=until,
-        domain_override=domain, organization_override=organization,
-        report=report,
-    )
-
-    out_path = output or document.with_stem(f"{document.stem}-policy-profile").with_suffix(".json")
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_path.write_text(json.dumps(result.model_dump(), indent=2))
-    typer.echo(f"Enriched PolicyProfile written to {out_path}")
-    typer.echo(f"  Organization: {result.organization.name if result.organization else ''}")
-    typer.echo(f"  Domain: {result.domain}")
-    typer.echo(f"  Policies: {len(result.policies)}")
-    _echo_token_usage(tracker)
-
-    md_path = debug.render_markdown()
-    if md_path:
-        typer.echo(f"Debug markdown written to {md_path}")
-
-    # Generate ingest report HTML
-    from refiner.ingest_report import build_ingest_report
-    passes = ["context"]
-    if until != "context":
-        passes.append("policies")
-    if until not in ("context", "policies") and not skip_enrichment:
-        passes.append("enrichment")
-    meta = {
-        "model": config.model,
-        "source_document": document.name,
-        "timestamp": report.timestamp,
-        "input_format": input_format,
-        "passes_completed": passes,
-    }
-    report_path = build_ingest_report(result, report, out_path.parent / f"{document.stem}-ingest-report.html", meta)
-    typer.echo(f"Ingest report written to {report_path}")
 
 
 def _create_risk_handlers(nexus_base_dir: str, nexus_chroma_dir: Path) -> dict:
@@ -179,7 +85,7 @@ def run(
     ontoquery_chroma_dir: Path = typer.Option(Path(".chroma"), "--ontoquery-chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="Ontoquery ChromaDB directory"),
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR", help="Nexus ChromaDB directory"),
     max_concurrent: int = typer.Option(1, "--max-concurrent", help="Max parallel LLM calls per stage (default: 1 = sequential)"),
-    landscape_path: Path = typer.Option(None, "--landscape", help="Pre-built risk-landscape.yaml from risk-landscaper"),
+    landscape_path: Path = typer.Option(..., "--landscape", help="Pre-built risk-landscape.yaml from risk-landscaper"),
     search_strategy: str = typer.Option("llm", "--search-strategy", help="Search merge strategy: llm (default), weighted, or grouped"),
     track: bool = typer.Option(False, "--track", help="Enable MLflow tracking + tracing"),
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
@@ -215,28 +121,20 @@ def run(
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
 
-    # Load pre-built landscape if provided
-    pre_landscape = None
-    if landscape_path:
-        if not landscape_path.exists():
-            typer.echo(f"Error: landscape file {landscape_path} does not exist", err=True)
-            raise typer.Exit(1)
-        from refiner.models import RiskLandscape
-        landscape_data = yaml.safe_load(landscape_path.read_text())
-        pre_landscape = RiskLandscape(**landscape_data)
-        typer.echo(f"Loaded pre-built landscape: {len(pre_landscape.risks)} risks")
+    # Load pre-built landscape
+    if not landscape_path.exists():
+        typer.echo(f"Error: landscape file {landscape_path} does not exist", err=True)
+        raise typer.Exit(1)
+    from refiner.models import RiskLandscape
+    landscape_data = yaml.safe_load(landscape_path.read_text())
+    pre_landscape = RiskLandscape(**landscape_data)
+    typer.echo(f"Loaded pre-built landscape: {len(pre_landscape.risks)} risks")
 
-    # Create handlers — only load what's needed for the requested stages
-    needs_risk = until not in ("identify_domains",) and not landscape_path
-    needs_onto = until not in ("identify_domains", "map_risks")
-    if needs_risk:
-        if not nexus_base_dir:
-            typer.echo("Error: --nexus-base-dir is required (or set NEXUS_BASE_DIR)", err=True)
-            raise typer.Exit(1)
+    # Create handlers — risk handlers optional (used by anchor for cross-mappings)
+    risk_handlers = {}
+    if nexus_base_dir:
         risk_handlers = _create_risk_handlers(nexus_base_dir, nexus_chroma_dir)
-    else:
-        risk_handlers = {}
-    onto_handlers = _create_onto_handlers(ontoquery_chroma_dir) if needs_onto else {}
+    onto_handlers = _create_onto_handlers(ontoquery_chroma_dir)
 
     # Load SSSOM seed mappings
     layer1_mappings = None
@@ -447,95 +345,9 @@ def run(
             typer.echo(f"Logged to MLflow: run {run_id}")
 
 
-@app.command("map-risks")
-def map_risks_cmd(
-    policy_json: Path = typer.Argument(..., help="Enriched PolicyProfile JSON"),
-    output_dir: Path = typer.Option(None, "--output", "-o", help="Output directory"),
-    base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL"),
-    model: str = typer.Option(None, "--model", envvar="REFINER_MODEL"),
-    api_key: str = typer.Option("none", "--api-key", envvar="REFINER_API_KEY"),
-    nexus_base_dir: str = typer.Option(None, "--nexus-base-dir", envvar="NEXUS_BASE_DIR"),
-    nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR"),
-    debug_dir: Path = typer.Option(None, "--debug"),
-):
-    """Run risk landscape mapping on a PolicyProfile. Produces a RiskLandscape YAML artifact."""
-    if not policy_json.exists():
-        typer.echo(f"Error: {policy_json} does not exist", err=True)
-        raise typer.Exit(1)
-    if not base_url or not model:
-        typer.echo("Error: --base-url and --model are required", err=True)
-        raise typer.Exit(1)
-    if not nexus_base_dir:
-        typer.echo("Error: --nexus-base-dir is required", err=True)
-        raise typer.Exit(1)
-
-    policies, doc = _load_policies(policy_json)
-    if doc is None:
-        typer.echo("Error: expected enriched PolicyProfile, got flat array. Run 'refiner ingest' first.", err=True)
-        raise typer.Exit(1)
-
-    config = LLMConfig(base_url=base_url, model=model, api_key=api_key)
-    tracker = TokenTracker()
-    client = create_client(config, tracker=tracker)
-    debug.configure(debug_dir)
-
-    report = RunReport(
-        model=config.model,
-        policy_set=policy_json.name,
-        timestamp=datetime.now(timezone.utc).isoformat(),
-    )
-
-    risk_handlers = _create_risk_handlers(nexus_base_dir, nexus_chroma_dir)
-
-    # Stage 1: identify domains
-    from refiner.stages.identify_domains import identify_domains
-    selected_domains = identify_domains(policies, client, config, report=report)
-
-    # Stage 2: map risks
-    from refiner.stages.map_risks import map_risks
-    mappings, risk_details, seen_ids, related, actions, coverage_gaps = map_risks(
-        policies, client, config, risk_handlers, report=report,
-    )
-
-    # Build RiskLandscape artifact
-    from refiner.stages.build_landscape import build_risk_landscape
-    landscape = build_risk_landscape(
-        mappings=mappings,
-        risk_details_cache=risk_details,
-        related_risks=related,
-        risk_actions=actions,
-        selected_domains=selected_domains,
-        model=config.model,
-        run_slug=policy_json.stem,
-        timestamp=report.timestamp,
-        policy_profile=doc,
-        coverage_gaps=coverage_gaps,
-    )
-
-    out = output_dir or Path(".")
-    out.mkdir(parents=True, exist_ok=True)
-    client_slug = policy_json.stem
-
-    rl_path = out / f"{client_slug}-risk-landscape.yaml"
-    rl_path.write_text(yaml.dump(
-        landscape.model_dump(), default_flow_style=False, sort_keys=False,
-    ))
-    typer.echo(f"Risk landscape written to {rl_path}")
-    from refiner.artifact_reports import build_risk_landscape_report
-    build_risk_landscape_report(landscape.model_dump(), out / f"{client_slug}-risk-landscape.html")
-
-    report.token_usage = tracker.to_dict()
-    report_path = out / f"{client_slug}-run-report.yaml"
-    report_path.write_text(yaml.dump(report.to_dict(), default_flow_style=False, sort_keys=False))
-    typer.echo(f"Report written to {report_path}")
-    from refiner.artifact_reports import build_run_report_html
-    build_run_report_html(report.to_dict(), out / f"{client_slug}-run-report.html")
-    _echo_token_usage(tracker)
-
-
 @app.command()
 def ground(
-    risk_landscape_yaml: Path = typer.Argument(..., help="RiskLandscape YAML from 'refiner map-risks'"),
+    risk_landscape_yaml: Path = typer.Argument(..., help="RiskLandscape YAML from risk-landscaper"),
     policies: Path = typer.Option(..., "--policies", help="Enriched PolicyProfile JSON"),
     output_dir: Path = typer.Option(None, "--output", "-o", help="Output directory"),
     base_url: str = typer.Option(None, "--base-url", envvar="REFINER_BASE_URL"),

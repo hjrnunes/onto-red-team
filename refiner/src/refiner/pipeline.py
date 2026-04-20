@@ -15,14 +15,11 @@ from refiner.models import (
     DomainContext,
     RunReport,
 )
-from refiner.stages.identify_domains import identify_domains
-from refiner.stages.map_risks import map_risks
 from refiner.stages.anchor import anchor, build_generic_safety_uris
 from refiner.stages.identify_domains import ALWAYS_INCLUDED
 from refiner.stages.contextualize import contextualize
-from refiner.stages.build_landscape import build_risk_landscape
 
-STAGES = ("identify_domains", "map_risks", "anchor", "contextualize")
+STAGES = ("anchor", "contextualize")
 
 
 @dataclass
@@ -117,21 +114,22 @@ def run_pipeline(
                 "model": config.model,
             })
 
-    if landscape is not None:
-        state.risk_landscape = landscape
-        state.selected_domains = landscape.selected_domains
-        logger.info("Using pre-built risk landscape: %d risks, %d policy mappings",
-                     len(landscape.risks), len(landscape.policy_mappings))
-        if report:
-            report.events.append({
-                "stage": "pipeline", "event": "landscape_loaded",
-                "risk_count": len(landscape.risks),
-                "policy_mapping_count": len(landscape.policy_mappings),
-            })
-    else:
-        t0 = _now()
-        state.selected_domains = identify_domains(state.policies, client, config, report=report)
-        _stage_done("identify_domains", t0)
+    if landscape is None:
+        raise ValueError(
+            "No pre-built landscape provided. Run risk-landscaper first, "
+            "then pass the result via --landscape."
+        )
+
+    state.risk_landscape = landscape
+    state.selected_domains = landscape.selected_domains
+    logger.info("Using pre-built risk landscape: %d risks, %d policy mappings",
+                 len(landscape.risks), len(landscape.policy_mappings))
+    if report:
+        report.events.append({
+            "stage": "pipeline", "event": "landscape_loaded",
+            "risk_count": len(landscape.risks),
+            "policy_mapping_count": len(landscape.policy_mappings),
+        })
 
     # Compute CSO DangerousInformation filter for domain-specific runs
     generic_safety_uris: set[str] = set()
@@ -145,30 +143,6 @@ def run_pipeline(
                     "Filtering %d CSO generic-safety URIs (domain-specific: %s)",
                     len(uris), ", ".join(sorted(domain_specific)),
                 )
-
-    if landscape is None:
-        if until == "identify_domains":
-            return state
-
-        t0 = _now()
-        state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions, coverage_gaps = map_risks(
-            state.policies, client, config, risk_handlers, report=report
-        )
-        state.coverage_gaps = coverage_gaps
-        _stage_done("map_risks", t0)
-        state.risk_landscape = build_risk_landscape(
-            mappings=state.risk_mappings,
-            risk_details_cache=state.risk_details,
-            related_risks=state.related_risks,
-            risk_actions=state.risk_actions,
-            selected_domains=state.selected_domains,
-            model=config.model,
-            run_slug=run_slug,
-            timestamp=report.timestamp if report else "",
-            coverage_gaps=state.coverage_gaps,
-        )
-        if until == "map_risks":
-            return state
 
     t0 = _now()
     state.variation_axes, state.vocabulary_contexts = anchor(

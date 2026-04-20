@@ -8,53 +8,6 @@ from refiner.cli import app
 runner = CliRunner()
 
 
-def test_map_risks_cli_produces_risk_landscape(tmp_path):
-    # Create input PolicyProfile
-    policy_doc = {
-        "organization": {"name": "TestOrg", "roles": []},
-        "domain": "banking",
-        "policies": [
-            {"policy_concept": "Fraud", "concept_definition": "Prompts about fraud"},
-        ],
-    }
-    input_path = tmp_path / "test-enriched.json"
-    input_path.write_text(json.dumps(policy_doc))
-
-    out_dir = tmp_path / "output"
-    out_dir.mkdir()
-
-    with patch("refiner.cli._create_risk_handlers") as mock_rh, \
-         patch("refiner.stages.identify_domains.identify_domains") as mock_id, \
-         patch("refiner.stages.map_risks.map_risks") as mock_mr:
-
-        mock_id.return_value = ["CCO", "Commons", "D3FEND", "CSO", "LKIF"]
-        mock_mr.return_value = (
-            [],  # mappings
-            {},  # risk_details
-            set(),  # seen_risk_ids
-            {},  # related_risks
-            {},  # risk_actions
-            [],  # coverage_gaps
-        )
-        mock_rh.return_value = {}
-
-        result = runner.invoke(app, [
-            "map-risks", str(input_path),
-            "--output", str(out_dir),
-            "--base-url", "http://localhost:8000/v1",
-            "--model", "test-model",
-            "--nexus-base-dir", "/tmp/nexus",
-        ])
-
-    assert result.exit_code == 0, result.output
-    # Check that risk-landscape.yaml was written
-    rl_files = list(out_dir.glob("*-risk-landscape.yaml"))
-    assert len(rl_files) == 1
-    landscape = yaml.safe_load(rl_files[0].read_text())
-    assert "version" in landscape
-    assert "selected_domains" in landscape
-
-
 def test_ground_cli_produces_dcd(tmp_path):
     # Create input RiskLandscape YAML
     landscape_data = {
