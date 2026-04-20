@@ -179,6 +179,7 @@ def run(
     ontoquery_chroma_dir: Path = typer.Option(Path(".chroma"), "--ontoquery-chroma-dir", envvar="ONTOQUERY_CHROMA_DIR", help="Ontoquery ChromaDB directory"),
     nexus_chroma_dir: Path = typer.Option(Path(".chroma"), "--nexus-chroma-dir", envvar="NEXUS_CHROMA_DIR", help="Nexus ChromaDB directory"),
     max_concurrent: int = typer.Option(1, "--max-concurrent", help="Max parallel LLM calls per stage (default: 1 = sequential)"),
+    landscape_path: Path = typer.Option(None, "--landscape", help="Pre-built risk-landscape.yaml from risk-landscaper"),
     search_strategy: str = typer.Option("llm", "--search-strategy", help="Search merge strategy: llm (default), weighted, or grouped"),
     track: bool = typer.Option(False, "--track", help="Enable MLflow tracking + tracing"),
     tracking_uri: str = typer.Option(None, "--tracking-uri", envvar="MLFLOW_TRACKING_URI", help="MLflow tracking server URI"),
@@ -214,8 +215,19 @@ def run(
         timestamp=datetime.now(timezone.utc).isoformat(),
     )
 
+    # Load pre-built landscape if provided
+    pre_landscape = None
+    if landscape_path:
+        if not landscape_path.exists():
+            typer.echo(f"Error: landscape file {landscape_path} does not exist", err=True)
+            raise typer.Exit(1)
+        from refiner.models import RiskLandscape
+        landscape_data = yaml.safe_load(landscape_path.read_text())
+        pre_landscape = RiskLandscape(**landscape_data)
+        typer.echo(f"Loaded pre-built landscape: {len(pre_landscape.risks)} risks")
+
     # Create handlers — only load what's needed for the requested stages
-    needs_risk = until not in ("identify_domains",)
+    needs_risk = until not in ("identify_domains",) and not landscape_path
     needs_onto = until not in ("identify_domains", "map_risks")
     if needs_risk:
         if not nexus_base_dir:
@@ -260,6 +272,7 @@ def run(
         layer2_mappings=layer2_mappings,
         bfo_fallbacks=bfo_fallbacks,
         run_slug=client_slug,
+        landscape=pre_landscape,
     )
     # TODO: thread policy_profile into pipeline stages (e.g. identify_domains domain hint)
     state.policy_profile = policy_profile

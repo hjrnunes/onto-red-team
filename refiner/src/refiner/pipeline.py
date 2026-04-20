@@ -101,6 +101,7 @@ def run_pipeline(
     layer2_mappings=None,
     bfo_fallbacks: dict[str, str] | None = None,
     run_slug: str = "",
+    landscape: RiskLandscape | None = None,
 ) -> PipelineState:
     state = PipelineState(policies=policies, report=report, run_slug=run_slug)
 
@@ -116,9 +117,21 @@ def run_pipeline(
                 "model": config.model,
             })
 
-    t0 = _now()
-    state.selected_domains = identify_domains(state.policies, client, config, report=report)
-    _stage_done("identify_domains", t0)
+    if landscape is not None:
+        state.risk_landscape = landscape
+        state.selected_domains = landscape.selected_domains
+        logger.info("Using pre-built risk landscape: %d risks, %d policy mappings",
+                     len(landscape.risks), len(landscape.policy_mappings))
+        if report:
+            report.events.append({
+                "stage": "pipeline", "event": "landscape_loaded",
+                "risk_count": len(landscape.risks),
+                "policy_mapping_count": len(landscape.policy_mappings),
+            })
+    else:
+        t0 = _now()
+        state.selected_domains = identify_domains(state.policies, client, config, report=report)
+        _stage_done("identify_domains", t0)
 
     # Compute CSO DangerousInformation filter for domain-specific runs
     generic_safety_uris: set[str] = set()
@@ -133,28 +146,29 @@ def run_pipeline(
                     len(uris), ", ".join(sorted(domain_specific)),
                 )
 
-    if until == "identify_domains":
-        return state
+    if landscape is None:
+        if until == "identify_domains":
+            return state
 
-    t0 = _now()
-    state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions, coverage_gaps = map_risks(
-        state.policies, client, config, risk_handlers, report=report
-    )
-    state.coverage_gaps = coverage_gaps
-    _stage_done("map_risks", t0)
-    state.risk_landscape = build_risk_landscape(
-        mappings=state.risk_mappings,
-        risk_details_cache=state.risk_details,
-        related_risks=state.related_risks,
-        risk_actions=state.risk_actions,
-        selected_domains=state.selected_domains,
-        model=config.model,
-        run_slug=run_slug,
-        timestamp=report.timestamp if report else "",
-        coverage_gaps=state.coverage_gaps,
-    )
-    if until == "map_risks":
-        return state
+        t0 = _now()
+        state.risk_mappings, state.risk_details, state.seen_risk_ids, state.related_risks, state.risk_actions, coverage_gaps = map_risks(
+            state.policies, client, config, risk_handlers, report=report
+        )
+        state.coverage_gaps = coverage_gaps
+        _stage_done("map_risks", t0)
+        state.risk_landscape = build_risk_landscape(
+            mappings=state.risk_mappings,
+            risk_details_cache=state.risk_details,
+            related_risks=state.related_risks,
+            risk_actions=state.risk_actions,
+            selected_domains=state.selected_domains,
+            model=config.model,
+            run_slug=run_slug,
+            timestamp=report.timestamp if report else "",
+            coverage_gaps=state.coverage_gaps,
+        )
+        if until == "map_risks":
+            return state
 
     t0 = _now()
     state.variation_axes, state.vocabulary_contexts = anchor(
