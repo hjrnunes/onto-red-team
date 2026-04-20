@@ -1,5 +1,6 @@
 """Tests for ontoquery.bfo — BFO category map, constitutive patterns, and property matching."""
-from ontoquery.bfo import match_property, ConstitutivePattern, CATEGORY_PATTERNS, BFO_CATEGORY_MAP
+from ontoquery.bfo import match_property, ConstitutivePattern, CATEGORY_PATTERNS, BFO_CATEGORY_MAP, classify_bfo_categories
+from ontoquery.owl2vec import ProjectedGraph, SUBCLASS_OF
 
 
 class TestMatchProperty:
@@ -59,3 +60,58 @@ class TestBfoCategoryMap:
     def test_cco_shortcuts(self):
         assert BFO_CATEGORY_MAP["https://www.commoncoreontologies.org/ont00000958"] == "InformationContentEntity"
         assert BFO_CATEGORY_MAP["https://www.commoncoreontologies.org/ont00001017"] == "Agent"
+
+
+class TestClassifyBfoCategories:
+    def _make_graph(self, edges):
+        g = ProjectedGraph()
+        for s, o in edges:
+            g.edges.append((s, SUBCLASS_OF, o))
+            g.classes.add(s)
+            g.classes.add(o)
+        return g
+
+    def test_direct_bfo_child(self):
+        graph = self._make_graph([
+            ("http://example.org/MyProcess", "http://purl.obolibrary.org/obo/BFO_0000015"),
+        ])
+        result = classify_bfo_categories(graph)
+        assert result["http://example.org/MyProcess"] == "Process"
+
+    def test_indirect_via_chain(self):
+        graph = self._make_graph([
+            ("http://example.org/DataCollection", "http://example.org/InformationProcessing"),
+            ("http://example.org/InformationProcessing", "http://purl.obolibrary.org/obo/BFO_0000015"),
+        ])
+        result = classify_bfo_categories(graph)
+        assert result["http://example.org/DataCollection"] == "Process"
+        assert result["http://example.org/InformationProcessing"] == "Process"
+
+    def test_cco_shortcut(self):
+        graph = self._make_graph([
+            ("http://example.org/Report", "https://www.commoncoreontologies.org/ont00000958"),
+        ])
+        result = classify_bfo_categories(graph)
+        assert result["http://example.org/Report"] == "InformationContentEntity"
+
+    def test_no_bfo_ancestor(self):
+        graph = self._make_graph([
+            ("http://example.org/Thing", "http://example.org/OtherThing"),
+        ])
+        result = classify_bfo_categories(graph)
+        assert "http://example.org/Thing" not in result
+
+    def test_bfo_class_itself_not_included(self):
+        graph = ProjectedGraph()
+        graph.classes.add("http://purl.obolibrary.org/obo/BFO_0000015")
+        result = classify_bfo_categories(graph)
+        assert "http://purl.obolibrary.org/obo/BFO_0000015" not in result
+
+    def test_most_specific_category_wins(self):
+        """Role is more specific than RealizableEntity — Role should win."""
+        graph = self._make_graph([
+            ("http://example.org/DataControllerRole", "http://purl.obolibrary.org/obo/BFO_0000023"),
+            ("http://purl.obolibrary.org/obo/BFO_0000023", "http://purl.obolibrary.org/obo/BFO_0000017"),
+        ])
+        result = classify_bfo_categories(graph)
+        assert result["http://example.org/DataControllerRole"] == "Role"

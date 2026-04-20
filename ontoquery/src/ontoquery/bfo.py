@@ -136,6 +136,66 @@ def _tokenize(name: str) -> list[str]:
     return [t.lower() for t in underscored.split("_") if t]
 
 
+def classify_bfo_categories(
+    projected_graph,
+    category_map: dict[str, str] | None = None,
+    max_depth: int = 10,
+) -> dict[str, str]:
+    """Classify each class in a projected graph by its nearest BFO/CCO ancestor.
+
+    Walks SubClassOf edges upward (BFS) from each class until a URI in
+    *category_map* is reached, then assigns the corresponding human-readable
+    category label.  Classes that *are* BFO/CCO categories themselves, or
+    that have no path to a category, are omitted from the result.
+
+    Args:
+        projected_graph: A ``ProjectedGraph`` (from owl2vec) containing
+            ``edges`` (list of (s, p, o) triples) and ``classes`` (set of URIs).
+        category_map: URI -> label mapping.  Defaults to ``BFO_CATEGORY_MAP``.
+        max_depth: Maximum BFS depth to prevent runaway traversal.
+
+    Returns:
+        ``{class_uri: category_label}`` for every class that has a BFO/CCO
+        ancestor reachable via SubClassOf edges.
+    """
+    if category_map is None:
+        category_map = BFO_CATEGORY_MAP
+
+    from ontoquery.owl2vec import SUBCLASS_OF
+
+    # Build parent adjacency from SubClassOf edges
+    parents: dict[str, list[str]] = {}
+    for s, p, o in projected_graph.edges:
+        if p == SUBCLASS_OF:
+            parents.setdefault(s, []).append(o)
+
+    result: dict[str, str] = {}
+    for uri in projected_graph.classes:
+        # Skip URIs that are themselves category entries
+        if uri in category_map:
+            continue
+        visited: set[str] = set()
+        frontier = [uri]
+        found = ""
+        for _ in range(max_depth):
+            if not frontier:
+                break
+            current = frontier.pop(0)
+            if current in visited:
+                continue
+            visited.add(current)
+            if current != uri and current in category_map:
+                found = category_map[current]
+                break
+            for parent in parents.get(current, []):
+                if parent not in visited:
+                    frontier.append(parent)
+        if found:
+            result[uri] = found
+
+    return result
+
+
 def match_property(property_uri: str, patterns: list[str]) -> bool:
     """Return True if the local part of *property_uri* matches any pattern.
 
