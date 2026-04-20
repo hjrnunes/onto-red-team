@@ -324,3 +324,127 @@ class TestDeriveRole:
             restriction_property="http://example.org/some_unknown_prop",
         )
         assert role == "agent"
+
+
+from refiner.stages.anchor import _expand_by_category
+
+
+class TestExpandByCategory:
+    @pytest.fixture
+    def base_kwargs(self):
+        return dict(
+            seed_label="TestSeed",
+            confidence=0.9,
+            predicate="skos:relatedMatch",
+            vocab_concept=None,
+            vocab_label=None,
+            safety=set(),
+            selected_domains=None,
+        )
+
+    def test_process_prioritizes_participant_restrictions(self, mock_onto, base_kwargs):
+        mock_onto["get_restrictions"].return_value = [
+            {"property": "http://ex.org/has_participant", "filler": "http://ex.org/Agent"},
+            {"property": "http://ex.org/governed_by", "filler": "http://ex.org/Regulation"},
+        ]
+        mock_onto["get_class_definition"].side_effect = lambda uri: {
+            "uri": uri, "label": uri.split("/")[-1], "definition": "test"}
+        mock_onto["get_siblings"].return_value = []
+        candidates = []
+        _expand_by_category(
+            category="Process",
+            seed_uri="http://ex.org/DataCollection",
+            onto_handlers=mock_onto,
+            candidates=candidates,
+            bfo_categories={"http://ex.org/Agent": "Agent"},
+            seed_label="DataCollection",
+            confidence=0.9,
+            predicate="skos:relatedMatch",
+            vocab_concept=None,
+            vocab_label=None,
+            safety=set(),
+            selected_domains=None,
+        )
+        uris = {c["uri"] for c in candidates}
+        assert "http://ex.org/Agent" in uris
+        assert "http://ex.org/Regulation" in uris
+        agent_c = next(c for c in candidates if c["uri"] == "http://ex.org/Agent")
+        reg_c = next(c for c in candidates if c["uri"] == "http://ex.org/Regulation")
+        assert agent_c["effective_confidence"] > reg_c["effective_confidence"]
+
+    def test_ice_skips_siblings(self, mock_onto, base_kwargs):
+        mock_onto["get_restrictions"].return_value = []
+        mock_onto["get_siblings"].return_value = [
+            {"uri": "http://ex.org/OtherDoc", "label": "OtherDoc"},
+        ]
+        mock_onto["get_class_definition"].return_value = None
+        candidates = []
+        _expand_by_category(
+            category="InformationContentEntity",
+            seed_uri="http://ex.org/Report",
+            onto_handlers=mock_onto,
+            candidates=candidates,
+            bfo_categories={},
+            seed_label="Report",
+            confidence=0.9,
+            predicate="skos:relatedMatch",
+            vocab_concept=None,
+            vocab_label=None,
+            safety=set(),
+            selected_domains=None,
+        )
+        uris = {c["uri"] for c in candidates}
+        assert "http://ex.org/OtherDoc" not in uris
+
+    def test_quality_expands_siblings_aggressively(self, mock_onto, base_kwargs):
+        mock_onto["get_restrictions"].return_value = []
+        mock_onto["get_siblings"].return_value = [
+            {"uri": "http://ex.org/GoodQuality", "label": "GoodQuality"},
+            {"uri": "http://ex.org/PoorQuality", "label": "PoorQuality"},
+        ]
+        candidates = []
+        _expand_by_category(
+            category="Quality",
+            seed_uri="http://ex.org/ImageQuality",
+            onto_handlers=mock_onto,
+            candidates=candidates,
+            bfo_categories={},
+            seed_label="ImageQuality",
+            confidence=0.9,
+            predicate="skos:relatedMatch",
+            vocab_concept=None,
+            vocab_label=None,
+            safety=set(),
+            selected_domains=None,
+        )
+        uris = {c["uri"] for c in candidates}
+        assert "http://ex.org/GoodQuality" in uris
+        assert "http://ex.org/PoorQuality" in uris
+
+    def test_fallback_for_unknown_category(self, mock_onto, base_kwargs):
+        mock_onto["get_restrictions"].return_value = [
+            {"property": "http://ex.org/some_prop", "filler": "http://ex.org/Target"},
+        ]
+        mock_onto["get_class_definition"].side_effect = lambda uri: {
+            "uri": uri, "label": uri.split("/")[-1], "definition": "test"}
+        mock_onto["get_siblings"].return_value = [
+            {"uri": "http://ex.org/Sibling", "label": "Sibling"},
+        ]
+        candidates = []
+        _expand_by_category(
+            category="",
+            seed_uri="http://ex.org/Unknown",
+            onto_handlers=mock_onto,
+            candidates=candidates,
+            bfo_categories={},
+            seed_label="Unknown",
+            confidence=0.9,
+            predicate="skos:relatedMatch",
+            vocab_concept=None,
+            vocab_label=None,
+            safety=set(),
+            selected_domains=None,
+        )
+        uris = {c["uri"] for c in candidates}
+        assert "http://ex.org/Target" in uris
+        assert "http://ex.org/Sibling" in uris

@@ -88,6 +88,114 @@ def derive_role(
     return _FALLBACK_ROLES.get(candidate_category, "")
 
 
+# --- Category-aware navigation dispatch ---
+
+_SIBLING_AGGRESSIVE = {"Quality", "Role", "Disposition", "RealizableEntity"}
+_SIBLING_CONDITIONAL = {"Process", "Act"}
+_SIBLING_SKIP = {"InformationContentEntity", "GenericallyDependentContinuant"}
+_CONDITIONAL_THRESHOLD = 4
+
+
+def _expand_by_category(
+    category: str,
+    seed_uri: str,
+    onto_handlers: dict,
+    candidates: list[dict],
+    bfo_categories: dict[str, str],
+    *,
+    seed_label: str,
+    confidence: float,
+    predicate: str,
+    vocab_concept: str | None,
+    vocab_label: str | None,
+    safety: set[str],
+    selected_domains: list[str] | None,
+) -> None:
+    patterns = CATEGORY_PATTERNS.get(category, [])
+    constitutive_props = set()
+    for cp in patterns:
+        for p in cp.property_patterns:
+            constitutive_props.add(p)
+
+    def _make_candidate(uri, label, conf, restriction_prop=""):
+        return {
+            "uri": uri,
+            "label": label,
+            "source": "structural",
+            "path": [seed_uri, uri],
+            "path_labels": [seed_label, label],
+            "seed_uri": seed_uri,
+            "seed_label": seed_label,
+            "effective_confidence": conf,
+            "predicate": predicate,
+            "vocabulary_concept": vocab_concept,
+            "vocabulary_label": vocab_label,
+            "restriction_property": restriction_prop,
+        }
+
+    # --- Restriction expansion ---
+    if onto_handlers.get("get_restrictions"):
+        for r in onto_handlers["get_restrictions"](seed_uri):
+            filler = r.get("filler", "")
+            prop = r.get("property", "")
+            if not filler or _is_excluded_uri(filler, safety):
+                continue
+            if selected_domains:
+                domain = derive_source_ontology(filler)
+                if domain and domain not in selected_domains:
+                    continue
+            filler_defn = onto_handlers["get_class_definition"](filler)
+            if not filler_defn:
+                continue
+            filler_label = filler_defn.get("label", "")
+
+            is_constitutive = bool(patterns) and match_property(
+                prop, list(constitutive_props))
+            conf_mult = 0.95 if is_constitutive else 0.8
+            candidates.append(
+                _make_candidate(filler, filler_label, confidence * conf_mult, prop))
+
+    # --- Sibling expansion ---
+    if category in _SIBLING_SKIP:
+        pass
+    elif category in _SIBLING_CONDITIONAL:
+        structural_count = len(candidates)
+        if structural_count < _CONDITIONAL_THRESHOLD:
+            for s in onto_handlers["get_siblings"](seed_uri):
+                s_uri = s["uri"]
+                if _is_excluded_uri(s_uri, safety):
+                    continue
+                if selected_domains:
+                    domain = derive_source_ontology(s_uri)
+                    if domain and domain not in selected_domains:
+                        continue
+                candidates.append(
+                    _make_candidate(s_uri, s.get("label", ""), confidence * 0.7))
+    elif category in _SIBLING_AGGRESSIVE:
+        for s in onto_handlers["get_siblings"](seed_uri):
+            s_uri = s["uri"]
+            if _is_excluded_uri(s_uri, safety):
+                continue
+            if selected_domains:
+                domain = derive_source_ontology(s_uri)
+                if domain and domain not in selected_domains:
+                    continue
+            candidates.append(
+                _make_candidate(s_uri, s.get("label", ""), confidence * 0.85))
+    else:
+        # Default / fallback (unknown category or MaterialEntity, Agent, etc.)
+        for s in onto_handlers["get_siblings"](seed_uri):
+            s_uri = s["uri"]
+            if _is_excluded_uri(s_uri, safety):
+                continue
+            if selected_domains:
+                domain = derive_source_ontology(s_uri)
+                if domain and domain not in selected_domains:
+                    continue
+            candidates.append(
+                _make_candidate(s_uri, s.get("label", ""), confidence * 0.8))
+
+
 # BFO classes are maximally abstract ontological primitives — useful for role
 # derivation via superclass chains but never appropriate as candidate axes
 # (they produce vague, jargon-laden scenarios like "generically dependent continuant").
