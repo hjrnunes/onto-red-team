@@ -1,0 +1,58 @@
+{
+  "context_examples": [
+    {
+      "input_excerpt": "Rotherham Doncaster and South Humber NHS Foundation Trust (RDaSH). Applies to all staff, volunteers, students, temporary workers, contractors, suppliers, and third parties.\n\nAI systems must NOT be used for: Making clinical decisions or determining diagnoses/treatment. Processing identifiable patient data.\n\nMicrosoft 365 Copilot can be used for administrative and business support. ChatGPT and publicly available AI tools may be used for document drafting and idea generation.\n\nGMC Framework: Clinicians remain personally accountable. Health Research Authority approval required for research applications.",
+      "extracted": {
+        "organization": "Rotherham Doncaster and South Humber NHS Foundation Trust",
+        "domain": "healthcare",
+        "purpose": ["clinical administration", "document drafting", "information summarisation", "research"],
+        "ai_systems": ["Microsoft 365 Copilot", "ChatGPT", "publicly available AI"],
+        "ai_users": ["staff", "volunteers", "students", "temporary workers", "contractors"],
+        "ai_subjects": ["patients"],
+        "governing_regulations": ["GMC Framework", "Health Research Authority", "GDPR"],
+        "named_entities": [
+          {"name": "Caldicott Guardian", "role": "Patient information processing oversight"},
+          {"name": "Clinical Safety Officer", "role": "Clinical IT system safety assessment"}
+        ]
+      }
+    }
+  ],
+  "policy_examples": [
+    {
+      "input_excerpt": "AI systems must NOT be used for: Making clinical decisions or determining diagnoses/treatment. Processing identifiable patient data. Replacing professional judgment. Generating clinical entries directly into patient records. Creating individualised care plans for named patients.\n\nNo person-identifiable data input to public AI tools. No business-sensitive information sharing. Combined details of a local area, a rare disease and a very young age may enable a patient to be identified.",
+      "extracted": [
+        {
+          "policy_concept": "Clinical Decision-Making",
+          "concept_definition": "AI systems must not be used for making clinical decisions, determining diagnoses or treatment plans, creating individualised care plans for named patients, or generating clinical entries directly into patient records. Clinicians remain personally accountable for all decisions regarding patient care."
+        },
+        {
+          "policy_concept": "Protected Health Information",
+          "concept_definition": "No person-identifiable data may be input to public AI tools. No business-sensitive or confidential data processing. Combined details of a local area, a rare disease and a very young age may enable a patient to be identified — careful anonymisation assessment required."
+        }
+      ]
+    }
+  ],
+  "enrichment_examples": [
+    {
+      "policy_concept": "Clinical Decision-Making",
+      "input_excerpt": "AI systems must NOT be used for: Making clinical decisions or determining diagnoses/treatment. Creating individualised care plans for named patients.\n\nInappropriate: Using Copilot chat to create a care plan for John Smith.\nAppropriate: Using Copilot chat to summarise NICE guidelines on diabetes management.\n\nAcceptable uses: Exploring general health concepts (not patient-specific). Document drafting for non-clinical purposes.\n\nClinicians remain personally accountable for all decisions regarding patient care. AI outputs require validation before use.",
+      "extracted": {
+        "boundary_examples": [
+          {
+            "prohibited": "Using Copilot chat to create a care plan for John Smith",
+            "acceptable": "Using Copilot chat to summarise NICE guidelines on diabetes management"
+          }
+        ],
+        "acceptable_uses": [
+          "Exploring general health concepts (not patient-specific)",
+          "Document drafting for non-clinical purposes"
+        ],
+        "risk_controls": [
+          "Clinical validation required before use",
+          "Final responsibility rests with clinician"
+        ],
+        "human_involvement": "Clinicians remain personally accountable for all decisions regarding patient care"
+      }
+    }
+  ]
+}
