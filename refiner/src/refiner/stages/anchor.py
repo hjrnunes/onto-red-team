@@ -11,7 +11,7 @@ from refiner.models import (
     VariationAxis,
 )
 from refiner import debug
-from ontoquery.bfo import CATEGORY_PATTERNS, match_property
+from ontoquery.bfo import BFO_CATEGORY_MAP, CATEGORY_PATTERNS, match_property
 from refiner.stages.identify_domains import derive_source_ontology
 from refiner.ontology_seeds import resolve_seeds
 
@@ -271,34 +271,6 @@ def build_generic_safety_uris(onto_handlers: dict) -> set[str]:
     return uris
 
 
-# --- BFO category labels for candidate enrichment ---
-
-_BFO_CATEGORIES: dict[str, str] = {
-    "http://purl.obolibrary.org/obo/BFO_0000040": "MaterialEntity",
-    "http://purl.obolibrary.org/obo/BFO_0000015": "Process",
-    "http://purl.obolibrary.org/obo/BFO_0000031": "GenericallyDependentContinuant",
-    "http://purl.obolibrary.org/obo/BFO_0000020": "Quality",
-    "http://purl.obolibrary.org/obo/BFO_0000023": "Role",
-    "http://purl.obolibrary.org/obo/BFO_0000016": "Disposition",
-    "http://purl.obolibrary.org/obo/BFO_0000017": "RealizableEntity",
-    "http://purl.obolibrary.org/obo/BFO_0000029": "Site",
-    "http://purl.obolibrary.org/obo/BFO_0000006": "SpatialRegion",
-    "http://purl.obolibrary.org/obo/BFO_0000141": "ImmaterialEntity",
-    "http://purl.obolibrary.org/obo/BFO_0000008": "TemporalRegion",
-    "http://purl.obolibrary.org/obo/BFO_0000019": "Quality",
-    # CCO shortcuts
-    "https://www.commoncoreontologies.org/ont00000958": "InformationContentEntity",
-    "https://www.commoncoreontologies.org/ont00001017": "Agent",
-    "https://www.commoncoreontologies.org/ont00000995": "MaterialArtifact",
-    "https://www.commoncoreontologies.org/ont00000192": "Facility",
-    "https://www.commoncoreontologies.org/ont00000005": "Act",
-    # CCO classes missing from superclass walk
-    "https://www.commoncoreontologies.org/ont00001262": "Agent",         # Person
-    "https://www.commoncoreontologies.org/ont00001180": "Agent",         # Organization
-    "https://www.commoncoreontologies.org/ont00000740": "MaterialEntity",  # Resource
-}
-
-
 def derive_bfo_category(
     class_uri: str,
     onto_handlers: dict,
@@ -313,8 +285,8 @@ def derive_bfo_category(
     visited = set()
     current = class_uri
     for _ in range(max_depth):
-        if current in _BFO_CATEGORIES:
-            return _BFO_CATEGORIES[current]
+        if current in BFO_CATEGORY_MAP:
+            return BFO_CATEGORY_MAP[current]
         if current in visited:
             break
         visited.add(current)

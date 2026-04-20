@@ -79,7 +79,7 @@ class TestDeriveBfoCategory:
         assert result == "MaterialEntity"
 
     def test_cco_direct_hit(self, mock_onto):
-        """CCO Person/Organization URIs added to _BFO_CATEGORIES should resolve without walking."""
+        """CCO Person/Organization URIs in BFO_CATEGORY_MAP should resolve without walking."""
         result = derive_bfo_category("https://www.commoncoreontologies.org/ont00001262", mock_onto)
         assert result == "Agent"
 
